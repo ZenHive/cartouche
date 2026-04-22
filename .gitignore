@@ -27,3 +27,9 @@ cartouche-*.tar
 
 # Secrets
 /config/*.secret.exs
+
+# Hex docs cache (local, churns on every deps update)
+/.hex-docs/
+
+# macOS Finder metadata
+.DS_Store
