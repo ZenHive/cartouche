@@ -1,5 +1,6 @@
 defmodule Cartouche.UtilTest do
   use ExUnit.Case, async: true
+
   doctest Cartouche.Util
   doctest Cartouche.Util.RecoveryBit
 

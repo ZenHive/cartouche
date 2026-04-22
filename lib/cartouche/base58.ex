@@ -25,8 +25,9 @@ defmodule Cartouche.Base58 do
 
   defmacro __using__(_opts) do
     quote do
-      require Cartouche.Base58
       import Cartouche.Base58, only: [sigil_B58: 2]
+
+      require Cartouche.Base58
     end
   end
 

@@ -1,8 +1,8 @@
 defmodule Cartouche.FilterTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Filter
-
   use Cartouche.Hex
+
+  doctest Cartouche.Filter
 
   test "add a filter and get events" do
     extra_data = %{some_key: "some value"}
@@ -21,7 +21,7 @@ defmodule Cartouche.FilterTest do
     :timer.sleep(600)
 
     log =
-      Cartouche.Filter.Log.deserialize(%{
+      %{
         "address" => "0xb5a5f22694352c15b00323844ad545abb2b11028",
         "blockHash" => "0x99e8663c7b6d8bba3c7627a17d774238eae3e793dee30008debb2699666657de",
         "blockNumber" => "0x5d12ab",
@@ -35,7 +35,8 @@ defmodule Cartouche.FilterTest do
         ],
         "transactionHash" => "0xa74c2432c9cf7dbb875a385a2411fd8f13ca9ec12216864b1a1ead3c99de99cd",
         "transactionIndex" => "0x3"
-      })
+      }
+      |> Cartouche.Filter.Log.deserialize()
       |> Map.put(:extra_data, extra_data)
 
     assert_received {:event,

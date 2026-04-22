@@ -7,13 +7,14 @@ defmodule Cartouche.Filter do
   use GenServer
   use Cartouche.Hex
 
-  require Logger
-
   alias Cartouche.RPC
+
+  require Logger
 
   @check_delay 3000
 
   defmodule Log do
+    @moduledoc false
     defstruct [
       :address,
       :block_hash,
@@ -101,7 +102,7 @@ defmodule Cartouche.Filter do
     )
   end
 
-  defp set_filter(state = %{address: nil, topics: topics, rpc_opts: rpc_opts}) do
+  defp set_filter(%{address: nil, topics: topics, rpc_opts: rpc_opts} = state) do
     {:ok, filter_id} =
       RPC.send_rpc(
         "eth_newFilter",
@@ -116,7 +117,7 @@ defmodule Cartouche.Filter do
     Map.put(state, :filter_id, filter_id)
   end
 
-  defp set_filter(state = %{address: address, topics: topics, rpc_opts: rpc_opts}) do
+  defp set_filter(%{address: address, topics: topics, rpc_opts: rpc_opts} = state) do
     {:ok, filter_id} =
       RPC.send_rpc(
         "eth_newFilter",
@@ -132,7 +133,7 @@ defmodule Cartouche.Filter do
     Map.put(state, :filter_id, filter_id)
   end
 
-  def init(state = %{check_delay: check_delay}) do
+  def init(%{check_delay: check_delay} = state) do
     state = set_filter(state)
 
     Process.send_after(self(), :check_filter, check_delay)
@@ -144,13 +145,13 @@ defmodule Cartouche.Filter do
     GenServer.cast(filter, {:listen, self()})
   end
 
-  def handle_cast({:listen, pid}, state = %{listeners: listeners}) do
+  def handle_cast({:listen, pid}, %{listeners: listeners} = state) do
     {:noreply, Map.put(state, :listeners, [pid | listeners])}
   end
 
   def handle_info(
         :check_filter,
-        state = %{
+        %{
           filter_id: filter_id,
           listeners: listeners,
           decoders: decoders,
@@ -158,7 +159,7 @@ defmodule Cartouche.Filter do
           check_delay: check_delay,
           rpc_opts: rpc_opts,
           extra_data: extra_data
-        }
+        } = state
       ) do
     Process.send_after(self(), :check_filter, check_delay)
 
@@ -181,10 +182,8 @@ defmodule Cartouche.Filter do
 
           state
 
-        {:error, %{code: -32000}} ->
-          Logger.error(
-            "[Filter #{name}] Filter expired, restarting... Note: some logs may have been lost."
-          )
+        {:error, %{code: -32_000}} ->
+          Logger.error("[Filter #{name}] Filter expired, restarting... Note: some logs may have been lost.")
 
           set_filter(state)
 

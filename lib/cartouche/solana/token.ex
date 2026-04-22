@@ -20,7 +20,10 @@ defmodule Cartouche.Solana.Token do
       )
   """
 
-  alias Cartouche.Solana.{RPC, ATA, TokenProgram, Programs}
+  alias Cartouche.Solana.ATA
+  alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.RPC
+  alias Cartouche.Solana.TokenProgram
 
   @doc """
   Get the balance of a specific token for a wallet.

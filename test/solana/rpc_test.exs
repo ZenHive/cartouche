@@ -1,7 +1,10 @@
 defmodule Cartouche.Solana.RPCTest do
   use ExUnit.Case
 
+  alias Cartouche.Solana.Keys
   alias Cartouche.Solana.RPC
+  alias Cartouche.Solana.SystemProgram
+  alias Cartouche.Solana.Transaction
 
   setup do
     prev_client = Application.get_env(:cartouche, :client)
@@ -24,7 +27,7 @@ defmodule Cartouche.Solana.RPCTest do
   end
 
   # Known test pubkeys
-  @test_pubkey elem(Cartouche.Solana.Keys.from_seed(<<0::256>>), 0)
+  @test_pubkey elem(Keys.from_seed(<<0::256>>), 0)
   @nonexistent_pubkey Cartouche.Base58.decode!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
   @error_pubkey Cartouche.Base58.decode!("11111111111111111111111111111112")
 
@@ -41,7 +44,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "returns error for unknown method" do
-      assert {:error, %{code: -32601, message: "Method not found: bogusMethod"}} =
+      assert {:error, %{code: -32_601, message: "Method not found: bogusMethod"}} =
                RPC.send_rpc("bogusMethod", [])
     end
   end
@@ -56,7 +59,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "returns error for error address" do
-      assert {:error, %{code: -32600, message: "Invalid request"}} =
+      assert {:error, %{code: -32_600, message: "Invalid request"}} =
                RPC.get_balance(@error_pubkey)
     end
   end
@@ -311,20 +314,18 @@ defmodule Cartouche.Solana.RPCTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 1_000_000)
-      msg = Cartouche.Solana.Transaction.build_message(fee_payer, [ix], blockhash)
-      {_pub, seed} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
-      trx = Cartouche.Solana.Transaction.sign(msg, [seed])
+      ix = SystemProgram.transfer(fee_payer, recipient, 1_000_000)
+      msg = Transaction.build_message(fee_payer, [ix], blockhash)
+      {_pub, seed} = Keys.from_seed(<<1::256>>)
+      trx = Transaction.sign(msg, [seed])
 
       assert RPC.send_transaction(trx) ==
-               {:ok,
-                "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
+               {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
     end
 
     test "sends raw bytes" do
       assert RPC.send_transaction(<<1, 2, 3>>) ==
-               {:ok,
-                "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
+               {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
     end
   end
 
@@ -346,10 +347,10 @@ defmodule Cartouche.Solana.RPCTest do
       fee_payer = <<1::256>>
       recipient = <<2::256>>
       blockhash = <<99::256>>
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 100)
-      msg = Cartouche.Solana.Transaction.build_message(fee_payer, [ix], blockhash)
-      {_pub, seed} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
-      trx = Cartouche.Solana.Transaction.sign(msg, [seed])
+      ix = SystemProgram.transfer(fee_payer, recipient, 100)
+      msg = Transaction.build_message(fee_payer, [ix], blockhash)
+      {_pub, seed} = Keys.from_seed(<<1::256>>)
+      trx = Transaction.sign(msg, [seed])
 
       assert {:ok, %{err: nil, logs: [_ | _]}} = RPC.simulate_transaction(trx)
     end

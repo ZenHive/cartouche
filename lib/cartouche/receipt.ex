@@ -11,6 +11,7 @@ defmodule Cartouche.Receipt do
   use Cartouche.Hex
 
   defmodule Log do
+    @moduledoc false
     @type t() :: %__MODULE__{
             # QUANTITY - integer of the log index position in the block. null when its pending log.
             log_index: integer(),
@@ -76,7 +77,7 @@ defmodule Cartouche.Receipt do
         }
     """
     @spec deserialize(map()) :: t() | no_return()
-    def deserialize(params = %{}) do
+    def deserialize(%{} = params) do
       %__MODULE__{
         log_index: Hex.decode_hex_number!(params["logIndex"]),
         block_number: Hex.decode_hex_number!(params["blockNumber"]),
@@ -332,7 +333,7 @@ defmodule Cartouche.Receipt do
       }
   """
   @spec deserialize(map()) :: t() | no_return()
-  def deserialize(params = %{}) do
+  def deserialize(%{} = params) do
     %__MODULE__{
       transaction_hash: Hex.decode_word!(params["transactionHash"]),
       transaction_index: Hex.decode_hex_number!(params["transactionIndex"]),

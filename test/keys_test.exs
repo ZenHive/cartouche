@@ -1,5 +1,6 @@
 defmodule Cartouche.KeysTest do
   use ExUnit.Case, async: true
+
   doctest Cartouche.Keys
 
   test "generate keypair" do

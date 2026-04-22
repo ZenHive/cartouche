@@ -6,6 +6,7 @@ defmodule Cartouche.OpenChain do
   use Cartouche.Hex
 
   defmodule Signatures do
+    @moduledoc false
     defstruct [:events, :functions]
 
     @type t :: %__MODULE__{
@@ -60,14 +61,14 @@ defmodule Cartouche.OpenChain do
   end
 
   defmodule API do
-    def http_client(), do: Application.get_env(:cartouche, :open_chain_client, Finch)
-
-    defp base_url(),
-      do: Application.get_env(:cartouche, :open_chain_base_url, "https://api.4byte.sourcify.dev")
-
-    defp finch_name(), do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
-
+    @moduledoc false
     import Cartouche.Util, only: [normalize_finch_result: 1]
+
+    def http_client, do: Application.get_env(:cartouche, :open_chain_client, Finch)
+
+    defp base_url, do: Application.get_env(:cartouche, :open_chain_base_url, "https://api.4byte.sourcify.dev")
+
+    defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
 
     @spec get(String.t(), Keyword.t()) :: {:ok, term()} | {:error, String.t()}
     def get(url, opts) do
@@ -77,9 +78,7 @@ defmodule Cartouche.OpenChain do
       request = Finch.build(:get, url, headers)
 
       finch_result =
-        normalize_finch_result(
-          http_client().request(request, finch_name(), receive_timeout: timeout)
-        )
+        normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
 
       case finch_result do
         {:ok, %Finch.Response{status: _, body: resp_body}} ->
@@ -136,9 +135,7 @@ defmodule Cartouche.OpenChain do
             Keyword.put(
               query,
               :event,
-              event_signatures
-              |> Enum.map(&Cartouche.Hex.to_hex/1)
-              |> Enum.join(",")
+              Enum.map_join(event_signatures, ",", &Cartouche.Hex.to_hex/1)
             )
         end
 
@@ -151,9 +148,7 @@ defmodule Cartouche.OpenChain do
             Keyword.put(
               query,
               :function,
-              function_signatures
-              |> Enum.map(&Cartouche.Hex.to_hex/1)
-              |> Enum.join(",")
+              Enum.map_join(function_signatures, ",", &Cartouche.Hex.to_hex/1)
             )
         end
 
@@ -218,9 +213,9 @@ defmodule Cartouche.OpenChain do
   def lookup_error(_, opts \\ [])
 
   def lookup_error(<<signature::binary-size(4), data::binary>>, opts) do
-    with {:ok, signature} <- lookup(signature, :function, opts),
-         function_selector <- ABI.FunctionSelector.decode(signature),
-         result <- ABI.decode(function_selector, data) do
+    with {:ok, signature} <- lookup(signature, :function, opts) do
+      function_selector = ABI.FunctionSelector.decode(signature)
+      result = ABI.decode(function_selector, data)
       {:ok, result}
     end
   end
@@ -238,9 +233,9 @@ defmodule Cartouche.OpenChain do
   def lookup_error_and_values(_, opts \\ [])
 
   def lookup_error_and_values(<<signature::binary-size(4), data::binary>>, opts) do
-    with {:ok, signature} <- lookup(signature, :function, opts),
-         function_selector <- ABI.FunctionSelector.decode(signature),
-         result <- ABI.decode(function_selector, data) do
+    with {:ok, signature} <- lookup(signature, :function, opts) do
+      function_selector = ABI.FunctionSelector.decode(signature)
+      result = ABI.decode(function_selector, data)
       {:ok, signature, result}
     end
   end

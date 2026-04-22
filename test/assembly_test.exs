@@ -1,7 +1,9 @@
 defmodule Cartouche.AssemblyTest do
   use ExUnit.Case, async: true
-  alias Cartouche.Assembly
   use Cartouche.Hex
+
+  alias Cartouche.Assembly
+
   doctest Assembly
 
   describe "compile/1" do

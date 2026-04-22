@@ -10,8 +10,10 @@ defmodule Cartouche.Contract.IERC20Test do
   """
   use ExUnit.Case, async: true
   use Cartouche.Hex
-  doctest Cartouche.Contract.IERC20
+
   alias Cartouche.Contract.IERC20
+
+  doctest IERC20
 
   test "returns correct contract name" do
     assert IERC20.contract_name() == "IERC20"

@@ -6,14 +6,14 @@ defmodule Cartouche.VM do
 
   import Bitwise
 
-  require Logger
-
   alias Cartouche.Assembly
+
+  require Logger
 
   @type signed :: integer()
   @type unsigned :: non_neg_integer()
 
-  @type opcode :: Cartouche.Assembly.opcode()
+  @type opcode :: Assembly.opcode()
   @type code :: [opcode()]
   @type word :: <<_::256>>
   @type address :: <<_::160>>
@@ -42,12 +42,11 @@ defmodule Cartouche.VM do
   @gas_amount 4_000_000
 
   defmodule FFIs do
+    @moduledoc false
     def log_ffi(args) do
       case Cartouche.Contract.IConsole.decode_call(args) do
         {:ok, f, values} ->
-          IO.puts(
-            "console.#{f}: #{inspect(values, limit: :infinity, printable_limit: :infinity)}"
-          )
+          IO.puts("console.#{f}: #{inspect(values, limit: :infinity, printable_limit: :infinity)}")
 
         _ ->
           nil
@@ -62,6 +61,7 @@ defmodule Cartouche.VM do
   }
 
   defmodule Input do
+    @moduledoc false
     defstruct [:calldata, :value]
 
     @type t :: %__MODULE__{
@@ -71,6 +71,7 @@ defmodule Cartouche.VM do
   end
 
   defmodule Context do
+    @moduledoc false
     defstruct [
       :code,
       :code_encoded,
@@ -103,7 +104,7 @@ defmodule Cartouche.VM do
 
     @spec init_from(Cartouche.VM.code(), Cartouche.VM.ffis()) :: t()
     def init_from(code, ffis) do
-      code_encoded = Cartouche.Assembly.assemble(code)
+      code_encoded = Assembly.assemble(code)
 
       %__MODULE__{
         code: code,
@@ -130,7 +131,8 @@ defmodule Cartouche.VM do
 
     @spec build_op_map(Cartouche.VM.code()) :: op_map()
     defp build_op_map(code) do
-      Enum.reduce(code, {0, %{}}, fn operation, {pc, op_map} ->
+      code
+      |> Enum.reduce({0, %{}}, fn operation, {pc, op_map} ->
         new_pc = pc + Assembly.opcode_size(operation)
         {new_pc, Map.put(op_map, pc, operation)}
       end)
@@ -150,23 +152,21 @@ defmodule Cartouche.VM do
     def show_stack(stack) do
       hex_length = String.length(show_hex(Enum.count(stack) * 32))
 
-      Enum.with_index(Enum.reverse(stack), fn el, i ->
+      stack
+      |> Enum.reverse()
+      |> Enum.with_index(fn el, i ->
         "\t#{show_hex(i * 32, hex_length)} #{to_hex(el)}"
       end)
       |> Enum.join("\n")
     end
 
     def show(context) do
-      [
-        "pc=#{context.pc}",
-        "stack:",
-        show_stack(context.stack)
-      ]
-      |> Enum.join("\n")
+      Enum.join(["pc=#{context.pc}", "stack:", show_stack(context.stack)], "\n")
     end
   end
 
   defmodule ExecutionResult do
+    @moduledoc false
     defstruct [:stack, :reverted, :return_data]
 
     @type t :: %__MODULE__{
@@ -360,7 +360,7 @@ defmodule Cartouche.VM do
   defp unsigned_op1(context, fun) do
     with {:ok, context, a} <- pop(context),
          {:ok, a_int} <- word_to_uint(a),
-         v <- fun.(a_int),
+         v = fun.(a_int),
          {:ok, v_enc} <- uint_to_word(v) do
       push_word(context, v_enc)
     end
@@ -371,7 +371,7 @@ defmodule Cartouche.VM do
     with {:ok, context, a, b} <- pop2(context),
          {:ok, a_int} <- word_to_uint(a),
          {:ok, b_int} <- word_to_uint(b),
-         v <- fun.(a_int, b_int),
+         v = fun.(a_int, b_int),
          {:ok, v_enc} <- uint_to_word(v) do
       push_word(context, v_enc)
     end
@@ -384,7 +384,7 @@ defmodule Cartouche.VM do
          {:ok, a_int} <- word_to_uint(a),
          {:ok, b_int} <- word_to_uint(b),
          {:ok, c_int} <- word_to_uint(c),
-         v <- fun.(a_int, b_int, c_int),
+         v = fun.(a_int, b_int, c_int),
          {:ok, v_enc} <- uint_to_word(v) do
       push_word(context, v_enc)
     end
@@ -395,7 +395,7 @@ defmodule Cartouche.VM do
     with {:ok, context, a, b} <- pop2(context),
          {:ok, a_int} <- word_to_sint(a),
          {:ok, b_int} <- word_to_sint(b),
-         v <- fun.(a_int, b_int),
+         v = fun.(a_int, b_int),
          {:ok, v_enc} <- sint_to_word(v) do
       push_word(context, v_enc)
     end
@@ -406,7 +406,7 @@ defmodule Cartouche.VM do
     with {:ok, context, a, b} <- pop2(context),
          {:ok, a_int} <- word_to_uint(a),
          {:ok, b_int} <- word_to_sint(b),
-         v <- fun.(a_int, b_int),
+         v = fun.(a_int, b_int),
          {:ok, v_enc} <- sint_to_word(v) do
       push_word(context, v_enc)
     end
@@ -448,6 +448,9 @@ defmodule Cartouche.VM do
 
   defmodule Memory do
     # 10MB
+    @moduledoc false
+    alias Cartouche.VM.Context
+
     @max_memory 10_000_000
 
     @spec expand_memory(binary(), Cartouche.VM.unsigned()) ::
@@ -478,8 +481,8 @@ defmodule Cartouche.VM do
       end
     end
 
-    @spec write_memory(Cartouche.VM.Context.t(), Cartouche.VM.unsigned(), binary()) ::
-            {:ok, Cartouche.VM.Context.t()} | {:error, Cartouche.VM.vm_error()}
+    @spec write_memory(Context.t(), Cartouche.VM.unsigned(), binary()) ::
+            {:ok, Context.t()} | {:error, Cartouche.VM.vm_error()}
     def write_memory(context, offset, value) do
       value_size = byte_size(value)
 
@@ -494,6 +497,7 @@ defmodule Cartouche.VM do
   end
 
   defmodule Operations do
+    @moduledoc false
     def sign_extend(b, x) do
       with {:ok, b_int} <- Cartouche.VM.word_to_uint(b) do
         if b_int >= 31 do
@@ -516,11 +520,11 @@ defmodule Cartouche.VM do
 
     def get_byte(i, x) do
       with {:ok, i} <- Cartouche.VM.word_to_uint(i) do
-        unless i < 32 do
-          {:ok, <<0::256>>}
-        else
+        if i < 32 do
           <<_::binary-size(i), word::binary-size(1), _::binary-size(31 - i)>> = x
           Cartouche.VM.pad_to_word(word)
+        else
+          {:ok, <<0::256>>}
         end
       end
     end
@@ -532,7 +536,7 @@ defmodule Cartouche.VM do
            pop_call_args(context),
          {:ok, memory_expanded, args} <-
            Memory.read_memory(context.memory, args_offset, args_size),
-         context <- %{context | memory: memory_expanded},
+         context = %{context | memory: memory_expanded},
          {:ok, ffi} <- Context.fetch_ffi(context, address) do
       case ffi.(args) do
         {:return, return_data} ->
@@ -572,8 +576,7 @@ defmodule Cartouche.VM do
          {:ok, context, args_size} <- pop_unsigned(context),
          {:ok, context, ret_offset} <- pop_unsigned(context),
          {:ok, context, ret_size} <- pop_unsigned(context) do
-      {:ok, context, gas, word_to_address(address_word), args_offset, args_size, ret_offset,
-       ret_size}
+      {:ok, context, gas, word_to_address(address_word), args_offset, args_size, ret_offset, ret_size}
     end
   end
 
@@ -591,165 +594,152 @@ defmodule Cartouche.VM do
 
     with {:ok, operation} <- get_operation(context) do
       if opts[:verbose] do
-        Logger.debug("Operation: #{Cartouche.Assembly.show_opcode(operation)}")
+        Logger.debug("Operation: #{Assembly.show_opcode(operation)}")
       end
 
-      case operation do
-        :stop ->
-          {:ok, %{context | return_data: <<>>, halted: true}}
+      case_result =
+        case operation do
+          :stop ->
+            {:ok, %{context | return_data: <<>>, halted: true}}
 
-        :add ->
-          unsigned_op2(context, &rem(&1 + &2, @two_pow_256))
+          :add ->
+            unsigned_op2(context, &rem(&1 + &2, @two_pow_256))
 
-        :sub ->
-          unsigned_op2(context, &rem(@two_pow_256 + &1 - &2, @two_pow_256))
+          :sub ->
+            unsigned_op2(context, &rem(@two_pow_256 + &1 - &2, @two_pow_256))
 
-        :mul ->
-          unsigned_op2(context, &rem(&1 * &2, @two_pow_256))
+          :mul ->
+            unsigned_op2(context, &rem(&1 * &2, @two_pow_256))
 
-        :div ->
-          unsigned_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
+          :div ->
+            unsigned_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
 
-        :sdiv ->
-          signed_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
+          :sdiv ->
+            signed_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
 
-        :mod ->
-          unsigned_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
+          :mod ->
+            unsigned_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
 
-        :smod ->
-          signed_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
+          :smod ->
+            signed_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
 
-        :addmod ->
-          unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 + &2, &3)))
+          :addmod ->
+            unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 + &2, &3)))
 
-        :mulmod ->
-          unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 * &2, &3)))
+          :mulmod ->
+            unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 * &2, &3)))
 
-        :exp ->
-          unsigned_op2(context, &rem(&1 ** &2, @two_pow_256))
+          :exp ->
+            unsigned_op2(context, &rem(&1 ** &2, @two_pow_256))
 
-        :signextend ->
-          pop2_and_push(context, &Operations.sign_extend/2)
+          :signextend ->
+            pop2_and_push(context, &Operations.sign_extend/2)
 
-        :lt ->
-          unsigned_op2(context, &if(&1 < &2, do: 1, else: 0))
+          :lt ->
+            unsigned_op2(context, &if(&1 < &2, do: 1, else: 0))
 
-        :gt ->
-          unsigned_op2(context, &if(&1 > &2, do: 1, else: 0))
+          :gt ->
+            unsigned_op2(context, &if(&1 > &2, do: 1, else: 0))
 
-        :slt ->
-          signed_op2(context, &if(&1 < &2, do: 1, else: 0))
+          :slt ->
+            signed_op2(context, &if(&1 < &2, do: 1, else: 0))
 
-        :sgt ->
-          signed_op2(context, &if(&1 > &2, do: 1, else: 0))
+          :sgt ->
+            signed_op2(context, &if(&1 > &2, do: 1, else: 0))
 
-        :eq ->
-          unsigned_op2(context, &if(&1 == &2, do: 1, else: 0))
+          :eq ->
+            unsigned_op2(context, &if(&1 == &2, do: 1, else: 0))
 
-        :iszero ->
-          unsigned_op1(context, &if(&1 == 0, do: 1, else: 0))
+          :iszero ->
+            unsigned_op1(context, &if(&1 == 0, do: 1, else: 0))
 
-        :and ->
-          unsigned_op2(context, &Bitwise.band(&1, &2))
+          :and ->
+            unsigned_op2(context, &Bitwise.band(&1, &2))
 
-        :or ->
-          unsigned_op2(context, &Bitwise.bor(&1, &2))
+          :or ->
+            unsigned_op2(context, &Bitwise.bor(&1, &2))
 
-        :xor ->
-          unsigned_op2(context, &Bitwise.bxor(&1, &2))
+          :xor ->
+            unsigned_op2(context, &Bitwise.bxor(&1, &2))
 
-        :not ->
-          unsigned_op1(context, &Bitwise.bxor(&1, @max_uint256))
+          :not ->
+            unsigned_op1(context, &Bitwise.bxor(&1, @max_uint256))
 
-        :byte ->
-          pop2_and_push(context, &Operations.get_byte/2)
+          :byte ->
+            pop2_and_push(context, &Operations.get_byte/2)
 
-        :shl ->
-          unsigned_op2(context, &rem(Bitwise.bsl(&2, cap_to_range(&1, 0, 255)), @two_pow_256))
+          :shl ->
+            unsigned_op2(context, &rem(Bitwise.bsl(&2, cap_to_range(&1, 0, 255)), @two_pow_256))
 
-        :shr ->
-          unsigned_op2(context, &Bitwise.bsr(&2, cap_to_range(&1, 0, 255)))
+          :shr ->
+            unsigned_op2(context, &Bitwise.bsr(&2, cap_to_range(&1, 0, 255)))
 
-        :sar ->
-          unsigned_signed_op2(context, &(&2 >>> cap_to_range(&1, 0, 255)))
+          :sar ->
+            unsigned_signed_op2(context, &(&2 >>> cap_to_range(&1, 0, 255)))
 
-        :sha3 ->
-          with {:ok, context, offset, size} <- pop2_unsigned(context),
-               {:ok, memory_expanded, data} <- Memory.read_memory(context.memory, offset, size) do
-            push_word(%{context | memory: memory_expanded}, Cartouche.Hash.keccak(data))
-          end
-
-        :callvalue ->
-          with {:ok, value} <- uint_to_word(input.value) do
-            push_word(context, value)
-          end
-
-        :calldataload ->
-          with {:ok, context, i} <- pop_unsigned(context),
-               {:ok, _, res} <- Memory.read_memory(input.calldata, i, 32) do
-            push_word(context, res)
-          end
-
-        :calldatasize ->
-          with {:ok, calldata_size} <- uint_to_word(byte_size(input.calldata)) do
-            push_word(context, calldata_size)
-          end
-
-        :calldatacopy ->
-          with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-               {:ok, _, calldata} <- Memory.read_memory(input.calldata, offset, size) do
-            Memory.write_memory(context, dest_offset, calldata)
-          end
-
-        :codesize ->
-          with {:ok, codesize} <- uint_to_word(byte_size(context.code_encoded)) do
-            push_word(context, codesize)
-          end
-
-        :codecopy ->
-          with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-               {:ok, _, code} <- Memory.read_memory(context.code_encoded, offset, size) do
-            Memory.write_memory(context, dest_offset, code)
-          end
-
-        :pop ->
-          with {:ok, context, _} <- pop(context) do
-            {:ok, context}
-          end
-
-        :mload ->
-          with {:ok, context, i} <- pop_unsigned(context),
-               {:ok, memory_expanded, res} <- Memory.read_memory(context.memory, i, 32) do
-            push_word(%{context | memory: memory_expanded}, res)
-          end
-
-        :mstore ->
-          with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
-            Memory.write_memory(context, offset, value)
-          end
-
-        :mstore8 ->
-          with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
-            <<_::binary-size(31), byte::binary>> = value
-            Memory.write_memory(context, offset, byte)
-          end
-
-        :jump ->
-          with {:ok, context, jump_dest} <- pop_unsigned(context) do
-            case Map.get(context.op_map, jump_dest) do
-              :jumpdest ->
-                {:ok, %{context | pc: jump_dest}}
-
-              _ ->
-                {:error, :invalid_jump_dest}
+          :sha3 ->
+            with {:ok, context, offset, size} <- pop2_unsigned(context),
+                 {:ok, memory_expanded, data} <- Memory.read_memory(context.memory, offset, size) do
+              push_word(%{context | memory: memory_expanded}, Cartouche.Hash.keccak(data))
             end
-          end
 
-        :jumpi ->
-          with {:ok, context, jump_dest, b} <- pop2_unsigned(context) do
-            if b == 0 do
+          :callvalue ->
+            with {:ok, value} <- uint_to_word(input.value) do
+              push_word(context, value)
+            end
+
+          :calldataload ->
+            with {:ok, context, i} <- pop_unsigned(context),
+                 {:ok, _, res} <- Memory.read_memory(input.calldata, i, 32) do
+              push_word(context, res)
+            end
+
+          :calldatasize ->
+            with {:ok, calldata_size} <- uint_to_word(byte_size(input.calldata)) do
+              push_word(context, calldata_size)
+            end
+
+          :calldatacopy ->
+            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+                 {:ok, _, calldata} <- Memory.read_memory(input.calldata, offset, size) do
+              Memory.write_memory(context, dest_offset, calldata)
+            end
+
+          :codesize ->
+            with {:ok, codesize} <- uint_to_word(byte_size(context.code_encoded)) do
+              push_word(context, codesize)
+            end
+
+          :codecopy ->
+            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+                 {:ok, _, code} <- Memory.read_memory(context.code_encoded, offset, size) do
+              Memory.write_memory(context, dest_offset, code)
+            end
+
+          :pop ->
+            with {:ok, context, _} <- pop(context) do
               {:ok, context}
-            else
+            end
+
+          :mload ->
+            with {:ok, context, i} <- pop_unsigned(context),
+                 {:ok, memory_expanded, res} <- Memory.read_memory(context.memory, i, 32) do
+              push_word(%{context | memory: memory_expanded}, res)
+            end
+
+          :mstore ->
+            with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
+              Memory.write_memory(context, offset, value)
+            end
+
+          :mstore8 ->
+            with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
+              <<_::binary-size(31), byte::binary>> = value
+              Memory.write_memory(context, offset, byte)
+            end
+
+          :jump ->
+            with {:ok, context, jump_dest} <- pop_unsigned(context) do
               case Map.get(context.op_map, jump_dest) do
                 :jumpdest ->
                   {:ok, %{context | pc: jump_dest}}
@@ -758,138 +748,153 @@ defmodule Cartouche.VM do
                   {:error, :invalid_jump_dest}
               end
             end
-          end
 
-        :pc ->
-          with {:ok, pc} <- uint_to_word(context.pc) do
-            push_word(context, pc)
-          end
+          :jumpi ->
+            with {:ok, context, jump_dest, b} <- pop2_unsigned(context) do
+              if b == 0 do
+                {:ok, context}
+              else
+                case Map.get(context.op_map, jump_dest) do
+                  :jumpdest ->
+                    {:ok, %{context | pc: jump_dest}}
 
-        :msize ->
-          with {:ok, memory_sz} <- uint_to_word(byte_size(context.memory)) do
-            push_word(context, memory_sz)
-          end
-
-        :gas ->
-          with {:ok, gas_amount} <- uint_to_word(@gas_amount) do
-            push_word(context, gas_amount)
-          end
-
-        :jumpdest ->
-          {:ok, context}
-
-        :tload ->
-          with {:ok, context, res} <- pop_unsigned(context) do
-            push_word(context, Map.get(context.tstorage, res, <<0::256>>))
-          end
-
-        :tstore ->
-          with {:ok, context, key, value} <- pop2_unsigned_word(context) do
-            {:ok, %{context | tstorage: Map.put(context.tstorage, key, value)}}
-          end
-
-        :mcopy ->
-          with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-               {:ok, memory_expanded, value} <- Memory.read_memory(context.memory, offset, size) do
-            Memory.write_memory(%{context | memory: memory_expanded}, dest_offset, value)
-          end
-
-        {:push, n, v} ->
-          push_n(context, n, v)
-
-        {:dup, n} ->
-          with {:ok, val} <- peek(context, n - 1) do
-            push_word(context, val)
-          end
-
-        {:swap, n} ->
-          with {:ok, high} <- peek(context, n),
-               {:ok, low} <- peek(context, 0) do
-            stack =
-              context.stack
-              |> List.replace_at(n, low)
-              |> List.replace_at(0, high)
-
-            {:ok, %{context | stack: stack}}
-          end
-
-        :return ->
-          with {:ok, context, offset, size} <- pop2_unsigned(context) do
-            with {:ok, memory_expanded, return_data} <-
-                   Memory.read_memory(context.memory, offset, size) do
-              {:ok, %{context | memory: memory_expanded, return_data: return_data, halted: true}}
+                  _ ->
+                    {:error, :invalid_jump_dest}
+                end
+              end
             end
-          end
 
-        :revert ->
-          with {:ok, context, offset, size} <- pop2_unsigned(context) do
-            with {:ok, memory_expanded, return_data} <-
-                   Memory.read_memory(context.memory, offset, size) do
-              {:ok,
-               %{
-                 context
-                 | memory: memory_expanded,
-                   return_data: return_data,
-                   halted: true,
-                   reverted: true
-               }}
+          :pc ->
+            with {:ok, pc} <- uint_to_word(context.pc) do
+              push_word(context, pc)
             end
-          end
 
-        {:invalid, _} ->
-          {:error, :invalid_operation}
+          :msize ->
+            with {:ok, memory_sz} <- uint_to_word(byte_size(context.memory)) do
+              push_word(context, memory_sz)
+            end
 
-        :staticcall ->
-          static_call(context)
+          :gas ->
+            with {:ok, gas_amount} <- uint_to_word(@gas_amount) do
+              push_word(context, gas_amount)
+            end
 
-        :returndatasize ->
-          with {:ok, return_data_size} <- uint_to_word(byte_size(context.return_data)) do
-            push_word(context, return_data_size)
-          end
+          :jumpdest ->
+            {:ok, context}
 
-        :returndatacopy ->
-          with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-               {:ok, _, calldata} <- Memory.read_memory(context.return_data, offset, size) do
-            Memory.write_memory(context, dest_offset, calldata)
-          end
+          :tload ->
+            with {:ok, context, res} <- pop_unsigned(context) do
+              push_word(context, Map.get(context.tstorage, res, <<0::256>>))
+            end
 
-        op
-        when op in [
-               :address,
-               :balance,
-               :origin,
-               :caller,
-               :gasprice,
-               :extcodesize,
-               :extcodecopy,
-               :extcodehash,
-               :blockhash,
-               :coinbase,
-               :timestamp,
-               :number,
-               :prevrandao,
-               :gaslimit,
-               :chainid,
-               :selfbalance,
-               :basefee,
-               :blobhash,
-               :blobbasefee,
-               :sload,
-               :sstore,
-               :log,
-               :create,
-               :call,
-               :callcode,
-               :delegatecall,
-               :create2,
-               :selfdestruct
-             ] ->
-          {:error, {:impure, operation}}
+          :tstore ->
+            with {:ok, context, key, value} <- pop2_unsigned_word(context) do
+              {:ok, %{context | tstorage: Map.put(context.tstorage, key, value)}}
+            end
 
-        _ ->
-          {:error, {:not_implemented, operation}}
-      end
-      |> inc_pc(operation)
+          :mcopy ->
+            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+                 {:ok, memory_expanded, value} <- Memory.read_memory(context.memory, offset, size) do
+              Memory.write_memory(%{context | memory: memory_expanded}, dest_offset, value)
+            end
+
+          {:push, n, v} ->
+            push_n(context, n, v)
+
+          {:dup, n} ->
+            with {:ok, val} <- peek(context, n - 1) do
+              push_word(context, val)
+            end
+
+          {:swap, n} ->
+            with {:ok, high} <- peek(context, n),
+                 {:ok, low} <- peek(context, 0) do
+              stack =
+                context.stack
+                |> List.replace_at(n, low)
+                |> List.replace_at(0, high)
+
+              {:ok, %{context | stack: stack}}
+            end
+
+          :return ->
+            with {:ok, context, offset, size} <- pop2_unsigned(context) do
+              with {:ok, memory_expanded, return_data} <-
+                     Memory.read_memory(context.memory, offset, size) do
+                {:ok, %{context | memory: memory_expanded, return_data: return_data, halted: true}}
+              end
+            end
+
+          :revert ->
+            with {:ok, context, offset, size} <- pop2_unsigned(context) do
+              with {:ok, memory_expanded, return_data} <-
+                     Memory.read_memory(context.memory, offset, size) do
+                {:ok,
+                 %{
+                   context
+                   | memory: memory_expanded,
+                     return_data: return_data,
+                     halted: true,
+                     reverted: true
+                 }}
+              end
+            end
+
+          {:invalid, _} ->
+            {:error, :invalid_operation}
+
+          :staticcall ->
+            static_call(context)
+
+          :returndatasize ->
+            with {:ok, return_data_size} <- uint_to_word(byte_size(context.return_data)) do
+              push_word(context, return_data_size)
+            end
+
+          :returndatacopy ->
+            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+                 {:ok, _, calldata} <- Memory.read_memory(context.return_data, offset, size) do
+              Memory.write_memory(context, dest_offset, calldata)
+            end
+
+          op
+          when op in [
+                 :address,
+                 :balance,
+                 :origin,
+                 :caller,
+                 :gasprice,
+                 :extcodesize,
+                 :extcodecopy,
+                 :extcodehash,
+                 :blockhash,
+                 :coinbase,
+                 :timestamp,
+                 :number,
+                 :prevrandao,
+                 :gaslimit,
+                 :chainid,
+                 :selfbalance,
+                 :basefee,
+                 :blobhash,
+                 :blobbasefee,
+                 :sload,
+                 :sstore,
+                 :log,
+                 :create,
+                 :call,
+                 :callcode,
+                 :delegatecall,
+                 :create2,
+                 :selfdestruct
+               ] ->
+            {:error, {:impure, operation}}
+
+          _ ->
+            {:error, {:not_implemented, operation}}
+        end
+
+      inc_pc(case_result, operation)
     end
   end
 
@@ -897,7 +902,7 @@ defmodule Cartouche.VM do
           {:ok, ExecutionResult.t()} | {:error, vm_error()}
   defp run_code(context, input, opts \\ []) do
     case run_single_op(context, input, opts) do
-      {:ok, context = %Context{halted: true}} ->
+      {:ok, %Context{halted: true} = context} ->
         {:ok, ExecutionResult.from_context(context)}
 
       {:ok, context} ->
@@ -942,6 +947,7 @@ defmodule Cartouche.VM do
   end
 
   defmodule VmError do
+    @moduledoc false
     defexception message: "VmError"
   end
 

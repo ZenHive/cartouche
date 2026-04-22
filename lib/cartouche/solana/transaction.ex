@@ -21,6 +21,8 @@ defmodule Cartouche.Solana.Transaction do
       bytes = Cartouche.Solana.Transaction.serialize(transaction)
   """
 
+  import Bitwise
+
   defmodule AccountMeta do
     @moduledoc "Account reference with permission flags."
     @type t :: %__MODULE__{
@@ -79,8 +81,6 @@ defmodule Cartouche.Solana.Transaction do
           message: Message.t()
         }
   defstruct [:signatures, :message]
-
-  import Bitwise
 
   # ---------------------------------------------------------------------------
   # Compact-u16 encoding
@@ -217,8 +217,7 @@ defmodule Cartouche.Solana.Transaction do
     rest = Map.delete(account_map, fee_payer)
 
     {ws, rs, wn, rn} =
-      Enum.reduce(rest, {[], [], [], []}, fn {pubkey, {is_signer, is_writable}},
-                                             {ws, rs, wn, rn} ->
+      Enum.reduce(rest, {[], [], [], []}, fn {pubkey, {is_signer, is_writable}}, {ws, rs, wn, rn} ->
         case {is_signer, is_writable} do
           {true, true} -> {[pubkey | ws], rs, wn, rn}
           {true, false} -> {ws, [pubkey | rs], wn, rn}
@@ -298,9 +297,7 @@ defmodule Cartouche.Solana.Transaction do
   Deserialize a message from binary.
   """
   @spec deserialize_message(binary()) :: {:ok, Message.t(), binary()} | {:error, term()}
-  def deserialize_message(
-        <<num_required_signatures, num_readonly_signed, num_readonly_unsigned, rest::binary>>
-      ) do
+  def deserialize_message(<<num_required_signatures, num_readonly_signed, num_readonly_unsigned, rest::binary>>) do
     header = %Header{
       num_required_signatures: num_required_signatures,
       num_readonly_signed_accounts: num_readonly_signed,
@@ -443,9 +440,8 @@ defmodule Cartouche.Solana.Transaction do
       full_trx = Transaction.add_signature(partial, 0, sponsor_sig)
   """
   @spec add_signature(t(), non_neg_integer(), <<_::512>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, index, <<signature::binary-64>>)
-      when is_integer(index) and index >= 0 do
+  def add_signature(%__MODULE__{} = transaction, index, <<signature::binary-64>>) when is_integer(index) and index >= 0 do
     signatures = List.replace_at(transaction.signatures, index, signature)
-    %__MODULE__{transaction | signatures: signatures}
+    %{transaction | signatures: signatures}
   end
 end

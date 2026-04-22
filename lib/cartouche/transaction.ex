@@ -3,6 +3,8 @@ defmodule Cartouche.Transaction do
   A module to help build, sign and encode Ethereum transactions.
   """
 
+  alias Cartouche.Signer.Default
+
   defmodule V1 do
     @moduledoc """
     Represents a V1 or "Legacy" (that is, pre-EIP-1559) transaction.
@@ -53,7 +55,7 @@ defmodule Cartouche.Transaction do
     def new(nonce, gas_price, gas_limit, to, value, data, chain_id \\ nil) do
       %__MODULE__{
         nonce: nonce,
-        gas_price: if(!is_nil(gas_price), do: Cartouche.Util.to_wei(gas_price), else: nil),
+        gas_price: if(is_nil(gas_price), do: nil, else: Cartouche.Util.to_wei(gas_price)),
         gas_limit: gas_limit,
         to: to,
         value: Cartouche.Util.to_wei(value),
@@ -153,10 +155,7 @@ defmodule Cartouche.Transaction do
           s: <<2::256>>
         }
     """
-    def add_signature(
-          transaction = %__MODULE__{},
-          <<r::binary-size(32), s::binary-size(32), v::binary>>
-        ) do
+    def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v::binary>>) do
       %{transaction | v: :binary.decode_unsigned(v), r: r, s: s}
     end
 
@@ -179,8 +178,7 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Transaction.V1.get_signature()
         {:error, "transaction missing signature"}
     """
-    def get_signature(%__MODULE__{v: _v, r: 0, s: 0}),
-      do: {:error, "transaction missing signature"}
+    def get_signature(%__MODULE__{v: _v, r: 0, s: 0}), do: {:error, "transaction missing signature"}
 
     def get_signature(%__MODULE__{v: v, r: r, s: s}) do
       v_enc = :binary.encode_unsigned(v)
@@ -333,12 +331,11 @@ defmodule Cartouche.Transaction do
           ),
         nonce: nonce,
         max_priority_fee_per_gas:
-          if(!is_nil(max_priority_fee_per_gas),
-            do: Cartouche.Util.to_wei(max_priority_fee_per_gas),
-            else: nil
+          if(is_nil(max_priority_fee_per_gas),
+            do: nil,
+            else: Cartouche.Util.to_wei(max_priority_fee_per_gas)
           ),
-        max_fee_per_gas:
-          if(!is_nil(max_fee_per_gas), do: Cartouche.Util.to_wei(max_fee_per_gas), else: nil),
+        max_fee_per_gas: if(is_nil(max_fee_per_gas), do: nil, else: Cartouche.Util.to_wei(max_fee_per_gas)),
         gas_limit: gas_limit,
         destination: destination,
         amount: Cartouche.Util.to_wei(amount),
@@ -640,20 +637,11 @@ defmodule Cartouche.Transaction do
           signature_s: <<0x02::256>>
         }
     """
-    def add_signature(
-          transaction = %__MODULE__{},
-          v,
-          r = <<_::256>>,
-          s = <<_::256>>
-        )
-        when is_boolean(v) do
+    def add_signature(%__MODULE__{} = transaction, v, <<_::256>> = r, <<_::256>> = s) when is_boolean(v) do
       %{transaction | signature_y_parity: v, signature_r: r, signature_s: s}
     end
 
-    def add_signature(
-          transaction = %__MODULE__{},
-          <<r::binary-size(32), s::binary-size(32), v_bin::binary>>
-        ) do
+    def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>) do
       v = :binary.decode_unsigned(v_bin)
 
       y_parity =
@@ -680,8 +668,7 @@ defmodule Cartouche.Transaction do
         {:error, "transaction missing signature"}
     """
     def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
-        when is_nil(v) or is_nil(r) or is_nil(s),
-        do: {:error, "transaction missing signature"}
+        when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
 
     def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
       v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
@@ -847,16 +834,8 @@ defmodule Cartouche.Transaction do
       iex> Cartouche.Hex.to_address(signer)
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
-  def build_signed_trx(
-        address,
-        nonce,
-        call_data,
-        gas_price,
-        gas_limit,
-        value,
-        opts \\ []
-      ) do
-    signer = Keyword.get(opts, :signer, Cartouche.Signer.Default)
+  def build_signed_trx(address, nonce, call_data, gas_price, gas_limit, value, opts \\ []) do
+    signer = Keyword.get(opts, :signer, Default)
     chain_id = Keyword.get(opts, :chain_id, nil)
     callback = Keyword.get(opts, :callback, nil)
 
@@ -864,7 +843,7 @@ defmodule Cartouche.Transaction do
     callback = if(is_nil(callback), do: fn trx -> {:ok, trx} end, else: callback)
 
     with {:ok, transaction} <- callback.(transaction),
-         transaction_encoded <- V1.encode(transaction),
+         transaction_encoded = V1.encode(transaction),
          {:ok, signature} <- Cartouche.Signer.sign(transaction_encoded, signer, chain_id: chain_id) do
       {:ok, V1.add_signature(transaction, signature)}
     end
@@ -895,7 +874,7 @@ defmodule Cartouche.Transaction do
         opts \\ []
       )
       when is_list(access_list) do
-    signer = Keyword.get(opts, :signer, Cartouche.Signer.Default)
+    signer = Keyword.get(opts, :signer, Default)
     chain_id = Keyword.get(opts, :chain_id, nil)
     callback = Keyword.get(opts, :callback, nil)
 
@@ -915,7 +894,7 @@ defmodule Cartouche.Transaction do
     callback = if(is_nil(callback), do: fn trx -> {:ok, trx} end, else: callback)
 
     with {:ok, transaction} <- callback.(transaction),
-         transaction_encoded <- V2.encode(transaction),
+         transaction_encoded = V2.encode(transaction),
          {:ok, signature} <- Cartouche.Signer.sign(transaction_encoded, signer, chain_id: chain_id) do
       {:ok, V2.add_signature(transaction, signature)}
     end

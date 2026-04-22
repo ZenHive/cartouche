@@ -1,10 +1,11 @@
 defmodule Cartouche.Solana.SignerTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.Signer
-  doctest Cartouche.Solana.Signer.Ed25519
 
   alias Cartouche.Solana.Signer
   alias Cartouche.Solana.Signer.Ed25519, as: Ed25519Backend
+
+  doctest Signer
+  doctest Ed25519Backend
 
   # RFC 8032 Section 7.1 Test Vectors
   @test_vectors [

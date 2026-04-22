@@ -23,11 +23,11 @@ defmodule Cartouche do
       iex> Cartouche.get_contract_address(:test)
       <<1::160>>
   """
-  def get_contract_address(address) when is_binary(address),
-    do: Cartouche.Util.decode_hex_input!(address)
+  def get_contract_address(address) when is_binary(address), do: Cartouche.Util.decode_hex_input!(address)
 
   def get_contract_address(contract) when is_atom(contract) do
-    Application.get_env(:cartouche, :contracts, [])
+    :cartouche
+    |> Application.get_env(:contracts, [])
     |> Keyword.fetch!(contract)
     |> Cartouche.Util.decode_hex_input!()
   end

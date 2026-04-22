@@ -12,8 +12,9 @@ defmodule Cartouche.Solana.TokenProgram do
       <<3, 64, 66, 15, 0, 0, 0, 0, 0>>
   """
 
-  alias Cartouche.Solana.Transaction.{Instruction, AccountMeta}
   alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Instruction
 
   @doc """
   Transfer tokens from source to destination.
@@ -25,13 +26,7 @@ defmodule Cartouche.Solana.TokenProgram do
   """
   @spec transfer(<<_::256>>, <<_::256>>, <<_::256>>, non_neg_integer(), keyword()) ::
           Instruction.t()
-  def transfer(
-        <<source::binary-32>>,
-        <<destination::binary-32>>,
-        <<authority::binary-32>>,
-        amount,
-        opts \\ []
-      )
+  def transfer(<<source::binary-32>>, <<destination::binary-32>>, <<authority::binary-32>>, amount, opts \\ [])
       when is_integer(amount) and amount >= 0 do
     %Instruction{
       program_id: token_program(opts),
@@ -91,13 +86,7 @@ defmodule Cartouche.Solana.TokenProgram do
   """
   @spec approve(<<_::256>>, <<_::256>>, <<_::256>>, non_neg_integer(), keyword()) ::
           Instruction.t()
-  def approve(
-        <<source::binary-32>>,
-        <<delegate::binary-32>>,
-        <<authority::binary-32>>,
-        amount,
-        opts \\ []
-      )
+  def approve(<<source::binary-32>>, <<delegate::binary-32>>, <<authority::binary-32>>, amount, opts \\ [])
       when is_integer(amount) and amount >= 0 do
     %Instruction{
       program_id: token_program(opts),
@@ -117,12 +106,7 @@ defmodule Cartouche.Solana.TokenProgram do
   - `:token_program` - Override the token program (default: SPL Token Program).
   """
   @spec close_account(<<_::256>>, <<_::256>>, <<_::256>>, keyword()) :: Instruction.t()
-  def close_account(
-        <<account::binary-32>>,
-        <<destination::binary-32>>,
-        <<authority::binary-32>>,
-        opts \\ []
-      ) do
+  def close_account(<<account::binary-32>>, <<destination::binary-32>>, <<authority::binary-32>>, opts \\ []) do
     %Instruction{
       program_id: token_program(opts),
       accounts: [

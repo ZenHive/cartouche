@@ -5,12 +5,11 @@ defmodule Cartouche.Application do
 
   use Application
 
-  def chain_id(), do: Cartouche.Util.parse_chain_id(Application.get_env(:cartouche, :chain_id, 1))
+  def chain_id, do: Cartouche.Util.parse_chain_id(Application.get_env(:cartouche, :chain_id, 1))
 
-  def ethereum_node(),
-    do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
+  def ethereum_node, do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
 
-  def http_client(), do: Application.get_env(:cartouche, :client, Finch)
+  def http_client, do: Application.get_env(:cartouche, :client, Finch)
 
   @impl true
   def start(_type, _args) do
@@ -60,8 +59,7 @@ defmodule Cartouche.Application do
     ["projects", project, "locations", location, "keyRings", key_ring, "cryptoKeys", key_id] =
       String.split(key_path, "/")
 
-    {Cartouche.Signer.CloudKMS, :sign,
-     [kms_credentials, project, location, key_ring, key_id, version]}
+    {Cartouche.Signer.CloudKMS, :sign, [kms_credentials, project, location, key_ring, key_id, version]}
   end
 
   # --- Solana signers ---
@@ -87,8 +85,7 @@ defmodule Cartouche.Application do
     ["projects", project, "locations", location, "keyRings", key_ring, "cryptoKeys", key_id] =
       String.split(key_path, "/")
 
-    {Cartouche.Solana.Signer.CloudKMS, :sign,
-     [kms_credentials, project, location, key_ring, key_id, version]}
+    {Cartouche.Solana.Signer.CloudKMS, :sign, [kms_credentials, project, location, key_ring, key_id, version]}
   end
 
   # Solana keys can be raw 32-byte binaries, hex-encoded, or Base58-encoded

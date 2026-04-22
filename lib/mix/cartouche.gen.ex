@@ -59,6 +59,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   require Logger
 
   defmodule InvalidFileError do
+    @moduledoc false
     defexception message: "invalid file error"
   end
 
@@ -82,7 +83,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
         nil
 
       contracts ->
-        case Enum.into(contracts, []) do
+        case Enum.to_list(contracts) do
           [{_k, v} | _rest] ->
             v
 
@@ -94,20 +95,19 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # Search the AST for the module name from the output-json
   defp get_contract_name_by_ast(abi) do
-    case abi["ast"] do
-      %{"sourceUnit" => _, "absolutePath" => absolute_path} ->
-        absolute_path
-        |> String.split("/")
-        |> List.last()
-        |> case do
-          nil ->
-            nil
+    %{"sourceUnit" => _, "absolutePath" => absolute_path} = abi["ast"]
 
-          file_name ->
-            file_name
-            |> String.split(".")
-            |> List.first()
-        end
+    absolute_path
+    |> String.split("/")
+    |> List.last()
+    |> case do
+      nil ->
+        nil
+
+      file_name ->
+        file_name
+        |> String.split(".")
+        |> List.first()
     end
   end
 
@@ -214,7 +214,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
       | events
     ]
 
-    fns ++ Enum.reverse(decoders) ++ Enum.reverse(events) ++ Enum.reverse(errors)
+    fns ++ Enum.reverse(decoders, Enum.reverse(events, Enum.reverse(errors)))
   end
 
   # Parses the ABI spec and generates the functions (encode and execute) if we can parse
@@ -231,10 +231,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
       end
 
     case fn_selector do
-      fs = %ABI.FunctionSelector{function: name} when not is_nil(name) ->
+      %ABI.FunctionSelector{function: name} = fs when not is_nil(name) ->
         encode_function_call(fs, abi["fn_name"] || name, has_bytecode)
 
-      fs = %ABI.FunctionSelector{function_type: function_type} ->
+      %ABI.FunctionSelector{function_type: function_type} = fs ->
         encode_function_call(fs, to_string(function_type), has_bytecode)
 
       _ ->
@@ -287,12 +287,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
                 String.trim_leading(els, "_")
             end
 
-          unless Map.has_key?(argument_type, :name) do
-            # There's no name for this argument, we're going to return nils
-            # here which will mean this function doesn't get included in
-            # the generated code.
-            {{nil, nil}, {nil, nil}}
-          else
+          if Map.has_key?(argument_type, :name) do
             names =
               case argument_type.type do
                 {:tuple, tuple_types} ->
@@ -370,6 +365,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
               var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
               {{var, var}, {var, var}}
             end
+          else
+            # There's no name for this argument, we're going to return nils
+            # here which will mean this function doesn't get included in
+            # the generated code.
+            {{nil, nil}, {nil, nil}}
           end
         end)
       )
@@ -608,9 +608,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       decode_call_fn =
         quote do
-          def unquote(decode_call_fun_name)(
-                <<unquote_splicing(abi_enc_signature_list)>> <> calldata
-              ) do
+          def unquote(decode_call_fun_name)(<<unquote_splicing(abi_enc_signature_list)>> <> calldata) do
             unquote(abi_enc_signature_hex)
             ABI.decode(unquote(selector_fun_name)(), calldata)
           end
@@ -618,9 +616,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       decode_error_fn =
         quote do
-          def unquote(decode_error_fun_name)(
-                <<unquote_splicing(abi_enc_signature_list)>> <> error
-              ) do
+          def unquote(decode_error_fun_name)(<<unquote_splicing(abi_enc_signature_list)>> <> error) do
             unquote(abi_enc_signature_hex)
             ABI.decode(unquote(selector_fun_name)(), error)
           end
@@ -628,7 +624,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       generic_decode_call_fn =
         quote do
-          def decode_call(calldata = <<unquote_splicing(abi_enc_signature_list)>> <> _) do
+          def decode_call(<<unquote_splicing(abi_enc_signature_list)>> <> _ = calldata) do
             unquote(abi_enc_signature_hex)
             {:ok, unquote(error_name), unquote(decode_call_fun_name)(calldata)}
           end
@@ -636,7 +632,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       generic_error_fn =
         quote do
-          def decode_error(error = <<unquote_splicing(abi_enc_signature_list)>> <> _) do
+          def decode_error(<<unquote_splicing(abi_enc_signature_list)>> <> _ = error) do
             unquote(abi_enc_signature_hex)
             {:ok, unquote(error_name), unquote(decode_error_fun_name)(error)}
           end
@@ -644,7 +640,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       generic_event_fn =
         quote do
-          def decode_event(topics = [<<unquote_splicing(signature_list)>> | _], data) do
+          def decode_event([<<unquote_splicing(signature_list)>> | _] = topics, data) do
             unquote(decode_event_fun_name)(topics, data)
           end
         end
@@ -698,7 +694,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     else
       [
         quote do
-          def bytecode(), do: hex!(unquote(bytecode))
+          def bytecode, do: hex!(unquote(bytecode))
         end
       ]
     end
@@ -714,7 +710,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     else
       [
         quote do
-          def deployed_bytecode(), do: hex!(unquote(deployed_bytecode))
+          def deployed_bytecode, do: hex!(unquote(deployed_bytecode))
         end
       ]
     end
@@ -749,7 +745,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     deployed_bytecode_decl = get_deployed_bytecode(abi_map)
     encode_call_decl = get_encode_calls(abi_map, Enum.count(bytecode_decl) > 0)
 
-    contents =
+    quote_result =
       quote do
         defmodule unquote(module_name) do
           @moduledoc ~S"""
@@ -766,7 +762,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
           unquote_splicing(deployed_bytecode_decl)
         end
       end
-      |> Macro.to_string()
+
+    contents = Macro.to_string(quote_result)
 
     {file_name, contents}
   end
@@ -806,7 +803,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   @doc false
   def run(args) do
     case OptionParser.parse(args, strict: [prefix: :string, out: :string]) do
-      {opts, patterns = [_ | _], []} ->
+      {opts, [_ | _] = patterns, []} ->
         prefix = Keyword.get(opts, :prefix, "")
         out = Keyword.get(opts, :out, "lib/")
 

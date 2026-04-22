@@ -15,8 +15,10 @@ defmodule Cartouche.Solana.ATA do
       true
   """
 
-  alias Cartouche.Solana.{PDA, Programs}
-  alias Cartouche.Solana.Transaction.{Instruction, AccountMeta}
+  alias Cartouche.Solana.PDA
+  alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Instruction
 
   @doc """
   Derive the associated token account address for a wallet + mint.
@@ -58,12 +60,7 @@ defmodule Cartouche.Solana.ATA do
   - `:token_program` - Override the token program (default: SPL Token Program).
   """
   @spec create_idempotent(<<_::256>>, <<_::256>>, <<_::256>>, keyword()) :: Instruction.t()
-  def create_idempotent(
-        <<payer::binary-32>>,
-        <<wallet::binary-32>>,
-        <<mint::binary-32>>,
-        opts \\ []
-      ) do
+  def create_idempotent(<<payer::binary-32>>, <<wallet::binary-32>>, <<mint::binary-32>>, opts \\ []) do
     build_create_instruction(payer, wallet, mint, <<1>>, opts)
   end
 

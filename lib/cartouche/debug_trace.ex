@@ -14,6 +14,7 @@ defmodule Cartouche.DebugTrace do
   use Cartouche.Hex
 
   defmodule StructLog do
+    @moduledoc false
     @type t() :: %__MODULE__{
             depth: integer(),
             gas: integer(),

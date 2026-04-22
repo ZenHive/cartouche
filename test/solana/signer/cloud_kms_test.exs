@@ -38,8 +38,7 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
                 pem: @ed25519_pem,
                 algorithm: "EC_SIGN_ED25519",
                 pemCrc32c: "0",
-                name:
-                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+                name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
                 protectionLevel: "HSM"
               })
           }
@@ -56,8 +55,7 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
               Jason.encode!(%{
                 signature: Base.encode64(@test_signature),
                 signatureCrc32c: "0",
-                name:
-                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+                name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
                 protectionLevel: "HSM"
               })
           }

@@ -35,7 +35,7 @@ defmodule Cartouche.Solana.Test.Client do
   # ---------------------------------------------------------------------------
 
   defp dispatch("getBalance", [@error_account | _]) do
-    {:rpc_error, %{"code" => -32600, "message" => "Invalid request"}}
+    {:rpc_error, %{"code" => -32_600, "message" => "Invalid request"}}
   end
 
   defp dispatch("getBalance", [_pubkey | _]) do
@@ -380,7 +380,7 @@ defmodule Cartouche.Solana.Test.Client do
   # ---------------------------------------------------------------------------
 
   defp dispatch(method, _params) do
-    {:rpc_error, %{"code" => -32601, "message" => "Method not found: #{method}"}}
+    {:rpc_error, %{"code" => -32_601, "message" => "Method not found: #{method}"}}
   end
 
   # ---------------------------------------------------------------------------

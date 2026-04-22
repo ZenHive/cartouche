@@ -1,17 +1,17 @@
 defmodule Cartouche.VmTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.VM
-  alias Cartouche.VM
-
   use Cartouche.Hex
 
   import Cartouche.VmTestHelpers
 
+  alias Cartouche.VM
+
+  doctest VM
+
   defmodule FFI do
+    @moduledoc false
     def simple_ffi(args) do
-      if byte_size(args) != 4 do
-        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
-      else
+      if byte_size(args) == 4 do
         case args do
           ~h[0x11223344] ->
             {:return, ABI.encode("(bool)", [{true}])}
@@ -22,13 +22,13 @@ defmodule Cartouche.VmTest do
           _ ->
             {:revert, ABI.encode("(string)", [{"unknown function call"}])}
         end
+      else
+        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
       end
     end
 
     def add_ffi(args) do
-      if byte_size(args) != 0x44 do
-        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
-      else
+      if byte_size(args) == 0x44 do
         <<f::binary-size(4), a::256, b::256>> = args
 
         case f do
@@ -39,13 +39,13 @@ defmodule Cartouche.VmTest do
           _ ->
             {:revert, ABI.encode("(string)", [{"unknown function call"}])}
         end
+      else
+        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
       end
     end
 
     def long_ffi(args) do
-      if byte_size(args) != 4 do
-        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
-      else
+      if byte_size(args) == 4 do
         case args do
           ~h[0x11223344] ->
             {:return,
@@ -54,6 +54,8 @@ defmodule Cartouche.VmTest do
           _ ->
             {:revert, ABI.encode("(string)", [{"unknown function call"}])}
         end
+      else
+        {:revert, ABI.encode("(string)", [{"invalid ABI input"}])}
       end
     end
   end

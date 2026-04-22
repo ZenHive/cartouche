@@ -4,13 +4,16 @@ defmodule Cartouche.RPC do
   """
   use Cartouche.Hex
 
-  require Logger
-
   import Cartouche.Util, only: [to_wei: 1, normalize_finch_result: 1]
 
-  defp ethereum_node(), do: Cartouche.Application.ethereum_node()
-  defp http_client(), do: Cartouche.Application.http_client()
-  defp finch_name(), do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
+  alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
+
+  require Logger
+
+  defp ethereum_node, do: Cartouche.Application.ethereum_node()
+  defp http_client, do: Cartouche.Application.http_client()
+  defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
   @default_timeout Application.compile_env(:cartouche, :timeout, 30_000)
 
   @default_gas_price nil
@@ -36,8 +39,7 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors)
-       when is_list(errors) do
+  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
     case Enum.find(all_errors, fn error ->
@@ -82,14 +84,15 @@ defmodule Cartouche.RPC do
   defp decode_error(_, _errors), do: :not_found
 
   defp decode_response(response, id, errors, method, body) do
-    with {:ok, %{"jsonrpc" => "2.0", "result" => result, "id" => ^id}} <- Jason.decode(response) do
-      {:ok, result}
-    else
+    case Jason.decode(response) do
+      {:ok, %{"jsonrpc" => "2.0", "result" => result, "id" => ^id}} ->
+        {:ok, result}
+
       {:ok,
        %{
          "jsonrpc" => "2.0",
          "error" => %{
-           "code" => code = 3,
+           "code" => 3 = code,
            "data" => data_hex,
            "message" => message
          },
@@ -98,14 +101,16 @@ defmodule Cartouche.RPC do
         extra_revert_data =
           case Hex.decode_hex(data_hex) do
             {:ok, data} ->
-              case decode_error(data, errors) do
-                {:ok, error_abi, error_params} when not is_nil(error_params) ->
-                  %{error_abi: error_abi, error_params: error_params}
+              case_result =
+                case decode_error(data, errors) do
+                  {:ok, error_abi, error_params} when not is_nil(error_params) ->
+                    %{error_abi: error_abi, error_params: error_params}
 
-                _ ->
-                  %{}
-              end
-              |> Enum.into(%{revert: data})
+                  _ ->
+                    %{}
+                end
+
+              Enum.into(case_result, %{revert: data})
 
             _ ->
               %{}
@@ -122,7 +127,7 @@ defmodule Cartouche.RPC do
          },
          "id" => ^id
        }} ->
-        if code == -32602 do
+        if code == -32_602 do
           Logger.warning(
             "[Cartouche][RPC][#{method}] Invalid JSON-PRC request \"#{code} #{message}\" from request `#{Jason.encode!(body)}`"
           )
@@ -217,7 +222,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_getTransactionCount",
       [Hex.encode_big_hex(account), block_number],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -242,23 +247,20 @@ defmodule Cartouche.RPC do
   """
   def send_trx(trx, opts \\ [])
 
-  def send_trx(trx = %Cartouche.Transaction.V1{}, opts) do
+  def send_trx(%V1{} = trx, opts) do
     send_rpc(
       "eth_sendRawTransaction",
-      [Hex.encode_big_hex(Cartouche.Transaction.V1.encode(trx))],
-      Keyword.merge(opts, decode: :hex)
+      [Hex.encode_big_hex(V1.encode(trx))],
+      Keyword.put(opts, :decode, :hex)
     )
   end
 
-  def send_trx(
-        trx = %Cartouche.Transaction.V2{signature_y_parity: v, signature_r: r, signature_s: s},
-        opts
-      )
+  def send_trx(%V2{signature_y_parity: v, signature_r: r, signature_s: s} = trx, opts)
       when not is_nil(v) and not is_nil(r) and not is_nil(s) do
     send_rpc(
       "eth_sendRawTransaction",
-      [Hex.encode_big_hex(Cartouche.Transaction.V2.encode(trx))],
-      Keyword.merge(opts, decode: :hex)
+      [Hex.encode_big_hex(V2.encode(trx))],
+      Keyword.put(opts, :decode, :hex)
     )
   end
 
@@ -351,7 +353,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_estimateGas",
       [to_call_params(trx, from), block_number],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -366,7 +368,7 @@ defmodule Cartouche.RPC do
       {:ok, 0x22}
   """
   def eth_chain_id(opts \\ []) do
-    Cartouche.RPC.send_rpc("eth_chainId", [], Keyword.merge(opts, decode: :hex_unsigned))
+    Cartouche.RPC.send_rpc("eth_chainId", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
 
   @doc """
@@ -377,13 +379,13 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_code(<<1::160>>)
       {:ok, <<0x11, 0x22, 0x33>>}
   """
-  def get_code(address = <<_::160>>, opts \\ []) do
+  def get_code(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
     send_rpc(
       "eth_getCode",
       [Hex.encode_big_hex(address), block_number],
-      Keyword.merge(opts, decode: :hex)
+      Keyword.put(opts, :decode, :hex)
     )
   end
 
@@ -397,13 +399,13 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_balance(~h[0x0000000000000000000000000000000000000001])
       {:ok, 0x55}
   """
-  def get_balance(address = <<_::160>>, opts \\ []) do
+  def get_balance(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
     Cartouche.RPC.send_rpc(
       "eth_getBalance",
       [to_hex(address), block_number],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -417,13 +419,13 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_transaction_count(~h[0x0000000000000000000000000000000000000001])
       {:ok, 0x4}
   """
-  def get_transaction_count(address = <<_::160>>, opts \\ []) do
+  def get_transaction_count(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
     Cartouche.RPC.send_rpc(
       "eth_getTransactionCount",
       [to_hex(address), block_number],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -438,7 +440,7 @@ defmodule Cartouche.RPC do
       {:ok, 0x44}
   """
   def eth_block_number(opts \\ []) do
-    Cartouche.RPC.send_rpc("eth_blockNumber", [], Keyword.merge(opts, decode: :hex_unsigned))
+    Cartouche.RPC.send_rpc("eth_blockNumber", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
 
   @doc ~S"""
@@ -477,7 +479,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_getBlockByNumber",
       [block_number, include_transaction_details],
-      Keyword.merge(opts, decode: &Cartouche.Block.deserialize/1)
+      Keyword.put(opts, :decode, &Cartouche.Block.deserialize/1)
     )
   end
 
@@ -515,7 +517,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_getBlockByHash",
       [to_hex(block_hash)],
-      Keyword.merge(opts, decode: &Cartouche.Block.deserialize/1)
+      Keyword.put(opts, :decode, &Cartouche.Block.deserialize/1)
     )
   end
 
@@ -664,22 +666,20 @@ defmodule Cartouche.RPC do
           {:ok, Cartouche.Receipt.t() | nil} | {:error, term()}
   def get_trx_receipt(trx_id, opts \\ [])
 
-  def get_trx_receipt(trx_id = "0x" <> _, opts) when byte_size(trx_id) == 66,
+  def get_trx_receipt("0x" <> _ = trx_id, opts) when byte_size(trx_id) == 66,
     do: get_trx_receipt(Hex.from_hex!(trx_id), opts)
 
-  def get_trx_receipt(trx_id = <<_::256>>, opts) do
+  def get_trx_receipt(<<_::256>> = trx_id, opts) do
     send_rpc(
       "eth_getTransactionReceipt",
       [Hex.encode_big_hex(trx_id)],
-      Keyword.merge(opts,
-        decode: fn
-          nil ->
-            nil
+      Keyword.put(opts, :decode, fn
+        nil ->
+          nil
 
-          receipt_params ->
-            Cartouche.Receipt.deserialize(receipt_params)
-        end
-      )
+        receipt_params ->
+          Cartouche.Receipt.deserialize(receipt_params)
+      end)
     )
   end
 
@@ -733,14 +733,13 @@ defmodule Cartouche.RPC do
   """
   def trace_trx(trx_id, opts \\ [])
 
-  def trace_trx(trx_id = "0x" <> _, opts) when byte_size(trx_id) == 66,
-    do: trace_trx(Hex.decode_hex!(trx_id), opts)
+  def trace_trx("0x" <> _ = trx_id, opts) when byte_size(trx_id) == 66, do: trace_trx(Hex.decode_hex!(trx_id), opts)
 
-  def trace_trx(trx_id = <<_::256>>, opts) do
+  def trace_trx(<<_::256>> = trx_id, opts) do
     send_rpc(
       "trace_transaction",
       [Hex.encode_big_hex(trx_id)],
-      Keyword.merge(opts, decode: &Cartouche.Trace.deserialize_many/1)
+      Keyword.put(opts, :decode, &Cartouche.Trace.deserialize_many/1)
     )
   end
 
@@ -872,7 +871,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "trace_call",
       [to_call_params(trx, from), ["trace"], block_number],
-      Keyword.merge(opts, decode: &Cartouche.TraceCall.deserialize/1)
+      Keyword.put(opts, :decode, &Cartouche.TraceCall.deserialize/1)
     )
   end
 
@@ -1062,7 +1061,7 @@ defmodule Cartouche.RPC do
         ),
         block_number
       ],
-      Keyword.merge(opts, decode: &Cartouche.TraceCall.deserialize_many/1)
+      Keyword.put(opts, :decode, &Cartouche.TraceCall.deserialize_many/1)
     )
   end
 
@@ -1113,7 +1112,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "debug_traceCall",
       [to_call_params(trx, from), block_number],
-      Keyword.merge(opts, decode: &Cartouche.DebugTrace.deserialize/1)
+      Keyword.put(opts, :decode, &Cartouche.DebugTrace.deserialize/1)
     )
   end
 
@@ -1129,7 +1128,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_gasPrice",
       [],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -1145,7 +1144,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_maxPriorityFeePerGas",
       [],
-      Keyword.merge(opts, decode: :hex_unsigned)
+      Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
 
@@ -1170,7 +1169,7 @@ defmodule Cartouche.RPC do
     send_rpc(
       "eth_feeHistory",
       [block_count, newest_block, reward_percentiles],
-      Keyword.merge(opts, decode: &Cartouche.FeeHistory.deserialize/1)
+      Keyword.put(opts, :decode, &Cartouche.FeeHistory.deserialize/1)
     )
   end
 
@@ -1417,7 +1416,7 @@ defmodule Cartouche.RPC do
 
     with {:ok, trx_type} <- trx_type_result,
          {:ok, nonce} <-
-           if(!is_nil(nonce), do: {:ok, nonce}, else: get_nonce(signer_address, opts)),
+           if(is_nil(nonce), do: get_nonce(signer_address, opts), else: {:ok, nonce}),
          {:ok, trx} <-
            (case trx_type do
               {:v1, gas_price} ->
@@ -1497,7 +1496,7 @@ defmodule Cartouche.RPC do
   end
 
   @doc false
-  def to_call_params(trx = %Cartouche.Transaction.V1{}, from) do
+  def to_call_params(%V1{} = trx, from) do
     %{
       from: nil_map(from, &Hex.encode_big_hex/1),
       to: nil_map(trx.to, &Hex.encode_big_hex/1),
@@ -1508,7 +1507,7 @@ defmodule Cartouche.RPC do
     }
   end
 
-  def to_call_params(trx = %Cartouche.Transaction.V2{}, from) do
+  def to_call_params(%V2{} = trx, from) do
     %{
       from: nil_map(from, &Hex.encode_big_hex/1),
       to: nil_map(trx.destination, &Hex.encode_big_hex/1),
@@ -1554,17 +1553,15 @@ defmodule Cartouche.RPC do
 
     with {:ok, base_fee} <- base_fee_result,
          {:ok, max_priority_fee_per_gas} <- max_priority_fee_per_gas_result do
-      {:ok,
-       {:v2, ceil(base_fee * buffer_multiplier + max_priority_fee_per_gas),
-        max_priority_fee_per_gas}}
+      {:ok, {:v2, ceil(base_fee * buffer_multiplier + max_priority_fee_per_gas), max_priority_fee_per_gas}}
     end
   end
 
   defp get_fee_history_base_fee(rpc_opts) do
-    with {:ok, %Cartouche.FeeHistory{base_fee_per_gas: [fee_history_base_fee | _]}} <-
-           fee_history(rpc_opts) do
-      {:ok, fee_history_base_fee}
-    else
+    case fee_history(rpc_opts) do
+      {:ok, %Cartouche.FeeHistory{base_fee_per_gas: [fee_history_base_fee | _]}} ->
+        {:ok, fee_history_base_fee}
+
       {:ok, _} ->
         {:error, "missing fee history"}
 
@@ -1577,7 +1574,7 @@ defmodule Cartouche.RPC do
   defp nil_map(x, fun), do: fun.(x)
 
   defp show_trace_revert(trx, trx_res, debug_trace, opts) do
-    with {:error, error = %{code: 3, message: "execution reverted" <> _}} <- trx_res do
+    with {:error, %{code: 3, message: "execution reverted" <> _} = error} <- trx_res do
       if debug_trace do
         case debug_trace_call(trx, opts) do
           {:ok, trace} ->

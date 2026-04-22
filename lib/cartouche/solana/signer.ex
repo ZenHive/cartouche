@@ -26,6 +26,8 @@ defmodule Cartouche.Solana.Signer do
   """
   use GenServer
 
+  alias Cartouche.Solana.Signer.Default
+
   require Logger
 
   @doc """
@@ -55,7 +57,7 @@ defmodule Cartouche.Solana.Signer do
       64
   """
   @spec sign(binary(), GenServer.name()) :: {:ok, <<_::512>>} | {:error, term()}
-  def sign(message, name \\ Cartouche.Solana.Signer.Default) when is_binary(message) do
+  def sign(message, name \\ Default) when is_binary(message) do
     GenServer.call(name, {:sign, message})
   end
 
@@ -70,7 +72,7 @@ defmodule Cartouche.Solana.Signer do
       32
   """
   @spec address(GenServer.name()) :: <<_::256>>
-  def address(name \\ Cartouche.Solana.Signer.Default) do
+  def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
 
@@ -86,28 +88,25 @@ defmodule Cartouche.Solana.Signer do
       true
   """
   @spec verify(binary(), <<_::512>>, <<_::256>>) :: boolean()
-  def verify(message, <<signature::binary-64>>, <<pub_key::binary-32>>)
-      when is_binary(message) do
+  def verify(message, <<signature::binary-64>>, <<pub_key::binary-32>>) when is_binary(message) do
     :crypto.verify(:eddsa, :none, message, signature, [pub_key, :ed25519])
   end
 
   # --- GenServer callbacks ---
 
   @impl true
-  def handle_call({:sign, message}, _from, state = %{mfa: mfa}) do
+  def handle_call({:sign, message}, _from, %{mfa: mfa} = state) do
     {:reply, sign_direct(message, mfa), state}
   end
 
-  def handle_call(:get_address, _from, state = %{address: address}) do
+  def handle_call(:get_address, _from, %{address: address} = state) do
     {:reply, address, state}
   end
 
-  def handle_call(:get_address, _from, state = %{name: name, mfa: {mod, _fun, args}}) do
+  def handle_call(:get_address, _from, %{name: name, mfa: {mod, _fun, args}} = state) do
     {:ok, address} = apply(mod, :get_address, args)
 
-    Logger.info(
-      "Cartouche.Solana.Signer #{inspect(name)} address: #{Cartouche.Solana.Keys.to_address(address)}"
-    )
+    Logger.info("Cartouche.Solana.Signer #{inspect(name)} address: #{Cartouche.Solana.Keys.to_address(address)}")
 
     {:reply, address, Map.put(state, :address, address)}
   end

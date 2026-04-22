@@ -15,6 +15,7 @@ defmodule Cartouche.Typed do
         }
 
   defmodule Type do
+    @moduledoc false
     defstruct [:fields]
 
     @type primitive() ::
@@ -211,11 +212,9 @@ defmodule Cartouche.Typed do
     def deserialize_value!(value, {:uint, _}), do: value
     def deserialize_value!(value, :bool), do: value
 
-    def deserialize_value!(value, {:bytes, sz}),
-      do: Cartouche.Util.pad(from_hex!(value), sz)
+    def deserialize_value!(value, {:bytes, sz}), do: Cartouche.Util.pad(from_hex!(value), sz)
 
-    def deserialize_value!(value, {:array, ty}) when is_list(value),
-      do: Enum.map(value, &deserialize_value!(&1, ty))
+    def deserialize_value!(value, {:array, ty}) when is_list(value), do: Enum.map(value, &deserialize_value!(&1, ty))
 
     @doc ~S"""
     Serializes a value of a given type to pass to JSON or JavaScript.
@@ -259,8 +258,7 @@ defmodule Cartouche.Typed do
       |> to_hex()
     end
 
-    def serialize_value(value, {:array, ty}) when is_list(value),
-      do: Enum.map(value, &serialize_value(&1, ty))
+    def serialize_value(value, {:array, ty}) when is_list(value), do: Enum.map(value, &serialize_value(&1, ty))
 
     @doc ~S"""
     Encodes a value for `encodeData`, as per the EIP-712 spec. Specifically, raw values are
@@ -293,18 +291,17 @@ defmodule Cartouche.Typed do
     def encode_data_value(value, :bytes), do: Cartouche.Hash.keccak(value)
     def encode_data_value(value, {:bytes, _}), do: Cartouche.Util.pad(value, 32)
 
-    def encode_data_value(value, :bool),
-      do: encode_data_value(if(value, do: 1, else: 0), {:uint, 256})
+    def encode_data_value(value, :bool), do: encode_data_value(if(value, do: 1, else: 0), {:uint, 256})
 
     def encode_data_value(value, {:array, ty}) do
       value
-      |> Enum.map(&encode_data_value(&1, ty))
-      |> Enum.join()
+      |> Enum.map_join(&encode_data_value(&1, ty))
       |> Cartouche.Hash.keccak()
     end
   end
 
   defmodule Domain do
+    @moduledoc false
     defstruct [:name, :version, :chain_id, :verifying_contract, :salt]
 
     @type t() :: %__MODULE__{
@@ -520,7 +517,7 @@ defmodule Cartouche.Typed do
       map
       |> Map.to_list()
       |> Enum.filter(fn {_, v} -> not is_nil(v) end)
-      |> Enum.into(%{})
+      |> Map.new()
     end
   end
 
@@ -544,8 +541,7 @@ defmodule Cartouche.Typed do
   defp deserialize_value_map(value, fields, types) do
     for {field, type} <- fields, into: %{} do
       if is_binary(type) do
-        {field,
-         deserialize_value_map(fetch_value(value, field), Map.fetch!(types, type).fields, types)}
+        {field, deserialize_value_map(fetch_value(value, field), Map.fetch!(types, type).fields, types)}
       else
         {field, Type.deserialize_value!(fetch_value(value, field), type)}
       end
@@ -559,8 +555,7 @@ defmodule Cartouche.Typed do
   defp serialize_value_map(value, fields, types) do
     for {field, type} <- fields, into: %{} do
       if is_binary(type) do
-        {field,
-         serialize_value_map(fetch_value(value, field), Map.fetch!(types, type).fields, types)}
+        {field, serialize_value_map(fetch_value(value, field), Map.fetch!(types, type).fields, types)}
       else
         {field, Type.serialize_value(fetch_value(value, field), type)}
       end
@@ -590,7 +585,7 @@ defmodule Cartouche.Typed do
       |> Enum.map(&to_string/1)
 
     case Enum.filter(types, fn {_name, type} ->
-           Enum.map(type.fields, fn {k, _v} -> k end) |> Enum.sort() == sorted_field_names
+           type.fields |> Enum.map(fn {k, _v} -> k end) |> Enum.sort() == sorted_field_names
          end) do
       [] ->
         raise "Failed to find matching type for field names #{inspect(field_names)}"
@@ -985,7 +980,7 @@ defmodule Cartouche.Typed do
       "0x1901f4806c1a9dae718712eca4906bfca239a3a4a6dea2e9b9a1284fee5ff4df4b1c8c56315a01fe3937526fe8c2b472b7e9e1c21728f6c14d5ffb0e0c156f74aca0"
   """
   @spec encode(t()) :: binary()
-  def encode(typed = %__MODULE__{types: types, value: value}) do
+  def encode(%__MODULE__{types: types, value: value} = typed) do
     {name, _type} = find_type(Map.keys(value), types)
     domain_separator = domain_seperator(typed)
     hash_struct_message = hash_struct(name, value, types)

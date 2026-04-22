@@ -1,4 +1,5 @@
 defmodule Cartouche.Hash do
+  @moduledoc false
   @doc ~S"""
   Returns the keccak of the given binary message.
 

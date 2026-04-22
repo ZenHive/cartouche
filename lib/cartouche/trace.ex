@@ -17,6 +17,9 @@ defmodule Cartouche.Trace do
   import Cartouche.Util, only: [nil_map: 2]
 
   defmodule Action do
+    @moduledoc false
+    import Cartouche.Util, only: [nil_map: 2]
+
     @type t() :: %__MODULE__{
             call_type: String.t() | nil,
             init: binary() | nil,
@@ -40,8 +43,6 @@ defmodule Cartouche.Trace do
       :refund_address,
       :balance
     ]
-
-    import Cartouche.Util, only: [nil_map: 2]
 
     @doc ~S"""
     Deserializes a trace sub-action into a struct.
@@ -100,7 +101,7 @@ defmodule Cartouche.Trace do
         }
     """
     @spec deserialize(map()) :: t() | no_return()
-    def deserialize(params = %{"callType" => call_type}) when is_binary(call_type) do
+    def deserialize(%{"callType" => call_type} = params) when is_binary(call_type) do
       %__MODULE__{
         call_type: call_type,
         from: Hex.decode_address!(params["from"]),
@@ -111,7 +112,7 @@ defmodule Cartouche.Trace do
       }
     end
 
-    def deserialize(params = %{"init" => init}) when is_binary(init) do
+    def deserialize(%{"init" => init} = params) when is_binary(init) do
       %__MODULE__{
         init: Hex.decode_hex!(init),
         from: Hex.decode_address!(params["from"]),
@@ -120,8 +121,7 @@ defmodule Cartouche.Trace do
       }
     end
 
-    def deserialize(params = %{"refundAddress" => refund_address})
-        when is_binary(refund_address) do
+    def deserialize(%{"refundAddress" => refund_address} = params) when is_binary(refund_address) do
       %__MODULE__{
         refund_address: Hex.decode_hex!(refund_address),
         balance: Hex.decode_hex_number!(params["balance"])
@@ -406,19 +406,13 @@ defmodule Cartouche.Trace do
       }
   """
   @spec deserialize(map()) :: t() | no_return()
-  def deserialize(
-        params = %{
-          "subtraces" => subtraces,
-          "type" => type
-        }
-      )
-      when is_integer(subtraces) and is_binary(type) do
+  def deserialize(%{"subtraces" => subtraces, "type" => type} = params) when is_integer(subtraces) and is_binary(type) do
     %__MODULE__{
       action: Action.deserialize(params["action"]),
       block_hash: map(get_in(params, ["blockHash"]), &Hex.decode_word!/1),
       block_number: params["blockNumber"],
       gas_used: map(get_in(params, ["result", "gasUsed"]), &Hex.decode_hex_number!/1),
-      error: if(Map.has_key?(params, "error"), do: params["error"], else: nil),
+      error: if(Map.has_key?(params, "error"), do: params["error"]),
       output: map(get_in(params, ["result", "output"]), &Hex.decode_hex!/1),
       subtraces: subtraces,
       trace_address: Enum.map(params["traceAddress"], &decode_address_or_number/1),
@@ -483,7 +477,7 @@ defmodule Cartouche.Trace do
       }
   """
   @spec serialize(t()) :: map()
-  def serialize(trace = %__MODULE__{}) do
+  def serialize(%__MODULE__{} = trace) do
     %{
       action: Action.serialize(trace.action),
       blockHash: nil_map(trace.block_hash, &Hex.to_hex(&1)),

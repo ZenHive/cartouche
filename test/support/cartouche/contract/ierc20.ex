@@ -6,11 +6,13 @@ defmodule Cartouche.Contract.IERC20 do
   """
   use Cartouche.Hex
 
+  alias Cartouche.Transaction.V2
+
   def contract_name do
     "IERC20"
   end
 
-  def allowance_selector() do
+  def allowance_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "allowance",
@@ -30,7 +32,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_allowance(contract, owner, spender) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_allowance(owner, spender)}
+    %V2{destination: contract, data: encode_allowance(owner, spender)}
   end
 
   def call_allowance(contract, owner, spender, opts \\ []) do
@@ -50,7 +52,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(allowance_selector(), calldata)
   end
 
-  def approve_selector() do
+  def approve_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "approve",
@@ -70,7 +72,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_approve(contract, spender, amount) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_approve(spender, amount)}
+    %V2{destination: contract, data: encode_approve(spender, amount)}
   end
 
   def call_approve(contract, spender, amount, opts \\ []) do
@@ -90,7 +92,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(approve_selector(), calldata)
   end
 
-  def balance_of_selector() do
+  def balance_of_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "balanceOf",
@@ -110,7 +112,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_balance_of(contract, account) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_balance_of(account)}
+    %V2{destination: contract, data: encode_balance_of(account)}
   end
 
   def call_balance_of(contract, account, opts \\ []) do
@@ -130,7 +132,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(balance_of_selector(), calldata)
   end
 
-  def decimals_selector() do
+  def decimals_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "decimals",
@@ -141,7 +143,7 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  def encode_decimals() do
+  def encode_decimals do
     ABI.encode(decimals_selector(), [])
   end
 
@@ -150,7 +152,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_decimals(contract) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_decimals()}
+    %V2{destination: contract, data: encode_decimals()}
   end
 
   def call_decimals(contract, opts \\ []) do
@@ -170,7 +172,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(decimals_selector(), calldata)
   end
 
-  def name_selector() do
+  def name_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "name",
@@ -181,7 +183,7 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  def encode_name() do
+  def encode_name do
     ABI.encode(name_selector(), [])
   end
 
@@ -190,7 +192,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_name(contract) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_name()}
+    %V2{destination: contract, data: encode_name()}
   end
 
   def call_name(contract, opts \\ []) do
@@ -210,7 +212,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(name_selector(), calldata)
   end
 
-  def symbol_selector() do
+  def symbol_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "symbol",
@@ -221,7 +223,7 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  def encode_symbol() do
+  def encode_symbol do
     ABI.encode(symbol_selector(), [])
   end
 
@@ -230,7 +232,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_symbol(contract) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_symbol()}
+    %V2{destination: contract, data: encode_symbol()}
   end
 
   def call_symbol(contract, opts \\ []) do
@@ -250,7 +252,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(symbol_selector(), calldata)
   end
 
-  def total_supply_selector() do
+  def total_supply_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "totalSupply",
@@ -261,7 +263,7 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  def encode_total_supply() do
+  def encode_total_supply do
     ABI.encode(total_supply_selector(), [])
   end
 
@@ -270,7 +272,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_total_supply(contract) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_total_supply()}
+    %V2{destination: contract, data: encode_total_supply()}
   end
 
   def call_total_supply(contract, opts \\ []) do
@@ -290,7 +292,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(total_supply_selector(), calldata)
   end
 
-  def transfer_selector() do
+  def transfer_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "transfer",
@@ -310,7 +312,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_transfer(contract, to, amount) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_transfer(to, amount)}
+    %V2{destination: contract, data: encode_transfer(to, amount)}
   end
 
   def call_transfer(contract, to, amount, opts \\ []) do
@@ -330,7 +332,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(transfer_selector(), calldata)
   end
 
-  def transfer_from_selector() do
+  def transfer_from_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "transferFrom",
@@ -354,7 +356,7 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def build_trx_transfer_from(contract, from, to, amount) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_transfer_from(from, to, amount)}
+    %V2{destination: contract, data: encode_transfer_from(from, to, amount)}
   end
 
   def call_transfer_from(contract, from, to, amount, opts \\ []) do
@@ -374,7 +376,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.decode(transfer_from_selector(), calldata)
   end
 
-  def approval_event_selector() do
+  def approval_event_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "Approval",
@@ -398,7 +400,7 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.Event.decode_event(data, topics, approval_event_selector())
   end
 
-  def transfer_ddf252ad_event_selector() do
+  def transfer_ddf252ad_event_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "Transfer",
@@ -422,47 +424,47 @@ defmodule Cartouche.Contract.IERC20 do
     ABI.Event.decode_event(data, topics, transfer_ddf252ad_event_selector())
   end
 
-  def decode_call(calldata = <<221, 98, 237, 62>> <> _) do
+  def decode_call(<<221, 98, 237, 62>> <> _ = calldata) do
     _signature = hex!("0xdd62ed3e")
     {:ok, "allowance", decode_allowance_call(calldata)}
   end
 
-  def decode_call(calldata = <<9, 94, 167, 179>> <> _) do
+  def decode_call(<<9, 94, 167, 179>> <> _ = calldata) do
     _signature = hex!("0x095ea7b3")
     {:ok, "approve", decode_approve_call(calldata)}
   end
 
-  def decode_call(calldata = <<112, 160, 130, 49>> <> _) do
+  def decode_call(<<112, 160, 130, 49>> <> _ = calldata) do
     _signature = hex!("0x70a08231")
     {:ok, "balanceOf", decode_balance_of_call(calldata)}
   end
 
-  def decode_call(calldata = <<49, 60, 229, 103>> <> _) do
+  def decode_call(<<49, 60, 229, 103>> <> _ = calldata) do
     _signature = hex!("0x313ce567")
     {:ok, "decimals", decode_decimals_call(calldata)}
   end
 
-  def decode_call(calldata = <<6, 253, 222, 3>> <> _) do
+  def decode_call(<<6, 253, 222, 3>> <> _ = calldata) do
     _signature = hex!("0x06fdde03")
     {:ok, "name", decode_name_call(calldata)}
   end
 
-  def decode_call(calldata = <<149, 216, 155, 65>> <> _) do
+  def decode_call(<<149, 216, 155, 65>> <> _ = calldata) do
     _signature = hex!("0x95d89b41")
     {:ok, "symbol", decode_symbol_call(calldata)}
   end
 
-  def decode_call(calldata = <<24, 22, 13, 221>> <> _) do
+  def decode_call(<<24, 22, 13, 221>> <> _ = calldata) do
     _signature = hex!("0x18160ddd")
     {:ok, "totalSupply", decode_total_supply_call(calldata)}
   end
 
-  def decode_call(calldata = <<169, 5, 156, 187>> <> _) do
+  def decode_call(<<169, 5, 156, 187>> <> _ = calldata) do
     _signature = hex!("0xa9059cbb")
     {:ok, "transfer", decode_transfer_call(calldata)}
   end
 
-  def decode_call(calldata = <<35, 184, 114, 221>> <> _) do
+  def decode_call(<<35, 184, 114, 221>> <> _ = calldata) do
     _signature = hex!("0x23b872dd")
     {:ok, "transferFrom", decode_transfer_from_call(calldata)}
   end
@@ -472,22 +474,22 @@ defmodule Cartouche.Contract.IERC20 do
   end
 
   def decode_event(
-        topics = [
-          <<140, 91, 225, 229, 235, 236, 125, 91, 209, 79, 113, 66, 125, 30, 132, 243, 221, 3, 20,
-            192, 247, 178, 41, 30, 91, 32, 10, 200, 199, 195, 185, 37>>
+        [
+          <<140, 91, 225, 229, 235, 236, 125, 91, 209, 79, 113, 66, 125, 30, 132, 243, 221, 3, 20, 192, 247, 178, 41, 30,
+            91, 32, 10, 200, 199, 195, 185, 37>>
           | _
-        ],
+        ] = topics,
         data
       ) do
     decode_approval_event(topics, data)
   end
 
   def decode_event(
-        topics = [
-          <<221, 242, 82, 173, 27, 226, 200, 155, 105, 194, 176, 104, 252, 55, 141, 170, 149, 43,
-            167, 241, 99, 196, 161, 22, 40, 245, 90, 77, 245, 35, 179, 239>>
+        [
+          <<221, 242, 82, 173, 27, 226, 200, 155, 105, 194, 176, 104, 252, 55, 141, 170, 149, 43, 167, 241, 99, 196, 161,
+            22, 40, 245, 90, 77, 245, 35, 179, 239>>
           | _
-        ],
+        ] = topics,
         data
       ) do
     decode_transfer_ddf252ad_event(topics, data)

@@ -144,8 +144,7 @@ defmodule Cartouche.Block do
       timestamp: map(get_in(params, ["timestamp"]), &Hex.decode_hex_number!/1),
       # TODO
       transactions: [],
-      uncles:
-        map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end)
+      uncles: map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end)
     }
   end
 

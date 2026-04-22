@@ -7,13 +7,13 @@ defmodule Cartouche.Sleuth do
   """
   use Cartouche.Hex
 
+  alias Cartouche.Contract.Sleuth
+
   @sleuth_address ~h[0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2]
 
-  def query(bytecode, query, selector, opts \\ []),
-    do: query_internal(bytecode, query, selector, false, opts)
+  def query(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, false, opts)
 
-  def query_annotated(bytecode, query, selector, opts \\ []),
-    do: query_internal(bytecode, query, selector, true, opts)
+  def query_annotated(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, true, opts)
 
   def query_by(mod, fun) when is_atom(mod) and is_atom(fun), do: query_by(mod, fun, [])
   def query_by(mod, opts) when is_atom(mod) and is_list(opts), do: query_by(mod, :query, opts)
@@ -27,13 +27,12 @@ defmodule Cartouche.Sleuth do
     query_internal(bytecode, query_val, selector, false, opts)
   end
 
-  defp query_internal(bytecode, query, selector, annotated, opts)
-       when is_binary(bytecode) and is_list(opts) do
+  defp query_internal(bytecode, query, selector, annotated, opts) when is_binary(bytecode) and is_list(opts) do
     {sleuth_address, opts} = Keyword.pop(opts, :sleuth_address, @sleuth_address)
     {decode_binaries, rpc_opts} = Keyword.pop(opts, :decode_binaries, true)
 
     with {:ok, query_res_bytes} <-
-           Cartouche.Contract.Sleuth.call_query(sleuth_address, bytecode, query, rpc_opts),
+           Sleuth.call_query(sleuth_address, bytecode, query, rpc_opts),
          {:ok, query_res} <- try_decode_bytes(query_res_bytes),
          {:ok, res} <- try_decode(query_res, selector, false) do
       {:ok,
@@ -53,7 +52,7 @@ defmodule Cartouche.Sleuth do
     {named_returns, rpc_opts} = Keyword.pop(opts, :named_returns, false)
 
     with {:ok, query_res_bytes} <-
-           Cartouche.Contract.Sleuth.call_query(sleuth_address, bytecode, query, rpc_opts),
+           Sleuth.call_query(sleuth_address, bytecode, query, rpc_opts),
          {:ok, query_res} <- try_decode_bytes(query_res_bytes),
          {:ok, res} <- try_decode(query_res, selector, decode_structs) do
       {:ok,
@@ -67,27 +66,23 @@ defmodule Cartouche.Sleuth do
   end
 
   defp try_decode_bytes(bytes) do
-    try do
-      [decoded] = ABI.decode("(bytes)", bytes)
-      {:ok, decoded}
-    rescue
-      e ->
-        {:error, "error decoding bytes: #{inspect(e)}"}
-    end
+    [decoded] = ABI.decode("(bytes)", bytes)
+    {:ok, decoded}
+  rescue
+    e ->
+      {:error, "error decoding bytes: #{inspect(e)}"}
   end
 
   defp try_decode(query_res, selector, decode_structs) do
-    try do
-      {:ok,
-       ABI.decode(
-         %ABI.FunctionSelector{types: selector.returns},
-         query_res,
-         decode_structs: decode_structs
-       )}
-    rescue
-      e ->
-        {:error, "error decoding: #{inspect(e)}"}
-    end
+    {:ok,
+     ABI.decode(
+       %ABI.FunctionSelector{types: selector.returns},
+       query_res,
+       decode_structs: decode_structs
+     )}
+  rescue
+    e ->
+      {:error, "error decoding: #{inspect(e)}"}
   end
 
   # NOTE: decode_structs weirdly also does dynamic return types with named
@@ -98,8 +93,7 @@ defmodule Cartouche.Sleuth do
   #
   defp postprocess(results, named_types, opts) when is_map(results) and is_list(named_types) do
     results_values =
-      named_types
-      |> Enum.map(fn %{name: name} ->
+      Enum.map(named_types, fn %{name: name} ->
         {_, v} = Enum.find(results, fn {k, _} -> to_string(k) == Macro.underscore(name) end)
         v
       end)
@@ -129,7 +123,7 @@ defmodule Cartouche.Sleuth do
           [_more | _than_one] = processed_results ->
             processed_results
             |> Enum.with_index()
-            |> Enum.map(fn {{name, it}, i} ->
+            |> Map.new(fn {{name, it}, i} ->
               name =
                 if is_nil(name) or name == "" do
                   "var#{i}"
@@ -139,13 +133,10 @@ defmodule Cartouche.Sleuth do
 
               {name, it}
             end)
-            |> Enum.into(%{})
         end
 
       processed_results when be_obvious ->
-        if not named_returns do
-          Enum.map(processed_results, fn {_, v} -> v end)
-        else
+        if named_returns do
           Enum.map(processed_results, fn {name, v} ->
             keyword =
               if is_nil(name) or name == "" do
@@ -156,51 +147,47 @@ defmodule Cartouche.Sleuth do
 
             {keyword, v}
           end)
+        else
+          Enum.map(processed_results, fn {_, v} -> v end)
         end
     end)
   end
 
-  defp postprocess(item, {:tuple, named_types}, opts)
-       when is_tuple(item) and is_list(named_types) do
+  defp postprocess(item, {:tuple, named_types}, opts) when is_tuple(item) and is_list(named_types) do
     item
     |> Tuple.to_list()
     |> Enum.zip(named_types)
-    |> Enum.map(fn {item, %{type: type, name: name}} ->
+    |> Map.new(fn {item, %{type: type, name: name}} ->
       {name, postprocess(item, type, opts)}
     end)
-    |> Enum.into(%{})
   end
 
-  defp postprocess(item, {:tuple, named_types}, opts)
-       when is_map(item) and is_list(named_types) do
-    item
-    |> Enum.map(fn {k, v} ->
+  defp postprocess(item, {:tuple, named_types}, opts) when is_map(item) and is_list(named_types) do
+    Map.new(item, fn {k, v} ->
       %{type: type} =
         Enum.find(named_types, fn %{name: name} -> Macro.underscore(name) == to_string(k) end)
 
       {k, postprocess(v, type, opts)}
     end)
-    |> Enum.into(%{})
   end
 
   defp postprocess(item, {:array, type}, opts) when is_list(item) do
     Enum.map(item, &postprocess(&1, type, opts))
   end
 
-  defp postprocess(item, {:array, type, _}, opts) when is_list(item),
-    do: postprocess(item, {:array, type}, opts)
+  defp postprocess(item, {:array, type, _}, opts) when is_list(item), do: postprocess(item, {:array, type}, opts)
 
   defp postprocess(item, type, opts) do
     item_encoded =
-      if not Keyword.get(opts, :decode_binaries, true) do
+      if Keyword.get(opts, :decode_binaries, true) do
+        item
+      else
         case type do
           :address -> to_hex(item)
           :bytes -> to_hex(item)
           {:bytes, _size} -> to_hex(item)
           _nonbinary_scalar -> item
         end
-      else
-        item
       end
 
     if Keyword.get(opts, :annotated, false) do
@@ -211,11 +198,9 @@ defmodule Cartouche.Sleuth do
   end
 
   defp try_apply(mod, fun, args) do
-    try do
-      apply(mod, fun, args)
-    rescue
-      _ ->
-        raise "Sleuth module #{mod} does not define required \"#{fun}/#{Enum.count(args)}\" function"
-    end
+    apply(mod, fun, args)
+  rescue
+    _ ->
+      raise "Sleuth module #{mod} does not define required \"#{fun}/#{Enum.count(args)}\" function"
   end
 end

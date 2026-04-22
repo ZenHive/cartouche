@@ -1,4 +1,14 @@
 defmodule Cartouche.Signer do
+  @moduledoc false
+  use GenServer
+  use Cartouche.Hex
+
+  import Cartouche.Util, only: [encode_bytes: 2]
+
+  alias Cartouche.Signer.Default
+
+  require Logger
+
   @doc """
   Cartouche.Signer is a GenServer which can sign messages. This module takes an
   mfa (mod, func, args triple) which defines how to actually sign messages.
@@ -17,13 +27,6 @@ defmodule Cartouche.Signer do
 
   Additionally, chain_id is used to return EIP-155 compliant signatures.
   """
-  use GenServer
-  use Cartouche.Hex
-
-  require Logger
-
-  import Cartouche.Util, only: [encode_bytes: 2]
-
   @doc """
   Starts a new Cartouche.Signer process.
   """
@@ -62,7 +65,7 @@ defmodule Cartouche.Signer do
       iex> :binary.decode_unsigned(v)
       0x05f5e0ff * 2 + 35 + 1
   """
-  def sign(message, name \\ Cartouche.Signer.Default, opts \\ []) do
+  def sign(message, name \\ Default, opts \\ []) do
     chain_id = Keyword.get(opts, :chain_id, GenServer.call(name, :get_chain_id))
     GenServer.call(name, {:sign, {message, chain_id}})
   end
@@ -76,7 +79,7 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.address(signer_proc) |> Cartouche.Hex.to_address()
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
-  def address(name \\ Cartouche.Signer.Default) do
+  def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
 
@@ -89,7 +92,7 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.chain_id(signer_proc)
       5
   """
-  def chain_id(name \\ Cartouche.Signer.Default) do
+  def chain_id(name \\ Default) do
     GenServer.call(name, :get_chain_id)
   end
 
@@ -98,20 +101,12 @@ defmodule Cartouche.Signer do
   is required for finding recovery bit.
   """
   @impl true
-  def handle_call(
-        {:sign, {message, chain_id}},
-        _from,
-        state = %{address: address, mfa: mfa}
-      ) do
+  def handle_call({:sign, {message, chain_id}}, _from, %{address: address, mfa: mfa} = state) do
     {:reply, sign_direct(message, address, mfa, chain_id), state}
   end
 
   # Note absence of address in state, find it and set it and then sign. Address will be cached on next signing.
-  def handle_call(
-        {:sign, {message, chain_id}},
-        _from,
-        state = %{name: name, mfa: {mod, _fn, args} = mfa}
-      ) do
+  def handle_call({:sign, {message, chain_id}}, _from, %{name: name, mfa: {mod, _fn, args} = mfa} = state) do
     {:ok, address} = apply(mod, :get_address, args)
     Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
 
@@ -119,17 +114,17 @@ defmodule Cartouche.Signer do
   end
 
   # Reads address from state, or finds and memoize address on first call.
-  def handle_call(:get_address, _from, state = %{address: address}) do
+  def handle_call(:get_address, _from, %{address: address} = state) do
     {:reply, address, state}
   end
 
-  def handle_call(:get_address, _from, state = %{name: name, mfa: {mod, _fn, args}}) do
+  def handle_call(:get_address, _from, %{name: name, mfa: {mod, _fn, args}} = state) do
     {:ok, address} = apply(mod, :get_address, args)
     Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
     {:reply, address, Map.put(state, :address, address)}
   end
 
-  def handle_call(:get_chain_id, _from, state = %{chain_id: chain_id}) do
+  def handle_call(:get_chain_id, _from, %{chain_id: chain_id} = state) do
     {:reply, chain_id, state}
   end
 
@@ -142,12 +137,12 @@ defmodule Cartouche.Signer do
           {:ok, binary()} | {:error, String.t()}
   def sign_direct(message, address, {mod, fun, args}, chain_id_or_name) do
     with {:ok,
-          signature = %Curvy.Signature{
+          %Curvy.Signature{
             crv: :secp256k1,
             r: r,
             recid: nil,
             s: s
-          }} <- apply(mod, fun, [message] ++ args),
+          } = signature} <- apply(mod, fun, [message] ++ args),
          {:ok, recid} <- Cartouche.Recover.find_recid(message, signature, address) do
       # EIP-155
       chain_id = Cartouche.Util.parse_chain_id(chain_id_or_name)

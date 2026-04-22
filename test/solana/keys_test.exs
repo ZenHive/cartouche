@@ -1,8 +1,9 @@
 defmodule Cartouche.Solana.KeysTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.Keys
 
   alias Cartouche.Solana.Keys
+
+  doctest Keys
 
   # RFC 8032 Section 7.1 Test Vectors
   @rfc_vectors [

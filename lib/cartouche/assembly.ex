@@ -146,9 +146,7 @@ defmodule Cartouche.Assembly do
     |> Enum.map(fn {opcode, _} -> opcode end)
   end
 
-  @opcodes_by_code @opcodes
-                   |> Enum.map(fn {opcode, {code, _, _}} -> {code, opcode} end)
-                   |> Enum.into(%{})
+  @opcodes_by_code Map.new(@opcodes, fn {opcode, {code, _, _}} -> {code, opcode} end)
 
   @opcodes_codes Enum.map(@opcodes, fn {_, {code, _, _}} -> code end)
 
@@ -166,14 +164,17 @@ defmodule Cartouche.Assembly do
   @jump_sz 3
 
   defmodule InvalidAssembly do
+    @moduledoc false
     defexception message: "invalid assembly"
   end
 
   defmodule InvalidCode do
+    @moduledoc false
     defexception message: "invalid code"
   end
 
   defmodule InvalidOpcode do
+    @moduledoc false
     defexception message: "invalid opcode"
   end
 
@@ -277,7 +278,7 @@ defmodule Cartouche.Assembly do
     bin
   end
 
-  def disassemble_opcode(op = <<x::integer-size(8)>> <> rest) when x >= 0x5F and x < 0x80 do
+  def disassemble_opcode(<<x::integer-size(8)>> <> rest = op) when x >= 0x5F and x < 0x80 do
     n = x - 0x5F
 
     if byte_size(rest) < n do
@@ -397,8 +398,7 @@ defmodule Cartouche.Assembly do
     # Finally, we'll encode the instructions.
     opcodes
     |> transform_jumps()
-    |> Enum.map(&assemble_opcode/1)
-    |> Enum.join()
+    |> Enum.map_join(&assemble_opcode/1)
   end
 
   @doc """
@@ -487,11 +487,7 @@ defmodule Cartouche.Assembly do
       "0x60036200000e60003960036000f3aabbcc"
   """
   def constructor(code),
-    do:
-      build([
-        {:codecopy, 0x00, :self_code_sz, byte_size(code)},
-        {:return, 0x00, byte_size(code)}
-      ]) <> code
+    do: build([{:codecopy, 0x00, :self_code_sz, byte_size(code)}, {:return, 0x00, byte_size(code)}]) <> code
 
   @doc """
   Returns a textual representation of the given operation.

@@ -7,28 +7,30 @@ defmodule Cartouche.Test.SleuthHandler do
   """
   use Cartouche.Hex
 
-  @block_number_query Cartouche.Contract.BlockNumber.bytecode()
+  alias Cartouche.Contract.BlockNumber
+
+  @block_number_query BlockNumber.bytecode()
 
   defp handle_call(@block_number_query, calldata) do
-    case Cartouche.Contract.BlockNumber.decode_call(calldata) do
+    case BlockNumber.decode_call(calldata) do
       {:ok, "query", _} ->
-        encode_sleuth(Cartouche.Contract.BlockNumber.query_selector(), {2})
+        encode_sleuth(BlockNumber.query_selector(), {2})
 
       {:ok, "queryTwo", _} ->
-        encode_sleuth(Cartouche.Contract.BlockNumber.query_two_selector(), {2, 3})
+        encode_sleuth(BlockNumber.query_two_selector(), {2, 3})
 
       {:ok, "queryThree", _} ->
-        encode_sleuth(Cartouche.Contract.BlockNumber.query_three_selector(), {2})
+        encode_sleuth(BlockNumber.query_three_selector(), {2})
 
       {:ok, "queryFour", _} ->
         encode_sleuth(
-          Cartouche.Contract.BlockNumber.query_four_selector(),
+          BlockNumber.query_four_selector(),
           {~h[0x010203], ~h[0x0000000000000000000000000000000000000001]}
         )
 
       {:ok, "queryCool", _} ->
         encode_sleuth(
-          Cartouche.Contract.BlockNumber.query_cool_selector(),
+          BlockNumber.query_cool_selector(),
           {{"hi", [1, 2, 3], {"meow"}}}
         )
 

@@ -1,9 +1,10 @@
 defmodule Cartouche.Solana.SystemProgramTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.SystemProgram
 
   alias Cartouche.Solana.SystemProgram
   alias Cartouche.Solana.Transaction.AccountMeta
+
+  doctest SystemProgram
 
   describe "program_id/0" do
     test "returns 32 zero bytes" do
@@ -64,8 +65,8 @@ defmodule Cartouche.Solana.SystemProgramTest do
       ix =
         SystemProgram.create_account(<<1::256>>, <<2::256>>, 1_461_600, 165, owner)
 
-      <<index::little-unsigned-32, lamports::little-unsigned-64, space::little-unsigned-64,
-        decoded_owner::binary-32>> = ix.data
+      <<index::little-unsigned-32, lamports::little-unsigned-64, space::little-unsigned-64, decoded_owner::binary-32>> =
+        ix.data
 
       assert index == 0
       assert lamports == 1_461_600

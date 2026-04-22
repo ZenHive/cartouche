@@ -96,8 +96,8 @@ defmodule Cartouche.Solana.Keys do
   @spec from_json(String.t()) :: {:ok, keypair()} | {:error, term()}
   def from_json(json_string) do
     with {:ok, bytes} when is_list(bytes) <- Jason.decode(json_string),
-         true <- length(bytes) == 64,
-         keypair_bytes <- :binary.list_to_bin(bytes) do
+         true <- length(bytes) == 64 do
+      keypair_bytes = :binary.list_to_bin(bytes)
       from_keypair_bytes(keypair_bytes)
     else
       false -> {:error, :invalid_length}

@@ -1,4 +1,5 @@
 defmodule Cartouche.Util do
+  @moduledoc false
   defdelegate keccak(value), to: Cartouche.Hash
 
   @doc ~S"""
@@ -125,7 +126,7 @@ defmodule Cartouche.Util do
   """
   @spec decode_hex_number!(String.t()) :: integer() | no_return()
   @deprecated "Use Cartouche.Hex.decode_hex_number!/2 instead"
-  def decode_hex_number!(hex), do: decode_hex!(hex) |> :binary.decode_unsigned()
+  def decode_hex_number!(hex), do: hex |> decode_hex!() |> :binary.decode_unsigned()
 
   @doc ~S"""
   Decodes hex, allowing it to either by "0x..." or <<1::160>>.
@@ -141,7 +142,7 @@ defmodule Cartouche.Util do
       iex> Cartouche.Util.decode_hex_input!(<<0x55>>)
       <<0x55>>
   """
-  def decode_hex_input!(hex = "0x" <> _), do: Cartouche.Hex.decode_hex!(hex)
+  def decode_hex_input!("0x" <> _ = hex), do: Cartouche.Hex.decode_hex!(hex)
   def decode_hex_input!(hex) when is_binary(hex), do: hex
 
   @doc ~S"""
@@ -266,10 +267,10 @@ defmodule Cartouche.Util do
     goerli: 5,
     kovan: 42,
     base: 8453,
-    base_sepolia: 84532,
-    arbitrum: 42161,
+    base_sepolia: 84_532,
+    arbitrum: 42_161,
     arbitrum_sepolia: 421_614,
-    mumbai: 80001,
+    mumbai: 80_001,
     sepolia: 11_155_111,
     optimism: 10,
     optimism_sepolia: 11_155_420,
@@ -282,8 +283,8 @@ defmodule Cartouche.Util do
     lens: 232,
     polygon: 137,
     sonic: 146,
-    ink: 57073,
-    plume: 98866
+    ink: 57_073,
+    plume: 98_866
   }
 
   @doc ~S"""
@@ -318,8 +319,7 @@ defmodule Cartouche.Util do
       iex> Cartouche.Util.checksum_address("0xd1220a0cf47c7b9be7a2e6ba89f429762e7b9adb")
       "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"
   """
-  def checksum_address(address = "0x" <> _) when byte_size(address) == 42,
-    do: checksum_address(decode_hex!(address))
+  def checksum_address("0x" <> _ = address) when byte_size(address) == 42, do: checksum_address(decode_hex!(address))
 
   def checksum_address(address) when is_binary(address) and byte_size(address) == 20 do
     # Weirdly instead of keccaking the address, we keccak the string representation...
@@ -353,8 +353,7 @@ defmodule Cartouche.Util do
 
   defp do_nibbles(<<>>, acc), do: acc
 
-  defp do_nibbles(<<high::4, low::4, rest::binary>>, acc),
-    do: do_nibbles(rest, [low, high | acc])
+  defp do_nibbles(<<high::4, low::4, rest::binary>>, acc), do: do_nibbles(rest, [low, high | acc])
 
   defmodule RecoveryBit do
     @moduledoc """
@@ -417,8 +416,7 @@ defmodule Cartouche.Util do
         <<1::256, 2::256, 0>>
     """
     @spec normalize_signature(Cartouche.signature(), rec_type()) :: Cartouche.signature() | :no_return
-    def normalize_signature(<<rs::binary-size(64), v>>, rec_type \\ :eip155)
-        when rec_type in @rec_types do
+    def normalize_signature(<<rs::binary-size(64), v>>, rec_type \\ :eip155) when rec_type in @rec_types do
       v_normalized = normalize(v, rec_type)
 
       <<rs::binary-size(64), v_normalized::8>>
@@ -489,7 +487,7 @@ defmodule Cartouche.Util do
       {:error, %Finch.Error{reason: reason}} ->
         {:error, "[Cartouche] HTTP client error: #{inspect(reason)}"}
 
-      {:error, _ = error} ->
+      {:error, error} ->
         {:error, "[Cartouche] Unknown error: #{inspect(error)}"}
     end
   end

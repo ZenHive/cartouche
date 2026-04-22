@@ -1,12 +1,13 @@
 defmodule Cartouche.Recover do
+  @moduledoc false
   use Cartouche.Hex
 
   import Cartouche.Hash, only: [keccak: 1]
   import Cartouche.Util, only: [get_eth_address: 1]
 
-  defp decode_signature(s = %Curvy.Signature{}), do: s
+  defp decode_signature(%Curvy.Signature{} = s), do: s
 
-  defp decode_signature(signature = "0x" <> _signature_hex) do
+  defp decode_signature("0x" <> _signature_hex = signature) do
     with {:ok, signature_bytes} <- Hex.decode_hex(signature) do
       decode_signature(signature_bytes)
     end
@@ -34,8 +35,7 @@ defmodule Cartouche.Recover do
     iex> Cartouche.Recover.prefix_eth("hello")
     "\x19Ethereum Signed Message:\\n5hello"
   """
-  def prefix_eth(msg),
-    do: "\x19Ethereum Signed Message:\n" <> to_string(String.length(msg)) <> msg
+  def prefix_eth(msg), do: "\x19Ethereum Signed Message:\n" <> to_string(String.length(msg)) <> msg
 
   @doc """
   Recovers a signer's public key from a signed message. The message will be

@@ -9,9 +9,11 @@ defmodule Cartouche.Contract.BlockNumberTest do
   ```
   """
   use ExUnit.Case, async: true
-  doctest Cartouche.Contract.BlockNumber
-  alias Cartouche.Contract.BlockNumber
   use Cartouche.Hex
+
+  alias Cartouche.Contract.BlockNumber
+
+  doctest BlockNumber
 
   test "returns correct contract name" do
     assert BlockNumber.contract_name() == "BlockNumber"

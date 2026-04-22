@@ -5,6 +5,9 @@ defmodule Cartouche.Test.Client do
   """
   use Cartouche.Hex
 
+  alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
+
   defp parse_request(body) do
     %{
       "jsonrpc" => "2.0",
@@ -34,7 +37,7 @@ defmodule Cartouche.Test.Client do
     end
   end
 
-  def net_version() do
+  def net_version do
     "3"
   end
 
@@ -46,19 +49,11 @@ defmodule Cartouche.Test.Client do
     "0x4"
   end
 
-  def eth_getTransactionReceipt(
-        "0x0000000000000000000000000000000000000000000000000000000000000001"
-      ),
-      do: %{}
+  def eth_getTransactionReceipt("0x0000000000000000000000000000000000000000000000000000000000000001"), do: %{}
 
-  def eth_getTransactionReceipt(
-        "0x0000000000000000000000000000000000000000000000000000000000000002"
-      ),
-      do: nil
+  def eth_getTransactionReceipt("0x0000000000000000000000000000000000000000000000000000000000000002"), do: nil
 
-  def eth_getTransactionReceipt(
-        "0xF9E69BE4F1AE524854E14DC820C519D8F2B86E52C60E54448ABF920D22FB6FE2"
-      ) do
+  def eth_getTransactionReceipt("0xF9E69BE4F1AE524854E14DC820C519D8F2B86E52C60E54448ABF920D22FB6FE2") do
     %{
       "transactionHash" => "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
       "transactionIndex" => "0x0",
@@ -81,8 +76,7 @@ defmodule Cartouche.Test.Client do
             "0x000000000000000000000000cb372382aa9a9e6f926714f4305afac4566f75380000000000000000000000000000000000000000000000000000000000000000",
           "blockHash" => "0x4bc3c26b1a599ced9876d9bf9a17c9bd58ec8b71a68e75335de7f2820e9336ca",
           "blockNumber" => "0xa01df4",
-          "transactionHash" =>
-            "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
+          "transactionHash" => "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
           "transactionIndex" => "0x0",
           "logIndex" => "0x0",
           "removed" => false
@@ -98,8 +92,7 @@ defmodule Cartouche.Test.Client do
           "data" => "0x0000000000000000000000000000000000000000000000000000000000000000",
           "blockHash" => "0x4bc3c26b1a599ced9876d9bf9a17c9bd58ec8b71a68e75335de7f2820e9336ca",
           "blockNumber" => "0xa01df4",
-          "transactionHash" =>
-            "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
+          "transactionHash" => "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
           "transactionIndex" => "0x0",
           "logIndex" => "0x1",
           "removed" => false
@@ -110,8 +103,7 @@ defmodule Cartouche.Test.Client do
           "data" => "0x",
           "blockHash" => "0x4bc3c26b1a599ced9876d9bf9a17c9bd58ec8b71a68e75335de7f2820e9336ca",
           "blockNumber" => "0xa01df4",
-          "transactionHash" =>
-            "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
+          "transactionHash" => "0xf9e69be4f1ae524854e14dc820c519d8f2b86e52c60e54448abf920d22fb6fe2",
           "transactionIndex" => "0x0",
           "logIndex" => "0x2",
           "removed" => false
@@ -126,9 +118,7 @@ defmodule Cartouche.Test.Client do
     }
   end
 
-  def eth_getTransactionReceipt(
-        "0x85D995EBA9763907FDF35CD2034144DD9D53CE32CBEC21349D4B12823C6860C5"
-      ) do
+  def eth_getTransactionReceipt("0x85D995EBA9763907FDF35CD2034144DD9D53CE32CBEC21349D4B12823C6860C5") do
     %{
       "blockHash" => "0xa957d47df264a31badc3ae823e10ac1d444b098d9b73d204c40426e57f47e8c3",
       "blockNumber" => "0xeff35f",
@@ -142,8 +132,7 @@ defmodule Cartouche.Test.Client do
           "logIndex" => "0x1",
           "blockNumber" => "0x1b4",
           "blockHash" => "0xaa8216c5785ac562ff41e2dcfdf5785ac562ff41e2dcfdf829c5a142f1fccd7d",
-          "transactionHash" =>
-            "0xaadf829c5a142f1fccd7d8216c5785ac562ff41e2dcfdf5785ac562ff41e2dcf",
+          "transactionHash" => "0xaadf829c5a142f1fccd7d8216c5785ac562ff41e2dcfdf5785ac562ff41e2dcf",
           "transactionIndex" => "0x0",
           "address" => "0x16c5785ac562ff41e2dcfdf829c5a142f1fccd7d",
           "data" => "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -363,8 +352,7 @@ defmodule Cartouche.Test.Client do
         "action" => %{
           "from" => "0x6385c1d72862d10fd77ceb80c1b896e030fa8cce",
           "gas" => "0x2c11c",
-          "init" =>
-            "0x608060405238601319018060146000396000f3fe630102030460005232620000135760006000f35b6004601cfd",
+          "init" => "0x608060405238601319018060146000396000f3fe630102030460005232620000135760006000f35b6004601cfd",
           "value" => "0x0"
         },
         "blockHash" => "0x151ccedeab15a443b3c45719ff00404d9b1d431454e6f63c845b22c46c9d25e2",
@@ -510,7 +498,7 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
-  def trace_call(_trx = %{"to" => _}, ["trace"], _block) do
+  def trace_call(%{"to" => _} = _trx, ["trace"], _block) do
     %{
       "output" => "0x",
       "stateDiff" => nil,
@@ -673,10 +661,10 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
-  def debug_traceCall(_trx = %{"to" => _}, _block) do
+  def debug_traceCall(%{"to" => _} = _trx, _block) do
     %{
       "failed" => false,
-      "gas" => 24034,
+      "gas" => 24_034,
       "returnValue" => "0000000000000000000000000000000000000000000000000858898f93629000",
       "structLogs" => [
         %{
@@ -707,22 +695,22 @@ defmodule Cartouche.Test.Client do
     }
   end
 
-  def eth_gasPrice() do
+  def eth_gasPrice do
     # 1 gwei
     "0x3b9aca00"
   end
 
-  def eth_maxPriorityFeePerGas() do
+  def eth_maxPriorityFeePerGas do
     "0x3b9aca01"
   end
 
-  def eth_sendRawTransaction(trx_enc = "0x02" <> _rest) do
+  def eth_sendRawTransaction("0x02" <> _rest = trx_enc) do
     {:ok, trx} =
       trx_enc
       |> from_hex!()
-      |> Cartouche.Transaction.V2.decode()
+      |> V2.decode()
 
-    %Cartouche.Transaction.V2{
+    %V2{
       nonce: nonce,
       max_priority_fee_per_gas: max_priority_fee_per_gas,
       max_fee_per_gas: max_fee_per_gas,
@@ -733,8 +721,8 @@ defmodule Cartouche.Test.Client do
     } = trx
 
     to_hex(
-      <<nonce::integer-size(8), max_priority_fee_per_gas::integer-size(64),
-        max_fee_per_gas::integer-size(64), gas_limit::integer-size(24), destination::binary>>
+      <<nonce::integer-size(8), max_priority_fee_per_gas::integer-size(64), max_fee_per_gas::integer-size(64),
+        gas_limit::integer-size(24), destination::binary>>
     )
   end
 
@@ -742,9 +730,9 @@ defmodule Cartouche.Test.Client do
     {:ok, trx} =
       trx_enc
       |> from_hex!()
-      |> Cartouche.Transaction.V1.decode()
+      |> V1.decode()
 
-    %Cartouche.Transaction.V1{
+    %V1{
       nonce: nonce,
       gas_price: gas_price,
       gas_limit: gas_limit,
@@ -756,14 +744,11 @@ defmodule Cartouche.Test.Client do
       s: _s
     } = trx
 
-    to_hex(
-      <<nonce::integer-size(8), gas_price::integer-size(64), gas_limit::integer-size(24),
-        to::binary>>
-    )
+    to_hex(<<nonce::integer-size(8), gas_price::integer-size(64), gas_limit::integer-size(24), to::binary>>)
   end
 
   # Call that fails with simple encoded error
-  def eth_call(_trx = %{"to" => "0x000000000000000000000000000000000000000A"}, _block) do
+  def eth_call(%{"to" => "0x000000000000000000000000000000000000000A"} = _trx, _block) do
     {:error,
      %{
        "code" => 3,
@@ -773,7 +758,7 @@ defmodule Cartouche.Test.Client do
   end
 
   # Call that fails with complex encoded error
-  def eth_call(_trx = %{"to" => "0x000000000000000000000000000000000000000B"}, _block) do
+  def eth_call(%{"to" => "0x000000000000000000000000000000000000000B"} = _trx, _block) do
     {:error,
      %{
        "code" => 3,
@@ -783,7 +768,7 @@ defmodule Cartouche.Test.Client do
   end
 
   # Call that fails with a blank data
-  def eth_call(_trx = %{"to" => "0x000000000000000000000000000000000000000C"}, _block) do
+  def eth_call(%{"to" => "0x000000000000000000000000000000000000000C"} = _trx, _block) do
     {:error,
      %{
        "code" => 3,
@@ -793,48 +778,35 @@ defmodule Cartouche.Test.Client do
   end
 
   # Call that fails with invalid params
-  def eth_call(_trx = %{"to" => "0x000000000000000000000000000000000000000D"}, _block) do
+  def eth_call(%{"to" => "0x000000000000000000000000000000000000000D"} = _trx, _block) do
     {:error,
      %{
-       "code" => -32602,
+       "code" => -32_602,
        "message" => "Failed to decode transaction"
      }}
   end
 
   # Sleuth call
   # Sleuth call - Facts Query
-  def eth_call(
-        trx = %{
-          "to" => "0xFD946BF25C47A1BFF567B28BA78A961BF78FF9D2",
-          "data" => _data
-        },
-        block
-      ) do
+  def eth_call(%{"to" => "0xFD946BF25C47A1BFF567B28BA78A961BF78FF9D2", "data" => _data} = trx, block) do
     Cartouche.Test.SleuthHandler.eth_call(trx, block)
   end
 
   # Call that works v1
-  def eth_call(
-        _trx = %{"to" => "0x0000000000000000000000000000000000000001", "gasPrice" => _},
-        _block
-      ) do
+  def eth_call(%{"to" => "0x0000000000000000000000000000000000000001", "gasPrice" => _} = _trx, _block) do
     "0x0c"
   end
 
   # Call that works v2
   def eth_call(
-        _trx = %{
-          "to" => "0x0000000000000000000000000000000000000001",
-          "maxPriorityFeePerGas" => _,
-          "maxFeePerGas" => _
-        },
+        %{"to" => "0x0000000000000000000000000000000000000001", "maxPriorityFeePerGas" => _, "maxFeePerGas" => _} = _trx,
         _block
       ) do
     "0x0d"
   end
 
   # Call to Adaptor- don't care about response
-  def eth_call(trx = %{"to" => "0x00000000000000000000000000000000000000CC"}, _block) do
+  def eth_call(%{"to" => "0x00000000000000000000000000000000000000CC"} = trx, _block) do
     case trx["data"] do
       "0x8035F0CE" ->
         # String.slice(to_hex(Cartouche.Hash.keccak("push()")), 0, 10) ->
@@ -850,12 +822,12 @@ defmodule Cartouche.Test.Client do
   end
 
   # Call els
-  def eth_call(_trx = %{"to" => _}, _block) do
+  def eth_call(%{"to" => _} = _trx, _block) do
     "0xcc"
   end
 
   # Reverting
-  def eth_estimateGas(_trx = %{"to" => "0x000000000000000000000000000000000000000A"}, _block) do
+  def eth_estimateGas(%{"to" => "0x000000000000000000000000000000000000000A"} = _trx, _block) do
     {:error,
      %{
        "code" => 3,
@@ -866,12 +838,12 @@ defmodule Cartouche.Test.Client do
   end
 
   # V1
-  def eth_estimateGas(_trx = %{"gasPrice" => _}, _block) do
+  def eth_estimateGas(%{"gasPrice" => _} = _trx, _block) do
     "0x0d"
   end
 
   # V2
-  def eth_estimateGas(_trx = %{"maxPriorityFeePerGas" => _, "maxFeePerGas" => _}, _block) do
+  def eth_estimateGas(%{"maxPriorityFeePerGas" => _, "maxFeePerGas" => _} = _trx, _block) do
     "0xdd"
   end
 
@@ -931,7 +903,7 @@ defmodule Cartouche.Test.Client do
     }
   end
 
-  def eth_chainId(), do: "0x22"
+  def eth_chainId, do: "0x22"
   def eth_getBalance(_addr, _block), do: "0x55"
-  def eth_blockNumber(), do: "0x44"
+  def eth_blockNumber, do: "0x44"
 end

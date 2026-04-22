@@ -9,6 +9,7 @@ defmodule Cartouche.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      aliases: aliases(),
       name: "Cartouche",
       description: "Lightweight Ethereum and Solana RPC client for Elixir",
       source_url: "https://github.com/zenhive/cartouche",
@@ -25,7 +26,7 @@ defmodule Cartouche.MixProject do
     [preferred_envs: ["test.json": :test, "dialyzer.json": :dev]]
   end
 
-  defp package() do
+  defp package do
     [
       files: ["lib", "mix.exs", "README*", "LICENSE*", "test/support"],
       maintainers: ["Geoffrey Hayes"],
@@ -67,13 +68,9 @@ defmodule Cartouche.MixProject do
 
   # ZenHive dev-branch only. Never merged back to main (tracks upstream).
   # PR branches fork from `main` so these never appear in any upstream diff.
-  #
-  # Intentionally omitted: :styler.
-  # Styler would reformat upstream code on this branch; any cherry-pick into a
-  # PR branch would then carry unrelated style churn. Global dev-setup hook
-  # suggests it — this fork overrides. See CLAUDE.md "Working rules".
   defp zenhive_dev_deps do
     [
+      {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_unit_json, "~> 0.4", only: [:dev, :test], runtime: false},
       {:dialyzer_json, "~> 0.2", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -83,10 +80,22 @@ defmodule Cartouche.MixProject do
       {:ex_dna, "~> 1.3", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.5", only: [:dev, :test], runtime: false},
       {:reach, "~> 1.5", only: [:dev, :test], runtime: false},
-      {:rename, "~> 0.1.0", only: :dev}
+      {:rename, "~> 0.1.0", only: :dev},
+      {:tidewave, "~> 0.5", only: :dev},
+      {:bandit, "~> 1.10", only: :dev}
       # :boxart intentionally omitted — conflicts with upstream ex_doc 0.31.1
       # (needs makeup_elixir ~> 1.0, ex_doc pulls ~> 0.14). Terminal --graph
       # rendering is optional; text/json output still works for all reach.* tasks.
+    ]
+  end
+
+  # ZenHive dev-branch only. Tidewave alias — port registered in
+  # ~/.claude/tidewave-ports.md. Never merged back to main.
+  defp aliases do
+    [
+      tidewave: [
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4013) end)'"
+      ]
     ]
   end
 end

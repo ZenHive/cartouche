@@ -6,11 +6,13 @@ defmodule Cartouche.Contract.IConsole do
   """
   use Cartouche.Hex
 
+  alias Cartouche.Transaction.V2
+
   def contract_name do
     "IConsole"
   end
 
-  def log_selector() do
+  def log_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -34,7 +36,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log(p0, p1, p2)}
   end
 
   def call_log(contract, p0, p1, p2, opts \\ []) do
@@ -57,9 +59,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log(p0, p1, p2, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log(p0, p1, p2), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -77,7 +77,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log(p0, p1, p2), exec_opts)
   end
 
-  def log_00dd87b9_selector() do
+  def log_00dd87b9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -102,7 +102,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_00dd87b9(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_00dd87b9(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_00dd87b9(p0, p1, p2, p3)}
   end
 
   def call_log_00dd87b9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -147,7 +147,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_00dd87b9(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_018c84c2_selector() do
+  def log_018c84c2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -171,7 +171,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_018c84c2(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_018c84c2(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_018c84c2(p0, p1, p2)}
   end
 
   def call_log_018c84c2(contract, p0, p1, p2, opts \\ []) do
@@ -216,7 +216,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_018c84c2(p0, p1, p2), exec_opts)
   end
 
-  def log_031c6f73_selector() do
+  def log_031c6f73_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -241,7 +241,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_031c6f73(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_031c6f73(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_031c6f73(p0, p1, p2, p3)}
   end
 
   def call_log_031c6f73(contract, p0, p1, p2, p3, opts \\ []) do
@@ -286,7 +286,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_031c6f73(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0454c079_selector() do
+  def log_0454c079_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -311,7 +311,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0454c079(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0454c079(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0454c079(p0, p1, p2, p3)}
   end
 
   def call_log_0454c079(contract, p0, p1, p2, p3, opts \\ []) do
@@ -356,7 +356,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0454c079(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_078287f5_selector() do
+  def log_078287f5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -381,7 +381,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_078287f5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_078287f5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_078287f5(p0, p1, p2, p3)}
   end
 
   def call_log_078287f5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -426,7 +426,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_078287f5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_07831502_selector() do
+  def log_07831502_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -451,7 +451,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_07831502(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_07831502(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_07831502(p0, p1, p2, p3)}
   end
 
   def call_log_07831502(contract, p0, p1, p2, p3, opts \\ []) do
@@ -496,7 +496,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_07831502(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_088ef9d2_selector() do
+  def log_088ef9d2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -520,7 +520,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_088ef9d2(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_088ef9d2(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_088ef9d2(p0, p1, p2)}
   end
 
   def call_log_088ef9d2(contract, p0, p1, p2, opts \\ []) do
@@ -565,7 +565,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_088ef9d2(p0, p1, p2), exec_opts)
   end
 
-  def log_091ffaf5_selector() do
+  def log_091ffaf5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -590,7 +590,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_091ffaf5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_091ffaf5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_091ffaf5(p0, p1, p2, p3)}
   end
 
   def call_log_091ffaf5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -635,7 +635,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_091ffaf5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0aa6cfad_selector() do
+  def log_0aa6cfad_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -660,7 +660,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0aa6cfad(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0aa6cfad(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0aa6cfad(p0, p1, p2, p3)}
   end
 
   def call_log_0aa6cfad(contract, p0, p1, p2, p3, opts \\ []) do
@@ -705,7 +705,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0aa6cfad(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0bb00eab_selector() do
+  def log_0bb00eab_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -730,7 +730,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0bb00eab(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0bb00eab(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0bb00eab(p0, p1, p2, p3)}
   end
 
   def call_log_0bb00eab(contract, p0, p1, p2, p3, opts \\ []) do
@@ -775,7 +775,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0bb00eab(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0c66d1be_selector() do
+  def log_0c66d1be_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -800,7 +800,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0c66d1be(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0c66d1be(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0c66d1be(p0, p1, p2, p3)}
   end
 
   def call_log_0c66d1be(contract, p0, p1, p2, p3, opts \\ []) do
@@ -845,7 +845,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0c66d1be(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0c9cd9c1_selector() do
+  def log_0c9cd9c1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -870,7 +870,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0c9cd9c1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0c9cd9c1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0c9cd9c1(p0, p1, p2, p3)}
   end
 
   def call_log_0c9cd9c1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -915,7 +915,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0c9cd9c1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0d26b925_selector() do
+  def log_0d26b925_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -939,7 +939,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0d26b925(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0d26b925(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_0d26b925(p0, p1, p2)}
   end
 
   def call_log_0d26b925(contract, p0, p1, p2, opts \\ []) do
@@ -984,7 +984,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0d26b925(p0, p1, p2), exec_opts)
   end
 
-  def log_0d36fa20_selector() do
+  def log_0d36fa20_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1009,7 +1009,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0d36fa20(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0d36fa20(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0d36fa20(p0, p1, p2, p3)}
   end
 
   def call_log_0d36fa20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1054,7 +1054,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0d36fa20(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0df12b76_selector() do
+  def log_0df12b76_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1079,7 +1079,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0df12b76(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0df12b76(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0df12b76(p0, p1, p2, p3)}
   end
 
   def call_log_0df12b76(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1124,7 +1124,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0df12b76(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0e378994_selector() do
+  def log_0e378994_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1149,7 +1149,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0e378994(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0e378994(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0e378994(p0, p1, p2, p3)}
   end
 
   def call_log_0e378994(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1194,7 +1194,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0e378994(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_0ef7e050_selector() do
+  def log_0ef7e050_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1219,7 +1219,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0ef7e050(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_0ef7e050(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_0ef7e050(p0, p1, p2, p3)}
   end
 
   def call_log_0ef7e050(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1264,7 +1264,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_0ef7e050(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_100f650e_selector() do
+  def log_100f650e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1289,7 +1289,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_100f650e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_100f650e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_100f650e(p0, p1, p2, p3)}
   end
 
   def call_log_100f650e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1334,7 +1334,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_100f650e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1023f7b2_selector() do
+  def log_1023f7b2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1359,7 +1359,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1023f7b2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1023f7b2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1023f7b2(p0, p1, p2, p3)}
   end
 
   def call_log_1023f7b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1404,7 +1404,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1023f7b2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1078f68d_selector() do
+  def log_1078f68d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1428,7 +1428,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1078f68d(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1078f68d(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_1078f68d(p0, p1, p2)}
   end
 
   def call_log_1078f68d(contract, p0, p1, p2, opts \\ []) do
@@ -1473,7 +1473,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1078f68d(p0, p1, p2), exec_opts)
   end
 
-  def log_1093ee11_selector() do
+  def log_1093ee11_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1497,7 +1497,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1093ee11(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1093ee11(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_1093ee11(p0, p1, p2)}
   end
 
   def call_log_1093ee11(contract, p0, p1, p2, opts \\ []) do
@@ -1542,7 +1542,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1093ee11(p0, p1, p2), exec_opts)
   end
 
-  def log_12d6c788_selector() do
+  def log_12d6c788_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1567,7 +1567,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_12d6c788(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_12d6c788(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_12d6c788(p0, p1, p2, p3)}
   end
 
   def call_log_12d6c788(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1612,7 +1612,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_12d6c788(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_12f21602_selector() do
+  def log_12f21602_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1636,7 +1636,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_12f21602(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_12f21602(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_12f21602(p0, p1, p2)}
   end
 
   def call_log_12f21602(contract, p0, p1, p2, opts \\ []) do
@@ -1681,7 +1681,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_12f21602(p0, p1, p2), exec_opts)
   end
 
-  def log_136b05dd_selector() do
+  def log_136b05dd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1706,7 +1706,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_136b05dd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_136b05dd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_136b05dd(p0, p1, p2, p3)}
   end
 
   def call_log_136b05dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1751,7 +1751,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_136b05dd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1537dc87_selector() do
+  def log_1537dc87_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1776,7 +1776,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1537dc87(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1537dc87(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1537dc87(p0, p1, p2, p3)}
   end
 
   def call_log_1537dc87(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1821,7 +1821,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1537dc87(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1596a1ce_selector() do
+  def log_1596a1ce_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1846,7 +1846,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1596a1ce(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1596a1ce(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1596a1ce(p0, p1, p2, p3)}
   end
 
   def call_log_1596a1ce(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1891,7 +1891,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1596a1ce(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_159f8927_selector() do
+  def log_159f8927_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1916,7 +1916,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_159f8927(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_159f8927(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_159f8927(p0, p1, p2, p3)}
   end
 
   def call_log_159f8927(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1961,7 +1961,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_159f8927(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_15c127b5_selector() do
+  def log_15c127b5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -1986,7 +1986,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_15c127b5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_15c127b5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_15c127b5(p0, p1, p2, p3)}
   end
 
   def call_log_15c127b5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2031,7 +2031,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_15c127b5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_15cac476_selector() do
+  def log_15cac476_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2056,7 +2056,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_15cac476(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_15cac476(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_15cac476(p0, p1, p2, p3)}
   end
 
   def call_log_15cac476(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2101,7 +2101,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_15cac476(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1606a393_selector() do
+  def log_1606a393_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2126,7 +2126,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1606a393(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1606a393(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1606a393(p0, p1, p2, p3)}
   end
 
   def call_log_1606a393(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2171,7 +2171,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1606a393(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1762e32a_selector() do
+  def log_1762e32a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2196,7 +2196,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1762e32a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1762e32a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1762e32a(p0, p1, p2, p3)}
   end
 
   def call_log_1762e32a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2241,7 +2241,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1762e32a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_17fe6185_selector() do
+  def log_17fe6185_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2265,7 +2265,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_17fe6185(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_17fe6185(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_17fe6185(p0, p1, p2)}
   end
 
   def call_log_17fe6185(contract, p0, p1, p2, opts \\ []) do
@@ -2310,7 +2310,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_17fe6185(p0, p1, p2), exec_opts)
   end
 
-  def log_18c9c746_selector() do
+  def log_18c9c746_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2334,7 +2334,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_18c9c746(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_18c9c746(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_18c9c746(p0, p1, p2)}
   end
 
   def call_log_18c9c746(contract, p0, p1, p2, opts \\ []) do
@@ -2379,7 +2379,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_18c9c746(p0, p1, p2), exec_opts)
   end
 
-  def log_193fb800_selector() do
+  def log_193fb800_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2404,7 +2404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_193fb800(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_193fb800(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_193fb800(p0, p1, p2, p3)}
   end
 
   def call_log_193fb800(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2449,7 +2449,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_193fb800(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_19fd4956_selector() do
+  def log_19fd4956_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2474,7 +2474,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_19fd4956(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_19fd4956(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_19fd4956(p0, p1, p2, p3)}
   end
 
   def call_log_19fd4956(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2519,7 +2519,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_19fd4956(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1ad96de6_selector() do
+  def log_1ad96de6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2544,7 +2544,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1ad96de6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1ad96de6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1ad96de6(p0, p1, p2, p3)}
   end
 
   def call_log_1ad96de6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2589,7 +2589,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1ad96de6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1bb3b09a_selector() do
+  def log_1bb3b09a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2614,7 +2614,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1bb3b09a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1bb3b09a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1bb3b09a(p0, p1, p2, p3)}
   end
 
   def call_log_1bb3b09a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2659,7 +2659,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1bb3b09a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1c41a336_selector() do
+  def log_1c41a336_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2684,7 +2684,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c41a336(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1c41a336(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1c41a336(p0, p1, p2, p3)}
   end
 
   def call_log_1c41a336(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2729,7 +2729,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1c41a336(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1c7ec448_selector() do
+  def log_1c7ec448_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2753,7 +2753,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c7ec448(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1c7ec448(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_1c7ec448(p0, p1, p2)}
   end
 
   def call_log_1c7ec448(contract, p0, p1, p2, opts \\ []) do
@@ -2798,7 +2798,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1c7ec448(p0, p1, p2), exec_opts)
   end
 
-  def log_1c9d7eb3_selector() do
+  def log_1c9d7eb3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2818,7 +2818,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c9d7eb3(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1c9d7eb3(p0, p1)}
+    %V2{destination: contract, data: encode_log_1c9d7eb3(p0, p1)}
   end
 
   def call_log_1c9d7eb3(contract, p0, p1, opts \\ []) do
@@ -2863,7 +2863,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1c9d7eb3(p0, p1), exec_opts)
   end
 
-  def log_1d14d001_selector() do
+  def log_1d14d001_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2888,7 +2888,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1d14d001(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1d14d001(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1d14d001(p0, p1, p2, p3)}
   end
 
   def call_log_1d14d001(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2933,7 +2933,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1d14d001(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1da986ea_selector() do
+  def log_1da986ea_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -2958,7 +2958,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1da986ea(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1da986ea(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1da986ea(p0, p1, p2, p3)}
   end
 
   def call_log_1da986ea(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3003,7 +3003,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1da986ea(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1dc8e1b8_selector() do
+  def log_1dc8e1b8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3028,7 +3028,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1dc8e1b8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1dc8e1b8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1dc8e1b8(p0, p1, p2, p3)}
   end
 
   def call_log_1dc8e1b8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3073,7 +3073,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1dc8e1b8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_1e4b87e5_selector() do
+  def log_1e4b87e5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3098,7 +3098,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1e4b87e5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_1e4b87e5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_1e4b87e5(p0, p1, p2, p3)}
   end
 
   def call_log_1e4b87e5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3143,7 +3143,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_1e4b87e5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_20098014_selector() do
+  def log_20098014_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3167,7 +3167,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20098014(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_20098014(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_20098014(p0, p1, p2)}
   end
 
   def call_log_20098014(contract, p0, p1, p2, opts \\ []) do
@@ -3212,7 +3212,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_20098014(p0, p1, p2), exec_opts)
   end
 
-  def log_205871c2_selector() do
+  def log_205871c2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3237,7 +3237,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_205871c2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_205871c2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_205871c2(p0, p1, p2, p3)}
   end
 
   def call_log_205871c2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3282,7 +3282,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_205871c2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_20718650_selector() do
+  def log_20718650_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3306,7 +3306,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20718650(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_20718650(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_20718650(p0, p1, p2)}
   end
 
   def call_log_20718650(contract, p0, p1, p2, opts \\ []) do
@@ -3351,7 +3351,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_20718650(p0, p1, p2), exec_opts)
   end
 
-  def log_20e3984d_selector() do
+  def log_20e3984d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3376,7 +3376,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20e3984d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_20e3984d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_20e3984d(p0, p1, p2, p3)}
   end
 
   def call_log_20e3984d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3421,7 +3421,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_20e3984d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_212255cc_selector() do
+  def log_212255cc_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3445,7 +3445,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_212255cc(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_212255cc(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_212255cc(p0, p1, p2)}
   end
 
   def call_log_212255cc(contract, p0, p1, p2, opts \\ []) do
@@ -3490,7 +3490,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_212255cc(p0, p1, p2), exec_opts)
   end
 
-  def log_21ad0683_selector() do
+  def log_21ad0683_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3515,7 +3515,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_21ad0683(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_21ad0683(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_21ad0683(p0, p1, p2, p3)}
   end
 
   def call_log_21ad0683(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3560,7 +3560,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_21ad0683(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_21bdaf25_selector() do
+  def log_21bdaf25_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3585,7 +3585,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_21bdaf25(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_21bdaf25(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_21bdaf25(p0, p1, p2, p3)}
   end
 
   def call_log_21bdaf25(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3630,7 +3630,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_21bdaf25(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_223603bd_selector() do
+  def log_223603bd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3655,7 +3655,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_223603bd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_223603bd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_223603bd(p0, p1, p2, p3)}
   end
 
   def call_log_223603bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3700,7 +3700,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_223603bd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_22f6b999_selector() do
+  def log_22f6b999_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3725,7 +3725,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_22f6b999(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_22f6b999(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_22f6b999(p0, p1, p2, p3)}
   end
 
   def call_log_22f6b999(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3770,7 +3770,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_22f6b999(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_245986f2_selector() do
+  def log_245986f2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3795,7 +3795,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_245986f2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_245986f2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_245986f2(p0, p1, p2, p3)}
   end
 
   def call_log_245986f2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3840,7 +3840,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_245986f2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2488b414_selector() do
+  def log_2488b414_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3865,7 +3865,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2488b414(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2488b414(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2488b414(p0, p1, p2, p3)}
   end
 
   def call_log_2488b414(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3910,7 +3910,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2488b414(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_24f91465_selector() do
+  def log_24f91465_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -3935,7 +3935,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_24f91465(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_24f91465(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_24f91465(p0, p1, p2, p3)}
   end
 
   def call_log_24f91465(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3980,7 +3980,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_24f91465(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2555fa46_selector() do
+  def log_2555fa46_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4004,7 +4004,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2555fa46(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2555fa46(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_2555fa46(p0, p1, p2)}
   end
 
   def call_log_2555fa46(contract, p0, p1, p2, opts \\ []) do
@@ -4049,7 +4049,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2555fa46(p0, p1, p2), exec_opts)
   end
 
-  def log_26f560a8_selector() do
+  def log_26f560a8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4074,7 +4074,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_26f560a8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_26f560a8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_26f560a8(p0, p1, p2, p3)}
   end
 
   def call_log_26f560a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4119,7 +4119,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_26f560a8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_27d8afd2_selector() do
+  def log_27d8afd2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4144,7 +4144,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_27d8afd2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_27d8afd2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_27d8afd2(p0, p1, p2, p3)}
   end
 
   def call_log_27d8afd2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4189,7 +4189,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_27d8afd2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_28863fcb_selector() do
+  def log_28863fcb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4214,7 +4214,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_28863fcb(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_28863fcb(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_28863fcb(p0, p1, p2, p3)}
   end
 
   def call_log_28863fcb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4259,7 +4259,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_28863fcb(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2a110e83_selector() do
+  def log_2a110e83_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4279,7 +4279,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2a110e83(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2a110e83(p0, p1)}
+    %V2{destination: contract, data: encode_log_2a110e83(p0, p1)}
   end
 
   def call_log_2a110e83(contract, p0, p1, opts \\ []) do
@@ -4324,7 +4324,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2a110e83(p0, p1), exec_opts)
   end
 
-  def log_2ae408d4_selector() do
+  def log_2ae408d4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4349,7 +4349,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2ae408d4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2ae408d4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2ae408d4(p0, p1, p2, p3)}
   end
 
   def call_log_2ae408d4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4394,7 +4394,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2ae408d4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2b2b18dc_selector() do
+  def log_2b2b18dc_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4419,7 +4419,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2b2b18dc(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2b2b18dc(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2b2b18dc(p0, p1, p2, p3)}
   end
 
   def call_log_2b2b18dc(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4464,7 +4464,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2b2b18dc(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2c1754ed_selector() do
+  def log_2c1754ed_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4489,7 +4489,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c1754ed(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2c1754ed(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2c1754ed(p0, p1, p2, p3)}
   end
 
   def call_log_2c1754ed(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4534,7 +4534,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2c1754ed(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2c1d0746_selector() do
+  def log_2c1d0746_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4559,7 +4559,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c1d0746(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2c1d0746(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2c1d0746(p0, p1, p2, p3)}
   end
 
   def call_log_2c1d0746(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4604,7 +4604,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2c1d0746(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2c2ecbc2_selector() do
+  def log_2c2ecbc2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4624,7 +4624,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c2ecbc2(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2c2ecbc2(p0)}
+    %V2{destination: contract, data: encode_log_2c2ecbc2(p0)}
   end
 
   def call_log_2c2ecbc2(contract, p0, opts \\ []) do
@@ -4669,7 +4669,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2c2ecbc2(p0), exec_opts)
   end
 
-  def log_2cd4134a_selector() do
+  def log_2cd4134a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4694,7 +4694,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2cd4134a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2cd4134a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2cd4134a(p0, p1, p2, p3)}
   end
 
   def call_log_2cd4134a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4739,7 +4739,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2cd4134a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2ced7cef_selector() do
+  def log_2ced7cef_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4763,7 +4763,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2ced7cef(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2ced7cef(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_2ced7cef(p0, p1, p2)}
   end
 
   def call_log_2ced7cef(contract, p0, p1, p2, opts \\ []) do
@@ -4808,7 +4808,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2ced7cef(p0, p1, p2), exec_opts)
   end
 
-  def log_2d5b6cb9_selector() do
+  def log_2d5b6cb9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4828,7 +4828,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2d5b6cb9(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2d5b6cb9(p0)}
+    %V2{destination: contract, data: encode_log_2d5b6cb9(p0)}
   end
 
   def call_log_2d5b6cb9(contract, p0, opts \\ []) do
@@ -4873,7 +4873,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2d5b6cb9(p0), exec_opts)
   end
 
-  def log_2d8e33a4_selector() do
+  def log_2d8e33a4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4898,7 +4898,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2d8e33a4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2d8e33a4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2d8e33a4(p0, p1, p2, p3)}
   end
 
   def call_log_2d8e33a4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4943,7 +4943,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2d8e33a4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_2dd778e6_selector() do
+  def log_2dd778e6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -4968,7 +4968,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2dd778e6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_2dd778e6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_2dd778e6(p0, p1, p2, p3)}
   end
 
   def call_log_2dd778e6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5013,7 +5013,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_2dd778e6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_319af333_selector() do
+  def log_319af333_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5033,7 +5033,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_319af333(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_319af333(p0, p1)}
+    %V2{destination: contract, data: encode_log_319af333(p0, p1)}
   end
 
   def call_log_319af333(contract, p0, p1, opts \\ []) do
@@ -5078,7 +5078,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_319af333(p0, p1), exec_opts)
   end
 
-  def log_32458eed_selector() do
+  def log_32458eed_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5098,7 +5098,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_32458eed(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_32458eed(p0)}
+    %V2{destination: contract, data: encode_log_32458eed(p0)}
   end
 
   def call_log_32458eed(contract, p0, opts \\ []) do
@@ -5143,7 +5143,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_32458eed(p0), exec_opts)
   end
 
-  def log_33e9dd1d_selector() do
+  def log_33e9dd1d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5168,7 +5168,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_33e9dd1d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_33e9dd1d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_33e9dd1d(p0, p1, p2, p3)}
   end
 
   def call_log_33e9dd1d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5213,7 +5213,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_33e9dd1d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_34f0e636_selector() do
+  def log_34f0e636_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5238,7 +5238,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_34f0e636(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_34f0e636(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_34f0e636(p0, p1, p2, p3)}
   end
 
   def call_log_34f0e636(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5283,7 +5283,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_34f0e636(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_35085f7b_selector() do
+  def log_35085f7b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5307,7 +5307,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_35085f7b(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_35085f7b(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_35085f7b(p0, p1, p2)}
   end
 
   def call_log_35085f7b(contract, p0, p1, p2, opts \\ []) do
@@ -5352,7 +5352,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_35085f7b(p0, p1, p2), exec_opts)
   end
 
-  def log_354c36d6_selector() do
+  def log_354c36d6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5377,7 +5377,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_354c36d6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_354c36d6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_354c36d6(p0, p1, p2, p3)}
   end
 
   def call_log_354c36d6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5422,7 +5422,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_354c36d6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_35a5071f_selector() do
+  def log_35a5071f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5447,7 +5447,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_35a5071f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_35a5071f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_35a5071f(p0, p1, p2, p3)}
   end
 
   def call_log_35a5071f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5492,7 +5492,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_35a5071f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_37103367_selector() do
+  def log_37103367_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5516,7 +5516,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_37103367(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_37103367(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_37103367(p0, p1, p2)}
   end
 
   def call_log_37103367(contract, p0, p1, p2, opts \\ []) do
@@ -5561,7 +5561,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_37103367(p0, p1, p2), exec_opts)
   end
 
-  def log_374bb4b2_selector() do
+  def log_374bb4b2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5586,7 +5586,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_374bb4b2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_374bb4b2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_374bb4b2(p0, p1, p2, p3)}
   end
 
   def call_log_374bb4b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5631,7 +5631,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_374bb4b2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_37aa7d4c_selector() do
+  def log_37aa7d4c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5655,7 +5655,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_37aa7d4c(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_37aa7d4c(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_37aa7d4c(p0, p1, p2)}
   end
 
   def call_log_37aa7d4c(contract, p0, p1, p2, opts \\ []) do
@@ -5700,7 +5700,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_37aa7d4c(p0, p1, p2), exec_opts)
   end
 
-  def log_386ff5f4_selector() do
+  def log_386ff5f4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5725,7 +5725,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_386ff5f4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_386ff5f4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_386ff5f4(p0, p1, p2, p3)}
   end
 
   def call_log_386ff5f4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5770,7 +5770,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_386ff5f4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3971e78c_selector() do
+  def log_3971e78c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5795,7 +5795,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3971e78c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3971e78c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3971e78c(p0, p1, p2, p3)}
   end
 
   def call_log_3971e78c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5840,7 +5840,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3971e78c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_399174d3_selector() do
+  def log_399174d3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5860,7 +5860,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_399174d3(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_399174d3(p0, p1)}
+    %V2{destination: contract, data: encode_log_399174d3(p0, p1)}
   end
 
   def call_log_399174d3(contract, p0, p1, opts \\ []) do
@@ -5905,7 +5905,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_399174d3(p0, p1), exec_opts)
   end
 
-  def log_3b2279b4_selector() do
+  def log_3b2279b4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -5930,7 +5930,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3b2279b4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3b2279b4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3b2279b4(p0, p1, p2, p3)}
   end
 
   def call_log_3b2279b4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5975,7 +5975,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3b2279b4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3b2a5ce0_selector() do
+  def log_3b2a5ce0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6000,7 +6000,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3b2a5ce0(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3b2a5ce0(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3b2a5ce0(p0, p1, p2, p3)}
   end
 
   def call_log_3b2a5ce0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6045,7 +6045,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3b2a5ce0(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3bf5e537_selector() do
+  def log_3bf5e537_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6070,7 +6070,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3bf5e537(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3bf5e537(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3bf5e537(p0, p1, p2, p3)}
   end
 
   def call_log_3bf5e537(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6115,7 +6115,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3bf5e537(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3ca6268e_selector() do
+  def log_3ca6268e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6135,7 +6135,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3ca6268e(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3ca6268e(p0, p1)}
+    %V2{destination: contract, data: encode_log_3ca6268e(p0, p1)}
   end
 
   def call_log_3ca6268e(contract, p0, p1, opts \\ []) do
@@ -6180,7 +6180,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3ca6268e(p0, p1), exec_opts)
   end
 
-  def log_3e128ca3_selector() do
+  def log_3e128ca3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6205,7 +6205,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3e128ca3(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3e128ca3(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3e128ca3(p0, p1, p2, p3)}
   end
 
   def call_log_3e128ca3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6250,7 +6250,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3e128ca3(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3e9f866a_selector() do
+  def log_3e9f866a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6275,7 +6275,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3e9f866a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3e9f866a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3e9f866a(p0, p1, p2, p3)}
   end
 
   def call_log_3e9f866a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6320,7 +6320,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3e9f866a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_3f8a701d_selector() do
+  def log_3f8a701d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6345,7 +6345,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3f8a701d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_3f8a701d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_3f8a701d(p0, p1, p2, p3)}
   end
 
   def call_log_3f8a701d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6390,7 +6390,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_3f8a701d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_40785869_selector() do
+  def log_40785869_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6415,7 +6415,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_40785869(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_40785869(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_40785869(p0, p1, p2, p3)}
   end
 
   def call_log_40785869(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6460,7 +6460,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_40785869(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_41304fac_selector() do
+  def log_41304fac_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6480,7 +6480,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_41304fac(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_41304fac(p0)}
+    %V2{destination: contract, data: encode_log_41304fac(p0)}
   end
 
   def call_log_41304fac(contract, p0, opts \\ []) do
@@ -6525,7 +6525,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_41304fac(p0), exec_opts)
   end
 
-  def log_42d21db7_selector() do
+  def log_42d21db7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6550,7 +6550,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_42d21db7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_42d21db7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_42d21db7(p0, p1, p2, p3)}
   end
 
   def call_log_42d21db7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6595,7 +6595,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_42d21db7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_439c7bef_selector() do
+  def log_439c7bef_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6620,7 +6620,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_439c7bef(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_439c7bef(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_439c7bef(p0, p1, p2, p3)}
   end
 
   def call_log_439c7bef(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6665,7 +6665,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_439c7bef(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_448830a8_selector() do
+  def log_448830a8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6690,7 +6690,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_448830a8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_448830a8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_448830a8(p0, p1, p2, p3)}
   end
 
   def call_log_448830a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6735,7 +6735,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_448830a8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_454d54a5_selector() do
+  def log_454d54a5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6760,7 +6760,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_454d54a5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_454d54a5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_454d54a5(p0, p1, p2, p3)}
   end
 
   def call_log_454d54a5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6805,7 +6805,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_454d54a5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_457fe3cf_selector() do
+  def log_457fe3cf_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6830,7 +6830,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_457fe3cf(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_457fe3cf(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_457fe3cf(p0, p1, p2, p3)}
   end
 
   def call_log_457fe3cf(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6875,7 +6875,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_457fe3cf(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_46600be0_selector() do
+  def log_46600be0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6900,7 +6900,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_46600be0(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_46600be0(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_46600be0(p0, p1, p2, p3)}
   end
 
   def call_log_46600be0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6945,7 +6945,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_46600be0(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_46826b5d_selector() do
+  def log_46826b5d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -6970,7 +6970,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_46826b5d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_46826b5d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_46826b5d(p0, p1, p2, p3)}
   end
 
   def call_log_46826b5d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7015,7 +7015,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_46826b5d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_475c5c33_selector() do
+  def log_475c5c33_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7040,7 +7040,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_475c5c33(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_475c5c33(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_475c5c33(p0, p1, p2, p3)}
   end
 
   def call_log_475c5c33(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7085,7 +7085,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_475c5c33(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_4766da72_selector() do
+  def log_4766da72_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7109,7 +7109,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4766da72(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4766da72(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_4766da72(p0, p1, p2)}
   end
 
   def call_log_4766da72(contract, p0, p1, p2, opts \\ []) do
@@ -7154,7 +7154,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4766da72(p0, p1, p2), exec_opts)
   end
 
-  def log_478d1c62_selector() do
+  def log_478d1c62_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7179,7 +7179,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_478d1c62(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_478d1c62(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_478d1c62(p0, p1, p2, p3)}
   end
 
   def call_log_478d1c62(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7224,7 +7224,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_478d1c62(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_483d0416_selector() do
+  def log_483d0416_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7249,7 +7249,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_483d0416(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_483d0416(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_483d0416(p0, p1, p2, p3)}
   end
 
   def call_log_483d0416(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7294,7 +7294,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_483d0416(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_4a28c017_selector() do
+  def log_4a28c017_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7319,7 +7319,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4a28c017(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4a28c017(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_4a28c017(p0, p1, p2, p3)}
   end
 
   def call_log_4a28c017(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7364,7 +7364,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4a28c017(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_4a66cb34_selector() do
+  def log_4a66cb34_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7389,7 +7389,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4a66cb34(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4a66cb34(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_4a66cb34(p0, p1, p2, p3)}
   end
 
   def call_log_4a66cb34(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7434,7 +7434,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4a66cb34(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_4b5c4277_selector() do
+  def log_4b5c4277_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7454,7 +7454,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4b5c4277(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4b5c4277(p0, p1)}
+    %V2{destination: contract, data: encode_log_4b5c4277(p0, p1)}
   end
 
   def call_log_4b5c4277(contract, p0, p1, opts \\ []) do
@@ -7499,7 +7499,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4b5c4277(p0, p1), exec_opts)
   end
 
-  def log_4c123d57_selector() do
+  def log_4c123d57_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7524,7 +7524,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4c123d57(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4c123d57(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_4c123d57(p0, p1, p2, p3)}
   end
 
   def call_log_4c123d57(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7569,7 +7569,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4c123d57(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_4ceda75a_selector() do
+  def log_4ceda75a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7593,7 +7593,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4ceda75a(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4ceda75a(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_4ceda75a(p0, p1, p2)}
   end
 
   def call_log_4ceda75a(contract, p0, p1, p2, opts \\ []) do
@@ -7638,7 +7638,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4ceda75a(p0, p1, p2), exec_opts)
   end
 
-  def log_4f04fdc6_selector() do
+  def log_4f04fdc6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7663,7 +7663,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4f04fdc6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_4f04fdc6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_4f04fdc6(p0, p1, p2, p3)}
   end
 
   def call_log_4f04fdc6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7708,7 +7708,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_4f04fdc6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_50709698_selector() do
+  def log_50709698_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7728,7 +7728,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_50709698(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_50709698(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_50709698(p0, p1, p2)}
   end
 
   def call_log_50709698(contract, p0, p1, p2, opts \\ []) do
@@ -7773,7 +7773,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_50709698(p0, p1, p2), exec_opts)
   end
 
-  def log_50ad461d_selector() do
+  def log_50ad461d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7798,7 +7798,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_50ad461d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_50ad461d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_50ad461d(p0, p1, p2, p3)}
   end
 
   def call_log_50ad461d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7843,7 +7843,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_50ad461d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_515e38b6_selector() do
+  def log_515e38b6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7868,7 +7868,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_515e38b6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_515e38b6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_515e38b6(p0, p1, p2, p3)}
   end
 
   def call_log_515e38b6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7913,7 +7913,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_515e38b6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_51973ec9_selector() do
+  def log_51973ec9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -7924,7 +7924,7 @@ defmodule Cartouche.Contract.IConsole do
     }
   end
 
-  def encode_log_51973ec9() do
+  def encode_log_51973ec9 do
     ABI.encode(log_51973ec9_selector(), [])
   end
 
@@ -7933,7 +7933,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_51973ec9(contract) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_51973ec9()}
+    %V2{destination: contract, data: encode_log_51973ec9()}
   end
 
   def call_log_51973ec9(contract, opts \\ []) do
@@ -7978,7 +7978,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_51973ec9(), exec_opts)
   end
 
-  def log_51f09ff8_selector() do
+  def log_51f09ff8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8003,7 +8003,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_51f09ff8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_51f09ff8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_51f09ff8(p0, p1, p2, p3)}
   end
 
   def call_log_51f09ff8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8048,7 +8048,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_51f09ff8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_538e06ab_selector() do
+  def log_538e06ab_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8073,7 +8073,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_538e06ab(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_538e06ab(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_538e06ab(p0, p1, p2, p3)}
   end
 
   def call_log_538e06ab(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8118,7 +8118,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_538e06ab(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_54a7a9a0_selector() do
+  def log_54a7a9a0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8143,7 +8143,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_54a7a9a0(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_54a7a9a0(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_54a7a9a0(p0, p1, p2, p3)}
   end
 
   def call_log_54a7a9a0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8188,7 +8188,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_54a7a9a0(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_56a5d1b1_selector() do
+  def log_56a5d1b1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8213,7 +8213,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_56a5d1b1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_56a5d1b1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_56a5d1b1(p0, p1, p2, p3)}
   end
 
   def call_log_56a5d1b1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8258,7 +8258,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_56a5d1b1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5821efa1_selector() do
+  def log_5821efa1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8282,7 +8282,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5821efa1(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5821efa1(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_5821efa1(p0, p1, p2)}
   end
 
   def call_log_5821efa1(contract, p0, p1, p2, opts \\ []) do
@@ -8327,7 +8327,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5821efa1(p0, p1, p2), exec_opts)
   end
 
-  def log_5970e089_selector() do
+  def log_5970e089_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8351,7 +8351,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5970e089(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5970e089(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_5970e089(p0, p1, p2)}
   end
 
   def call_log_5970e089(contract, p0, p1, p2, opts \\ []) do
@@ -8396,7 +8396,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5970e089(p0, p1, p2), exec_opts)
   end
 
-  def log_59cfcbe3_selector() do
+  def log_59cfcbe3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8421,7 +8421,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_59cfcbe3(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_59cfcbe3(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_59cfcbe3(p0, p1, p2, p3)}
   end
 
   def call_log_59cfcbe3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8466,7 +8466,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_59cfcbe3(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5a477632_selector() do
+  def log_5a477632_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8491,7 +8491,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5a477632(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5a477632(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5a477632(p0, p1, p2, p3)}
   end
 
   def call_log_5a477632(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8536,7 +8536,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5a477632(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5a9b5ed5_selector() do
+  def log_5a9b5ed5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8560,7 +8560,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5a9b5ed5(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5a9b5ed5(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_5a9b5ed5(p0, p1, p2)}
   end
 
   def call_log_5a9b5ed5(contract, p0, p1, p2, opts \\ []) do
@@ -8605,7 +8605,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5a9b5ed5(p0, p1, p2), exec_opts)
   end
 
-  def log_5ab84e1f_selector() do
+  def log_5ab84e1f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8630,7 +8630,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ab84e1f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5ab84e1f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5ab84e1f(p0, p1, p2, p3)}
   end
 
   def call_log_5ab84e1f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8675,7 +8675,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5ab84e1f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5abd992a_selector() do
+  def log_5abd992a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8700,7 +8700,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5abd992a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5abd992a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5abd992a(p0, p1, p2, p3)}
   end
 
   def call_log_5abd992a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8745,7 +8745,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5abd992a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5c430d47_selector() do
+  def log_5c430d47_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8770,7 +8770,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5c430d47(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5c430d47(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5c430d47(p0, p1, p2, p3)}
   end
 
   def call_log_5c430d47(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8815,7 +8815,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5c430d47(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5c96b331_selector() do
+  def log_5c96b331_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8839,7 +8839,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5c96b331(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5c96b331(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_5c96b331(p0, p1, p2)}
   end
 
   def call_log_5c96b331(contract, p0, p1, p2, opts \\ []) do
@@ -8884,7 +8884,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5c96b331(p0, p1, p2), exec_opts)
   end
 
-  def log_5ccd4e37_selector() do
+  def log_5ccd4e37_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8909,7 +8909,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ccd4e37(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5ccd4e37(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5ccd4e37(p0, p1, p2, p3)}
   end
 
   def call_log_5ccd4e37(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8954,7 +8954,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5ccd4e37(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5d02c50b_selector() do
+  def log_5d02c50b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -8979,7 +8979,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d02c50b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5d02c50b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5d02c50b(p0, p1, p2, p3)}
   end
 
   def call_log_5d02c50b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9024,7 +9024,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5d02c50b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5d08bb05_selector() do
+  def log_5d08bb05_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9049,7 +9049,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d08bb05(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5d08bb05(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5d08bb05(p0, p1, p2, p3)}
   end
 
   def call_log_5d08bb05(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9094,7 +9094,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5d08bb05(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5d1a971a_selector() do
+  def log_5d1a971a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9119,7 +9119,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d1a971a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5d1a971a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5d1a971a(p0, p1, p2, p3)}
   end
 
   def call_log_5d1a971a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9164,7 +9164,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5d1a971a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5da297eb_selector() do
+  def log_5da297eb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9189,7 +9189,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5da297eb(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5da297eb(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5da297eb(p0, p1, p2, p3)}
   end
 
   def call_log_5da297eb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9234,7 +9234,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5da297eb(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5e84b0ea_selector() do
+  def log_5e84b0ea_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9259,7 +9259,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5e84b0ea(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5e84b0ea(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5e84b0ea(p0, p1, p2, p3)}
   end
 
   def call_log_5e84b0ea(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9304,7 +9304,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5e84b0ea(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5ea2b7ae_selector() do
+  def log_5ea2b7ae_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9329,7 +9329,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ea2b7ae(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5ea2b7ae(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5ea2b7ae(p0, p1, p2, p3)}
   end
 
   def call_log_5ea2b7ae(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9374,7 +9374,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5ea2b7ae(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5f15d28c_selector() do
+  def log_5f15d28c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9399,7 +9399,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f15d28c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5f15d28c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5f15d28c(p0, p1, p2, p3)}
   end
 
   def call_log_5f15d28c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9444,7 +9444,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5f15d28c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5f1d5c9f_selector() do
+  def log_5f1d5c9f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9469,7 +9469,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f1d5c9f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5f1d5c9f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5f1d5c9f(p0, p1, p2, p3)}
   end
 
   def call_log_5f1d5c9f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9514,7 +9514,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5f1d5c9f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5f743a7c_selector() do
+  def log_5f743a7c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9539,7 +9539,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f743a7c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5f743a7c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_5f743a7c(p0, p1, p2, p3)}
   end
 
   def call_log_5f743a7c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9584,7 +9584,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5f743a7c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_5f7b9afb_selector() do
+  def log_5f7b9afb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9608,7 +9608,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f7b9afb(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_5f7b9afb(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_5f7b9afb(p0, p1, p2)}
   end
 
   def call_log_5f7b9afb(contract, p0, p1, p2, opts \\ []) do
@@ -9653,7 +9653,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_5f7b9afb(p0, p1, p2), exec_opts)
   end
 
-  def log_6168ed61_selector() do
+  def log_6168ed61_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9678,7 +9678,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6168ed61(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6168ed61(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6168ed61(p0, p1, p2, p3)}
   end
 
   def call_log_6168ed61(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9723,7 +9723,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6168ed61(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_619e4d0e_selector() do
+  def log_619e4d0e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9748,7 +9748,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_619e4d0e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_619e4d0e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_619e4d0e(p0, p1, p2, p3)}
   end
 
   def call_log_619e4d0e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9793,7 +9793,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_619e4d0e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_63183678_selector() do
+  def log_63183678_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9818,7 +9818,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63183678(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_63183678(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_63183678(p0, p1, p2, p3)}
   end
 
   def call_log_63183678(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9863,7 +9863,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_63183678(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_63cb41f9_selector() do
+  def log_63cb41f9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9887,7 +9887,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63cb41f9(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_63cb41f9(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_63cb41f9(p0, p1, p2)}
   end
 
   def call_log_63cb41f9(contract, p0, p1, p2, opts \\ []) do
@@ -9932,7 +9932,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_63cb41f9(p0, p1, p2), exec_opts)
   end
 
-  def log_63fb8bc5_selector() do
+  def log_63fb8bc5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -9957,7 +9957,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63fb8bc5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_63fb8bc5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_63fb8bc5(p0, p1, p2, p3)}
   end
 
   def call_log_63fb8bc5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10002,7 +10002,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_63fb8bc5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_643fd0df_selector() do
+  def log_643fd0df_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10022,7 +10022,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_643fd0df(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_643fd0df(p0, p1)}
+    %V2{destination: contract, data: encode_log_643fd0df(p0, p1)}
   end
 
   def call_log_643fd0df(contract, p0, p1, opts \\ []) do
@@ -10067,7 +10067,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_643fd0df(p0, p1), exec_opts)
   end
 
-  def log_64b5bb67_selector() do
+  def log_64b5bb67_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10092,7 +10092,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_64b5bb67(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_64b5bb67(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_64b5bb67(p0, p1, p2, p3)}
   end
 
   def call_log_64b5bb67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10137,7 +10137,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_64b5bb67(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_660375dd_selector() do
+  def log_660375dd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10162,7 +10162,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_660375dd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_660375dd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_660375dd(p0, p1, p2, p3)}
   end
 
   def call_log_660375dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10207,7 +10207,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_660375dd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_665bf134_selector() do
+  def log_665bf134_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10232,7 +10232,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_665bf134(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_665bf134(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_665bf134(p0, p1, p2, p3)}
   end
 
   def call_log_665bf134(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10277,7 +10277,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_665bf134(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_66f1bc67_selector() do
+  def log_66f1bc67_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10302,7 +10302,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_66f1bc67(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_66f1bc67(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_66f1bc67(p0, p1, p2, p3)}
   end
 
   def call_log_66f1bc67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10347,7 +10347,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_66f1bc67(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_678209a8_selector() do
+  def log_678209a8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10371,7 +10371,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_678209a8(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_678209a8(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_678209a8(p0, p1, p2)}
   end
 
   def call_log_678209a8(contract, p0, p1, p2, opts \\ []) do
@@ -10416,7 +10416,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_678209a8(p0, p1, p2), exec_opts)
   end
 
-  def log_67dd6ff1_selector() do
+  def log_67dd6ff1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10440,7 +10440,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_67dd6ff1(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_67dd6ff1(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_67dd6ff1(p0, p1, p2)}
   end
 
   def call_log_67dd6ff1(contract, p0, p1, p2, opts \\ []) do
@@ -10485,7 +10485,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_67dd6ff1(p0, p1, p2), exec_opts)
   end
 
-  def log_68c8b8bd_selector() do
+  def log_68c8b8bd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10510,7 +10510,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_68c8b8bd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_68c8b8bd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_68c8b8bd(p0, p1, p2, p3)}
   end
 
   def call_log_68c8b8bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10555,7 +10555,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_68c8b8bd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_691a8f74_selector() do
+  def log_691a8f74_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10580,7 +10580,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_691a8f74(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_691a8f74(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_691a8f74(p0, p1, p2, p3)}
   end
 
   def call_log_691a8f74(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10625,7 +10625,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_691a8f74(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_69276c86_selector() do
+  def log_69276c86_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10645,7 +10645,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_69276c86(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_69276c86(p0, p1)}
+    %V2{destination: contract, data: encode_log_69276c86(p0, p1)}
   end
 
   def call_log_69276c86(contract, p0, p1, opts \\ []) do
@@ -10690,7 +10690,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_69276c86(p0, p1), exec_opts)
   end
 
-  def log_69640b59_selector() do
+  def log_69640b59_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10715,7 +10715,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_69640b59(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_69640b59(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_69640b59(p0, p1, p2, p3)}
   end
 
   def call_log_69640b59(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10760,7 +10760,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_69640b59(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6a1199e2_selector() do
+  def log_6a1199e2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10785,7 +10785,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6a1199e2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6a1199e2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6a1199e2(p0, p1, p2, p3)}
   end
 
   def call_log_6a1199e2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10830,7 +10830,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6a1199e2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6a9c478b_selector() do
+  def log_6a9c478b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10855,7 +10855,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6a9c478b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6a9c478b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6a9c478b(p0, p1, p2, p3)}
   end
 
   def call_log_6a9c478b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10900,7 +10900,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6a9c478b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6b0e5d53_selector() do
+  def log_6b0e5d53_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10925,7 +10925,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6b0e5d53(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6b0e5d53(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6b0e5d53(p0, p1, p2, p3)}
   end
 
   def call_log_6b0e5d53(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10970,7 +10970,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6b0e5d53(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6cde40b8_selector() do
+  def log_6cde40b8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -10995,7 +10995,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6cde40b8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6cde40b8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6cde40b8(p0, p1, p2, p3)}
   end
 
   def call_log_6cde40b8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11040,7 +11040,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6cde40b8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6d1e8751_selector() do
+  def log_6d1e8751_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11065,7 +11065,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d1e8751(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6d1e8751(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6d1e8751(p0, p1, p2, p3)}
   end
 
   def call_log_6d1e8751(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11110,7 +11110,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6d1e8751(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6d572f44_selector() do
+  def log_6d572f44_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11135,7 +11135,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d572f44(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6d572f44(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6d572f44(p0, p1, p2, p3)}
   end
 
   def call_log_6d572f44(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11180,7 +11180,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6d572f44(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6d7045c1_selector() do
+  def log_6d7045c1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11205,7 +11205,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d7045c1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6d7045c1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6d7045c1(p0, p1, p2, p3)}
   end
 
   def call_log_6d7045c1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11250,7 +11250,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6d7045c1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6dd434ca_selector() do
+  def log_6dd434ca_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11275,7 +11275,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6dd434ca(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6dd434ca(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6dd434ca(p0, p1, p2, p3)}
   end
 
   def call_log_6dd434ca(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11320,7 +11320,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6dd434ca(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6f1a594e_selector() do
+  def log_6f1a594e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11345,7 +11345,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6f1a594e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6f1a594e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6f1a594e(p0, p1, p2, p3)}
   end
 
   def call_log_6f1a594e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11390,7 +11390,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6f1a594e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_6f7c603e_selector() do
+  def log_6f7c603e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11415,7 +11415,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6f7c603e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_6f7c603e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_6f7c603e(p0, p1, p2, p3)}
   end
 
   def call_log_6f7c603e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11460,7 +11460,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_6f7c603e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7190a529_selector() do
+  def log_7190a529_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11485,7 +11485,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7190a529(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7190a529(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7190a529(p0, p1, p2, p3)}
   end
 
   def call_log_7190a529(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11530,7 +11530,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7190a529(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_71d04af2_selector() do
+  def log_71d04af2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11554,7 +11554,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_71d04af2(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_71d04af2(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_71d04af2(p0, p1, p2)}
   end
 
   def call_log_71d04af2(contract, p0, p1, p2, opts \\ []) do
@@ -11599,7 +11599,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_71d04af2(p0, p1, p2), exec_opts)
   end
 
-  def log_736efbb6_selector() do
+  def log_736efbb6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11624,7 +11624,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_736efbb6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_736efbb6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_736efbb6(p0, p1, p2, p3)}
   end
 
   def call_log_736efbb6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11669,7 +11669,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_736efbb6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_742d6ee7_selector() do
+  def log_742d6ee7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11694,7 +11694,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_742d6ee7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_742d6ee7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_742d6ee7(p0, p1, p2, p3)}
   end
 
   def call_log_742d6ee7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11739,7 +11739,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_742d6ee7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7464ce23_selector() do
+  def log_7464ce23_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11764,7 +11764,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7464ce23(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7464ce23(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7464ce23(p0, p1, p2, p3)}
   end
 
   def call_log_7464ce23(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11809,7 +11809,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7464ce23(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_759f86bb_selector() do
+  def log_759f86bb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11829,7 +11829,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_759f86bb(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_759f86bb(p0, p1)}
+    %V2{destination: contract, data: encode_log_759f86bb(p0, p1)}
   end
 
   def call_log_759f86bb(contract, p0, p1, opts \\ []) do
@@ -11874,7 +11874,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_759f86bb(p0, p1), exec_opts)
   end
 
-  def log_75b605d3_selector() do
+  def log_75b605d3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11894,7 +11894,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_75b605d3(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_75b605d3(p0, p1)}
+    %V2{destination: contract, data: encode_log_75b605d3(p0, p1)}
   end
 
   def call_log_75b605d3(contract, p0, p1, opts \\ []) do
@@ -11939,7 +11939,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_75b605d3(p0, p1), exec_opts)
   end
 
-  def log_7626db92_selector() do
+  def log_7626db92_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -11964,7 +11964,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7626db92(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7626db92(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7626db92(p0, p1, p2, p3)}
   end
 
   def call_log_7626db92(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12009,7 +12009,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7626db92(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_79884c2b_selector() do
+  def log_79884c2b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12034,7 +12034,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_79884c2b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_79884c2b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_79884c2b(p0, p1, p2, p3)}
   end
 
   def call_log_79884c2b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12079,7 +12079,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_79884c2b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7af6ab25_selector() do
+  def log_7af6ab25_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12104,7 +12104,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7af6ab25(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7af6ab25(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7af6ab25(p0, p1, p2, p3)}
   end
 
   def call_log_7af6ab25(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12149,7 +12149,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7af6ab25(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7afac959_selector() do
+  def log_7afac959_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12173,7 +12173,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7afac959(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7afac959(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_7afac959(p0, p1, p2)}
   end
 
   def call_log_7afac959(contract, p0, p1, p2, opts \\ []) do
@@ -12218,7 +12218,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7afac959(p0, p1, p2), exec_opts)
   end
 
-  def log_7bc0d848_selector() do
+  def log_7bc0d848_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12242,7 +12242,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7bc0d848(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7bc0d848(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_7bc0d848(p0, p1, p2)}
   end
 
   def call_log_7bc0d848(contract, p0, p1, p2, opts \\ []) do
@@ -12287,7 +12287,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7bc0d848(p0, p1, p2), exec_opts)
   end
 
-  def log_7be0c3eb_selector() do
+  def log_7be0c3eb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12312,7 +12312,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7be0c3eb(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7be0c3eb(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7be0c3eb(p0, p1, p2, p3)}
   end
 
   def call_log_7be0c3eb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12357,7 +12357,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7be0c3eb(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7bf181a1_selector() do
+  def log_7bf181a1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12382,7 +12382,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7bf181a1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7bf181a1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7bf181a1(p0, p1, p2, p3)}
   end
 
   def call_log_7bf181a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12427,7 +12427,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7bf181a1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7c4632a4_selector() do
+  def log_7c4632a4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12452,7 +12452,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7c4632a4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7c4632a4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7c4632a4(p0, p1, p2, p3)}
   end
 
   def call_log_7c4632a4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12497,7 +12497,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7c4632a4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7cc3c607_selector() do
+  def log_7cc3c607_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12522,7 +12522,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7cc3c607(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7cc3c607(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7cc3c607(p0, p1, p2, p3)}
   end
 
   def call_log_7cc3c607(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12567,7 +12567,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7cc3c607(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7d24491d_selector() do
+  def log_7d24491d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12592,7 +12592,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7d24491d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7d24491d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7d24491d(p0, p1, p2, p3)}
   end
 
   def call_log_7d24491d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12637,7 +12637,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7d24491d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7dd4d0e0_selector() do
+  def log_7dd4d0e0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12662,7 +12662,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7dd4d0e0(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7dd4d0e0(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7dd4d0e0(p0, p1, p2, p3)}
   end
 
   def call_log_7dd4d0e0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12707,7 +12707,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7dd4d0e0(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_7f9bbca2_selector() do
+  def log_7f9bbca2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12732,7 +12732,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7f9bbca2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_7f9bbca2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_7f9bbca2(p0, p1, p2, p3)}
   end
 
   def call_log_7f9bbca2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12777,7 +12777,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_7f9bbca2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_800a1c67_selector() do
+  def log_800a1c67_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12802,7 +12802,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_800a1c67(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_800a1c67(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_800a1c67(p0, p1, p2, p3)}
   end
 
   def call_log_800a1c67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12847,7 +12847,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_800a1c67(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_80e6a20b_selector() do
+  def log_80e6a20b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12872,7 +12872,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_80e6a20b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_80e6a20b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_80e6a20b(p0, p1, p2, p3)}
   end
 
   def call_log_80e6a20b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12917,7 +12917,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_80e6a20b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_82112a42_selector() do
+  def log_82112a42_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -12942,7 +12942,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_82112a42(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_82112a42(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_82112a42(p0, p1, p2, p3)}
   end
 
   def call_log_82112a42(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12987,7 +12987,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_82112a42(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_82c25b74_selector() do
+  def log_82c25b74_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13012,7 +13012,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_82c25b74(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_82c25b74(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_82c25b74(p0, p1, p2, p3)}
   end
 
   def call_log_82c25b74(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13057,7 +13057,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_82c25b74(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8309e8a8_selector() do
+  def log_8309e8a8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13077,7 +13077,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8309e8a8(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8309e8a8(p0, p1)}
+    %V2{destination: contract, data: encode_log_8309e8a8(p0, p1)}
   end
 
   def call_log_8309e8a8(contract, p0, p1, opts \\ []) do
@@ -13122,7 +13122,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8309e8a8(p0, p1), exec_opts)
   end
 
-  def log_850b7ad6_selector() do
+  def log_850b7ad6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13146,7 +13146,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_850b7ad6(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_850b7ad6(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_850b7ad6(p0, p1, p2)}
   end
 
   def call_log_850b7ad6(contract, p0, p1, p2, opts \\ []) do
@@ -13191,7 +13191,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_850b7ad6(p0, p1, p2), exec_opts)
   end
 
-  def log_853c4849_selector() do
+  def log_853c4849_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13211,7 +13211,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_853c4849(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_853c4849(p0, p1)}
+    %V2{destination: contract, data: encode_log_853c4849(p0, p1)}
   end
 
   def call_log_853c4849(contract, p0, p1, opts \\ []) do
@@ -13256,7 +13256,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_853c4849(p0, p1), exec_opts)
   end
 
-  def log_854b3496_selector() do
+  def log_854b3496_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13281,7 +13281,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_854b3496(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_854b3496(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_854b3496(p0, p1, p2, p3)}
   end
 
   def call_log_854b3496(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13326,7 +13326,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_854b3496(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_85775021_selector() do
+  def log_85775021_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13350,7 +13350,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_85775021(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_85775021(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_85775021(p0, p1, p2)}
   end
 
   def call_log_85775021(contract, p0, p1, p2, opts \\ []) do
@@ -13395,7 +13395,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_85775021(p0, p1, p2), exec_opts)
   end
 
-  def log_88a8c406_selector() do
+  def log_88a8c406_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13420,7 +13420,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88a8c406(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_88a8c406(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_88a8c406(p0, p1, p2, p3)}
   end
 
   def call_log_88a8c406(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13465,7 +13465,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_88a8c406(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_88cb6041_selector() do
+  def log_88cb6041_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13490,7 +13490,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88cb6041(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_88cb6041(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_88cb6041(p0, p1, p2, p3)}
   end
 
   def call_log_88cb6041(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13535,7 +13535,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_88cb6041(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_88f6e4b2_selector() do
+  def log_88f6e4b2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13560,7 +13560,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88f6e4b2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_88f6e4b2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_88f6e4b2(p0, p1, p2, p3)}
   end
 
   def call_log_88f6e4b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13605,7 +13605,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_88f6e4b2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_895af8c5_selector() do
+  def log_895af8c5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13630,7 +13630,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_895af8c5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_895af8c5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_895af8c5(p0, p1, p2, p3)}
   end
 
   def call_log_895af8c5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13675,7 +13675,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_895af8c5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8af7cf8a_selector() do
+  def log_8af7cf8a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13700,7 +13700,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8af7cf8a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8af7cf8a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8af7cf8a(p0, p1, p2, p3)}
   end
 
   def call_log_8af7cf8a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13745,7 +13745,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8af7cf8a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8c329b1a_selector() do
+  def log_8c329b1a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13770,7 +13770,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8c329b1a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8c329b1a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8c329b1a(p0, p1, p2, p3)}
   end
 
   def call_log_8c329b1a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13815,7 +13815,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8c329b1a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8c4e5de6_selector() do
+  def log_8c4e5de6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13840,7 +13840,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8c4e5de6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8c4e5de6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8c4e5de6(p0, p1, p2, p3)}
   end
 
   def call_log_8c4e5de6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13885,7 +13885,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8c4e5de6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8da6def5_selector() do
+  def log_8da6def5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13910,7 +13910,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8da6def5(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8da6def5(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8da6def5(p0, p1, p2, p3)}
   end
 
   def call_log_8da6def5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13955,7 +13955,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8da6def5(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8e3f78a9_selector() do
+  def log_8e3f78a9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -13980,7 +13980,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8e3f78a9(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8e3f78a9(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8e3f78a9(p0, p1, p2, p3)}
   end
 
   def call_log_8e3f78a9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14025,7 +14025,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8e3f78a9(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8e69fb5d_selector() do
+  def log_8e69fb5d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14050,7 +14050,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8e69fb5d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8e69fb5d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8e69fb5d(p0, p1, p2, p3)}
   end
 
   def call_log_8e69fb5d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14095,7 +14095,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8e69fb5d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8eafb02b_selector() do
+  def log_8eafb02b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14120,7 +14120,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8eafb02b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8eafb02b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8eafb02b(p0, p1, p2, p3)}
   end
 
   def call_log_8eafb02b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14165,7 +14165,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8eafb02b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8ef3f399_selector() do
+  def log_8ef3f399_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14190,7 +14190,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8ef3f399(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8ef3f399(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8ef3f399(p0, p1, p2, p3)}
   end
 
   def call_log_8ef3f399(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14235,7 +14235,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8ef3f399(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8f736d16_selector() do
+  def log_8f736d16_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14260,7 +14260,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8f736d16(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8f736d16(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_8f736d16(p0, p1, p2, p3)}
   end
 
   def call_log_8f736d16(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14305,7 +14305,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8f736d16(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_8feac525_selector() do
+  def log_8feac525_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14325,7 +14325,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8feac525(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_8feac525(p0, p1)}
+    %V2{destination: contract, data: encode_log_8feac525(p0, p1)}
   end
 
   def call_log_8feac525(contract, p0, p1, opts \\ []) do
@@ -14370,7 +14370,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_8feac525(p0, p1), exec_opts)
   end
 
-  def log_90c30a56_selector() do
+  def log_90c30a56_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14395,7 +14395,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_90c30a56(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_90c30a56(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_90c30a56(p0, p1, p2, p3)}
   end
 
   def call_log_90c30a56(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14440,7 +14440,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_90c30a56(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_90fb06aa_selector() do
+  def log_90fb06aa_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14465,7 +14465,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_90fb06aa(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_90fb06aa(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_90fb06aa(p0, p1, p2, p3)}
   end
 
   def call_log_90fb06aa(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14510,7 +14510,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_90fb06aa(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9143dbb1_selector() do
+  def log_9143dbb1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14535,7 +14535,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9143dbb1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9143dbb1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9143dbb1(p0, p1, p2, p3)}
   end
 
   def call_log_9143dbb1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14580,7 +14580,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9143dbb1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_91a02e2a_selector() do
+  def log_91a02e2a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14605,7 +14605,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_91a02e2a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_91a02e2a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_91a02e2a(p0, p1, p2, p3)}
   end
 
   def call_log_91a02e2a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14650,7 +14650,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_91a02e2a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_91d1112e_selector() do
+  def log_91d1112e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14675,7 +14675,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_91d1112e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_91d1112e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_91d1112e(p0, p1, p2, p3)}
   end
 
   def call_log_91d1112e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14720,7 +14720,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_91d1112e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_932bbb38_selector() do
+  def log_932bbb38_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14744,7 +14744,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_932bbb38(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_932bbb38(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_932bbb38(p0, p1, p2)}
   end
 
   def call_log_932bbb38(contract, p0, p1, p2, opts \\ []) do
@@ -14789,7 +14789,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_932bbb38(p0, p1, p2), exec_opts)
   end
 
-  def log_935e09bf_selector() do
+  def log_935e09bf_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14814,7 +14814,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_935e09bf(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_935e09bf(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_935e09bf(p0, p1, p2, p3)}
   end
 
   def call_log_935e09bf(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14859,7 +14859,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_935e09bf(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_94250d77_selector() do
+  def log_94250d77_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14884,7 +14884,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_94250d77(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_94250d77(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_94250d77(p0, p1, p2, p3)}
   end
 
   def call_log_94250d77(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14929,7 +14929,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_94250d77(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_958c28c6_selector() do
+  def log_958c28c6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -14954,7 +14954,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_958c28c6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_958c28c6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_958c28c6(p0, p1, p2, p3)}
   end
 
   def call_log_958c28c6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14999,7 +14999,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_958c28c6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9591b953_selector() do
+  def log_9591b953_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15023,7 +15023,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9591b953(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9591b953(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_9591b953(p0, p1, p2)}
   end
 
   def call_log_9591b953(contract, p0, p1, p2, opts \\ []) do
@@ -15068,7 +15068,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9591b953(p0, p1, p2), exec_opts)
   end
 
-  def log_95ed0195_selector() do
+  def log_95ed0195_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15092,7 +15092,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_95ed0195(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_95ed0195(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_95ed0195(p0, p1, p2)}
   end
 
   def call_log_95ed0195(contract, p0, p1, p2, opts \\ []) do
@@ -15137,7 +15137,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_95ed0195(p0, p1, p2), exec_opts)
   end
 
-  def log_97d394d8_selector() do
+  def log_97d394d8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15162,7 +15162,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_97d394d8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_97d394d8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_97d394d8(p0, p1, p2, p3)}
   end
 
   def call_log_97d394d8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15207,7 +15207,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_97d394d8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9a816a83_selector() do
+  def log_9a816a83_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15232,7 +15232,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9a816a83(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9a816a83(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9a816a83(p0, p1, p2, p3)}
   end
 
   def call_log_9a816a83(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15277,7 +15277,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9a816a83(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9acd3616_selector() do
+  def log_9acd3616_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15302,7 +15302,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9acd3616(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9acd3616(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9acd3616(p0, p1, p2, p3)}
   end
 
   def call_log_9acd3616(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15347,7 +15347,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9acd3616(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9b4254e2_selector() do
+  def log_9b4254e2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15372,7 +15372,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9b4254e2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9b4254e2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9b4254e2(p0, p1, p2, p3)}
   end
 
   def call_log_9b4254e2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15417,7 +15417,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9b4254e2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9b6ec042_selector() do
+  def log_9b6ec042_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15441,7 +15441,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9b6ec042(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9b6ec042(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_9b6ec042(p0, p1, p2)}
   end
 
   def call_log_9b6ec042(contract, p0, p1, p2, opts \\ []) do
@@ -15486,7 +15486,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9b6ec042(p0, p1, p2), exec_opts)
   end
 
-  def log_9c3adfa1_selector() do
+  def log_9c3adfa1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15511,7 +15511,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9c3adfa1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9c3adfa1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9c3adfa1(p0, p1, p2, p3)}
   end
 
   def call_log_9c3adfa1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15556,7 +15556,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9c3adfa1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9c4f99fb_selector() do
+  def log_9c4f99fb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15580,7 +15580,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9c4f99fb(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9c4f99fb(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_9c4f99fb(p0, p1, p2)}
   end
 
   def call_log_9c4f99fb(contract, p0, p1, p2, opts \\ []) do
@@ -15625,7 +15625,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9c4f99fb(p0, p1, p2), exec_opts)
   end
 
-  def log_9cba8fff_selector() do
+  def log_9cba8fff_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15650,7 +15650,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9cba8fff(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9cba8fff(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9cba8fff(p0, p1, p2, p3)}
   end
 
   def call_log_9cba8fff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15695,7 +15695,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9cba8fff(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9d22d5dd_selector() do
+  def log_9d22d5dd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15720,7 +15720,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9d22d5dd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9d22d5dd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9d22d5dd(p0, p1, p2, p3)}
   end
 
   def call_log_9d22d5dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15765,7 +15765,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9d22d5dd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9f1bc36e_selector() do
+  def log_9f1bc36e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15790,7 +15790,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9f1bc36e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9f1bc36e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9f1bc36e(p0, p1, p2, p3)}
   end
 
   def call_log_9f1bc36e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15835,7 +15835,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9f1bc36e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_9ffb2f93_selector() do
+  def log_9ffb2f93_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15860,7 +15860,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9ffb2f93(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_9ffb2f93(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_9ffb2f93(p0, p1, p2, p3)}
   end
 
   def call_log_9ffb2f93(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15905,7 +15905,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_9ffb2f93(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a04e2f87_selector() do
+  def log_a04e2f87_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -15930,7 +15930,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a04e2f87(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a04e2f87(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a04e2f87(p0, p1, p2, p3)}
   end
 
   def call_log_a04e2f87(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15975,7 +15975,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a04e2f87(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a0a47963_selector() do
+  def log_a0a47963_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16000,7 +16000,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a0a47963(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a0a47963(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a0a47963(p0, p1, p2, p3)}
   end
 
   def call_log_a0a47963(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16045,7 +16045,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a0a47963(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a1bcc9b3_selector() do
+  def log_a1bcc9b3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16070,7 +16070,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1bcc9b3(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a1bcc9b3(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a1bcc9b3(p0, p1, p2, p3)}
   end
 
   def call_log_a1bcc9b3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16115,7 +16115,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a1bcc9b3(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a1ef4cbb_selector() do
+  def log_a1ef4cbb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16140,7 +16140,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1ef4cbb(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a1ef4cbb(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a1ef4cbb(p0, p1, p2, p3)}
   end
 
   def call_log_a1ef4cbb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16185,7 +16185,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a1ef4cbb(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a1f2e8aa_selector() do
+  def log_a1f2e8aa_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16209,7 +16209,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1f2e8aa(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a1f2e8aa(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_a1f2e8aa(p0, p1, p2)}
   end
 
   def call_log_a1f2e8aa(contract, p0, p1, p2, opts \\ []) do
@@ -16254,7 +16254,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a1f2e8aa(p0, p1, p2), exec_opts)
   end
 
-  def log_a31bfdcc_selector() do
+  def log_a31bfdcc_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16279,7 +16279,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a31bfdcc(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a31bfdcc(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a31bfdcc(p0, p1, p2, p3)}
   end
 
   def call_log_a31bfdcc(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16324,7 +16324,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a31bfdcc(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a5b4fc99_selector() do
+  def log_a5b4fc99_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16349,7 +16349,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a5b4fc99(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a5b4fc99(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a5b4fc99(p0, p1, p2, p3)}
   end
 
   def call_log_a5b4fc99(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16394,7 +16394,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a5b4fc99(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a5cada94_selector() do
+  def log_a5cada94_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16419,7 +16419,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a5cada94(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a5cada94(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a5cada94(p0, p1, p2, p3)}
   end
 
   def call_log_a5cada94(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16464,7 +16464,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a5cada94(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a6f50b0f_selector() do
+  def log_a6f50b0f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16489,7 +16489,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a6f50b0f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a6f50b0f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a6f50b0f(p0, p1, p2, p3)}
   end
 
   def call_log_a6f50b0f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16534,7 +16534,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a6f50b0f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a73c1db6_selector() do
+  def log_a73c1db6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16559,7 +16559,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a73c1db6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a73c1db6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a73c1db6(p0, p1, p2, p3)}
   end
 
   def call_log_a73c1db6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16604,7 +16604,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a73c1db6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a75c59de_selector() do
+  def log_a75c59de_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16629,7 +16629,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a75c59de(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a75c59de(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a75c59de(p0, p1, p2, p3)}
   end
 
   def call_log_a75c59de(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16674,7 +16674,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a75c59de(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a7a87853_selector() do
+  def log_a7a87853_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16699,7 +16699,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a7a87853(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a7a87853(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a7a87853(p0, p1, p2, p3)}
   end
 
   def call_log_a7a87853(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16744,7 +16744,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a7a87853(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_a826caeb_selector() do
+  def log_a826caeb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16769,7 +16769,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a826caeb(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_a826caeb(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_a826caeb(p0, p1, p2, p3)}
   end
 
   def call_log_a826caeb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16814,7 +16814,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_a826caeb(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_aa6540c8_selector() do
+  def log_aa6540c8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16839,7 +16839,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_aa6540c8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_aa6540c8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_aa6540c8(p0, p1, p2, p3)}
   end
 
   def call_log_aa6540c8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16884,7 +16884,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_aa6540c8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_aabc9a31_selector() do
+  def log_aabc9a31_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16909,7 +16909,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_aabc9a31(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_aabc9a31(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_aabc9a31(p0, p1, p2, p3)}
   end
 
   def call_log_aabc9a31(contract, p0, p1, p2, p3, opts \\ []) do
@@ -16954,7 +16954,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_aabc9a31(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ab085ae6_selector() do
+  def log_ab085ae6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -16979,7 +16979,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ab085ae6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ab085ae6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ab085ae6(p0, p1, p2, p3)}
   end
 
   def call_log_ab085ae6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17024,7 +17024,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ab085ae6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_abf73a98_selector() do
+  def log_abf73a98_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17049,7 +17049,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_abf73a98(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_abf73a98(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_abf73a98(p0, p1, p2, p3)}
   end
 
   def call_log_abf73a98(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17094,7 +17094,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_abf73a98(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ade052c7_selector() do
+  def log_ade052c7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17119,7 +17119,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ade052c7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ade052c7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ade052c7(p0, p1, p2, p3)}
   end
 
   def call_log_ade052c7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17164,7 +17164,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ade052c7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ae2ec581_selector() do
+  def log_ae2ec581_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17189,7 +17189,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ae2ec581(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ae2ec581(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ae2ec581(p0, p1, p2, p3)}
   end
 
   def call_log_ae2ec581(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17234,7 +17234,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ae2ec581(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b028c9bd_selector() do
+  def log_b028c9bd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17259,7 +17259,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b028c9bd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b028c9bd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b028c9bd(p0, p1, p2, p3)}
   end
 
   def call_log_b028c9bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17304,7 +17304,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b028c9bd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b076847f_selector() do
+  def log_b076847f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17328,7 +17328,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b076847f(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b076847f(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_b076847f(p0, p1, p2)}
   end
 
   def call_log_b076847f(contract, p0, p1, p2, opts \\ []) do
@@ -17373,7 +17373,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b076847f(p0, p1, p2), exec_opts)
   end
 
-  def log_b0e0f9b5_selector() do
+  def log_b0e0f9b5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17397,7 +17397,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b0e0f9b5(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b0e0f9b5(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_b0e0f9b5(p0, p1, p2)}
   end
 
   def call_log_b0e0f9b5(contract, p0, p1, p2, opts \\ []) do
@@ -17442,7 +17442,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b0e0f9b5(p0, p1, p2), exec_opts)
   end
 
-  def log_b115611f_selector() do
+  def log_b115611f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17466,7 +17466,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b115611f(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b115611f(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_b115611f(p0, p1, p2)}
   end
 
   def call_log_b115611f(contract, p0, p1, p2, opts \\ []) do
@@ -17511,7 +17511,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b115611f(p0, p1, p2), exec_opts)
   end
 
-  def log_b3a6b6bd_selector() do
+  def log_b3a6b6bd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17536,7 +17536,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b3a6b6bd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b3a6b6bd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b3a6b6bd(p0, p1, p2, p3)}
   end
 
   def call_log_b3a6b6bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17581,7 +17581,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b3a6b6bd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b4c314ff_selector() do
+  def log_b4c314ff_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17606,7 +17606,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b4c314ff(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b4c314ff(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b4c314ff(p0, p1, p2, p3)}
   end
 
   def call_log_b4c314ff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17651,7 +17651,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b4c314ff(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b59dbd60_selector() do
+  def log_b59dbd60_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17676,7 +17676,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b59dbd60(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b59dbd60(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b59dbd60(p0, p1, p2, p3)}
   end
 
   def call_log_b59dbd60(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17721,7 +17721,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b59dbd60(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b60e72cc_selector() do
+  def log_b60e72cc_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17741,7 +17741,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b60e72cc(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b60e72cc(p0, p1)}
+    %V2{destination: contract, data: encode_log_b60e72cc(p0, p1)}
   end
 
   def call_log_b60e72cc(contract, p0, p1, opts \\ []) do
@@ -17786,7 +17786,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b60e72cc(p0, p1), exec_opts)
   end
 
-  def log_b69bcaf6_selector() do
+  def log_b69bcaf6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17810,7 +17810,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b69bcaf6(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b69bcaf6(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_b69bcaf6(p0, p1, p2)}
   end
 
   def call_log_b69bcaf6(contract, p0, p1, p2, opts \\ []) do
@@ -17855,7 +17855,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b69bcaf6(p0, p1, p2), exec_opts)
   end
 
-  def log_b6f577a1_selector() do
+  def log_b6f577a1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17880,7 +17880,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b6f577a1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b6f577a1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b6f577a1(p0, p1, p2, p3)}
   end
 
   def call_log_b6f577a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17925,7 +17925,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b6f577a1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b7b914ca_selector() do
+  def log_b7b914ca_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -17950,7 +17950,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b7b914ca(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b7b914ca(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b7b914ca(p0, p1, p2, p3)}
   end
 
   def call_log_b7b914ca(contract, p0, p1, p2, p3, opts \\ []) do
@@ -17995,7 +17995,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b7b914ca(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_b857163a_selector() do
+  def log_b857163a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18020,7 +18020,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b857163a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_b857163a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_b857163a(p0, p1, p2, p3)}
   end
 
   def call_log_b857163a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18065,7 +18065,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_b857163a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ba535d9c_selector() do
+  def log_ba535d9c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18090,7 +18090,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ba535d9c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ba535d9c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ba535d9c(p0, p1, p2, p3)}
   end
 
   def call_log_ba535d9c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18135,7 +18135,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ba535d9c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_bc0b61fe_selector() do
+  def log_bc0b61fe_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18160,7 +18160,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bc0b61fe(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bc0b61fe(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_bc0b61fe(p0, p1, p2, p3)}
   end
 
   def call_log_bc0b61fe(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18205,7 +18205,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bc0b61fe(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_bcfd9be0_selector() do
+  def log_bcfd9be0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18229,7 +18229,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bcfd9be0(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bcfd9be0(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_bcfd9be0(p0, p1, p2)}
   end
 
   def call_log_bcfd9be0(contract, p0, p1, p2, opts \\ []) do
@@ -18274,7 +18274,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bcfd9be0(p0, p1, p2), exec_opts)
   end
 
-  def log_be553481_selector() do
+  def log_be553481_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18299,7 +18299,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_be553481(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_be553481(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_be553481(p0, p1, p2, p3)}
   end
 
   def call_log_be553481(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18344,7 +18344,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_be553481(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_be984353_selector() do
+  def log_be984353_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18369,7 +18369,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_be984353(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_be984353(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_be984353(p0, p1, p2, p3)}
   end
 
   def call_log_be984353(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18414,7 +18414,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_be984353(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_bf01f891_selector() do
+  def log_bf01f891_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18439,7 +18439,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bf01f891(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bf01f891(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_bf01f891(p0, p1, p2, p3)}
   end
 
   def call_log_bf01f891(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18484,7 +18484,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bf01f891(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c0a302d8_selector() do
+  def log_c0a302d8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18509,7 +18509,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c0a302d8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c0a302d8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c0a302d8(p0, p1, p2, p3)}
   end
 
   def call_log_c0a302d8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18554,7 +18554,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c0a302d8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c21f64c7_selector() do
+  def log_c21f64c7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18579,7 +18579,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c21f64c7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c21f64c7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c21f64c7(p0, p1, p2, p3)}
   end
 
   def call_log_c21f64c7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18624,7 +18624,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c21f64c7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c371c7db_selector() do
+  def log_c371c7db_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18649,7 +18649,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c371c7db(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c371c7db(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c371c7db(p0, p1, p2, p3)}
   end
 
   def call_log_c371c7db(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18694,7 +18694,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c371c7db(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c3a8a654_selector() do
+  def log_c3a8a654_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18719,7 +18719,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3a8a654(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c3a8a654(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c3a8a654(p0, p1, p2, p3)}
   end
 
   def call_log_c3a8a654(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18764,7 +18764,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c3a8a654(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c3b55635_selector() do
+  def log_c3b55635_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18784,7 +18784,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3b55635(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c3b55635(p0, p1)}
+    %V2{destination: contract, data: encode_log_c3b55635(p0, p1)}
   end
 
   def call_log_c3b55635(contract, p0, p1, opts \\ []) do
@@ -18829,7 +18829,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c3b55635(p0, p1), exec_opts)
   end
 
-  def log_c3fc3970_selector() do
+  def log_c3fc3970_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18853,7 +18853,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3fc3970(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c3fc3970(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_c3fc3970(p0, p1, p2)}
   end
 
   def call_log_c3fc3970(contract, p0, p1, p2, opts \\ []) do
@@ -18898,7 +18898,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c3fc3970(p0, p1, p2), exec_opts)
   end
 
-  def log_c4643e20_selector() do
+  def log_c4643e20_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18923,7 +18923,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c4643e20(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c4643e20(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c4643e20(p0, p1, p2, p3)}
   end
 
   def call_log_c4643e20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -18968,7 +18968,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c4643e20(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c598d185_selector() do
+  def log_c598d185_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -18993,7 +18993,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c598d185(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c598d185(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c598d185(p0, p1, p2, p3)}
   end
 
   def call_log_c598d185(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19038,7 +19038,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c598d185(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c5ad85f9_selector() do
+  def log_c5ad85f9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19063,7 +19063,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c5ad85f9(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c5ad85f9(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c5ad85f9(p0, p1, p2, p3)}
   end
 
   def call_log_c5ad85f9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19108,7 +19108,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c5ad85f9(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c67ea9d1_selector() do
+  def log_c67ea9d1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19133,7 +19133,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c67ea9d1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c67ea9d1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c67ea9d1(p0, p1, p2, p3)}
   end
 
   def call_log_c67ea9d1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19178,7 +19178,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c67ea9d1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c6acc7a8_selector() do
+  def log_c6acc7a8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19203,7 +19203,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c6acc7a8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c6acc7a8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_c6acc7a8(p0, p1, p2, p3)}
   end
 
   def call_log_c6acc7a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19248,7 +19248,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c6acc7a8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_c91d5ed4_selector() do
+  def log_c91d5ed4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19272,7 +19272,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c91d5ed4(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c91d5ed4(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_c91d5ed4(p0, p1, p2)}
   end
 
   def call_log_c91d5ed4(contract, p0, p1, p2, opts \\ []) do
@@ -19317,7 +19317,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c91d5ed4(p0, p1, p2), exec_opts)
   end
 
-  def log_c95958d6_selector() do
+  def log_c95958d6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19341,7 +19341,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c95958d6(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_c95958d6(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_c95958d6(p0, p1, p2)}
   end
 
   def call_log_c95958d6(contract, p0, p1, p2, opts \\ []) do
@@ -19386,7 +19386,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_c95958d6(p0, p1, p2), exec_opts)
   end
 
-  def log_ca47c4eb_selector() do
+  def log_ca47c4eb_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19410,7 +19410,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ca47c4eb(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ca47c4eb(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_ca47c4eb(p0, p1, p2)}
   end
 
   def call_log_ca47c4eb(contract, p0, p1, p2, opts \\ []) do
@@ -19455,7 +19455,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ca47c4eb(p0, p1, p2), exec_opts)
   end
 
-  def log_ca7733b1_selector() do
+  def log_ca7733b1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19479,7 +19479,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ca7733b1(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ca7733b1(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_ca7733b1(p0, p1, p2)}
   end
 
   def call_log_ca7733b1(contract, p0, p1, p2, opts \\ []) do
@@ -19524,7 +19524,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ca7733b1(p0, p1, p2), exec_opts)
   end
 
-  def log_cac43479_selector() do
+  def log_cac43479_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19549,7 +19549,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cac43479(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cac43479(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_cac43479(p0, p1, p2, p3)}
   end
 
   def call_log_cac43479(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19594,7 +19594,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cac43479(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_cc32ab07_selector() do
+  def log_cc32ab07_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19619,7 +19619,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cc32ab07(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cc32ab07(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_cc32ab07(p0, p1, p2, p3)}
   end
 
   def call_log_cc32ab07(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19664,7 +19664,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cc32ab07(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ccf790a1_selector() do
+  def log_ccf790a1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19689,7 +19689,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ccf790a1(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ccf790a1(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ccf790a1(p0, p1, p2, p3)}
   end
 
   def call_log_ccf790a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19734,7 +19734,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ccf790a1(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ceb5f4d7_selector() do
+  def log_ceb5f4d7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19759,7 +19759,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ceb5f4d7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ceb5f4d7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ceb5f4d7(p0, p1, p2, p3)}
   end
 
   def call_log_ceb5f4d7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19804,7 +19804,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ceb5f4d7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_cf009880_selector() do
+  def log_cf009880_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19829,7 +19829,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf009880(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cf009880(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_cf009880(p0, p1, p2, p3)}
   end
 
   def call_log_cf009880(contract, p0, p1, p2, p3, opts \\ []) do
@@ -19874,7 +19874,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cf009880(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_cf020fb1_selector() do
+  def log_cf020fb1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19898,7 +19898,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf020fb1(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cf020fb1(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_cf020fb1(p0, p1, p2)}
   end
 
   def call_log_cf020fb1(contract, p0, p1, p2, opts \\ []) do
@@ -19943,7 +19943,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cf020fb1(p0, p1, p2), exec_opts)
   end
 
-  def log_cf18105c_selector() do
+  def log_cf18105c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -19968,7 +19968,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf18105c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cf18105c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_cf18105c(p0, p1, p2, p3)}
   end
 
   def call_log_cf18105c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20013,7 +20013,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cf18105c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_cf394485_selector() do
+  def log_cf394485_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20038,7 +20038,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf394485(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_cf394485(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_cf394485(p0, p1, p2, p3)}
   end
 
   def call_log_cf394485(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20083,7 +20083,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_cf394485(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_d1ed7a3c_selector() do
+  def log_d1ed7a3c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20107,7 +20107,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d1ed7a3c(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d1ed7a3c(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_d1ed7a3c(p0, p1, p2)}
   end
 
   def call_log_d1ed7a3c(contract, p0, p1, p2, opts \\ []) do
@@ -20152,7 +20152,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d1ed7a3c(p0, p1, p2), exec_opts)
   end
 
-  def log_d2763667_selector() do
+  def log_d2763667_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20176,7 +20176,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d2763667(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d2763667(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_d2763667(p0, p1, p2)}
   end
 
   def call_log_d2763667(contract, p0, p1, p2, opts \\ []) do
@@ -20221,7 +20221,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d2763667(p0, p1, p2), exec_opts)
   end
 
-  def log_d2d423cd_selector() do
+  def log_d2d423cd_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20246,7 +20246,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d2d423cd(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d2d423cd(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_d2d423cd(p0, p1, p2, p3)}
   end
 
   def call_log_d2d423cd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20291,7 +20291,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d2d423cd(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_d583c602_selector() do
+  def log_d583c602_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20316,7 +20316,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d583c602(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d583c602(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_d583c602(p0, p1, p2, p3)}
   end
 
   def call_log_d583c602(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20361,7 +20361,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d583c602(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_d6019f1c_selector() do
+  def log_d6019f1c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20386,7 +20386,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d6019f1c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d6019f1c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_d6019f1c(p0, p1, p2, p3)}
   end
 
   def call_log_d6019f1c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20431,7 +20431,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d6019f1c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_d6aefad2_selector() do
+  def log_d6aefad2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20456,7 +20456,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d6aefad2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d6aefad2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_d6aefad2(p0, p1, p2, p3)}
   end
 
   def call_log_d6aefad2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20501,7 +20501,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d6aefad2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_d812a167_selector() do
+  def log_d812a167_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20526,7 +20526,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d812a167(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_d812a167(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_d812a167(p0, p1, p2, p3)}
   end
 
   def call_log_d812a167(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20571,7 +20571,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_d812a167(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_daf0d4aa_selector() do
+  def log_daf0d4aa_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20591,7 +20591,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_daf0d4aa(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_daf0d4aa(p0, p1)}
+    %V2{destination: contract, data: encode_log_daf0d4aa(p0, p1)}
   end
 
   def call_log_daf0d4aa(contract, p0, p1, opts \\ []) do
@@ -20636,7 +20636,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_daf0d4aa(p0, p1), exec_opts)
   end
 
-  def log_dbb4c247_selector() do
+  def log_dbb4c247_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20660,7 +20660,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dbb4c247(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_dbb4c247(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_dbb4c247(p0, p1, p2)}
   end
 
   def call_log_dbb4c247(contract, p0, p1, p2, opts \\ []) do
@@ -20705,7 +20705,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_dbb4c247(p0, p1, p2), exec_opts)
   end
 
-  def log_dc5e935b_selector() do
+  def log_dc5e935b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20730,7 +20730,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dc5e935b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_dc5e935b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_dc5e935b(p0, p1, p2, p3)}
   end
 
   def call_log_dc5e935b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20775,7 +20775,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_dc5e935b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ddb06521_selector() do
+  def log_ddb06521_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20800,7 +20800,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ddb06521(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ddb06521(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ddb06521(p0, p1, p2, p3)}
   end
 
   def call_log_ddb06521(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20845,7 +20845,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ddb06521(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_dddb9561_selector() do
+  def log_dddb9561_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20870,7 +20870,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dddb9561(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_dddb9561(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_dddb9561(p0, p1, p2, p3)}
   end
 
   def call_log_dddb9561(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20915,7 +20915,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_dddb9561(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_de03e774_selector() do
+  def log_de03e774_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -20940,7 +20940,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de03e774(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_de03e774(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_de03e774(p0, p1, p2, p3)}
   end
 
   def call_log_de03e774(contract, p0, p1, p2, p3, opts \\ []) do
@@ -20985,7 +20985,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_de03e774(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_de68f20a_selector() do
+  def log_de68f20a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21010,7 +21010,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de68f20a(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_de68f20a(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_de68f20a(p0, p1, p2, p3)}
   end
 
   def call_log_de68f20a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21055,7 +21055,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_de68f20a(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_de9a9270_selector() do
+  def log_de9a9270_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21079,7 +21079,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de9a9270(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_de9a9270(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_de9a9270(p0, p1, p2)}
   end
 
   def call_log_de9a9270(contract, p0, p1, p2, opts \\ []) do
@@ -21124,7 +21124,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_de9a9270(p0, p1, p2), exec_opts)
   end
 
-  def log_dfc4a2e8_selector() do
+  def log_dfc4a2e8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21149,7 +21149,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dfc4a2e8(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_dfc4a2e8(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_dfc4a2e8(p0, p1, p2, p3)}
   end
 
   def call_log_dfc4a2e8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21194,7 +21194,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_dfc4a2e8(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e0625b29_selector() do
+  def log_e0625b29_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21219,7 +21219,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0625b29(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e0625b29(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e0625b29(p0, p1, p2, p3)}
   end
 
   def call_log_e0625b29(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21264,7 +21264,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e0625b29(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e0e95b98_selector() do
+  def log_e0e95b98_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21289,7 +21289,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0e95b98(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e0e95b98(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e0e95b98(p0, p1, p2, p3)}
   end
 
   def call_log_e0e95b98(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21334,7 +21334,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e0e95b98(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e0e9ad4f_selector() do
+  def log_e0e9ad4f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21358,7 +21358,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0e9ad4f(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e0e9ad4f(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_e0e9ad4f(p0, p1, p2)}
   end
 
   def call_log_e0e9ad4f(contract, p0, p1, p2, opts \\ []) do
@@ -21403,7 +21403,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e0e9ad4f(p0, p1, p2), exec_opts)
   end
 
-  def log_e21de278_selector() do
+  def log_e21de278_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21428,7 +21428,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e21de278(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e21de278(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e21de278(p0, p1, p2, p3)}
   end
 
   def call_log_e21de278(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21473,7 +21473,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e21de278(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e298f47d_selector() do
+  def log_e298f47d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21497,7 +21497,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e298f47d(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e298f47d(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_e298f47d(p0, p1, p2)}
   end
 
   def call_log_e298f47d(contract, p0, p1, p2, opts \\ []) do
@@ -21542,7 +21542,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e298f47d(p0, p1, p2), exec_opts)
   end
 
-  def log_e2bfd60b_selector() do
+  def log_e2bfd60b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21567,7 +21567,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e2bfd60b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e2bfd60b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e2bfd60b(p0, p1, p2, p3)}
   end
 
   def call_log_e2bfd60b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21612,7 +21612,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e2bfd60b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e351140f_selector() do
+  def log_e351140f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21637,7 +21637,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e351140f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e351140f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e351140f(p0, p1, p2, p3)}
   end
 
   def call_log_e351140f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21682,7 +21682,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e351140f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e3a9ca2f_selector() do
+  def log_e3a9ca2f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21707,7 +21707,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e3a9ca2f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e3a9ca2f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e3a9ca2f(p0, p1, p2, p3)}
   end
 
   def call_log_e3a9ca2f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21752,7 +21752,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e3a9ca2f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e41b6f6f_selector() do
+  def log_e41b6f6f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21777,7 +21777,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e41b6f6f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e41b6f6f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e41b6f6f(p0, p1, p2, p3)}
   end
 
   def call_log_e41b6f6f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21822,7 +21822,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e41b6f6f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e5e70b2b_selector() do
+  def log_e5e70b2b_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21847,7 +21847,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e5e70b2b(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e5e70b2b(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e5e70b2b(p0, p1, p2, p3)}
   end
 
   def call_log_e5e70b2b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21892,7 +21892,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e5e70b2b(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e8d3018d_selector() do
+  def log_e8d3018d_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21917,7 +21917,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e8d3018d(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e8d3018d(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_e8d3018d(p0, p1, p2, p3)}
   end
 
   def call_log_e8d3018d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -21962,7 +21962,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e8d3018d(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_e8defba9_selector() do
+  def log_e8defba9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -21986,7 +21986,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e8defba9(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_e8defba9(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_e8defba9(p0, p1, p2)}
   end
 
   def call_log_e8defba9(contract, p0, p1, p2, opts \\ []) do
@@ -22031,7 +22031,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_e8defba9(p0, p1, p2), exec_opts)
   end
 
-  def log_eb1bff80_selector() do
+  def log_eb1bff80_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22056,7 +22056,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb1bff80(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_eb1bff80(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_eb1bff80(p0, p1, p2, p3)}
   end
 
   def call_log_eb1bff80(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22101,7 +22101,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_eb1bff80(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_eb7f6fd2_selector() do
+  def log_eb7f6fd2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22126,7 +22126,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb7f6fd2(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_eb7f6fd2(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_eb7f6fd2(p0, p1, p2, p3)}
   end
 
   def call_log_eb7f6fd2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22171,7 +22171,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_eb7f6fd2(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_eb830c92_selector() do
+  def log_eb830c92_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22195,7 +22195,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb830c92(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_eb830c92(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_eb830c92(p0, p1, p2)}
   end
 
   def call_log_eb830c92(contract, p0, p1, p2, opts \\ []) do
@@ -22240,7 +22240,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_eb830c92(p0, p1, p2), exec_opts)
   end
 
-  def log_eb928d7f_selector() do
+  def log_eb928d7f_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22265,7 +22265,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb928d7f(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_eb928d7f(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_eb928d7f(p0, p1, p2, p3)}
   end
 
   def call_log_eb928d7f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22310,7 +22310,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_eb928d7f(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ed8f28f6_selector() do
+  def log_ed8f28f6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22335,7 +22335,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ed8f28f6(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ed8f28f6(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ed8f28f6(p0, p1, p2, p3)}
   end
 
   def call_log_ed8f28f6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22380,7 +22380,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ed8f28f6(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ef1cefe7_selector() do
+  def log_ef1cefe7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22405,7 +22405,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef1cefe7(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ef1cefe7(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ef1cefe7(p0, p1, p2, p3)}
   end
 
   def call_log_ef1cefe7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22450,7 +22450,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ef1cefe7(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ef529018_selector() do
+  def log_ef529018_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22475,7 +22475,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef529018(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ef529018(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ef529018(p0, p1, p2, p3)}
   end
 
   def call_log_ef529018(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22520,7 +22520,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ef529018(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_ef72c513_selector() do
+  def log_ef72c513_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22545,7 +22545,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef72c513(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_ef72c513(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_ef72c513(p0, p1, p2, p3)}
   end
 
   def call_log_ef72c513(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22590,7 +22590,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_ef72c513(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f08744e8_selector() do
+  def log_f08744e8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22614,7 +22614,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f08744e8(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f08744e8(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_f08744e8(p0, p1, p2)}
   end
 
   def call_log_f08744e8(contract, p0, p1, p2, opts \\ []) do
@@ -22659,7 +22659,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f08744e8(p0, p1, p2), exec_opts)
   end
 
-  def log_f11699ed_selector() do
+  def log_f11699ed_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22683,7 +22683,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f11699ed(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f11699ed(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_f11699ed(p0, p1, p2)}
   end
 
   def call_log_f11699ed(contract, p0, p1, p2, opts \\ []) do
@@ -22728,7 +22728,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f11699ed(p0, p1, p2), exec_opts)
   end
 
-  def log_f2a66286_selector() do
+  def log_f2a66286_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22752,7 +22752,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f2a66286(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f2a66286(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_f2a66286(p0, p1, p2)}
   end
 
   def call_log_f2a66286(contract, p0, p1, p2, opts \\ []) do
@@ -22797,7 +22797,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f2a66286(p0, p1, p2), exec_opts)
   end
 
-  def log_f45d7d2c_selector() do
+  def log_f45d7d2c_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22822,7 +22822,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f45d7d2c(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f45d7d2c(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f45d7d2c(p0, p1, p2, p3)}
   end
 
   def call_log_f45d7d2c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22867,7 +22867,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f45d7d2c(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f4880ea4_selector() do
+  def log_f4880ea4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22892,7 +22892,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f4880ea4(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f4880ea4(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f4880ea4(p0, p1, p2, p3)}
   end
 
   def call_log_f4880ea4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -22937,7 +22937,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f4880ea4(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f5bc2249_selector() do
+  def log_f5bc2249_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -22962,7 +22962,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f5bc2249(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f5bc2249(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f5bc2249(p0, p1, p2, p3)}
   end
 
   def call_log_f5bc2249(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23007,7 +23007,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f5bc2249(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f666715a_selector() do
+  def log_f666715a_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23027,7 +23027,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f666715a(contract, p0, p1) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f666715a(p0, p1)}
+    %V2{destination: contract, data: encode_log_f666715a(p0, p1)}
   end
 
   def call_log_f666715a(contract, p0, p1, opts \\ []) do
@@ -23072,7 +23072,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f666715a(p0, p1), exec_opts)
   end
 
-  def log_f7e36245_selector() do
+  def log_f7e36245_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23097,7 +23097,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f7e36245(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f7e36245(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f7e36245(p0, p1, p2, p3)}
   end
 
   def call_log_f7e36245(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23142,7 +23142,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f7e36245(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f808da20_selector() do
+  def log_f808da20_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23167,7 +23167,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f808da20(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f808da20(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f808da20(p0, p1, p2, p3)}
   end
 
   def call_log_f808da20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23212,7 +23212,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f808da20(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f82c50f1_selector() do
+  def log_f82c50f1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23232,7 +23232,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f82c50f1(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f82c50f1(p0)}
+    %V2{destination: contract, data: encode_log_f82c50f1(p0)}
   end
 
   def call_log_f82c50f1(contract, p0, opts \\ []) do
@@ -23277,7 +23277,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f82c50f1(p0), exec_opts)
   end
 
-  def log_f8f51b1e_selector() do
+  def log_f8f51b1e_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23302,7 +23302,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f8f51b1e(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f8f51b1e(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f8f51b1e(p0, p1, p2, p3)}
   end
 
   def call_log_f8f51b1e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23347,7 +23347,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f8f51b1e(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_f9ad2b89_selector() do
+  def log_f9ad2b89_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23372,7 +23372,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f9ad2b89(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_f9ad2b89(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_f9ad2b89(p0, p1, p2, p3)}
   end
 
   def call_log_f9ad2b89(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23417,7 +23417,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_f9ad2b89(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_fa8185af_selector() do
+  def log_fa8185af_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23442,7 +23442,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fa8185af(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fa8185af(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_fa8185af(p0, p1, p2, p3)}
   end
 
   def call_log_fa8185af(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23487,7 +23487,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fa8185af(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_fb772265_selector() do
+  def log_fb772265_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23511,7 +23511,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fb772265(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fb772265(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_fb772265(p0, p1, p2)}
   end
 
   def call_log_fb772265(contract, p0, p1, p2, opts \\ []) do
@@ -23556,7 +23556,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fb772265(p0, p1, p2), exec_opts)
   end
 
-  def log_fc4845f0_selector() do
+  def log_fc4845f0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23581,7 +23581,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fc4845f0(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fc4845f0(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_fc4845f0(p0, p1, p2, p3)}
   end
 
   def call_log_fc4845f0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23626,7 +23626,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fc4845f0(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_fcec75e0_selector() do
+  def log_fcec75e0_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23650,7 +23650,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fcec75e0(contract, p0, p1, p2) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fcec75e0(p0, p1, p2)}
+    %V2{destination: contract, data: encode_log_fcec75e0(p0, p1, p2)}
   end
 
   def call_log_fcec75e0(contract, p0, p1, p2, opts \\ []) do
@@ -23695,7 +23695,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fcec75e0(p0, p1, p2), exec_opts)
   end
 
-  def log_fdb4f990_selector() do
+  def log_fdb4f990_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23720,7 +23720,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fdb4f990(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fdb4f990(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_fdb4f990(p0, p1, p2, p3)}
   end
 
   def call_log_fdb4f990(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23765,7 +23765,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fdb4f990(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_fedd1fff_selector() do
+  def log_fedd1fff_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "log",
@@ -23790,7 +23790,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fedd1fff(contract, p0, p1, p2, p3) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_fedd1fff(p0, p1, p2, p3)}
+    %V2{destination: contract, data: encode_log_fedd1fff(p0, p1, p2, p3)}
   end
 
   def call_log_fedd1fff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -23835,7 +23835,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_fedd1fff(p0, p1, p2, p3), exec_opts)
   end
 
-  def log_address_selector() do
+  def log_address_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logAddress",
@@ -23855,7 +23855,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_address(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_address(p0)}
+    %V2{destination: contract, data: encode_log_address(p0)}
   end
 
   def call_log_address(contract, p0, opts \\ []) do
@@ -23878,9 +23878,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_address(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_address(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_address_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_address_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -23898,7 +23896,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_address(p0), exec_opts)
   end
 
-  def log_bool_selector() do
+  def log_bool_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBool",
@@ -23918,7 +23916,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bool(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bool(p0)}
+    %V2{destination: contract, data: encode_log_bool(p0)}
   end
 
   def call_log_bool(contract, p0, opts \\ []) do
@@ -23941,9 +23939,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bool(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bool(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bool_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bool_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -23961,7 +23957,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bool(p0), exec_opts)
   end
 
-  def log_bytes_selector() do
+  def log_bytes_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes",
@@ -23981,7 +23977,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes(p0)}
+    %V2{destination: contract, data: encode_log_bytes(p0)}
   end
 
   def call_log_bytes(contract, p0, opts \\ []) do
@@ -24004,9 +24000,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24024,7 +24018,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes(p0), exec_opts)
   end
 
-  def log_bytes1_selector() do
+  def log_bytes1_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes1",
@@ -24044,7 +24038,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes1(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes1(p0)}
+    %V2{destination: contract, data: encode_log_bytes1(p0)}
   end
 
   def call_log_bytes1(contract, p0, opts \\ []) do
@@ -24067,9 +24061,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes1(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes1(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes1_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes1_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24087,7 +24079,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes1(p0), exec_opts)
   end
 
-  def log_bytes10_selector() do
+  def log_bytes10_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes10",
@@ -24107,7 +24099,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes10(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes10(p0)}
+    %V2{destination: contract, data: encode_log_bytes10(p0)}
   end
 
   def call_log_bytes10(contract, p0, opts \\ []) do
@@ -24130,9 +24122,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes10(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes10(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes10_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes10_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24150,7 +24140,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes10(p0), exec_opts)
   end
 
-  def log_bytes11_selector() do
+  def log_bytes11_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes11",
@@ -24170,7 +24160,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes11(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes11(p0)}
+    %V2{destination: contract, data: encode_log_bytes11(p0)}
   end
 
   def call_log_bytes11(contract, p0, opts \\ []) do
@@ -24193,9 +24183,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes11(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes11(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes11_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes11_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24213,7 +24201,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes11(p0), exec_opts)
   end
 
-  def log_bytes12_selector() do
+  def log_bytes12_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes12",
@@ -24233,7 +24221,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes12(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes12(p0)}
+    %V2{destination: contract, data: encode_log_bytes12(p0)}
   end
 
   def call_log_bytes12(contract, p0, opts \\ []) do
@@ -24256,9 +24244,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes12(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes12(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes12_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes12_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24276,7 +24262,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes12(p0), exec_opts)
   end
 
-  def log_bytes13_selector() do
+  def log_bytes13_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes13",
@@ -24296,7 +24282,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes13(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes13(p0)}
+    %V2{destination: contract, data: encode_log_bytes13(p0)}
   end
 
   def call_log_bytes13(contract, p0, opts \\ []) do
@@ -24319,9 +24305,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes13(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes13(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes13_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes13_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24339,7 +24323,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes13(p0), exec_opts)
   end
 
-  def log_bytes14_selector() do
+  def log_bytes14_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes14",
@@ -24359,7 +24343,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes14(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes14(p0)}
+    %V2{destination: contract, data: encode_log_bytes14(p0)}
   end
 
   def call_log_bytes14(contract, p0, opts \\ []) do
@@ -24382,9 +24366,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes14(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes14(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes14_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes14_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24402,7 +24384,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes14(p0), exec_opts)
   end
 
-  def log_bytes15_selector() do
+  def log_bytes15_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes15",
@@ -24422,7 +24404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes15(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes15(p0)}
+    %V2{destination: contract, data: encode_log_bytes15(p0)}
   end
 
   def call_log_bytes15(contract, p0, opts \\ []) do
@@ -24445,9 +24427,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes15(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes15(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes15_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes15_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24465,7 +24445,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes15(p0), exec_opts)
   end
 
-  def log_bytes16_selector() do
+  def log_bytes16_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes16",
@@ -24485,7 +24465,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes16(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes16(p0)}
+    %V2{destination: contract, data: encode_log_bytes16(p0)}
   end
 
   def call_log_bytes16(contract, p0, opts \\ []) do
@@ -24508,9 +24488,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes16(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes16(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes16_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes16_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24528,7 +24506,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes16(p0), exec_opts)
   end
 
-  def log_bytes17_selector() do
+  def log_bytes17_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes17",
@@ -24548,7 +24526,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes17(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes17(p0)}
+    %V2{destination: contract, data: encode_log_bytes17(p0)}
   end
 
   def call_log_bytes17(contract, p0, opts \\ []) do
@@ -24571,9 +24549,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes17(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes17(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes17_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes17_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24591,7 +24567,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes17(p0), exec_opts)
   end
 
-  def log_bytes18_selector() do
+  def log_bytes18_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes18",
@@ -24611,7 +24587,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes18(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes18(p0)}
+    %V2{destination: contract, data: encode_log_bytes18(p0)}
   end
 
   def call_log_bytes18(contract, p0, opts \\ []) do
@@ -24634,9 +24610,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes18(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes18(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes18_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes18_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24654,7 +24628,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes18(p0), exec_opts)
   end
 
-  def log_bytes19_selector() do
+  def log_bytes19_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes19",
@@ -24674,7 +24648,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes19(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes19(p0)}
+    %V2{destination: contract, data: encode_log_bytes19(p0)}
   end
 
   def call_log_bytes19(contract, p0, opts \\ []) do
@@ -24697,9 +24671,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes19(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes19(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes19_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes19_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24717,7 +24689,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes19(p0), exec_opts)
   end
 
-  def log_bytes2_selector() do
+  def log_bytes2_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes2",
@@ -24737,7 +24709,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes2(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes2(p0)}
+    %V2{destination: contract, data: encode_log_bytes2(p0)}
   end
 
   def call_log_bytes2(contract, p0, opts \\ []) do
@@ -24760,9 +24732,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes2(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes2(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes2_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes2_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24780,7 +24750,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes2(p0), exec_opts)
   end
 
-  def log_bytes20_selector() do
+  def log_bytes20_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes20",
@@ -24800,7 +24770,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes20(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes20(p0)}
+    %V2{destination: contract, data: encode_log_bytes20(p0)}
   end
 
   def call_log_bytes20(contract, p0, opts \\ []) do
@@ -24823,9 +24793,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes20(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes20(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes20_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes20_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24843,7 +24811,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes20(p0), exec_opts)
   end
 
-  def log_bytes21_selector() do
+  def log_bytes21_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes21",
@@ -24863,7 +24831,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes21(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes21(p0)}
+    %V2{destination: contract, data: encode_log_bytes21(p0)}
   end
 
   def call_log_bytes21(contract, p0, opts \\ []) do
@@ -24886,9 +24854,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes21(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes21(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes21_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes21_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24906,7 +24872,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes21(p0), exec_opts)
   end
 
-  def log_bytes22_selector() do
+  def log_bytes22_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes22",
@@ -24926,7 +24892,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes22(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes22(p0)}
+    %V2{destination: contract, data: encode_log_bytes22(p0)}
   end
 
   def call_log_bytes22(contract, p0, opts \\ []) do
@@ -24949,9 +24915,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes22(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes22(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes22_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes22_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -24969,7 +24933,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes22(p0), exec_opts)
   end
 
-  def log_bytes23_selector() do
+  def log_bytes23_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes23",
@@ -24989,7 +24953,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes23(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes23(p0)}
+    %V2{destination: contract, data: encode_log_bytes23(p0)}
   end
 
   def call_log_bytes23(contract, p0, opts \\ []) do
@@ -25012,9 +24976,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes23(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes23(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes23_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes23_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25032,7 +24994,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes23(p0), exec_opts)
   end
 
-  def log_bytes24_selector() do
+  def log_bytes24_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes24",
@@ -25052,7 +25014,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes24(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes24(p0)}
+    %V2{destination: contract, data: encode_log_bytes24(p0)}
   end
 
   def call_log_bytes24(contract, p0, opts \\ []) do
@@ -25075,9 +25037,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes24(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes24(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes24_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes24_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25095,7 +25055,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes24(p0), exec_opts)
   end
 
-  def log_bytes25_selector() do
+  def log_bytes25_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes25",
@@ -25115,7 +25075,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes25(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes25(p0)}
+    %V2{destination: contract, data: encode_log_bytes25(p0)}
   end
 
   def call_log_bytes25(contract, p0, opts \\ []) do
@@ -25138,9 +25098,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes25(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes25(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes25_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes25_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25158,7 +25116,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes25(p0), exec_opts)
   end
 
-  def log_bytes26_selector() do
+  def log_bytes26_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes26",
@@ -25178,7 +25136,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes26(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes26(p0)}
+    %V2{destination: contract, data: encode_log_bytes26(p0)}
   end
 
   def call_log_bytes26(contract, p0, opts \\ []) do
@@ -25201,9 +25159,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes26(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes26(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes26_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes26_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25221,7 +25177,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes26(p0), exec_opts)
   end
 
-  def log_bytes27_selector() do
+  def log_bytes27_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes27",
@@ -25241,7 +25197,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes27(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes27(p0)}
+    %V2{destination: contract, data: encode_log_bytes27(p0)}
   end
 
   def call_log_bytes27(contract, p0, opts \\ []) do
@@ -25264,9 +25220,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes27(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes27(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes27_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes27_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25284,7 +25238,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes27(p0), exec_opts)
   end
 
-  def log_bytes28_selector() do
+  def log_bytes28_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes28",
@@ -25304,7 +25258,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes28(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes28(p0)}
+    %V2{destination: contract, data: encode_log_bytes28(p0)}
   end
 
   def call_log_bytes28(contract, p0, opts \\ []) do
@@ -25327,9 +25281,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes28(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes28(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes28_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes28_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25347,7 +25299,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes28(p0), exec_opts)
   end
 
-  def log_bytes29_selector() do
+  def log_bytes29_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes29",
@@ -25367,7 +25319,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes29(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes29(p0)}
+    %V2{destination: contract, data: encode_log_bytes29(p0)}
   end
 
   def call_log_bytes29(contract, p0, opts \\ []) do
@@ -25390,9 +25342,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes29(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes29(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes29_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes29_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25410,7 +25360,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes29(p0), exec_opts)
   end
 
-  def log_bytes3_selector() do
+  def log_bytes3_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes3",
@@ -25430,7 +25380,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes3(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes3(p0)}
+    %V2{destination: contract, data: encode_log_bytes3(p0)}
   end
 
   def call_log_bytes3(contract, p0, opts \\ []) do
@@ -25453,9 +25403,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes3(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes3(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes3_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes3_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25473,7 +25421,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes3(p0), exec_opts)
   end
 
-  def log_bytes30_selector() do
+  def log_bytes30_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes30",
@@ -25493,7 +25441,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes30(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes30(p0)}
+    %V2{destination: contract, data: encode_log_bytes30(p0)}
   end
 
   def call_log_bytes30(contract, p0, opts \\ []) do
@@ -25516,9 +25464,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes30(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes30(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes30_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes30_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25536,7 +25482,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes30(p0), exec_opts)
   end
 
-  def log_bytes31_selector() do
+  def log_bytes31_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes31",
@@ -25556,7 +25502,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes31(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes31(p0)}
+    %V2{destination: contract, data: encode_log_bytes31(p0)}
   end
 
   def call_log_bytes31(contract, p0, opts \\ []) do
@@ -25579,9 +25525,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes31(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes31(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes31_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes31_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25599,7 +25543,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes31(p0), exec_opts)
   end
 
-  def log_bytes32_selector() do
+  def log_bytes32_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes32",
@@ -25619,7 +25563,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes32(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes32(p0)}
+    %V2{destination: contract, data: encode_log_bytes32(p0)}
   end
 
   def call_log_bytes32(contract, p0, opts \\ []) do
@@ -25642,9 +25586,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes32(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes32(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes32_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes32_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25662,7 +25604,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes32(p0), exec_opts)
   end
 
-  def log_bytes4_selector() do
+  def log_bytes4_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes4",
@@ -25682,7 +25624,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes4(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes4(p0)}
+    %V2{destination: contract, data: encode_log_bytes4(p0)}
   end
 
   def call_log_bytes4(contract, p0, opts \\ []) do
@@ -25705,9 +25647,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes4(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes4(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes4_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes4_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25725,7 +25665,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes4(p0), exec_opts)
   end
 
-  def log_bytes5_selector() do
+  def log_bytes5_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes5",
@@ -25745,7 +25685,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes5(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes5(p0)}
+    %V2{destination: contract, data: encode_log_bytes5(p0)}
   end
 
   def call_log_bytes5(contract, p0, opts \\ []) do
@@ -25768,9 +25708,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes5(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes5(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes5_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes5_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25788,7 +25726,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes5(p0), exec_opts)
   end
 
-  def log_bytes6_selector() do
+  def log_bytes6_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes6",
@@ -25808,7 +25746,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes6(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes6(p0)}
+    %V2{destination: contract, data: encode_log_bytes6(p0)}
   end
 
   def call_log_bytes6(contract, p0, opts \\ []) do
@@ -25831,9 +25769,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes6(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes6(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes6_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes6_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25851,7 +25787,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes6(p0), exec_opts)
   end
 
-  def log_bytes7_selector() do
+  def log_bytes7_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes7",
@@ -25871,7 +25807,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes7(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes7(p0)}
+    %V2{destination: contract, data: encode_log_bytes7(p0)}
   end
 
   def call_log_bytes7(contract, p0, opts \\ []) do
@@ -25894,9 +25830,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes7(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes7(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes7_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes7_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25914,7 +25848,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes7(p0), exec_opts)
   end
 
-  def log_bytes8_selector() do
+  def log_bytes8_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes8",
@@ -25934,7 +25868,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes8(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes8(p0)}
+    %V2{destination: contract, data: encode_log_bytes8(p0)}
   end
 
   def call_log_bytes8(contract, p0, opts \\ []) do
@@ -25957,9 +25891,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes8(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes8(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes8_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes8_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -25977,7 +25909,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes8(p0), exec_opts)
   end
 
-  def log_bytes9_selector() do
+  def log_bytes9_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logBytes9",
@@ -25997,7 +25929,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes9(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_bytes9(p0)}
+    %V2{destination: contract, data: encode_log_bytes9(p0)}
   end
 
   def call_log_bytes9(contract, p0, opts \\ []) do
@@ -26020,9 +25952,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_bytes9(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes9(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_bytes9_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_bytes9_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -26040,7 +25970,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_bytes9(p0), exec_opts)
   end
 
-  def log_int_selector() do
+  def log_int_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logInt",
@@ -26060,7 +25990,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_int(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_int(p0)}
+    %V2{destination: contract, data: encode_log_int(p0)}
   end
 
   def call_log_int(contract, p0, opts \\ []) do
@@ -26083,9 +26013,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_int(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_int(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_int_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_int_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -26103,7 +26031,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_int(p0), exec_opts)
   end
 
-  def log_string_selector() do
+  def log_string_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logString",
@@ -26123,7 +26051,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_string(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_string(p0)}
+    %V2{destination: contract, data: encode_log_string(p0)}
   end
 
   def call_log_string(contract, p0, opts \\ []) do
@@ -26146,9 +26074,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_string(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_string(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_string_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_string_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -26166,7 +26092,7 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_string(p0), exec_opts)
   end
 
-  def log_uint_selector() do
+  def log_uint_selector do
     %{
       __struct__: ABI.FunctionSelector,
       function: "logUint",
@@ -26186,7 +26112,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_uint(contract, p0) do
-    %Cartouche.Transaction.V2{destination: contract, data: encode_log_uint(p0)}
+    %V2{destination: contract, data: encode_log_uint(p0)}
   end
 
   def call_log_uint(contract, p0, opts \\ []) do
@@ -26209,9 +26135,7 @@ defmodule Cartouche.Contract.IConsole do
   def exec_vm_log_uint(p0, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_log_uint(p0), exec_opts) do
       {:ok, return_data} ->
-        case ABI.decode(%ABI.FunctionSelector{types: log_uint_selector().returns}, return_data,
-               decode_structs: true
-             ) do
+        case ABI.decode(%ABI.FunctionSelector{types: log_uint_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
           els -> {:ok, els}
@@ -26229,1907 +26153,1907 @@ defmodule Cartouche.Contract.IConsole do
     Cartouche.VM.exec_call(deployed_bytecode(), encode_log_uint(p0), exec_opts)
   end
 
-  def decode_call(calldata = <<0, 113, 80, 190>> <> _) do
+  def decode_call(<<0, 113, 80, 190>> <> _ = calldata) do
     _signature = hex!("0x007150be")
     {:ok, "log", decode_log_call(calldata)}
   end
 
-  def decode_call(calldata = <<0, 221, 135, 185>> <> _) do
+  def decode_call(<<0, 221, 135, 185>> <> _ = calldata) do
     _signature = hex!("0x00dd87b9")
     {:ok, "log", decode_log_00dd87b9_call(calldata)}
   end
 
-  def decode_call(calldata = <<1, 140, 132, 194>> <> _) do
+  def decode_call(<<1, 140, 132, 194>> <> _ = calldata) do
     _signature = hex!("0x018c84c2")
     {:ok, "log", decode_log_018c84c2_call(calldata)}
   end
 
-  def decode_call(calldata = <<3, 28, 111, 115>> <> _) do
+  def decode_call(<<3, 28, 111, 115>> <> _ = calldata) do
     _signature = hex!("0x031c6f73")
     {:ok, "log", decode_log_031c6f73_call(calldata)}
   end
 
-  def decode_call(calldata = <<4, 84, 192, 121>> <> _) do
+  def decode_call(<<4, 84, 192, 121>> <> _ = calldata) do
     _signature = hex!("0x0454c079")
     {:ok, "log", decode_log_0454c079_call(calldata)}
   end
 
-  def decode_call(calldata = <<7, 130, 135, 245>> <> _) do
+  def decode_call(<<7, 130, 135, 245>> <> _ = calldata) do
     _signature = hex!("0x078287f5")
     {:ok, "log", decode_log_078287f5_call(calldata)}
   end
 
-  def decode_call(calldata = <<7, 131, 21, 2>> <> _) do
+  def decode_call(<<7, 131, 21, 2>> <> _ = calldata) do
     _signature = hex!("0x07831502")
     {:ok, "log", decode_log_07831502_call(calldata)}
   end
 
-  def decode_call(calldata = <<8, 142, 249, 210>> <> _) do
+  def decode_call(<<8, 142, 249, 210>> <> _ = calldata) do
     _signature = hex!("0x088ef9d2")
     {:ok, "log", decode_log_088ef9d2_call(calldata)}
   end
 
-  def decode_call(calldata = <<9, 31, 250, 245>> <> _) do
+  def decode_call(<<9, 31, 250, 245>> <> _ = calldata) do
     _signature = hex!("0x091ffaf5")
     {:ok, "log", decode_log_091ffaf5_call(calldata)}
   end
 
-  def decode_call(calldata = <<10, 166, 207, 173>> <> _) do
+  def decode_call(<<10, 166, 207, 173>> <> _ = calldata) do
     _signature = hex!("0x0aa6cfad")
     {:ok, "log", decode_log_0aa6cfad_call(calldata)}
   end
 
-  def decode_call(calldata = <<11, 176, 14, 171>> <> _) do
+  def decode_call(<<11, 176, 14, 171>> <> _ = calldata) do
     _signature = hex!("0x0bb00eab")
     {:ok, "log", decode_log_0bb00eab_call(calldata)}
   end
 
-  def decode_call(calldata = <<12, 102, 209, 190>> <> _) do
+  def decode_call(<<12, 102, 209, 190>> <> _ = calldata) do
     _signature = hex!("0x0c66d1be")
     {:ok, "log", decode_log_0c66d1be_call(calldata)}
   end
 
-  def decode_call(calldata = <<12, 156, 217, 193>> <> _) do
+  def decode_call(<<12, 156, 217, 193>> <> _ = calldata) do
     _signature = hex!("0x0c9cd9c1")
     {:ok, "log", decode_log_0c9cd9c1_call(calldata)}
   end
 
-  def decode_call(calldata = <<13, 38, 185, 37>> <> _) do
+  def decode_call(<<13, 38, 185, 37>> <> _ = calldata) do
     _signature = hex!("0x0d26b925")
     {:ok, "log", decode_log_0d26b925_call(calldata)}
   end
 
-  def decode_call(calldata = <<13, 54, 250, 32>> <> _) do
+  def decode_call(<<13, 54, 250, 32>> <> _ = calldata) do
     _signature = hex!("0x0d36fa20")
     {:ok, "log", decode_log_0d36fa20_call(calldata)}
   end
 
-  def decode_call(calldata = <<13, 241, 43, 118>> <> _) do
+  def decode_call(<<13, 241, 43, 118>> <> _ = calldata) do
     _signature = hex!("0x0df12b76")
     {:ok, "log", decode_log_0df12b76_call(calldata)}
   end
 
-  def decode_call(calldata = <<14, 55, 137, 148>> <> _) do
+  def decode_call(<<14, 55, 137, 148>> <> _ = calldata) do
     _signature = hex!("0x0e378994")
     {:ok, "log", decode_log_0e378994_call(calldata)}
   end
 
-  def decode_call(calldata = <<14, 247, 224, 80>> <> _) do
+  def decode_call(<<14, 247, 224, 80>> <> _ = calldata) do
     _signature = hex!("0x0ef7e050")
     {:ok, "log", decode_log_0ef7e050_call(calldata)}
   end
 
-  def decode_call(calldata = <<16, 15, 101, 14>> <> _) do
+  def decode_call(<<16, 15, 101, 14>> <> _ = calldata) do
     _signature = hex!("0x100f650e")
     {:ok, "log", decode_log_100f650e_call(calldata)}
   end
 
-  def decode_call(calldata = <<16, 35, 247, 178>> <> _) do
+  def decode_call(<<16, 35, 247, 178>> <> _ = calldata) do
     _signature = hex!("0x1023f7b2")
     {:ok, "log", decode_log_1023f7b2_call(calldata)}
   end
 
-  def decode_call(calldata = <<16, 120, 246, 141>> <> _) do
+  def decode_call(<<16, 120, 246, 141>> <> _ = calldata) do
     _signature = hex!("0x1078f68d")
     {:ok, "log", decode_log_1078f68d_call(calldata)}
   end
 
-  def decode_call(calldata = <<16, 147, 238, 17>> <> _) do
+  def decode_call(<<16, 147, 238, 17>> <> _ = calldata) do
     _signature = hex!("0x1093ee11")
     {:ok, "log", decode_log_1093ee11_call(calldata)}
   end
 
-  def decode_call(calldata = <<18, 214, 199, 136>> <> _) do
+  def decode_call(<<18, 214, 199, 136>> <> _ = calldata) do
     _signature = hex!("0x12d6c788")
     {:ok, "log", decode_log_12d6c788_call(calldata)}
   end
 
-  def decode_call(calldata = <<18, 242, 22, 2>> <> _) do
+  def decode_call(<<18, 242, 22, 2>> <> _ = calldata) do
     _signature = hex!("0x12f21602")
     {:ok, "log", decode_log_12f21602_call(calldata)}
   end
 
-  def decode_call(calldata = <<19, 107, 5, 221>> <> _) do
+  def decode_call(<<19, 107, 5, 221>> <> _ = calldata) do
     _signature = hex!("0x136b05dd")
     {:ok, "log", decode_log_136b05dd_call(calldata)}
   end
 
-  def decode_call(calldata = <<21, 55, 220, 135>> <> _) do
+  def decode_call(<<21, 55, 220, 135>> <> _ = calldata) do
     _signature = hex!("0x1537dc87")
     {:ok, "log", decode_log_1537dc87_call(calldata)}
   end
 
-  def decode_call(calldata = <<21, 150, 161, 206>> <> _) do
+  def decode_call(<<21, 150, 161, 206>> <> _ = calldata) do
     _signature = hex!("0x1596a1ce")
     {:ok, "log", decode_log_1596a1ce_call(calldata)}
   end
 
-  def decode_call(calldata = <<21, 159, 137, 39>> <> _) do
+  def decode_call(<<21, 159, 137, 39>> <> _ = calldata) do
     _signature = hex!("0x159f8927")
     {:ok, "log", decode_log_159f8927_call(calldata)}
   end
 
-  def decode_call(calldata = <<21, 193, 39, 181>> <> _) do
+  def decode_call(<<21, 193, 39, 181>> <> _ = calldata) do
     _signature = hex!("0x15c127b5")
     {:ok, "log", decode_log_15c127b5_call(calldata)}
   end
 
-  def decode_call(calldata = <<21, 202, 196, 118>> <> _) do
+  def decode_call(<<21, 202, 196, 118>> <> _ = calldata) do
     _signature = hex!("0x15cac476")
     {:ok, "log", decode_log_15cac476_call(calldata)}
   end
 
-  def decode_call(calldata = <<22, 6, 163, 147>> <> _) do
+  def decode_call(<<22, 6, 163, 147>> <> _ = calldata) do
     _signature = hex!("0x1606a393")
     {:ok, "log", decode_log_1606a393_call(calldata)}
   end
 
-  def decode_call(calldata = <<23, 98, 227, 42>> <> _) do
+  def decode_call(<<23, 98, 227, 42>> <> _ = calldata) do
     _signature = hex!("0x1762e32a")
     {:ok, "log", decode_log_1762e32a_call(calldata)}
   end
 
-  def decode_call(calldata = <<23, 254, 97, 133>> <> _) do
+  def decode_call(<<23, 254, 97, 133>> <> _ = calldata) do
     _signature = hex!("0x17fe6185")
     {:ok, "log", decode_log_17fe6185_call(calldata)}
   end
 
-  def decode_call(calldata = <<24, 201, 199, 70>> <> _) do
+  def decode_call(<<24, 201, 199, 70>> <> _ = calldata) do
     _signature = hex!("0x18c9c746")
     {:ok, "log", decode_log_18c9c746_call(calldata)}
   end
 
-  def decode_call(calldata = <<25, 63, 184, 0>> <> _) do
+  def decode_call(<<25, 63, 184, 0>> <> _ = calldata) do
     _signature = hex!("0x193fb800")
     {:ok, "log", decode_log_193fb800_call(calldata)}
   end
 
-  def decode_call(calldata = <<25, 253, 73, 86>> <> _) do
+  def decode_call(<<25, 253, 73, 86>> <> _ = calldata) do
     _signature = hex!("0x19fd4956")
     {:ok, "log", decode_log_19fd4956_call(calldata)}
   end
 
-  def decode_call(calldata = <<26, 217, 109, 230>> <> _) do
+  def decode_call(<<26, 217, 109, 230>> <> _ = calldata) do
     _signature = hex!("0x1ad96de6")
     {:ok, "log", decode_log_1ad96de6_call(calldata)}
   end
 
-  def decode_call(calldata = <<27, 179, 176, 154>> <> _) do
+  def decode_call(<<27, 179, 176, 154>> <> _ = calldata) do
     _signature = hex!("0x1bb3b09a")
     {:ok, "log", decode_log_1bb3b09a_call(calldata)}
   end
 
-  def decode_call(calldata = <<28, 65, 163, 54>> <> _) do
+  def decode_call(<<28, 65, 163, 54>> <> _ = calldata) do
     _signature = hex!("0x1c41a336")
     {:ok, "log", decode_log_1c41a336_call(calldata)}
   end
 
-  def decode_call(calldata = <<28, 126, 196, 72>> <> _) do
+  def decode_call(<<28, 126, 196, 72>> <> _ = calldata) do
     _signature = hex!("0x1c7ec448")
     {:ok, "log", decode_log_1c7ec448_call(calldata)}
   end
 
-  def decode_call(calldata = <<28, 157, 126, 179>> <> _) do
+  def decode_call(<<28, 157, 126, 179>> <> _ = calldata) do
     _signature = hex!("0x1c9d7eb3")
     {:ok, "log", decode_log_1c9d7eb3_call(calldata)}
   end
 
-  def decode_call(calldata = <<29, 20, 208, 1>> <> _) do
+  def decode_call(<<29, 20, 208, 1>> <> _ = calldata) do
     _signature = hex!("0x1d14d001")
     {:ok, "log", decode_log_1d14d001_call(calldata)}
   end
 
-  def decode_call(calldata = <<29, 169, 134, 234>> <> _) do
+  def decode_call(<<29, 169, 134, 234>> <> _ = calldata) do
     _signature = hex!("0x1da986ea")
     {:ok, "log", decode_log_1da986ea_call(calldata)}
   end
 
-  def decode_call(calldata = <<29, 200, 225, 184>> <> _) do
+  def decode_call(<<29, 200, 225, 184>> <> _ = calldata) do
     _signature = hex!("0x1dc8e1b8")
     {:ok, "log", decode_log_1dc8e1b8_call(calldata)}
   end
 
-  def decode_call(calldata = <<30, 75, 135, 229>> <> _) do
+  def decode_call(<<30, 75, 135, 229>> <> _ = calldata) do
     _signature = hex!("0x1e4b87e5")
     {:ok, "log", decode_log_1e4b87e5_call(calldata)}
   end
 
-  def decode_call(calldata = <<32, 9, 128, 20>> <> _) do
+  def decode_call(<<32, 9, 128, 20>> <> _ = calldata) do
     _signature = hex!("0x20098014")
     {:ok, "log", decode_log_20098014_call(calldata)}
   end
 
-  def decode_call(calldata = <<32, 88, 113, 194>> <> _) do
+  def decode_call(<<32, 88, 113, 194>> <> _ = calldata) do
     _signature = hex!("0x205871c2")
     {:ok, "log", decode_log_205871c2_call(calldata)}
   end
 
-  def decode_call(calldata = <<32, 113, 134, 80>> <> _) do
+  def decode_call(<<32, 113, 134, 80>> <> _ = calldata) do
     _signature = hex!("0x20718650")
     {:ok, "log", decode_log_20718650_call(calldata)}
   end
 
-  def decode_call(calldata = <<32, 227, 152, 77>> <> _) do
+  def decode_call(<<32, 227, 152, 77>> <> _ = calldata) do
     _signature = hex!("0x20e3984d")
     {:ok, "log", decode_log_20e3984d_call(calldata)}
   end
 
-  def decode_call(calldata = <<33, 34, 85, 204>> <> _) do
+  def decode_call(<<33, 34, 85, 204>> <> _ = calldata) do
     _signature = hex!("0x212255cc")
     {:ok, "log", decode_log_212255cc_call(calldata)}
   end
 
-  def decode_call(calldata = <<33, 173, 6, 131>> <> _) do
+  def decode_call(<<33, 173, 6, 131>> <> _ = calldata) do
     _signature = hex!("0x21ad0683")
     {:ok, "log", decode_log_21ad0683_call(calldata)}
   end
 
-  def decode_call(calldata = <<33, 189, 175, 37>> <> _) do
+  def decode_call(<<33, 189, 175, 37>> <> _ = calldata) do
     _signature = hex!("0x21bdaf25")
     {:ok, "log", decode_log_21bdaf25_call(calldata)}
   end
 
-  def decode_call(calldata = <<34, 54, 3, 189>> <> _) do
+  def decode_call(<<34, 54, 3, 189>> <> _ = calldata) do
     _signature = hex!("0x223603bd")
     {:ok, "log", decode_log_223603bd_call(calldata)}
   end
 
-  def decode_call(calldata = <<34, 246, 185, 153>> <> _) do
+  def decode_call(<<34, 246, 185, 153>> <> _ = calldata) do
     _signature = hex!("0x22f6b999")
     {:ok, "log", decode_log_22f6b999_call(calldata)}
   end
 
-  def decode_call(calldata = <<36, 89, 134, 242>> <> _) do
+  def decode_call(<<36, 89, 134, 242>> <> _ = calldata) do
     _signature = hex!("0x245986f2")
     {:ok, "log", decode_log_245986f2_call(calldata)}
   end
 
-  def decode_call(calldata = <<36, 136, 180, 20>> <> _) do
+  def decode_call(<<36, 136, 180, 20>> <> _ = calldata) do
     _signature = hex!("0x2488b414")
     {:ok, "log", decode_log_2488b414_call(calldata)}
   end
 
-  def decode_call(calldata = <<36, 249, 20, 101>> <> _) do
+  def decode_call(<<36, 249, 20, 101>> <> _ = calldata) do
     _signature = hex!("0x24f91465")
     {:ok, "log", decode_log_24f91465_call(calldata)}
   end
 
-  def decode_call(calldata = <<37, 85, 250, 70>> <> _) do
+  def decode_call(<<37, 85, 250, 70>> <> _ = calldata) do
     _signature = hex!("0x2555fa46")
     {:ok, "log", decode_log_2555fa46_call(calldata)}
   end
 
-  def decode_call(calldata = <<38, 245, 96, 168>> <> _) do
+  def decode_call(<<38, 245, 96, 168>> <> _ = calldata) do
     _signature = hex!("0x26f560a8")
     {:ok, "log", decode_log_26f560a8_call(calldata)}
   end
 
-  def decode_call(calldata = <<39, 216, 175, 210>> <> _) do
+  def decode_call(<<39, 216, 175, 210>> <> _ = calldata) do
     _signature = hex!("0x27d8afd2")
     {:ok, "log", decode_log_27d8afd2_call(calldata)}
   end
 
-  def decode_call(calldata = <<40, 134, 63, 203>> <> _) do
+  def decode_call(<<40, 134, 63, 203>> <> _ = calldata) do
     _signature = hex!("0x28863fcb")
     {:ok, "log", decode_log_28863fcb_call(calldata)}
   end
 
-  def decode_call(calldata = <<42, 17, 14, 131>> <> _) do
+  def decode_call(<<42, 17, 14, 131>> <> _ = calldata) do
     _signature = hex!("0x2a110e83")
     {:ok, "log", decode_log_2a110e83_call(calldata)}
   end
 
-  def decode_call(calldata = <<42, 228, 8, 212>> <> _) do
+  def decode_call(<<42, 228, 8, 212>> <> _ = calldata) do
     _signature = hex!("0x2ae408d4")
     {:ok, "log", decode_log_2ae408d4_call(calldata)}
   end
 
-  def decode_call(calldata = <<43, 43, 24, 220>> <> _) do
+  def decode_call(<<43, 43, 24, 220>> <> _ = calldata) do
     _signature = hex!("0x2b2b18dc")
     {:ok, "log", decode_log_2b2b18dc_call(calldata)}
   end
 
-  def decode_call(calldata = <<44, 23, 84, 237>> <> _) do
+  def decode_call(<<44, 23, 84, 237>> <> _ = calldata) do
     _signature = hex!("0x2c1754ed")
     {:ok, "log", decode_log_2c1754ed_call(calldata)}
   end
 
-  def decode_call(calldata = <<44, 29, 7, 70>> <> _) do
+  def decode_call(<<44, 29, 7, 70>> <> _ = calldata) do
     _signature = hex!("0x2c1d0746")
     {:ok, "log", decode_log_2c1d0746_call(calldata)}
   end
 
-  def decode_call(calldata = <<44, 46, 203, 194>> <> _) do
+  def decode_call(<<44, 46, 203, 194>> <> _ = calldata) do
     _signature = hex!("0x2c2ecbc2")
     {:ok, "log", decode_log_2c2ecbc2_call(calldata)}
   end
 
-  def decode_call(calldata = <<44, 212, 19, 74>> <> _) do
+  def decode_call(<<44, 212, 19, 74>> <> _ = calldata) do
     _signature = hex!("0x2cd4134a")
     {:ok, "log", decode_log_2cd4134a_call(calldata)}
   end
 
-  def decode_call(calldata = <<44, 237, 124, 239>> <> _) do
+  def decode_call(<<44, 237, 124, 239>> <> _ = calldata) do
     _signature = hex!("0x2ced7cef")
     {:ok, "log", decode_log_2ced7cef_call(calldata)}
   end
 
-  def decode_call(calldata = <<45, 91, 108, 185>> <> _) do
+  def decode_call(<<45, 91, 108, 185>> <> _ = calldata) do
     _signature = hex!("0x2d5b6cb9")
     {:ok, "log", decode_log_2d5b6cb9_call(calldata)}
   end
 
-  def decode_call(calldata = <<45, 142, 51, 164>> <> _) do
+  def decode_call(<<45, 142, 51, 164>> <> _ = calldata) do
     _signature = hex!("0x2d8e33a4")
     {:ok, "log", decode_log_2d8e33a4_call(calldata)}
   end
 
-  def decode_call(calldata = <<45, 215, 120, 230>> <> _) do
+  def decode_call(<<45, 215, 120, 230>> <> _ = calldata) do
     _signature = hex!("0x2dd778e6")
     {:ok, "log", decode_log_2dd778e6_call(calldata)}
   end
 
-  def decode_call(calldata = <<49, 154, 243, 51>> <> _) do
+  def decode_call(<<49, 154, 243, 51>> <> _ = calldata) do
     _signature = hex!("0x319af333")
     {:ok, "log", decode_log_319af333_call(calldata)}
   end
 
-  def decode_call(calldata = <<50, 69, 142, 237>> <> _) do
+  def decode_call(<<50, 69, 142, 237>> <> _ = calldata) do
     _signature = hex!("0x32458eed")
     {:ok, "log", decode_log_32458eed_call(calldata)}
   end
 
-  def decode_call(calldata = <<51, 233, 221, 29>> <> _) do
+  def decode_call(<<51, 233, 221, 29>> <> _ = calldata) do
     _signature = hex!("0x33e9dd1d")
     {:ok, "log", decode_log_33e9dd1d_call(calldata)}
   end
 
-  def decode_call(calldata = <<52, 240, 230, 54>> <> _) do
+  def decode_call(<<52, 240, 230, 54>> <> _ = calldata) do
     _signature = hex!("0x34f0e636")
     {:ok, "log", decode_log_34f0e636_call(calldata)}
   end
 
-  def decode_call(calldata = <<53, 8, 95, 123>> <> _) do
+  def decode_call(<<53, 8, 95, 123>> <> _ = calldata) do
     _signature = hex!("0x35085f7b")
     {:ok, "log", decode_log_35085f7b_call(calldata)}
   end
 
-  def decode_call(calldata = <<53, 76, 54, 214>> <> _) do
+  def decode_call(<<53, 76, 54, 214>> <> _ = calldata) do
     _signature = hex!("0x354c36d6")
     {:ok, "log", decode_log_354c36d6_call(calldata)}
   end
 
-  def decode_call(calldata = <<53, 165, 7, 31>> <> _) do
+  def decode_call(<<53, 165, 7, 31>> <> _ = calldata) do
     _signature = hex!("0x35a5071f")
     {:ok, "log", decode_log_35a5071f_call(calldata)}
   end
 
-  def decode_call(calldata = <<55, 16, 51, 103>> <> _) do
+  def decode_call(<<55, 16, 51, 103>> <> _ = calldata) do
     _signature = hex!("0x37103367")
     {:ok, "log", decode_log_37103367_call(calldata)}
   end
 
-  def decode_call(calldata = <<55, 75, 180, 178>> <> _) do
+  def decode_call(<<55, 75, 180, 178>> <> _ = calldata) do
     _signature = hex!("0x374bb4b2")
     {:ok, "log", decode_log_374bb4b2_call(calldata)}
   end
 
-  def decode_call(calldata = <<55, 170, 125, 76>> <> _) do
+  def decode_call(<<55, 170, 125, 76>> <> _ = calldata) do
     _signature = hex!("0x37aa7d4c")
     {:ok, "log", decode_log_37aa7d4c_call(calldata)}
   end
 
-  def decode_call(calldata = <<56, 111, 245, 244>> <> _) do
+  def decode_call(<<56, 111, 245, 244>> <> _ = calldata) do
     _signature = hex!("0x386ff5f4")
     {:ok, "log", decode_log_386ff5f4_call(calldata)}
   end
 
-  def decode_call(calldata = <<57, 113, 231, 140>> <> _) do
+  def decode_call(<<57, 113, 231, 140>> <> _ = calldata) do
     _signature = hex!("0x3971e78c")
     {:ok, "log", decode_log_3971e78c_call(calldata)}
   end
 
-  def decode_call(calldata = <<57, 145, 116, 211>> <> _) do
+  def decode_call(<<57, 145, 116, 211>> <> _ = calldata) do
     _signature = hex!("0x399174d3")
     {:ok, "log", decode_log_399174d3_call(calldata)}
   end
 
-  def decode_call(calldata = <<59, 34, 121, 180>> <> _) do
+  def decode_call(<<59, 34, 121, 180>> <> _ = calldata) do
     _signature = hex!("0x3b2279b4")
     {:ok, "log", decode_log_3b2279b4_call(calldata)}
   end
 
-  def decode_call(calldata = <<59, 42, 92, 224>> <> _) do
+  def decode_call(<<59, 42, 92, 224>> <> _ = calldata) do
     _signature = hex!("0x3b2a5ce0")
     {:ok, "log", decode_log_3b2a5ce0_call(calldata)}
   end
 
-  def decode_call(calldata = <<59, 245, 229, 55>> <> _) do
+  def decode_call(<<59, 245, 229, 55>> <> _ = calldata) do
     _signature = hex!("0x3bf5e537")
     {:ok, "log", decode_log_3bf5e537_call(calldata)}
   end
 
-  def decode_call(calldata = <<60, 166, 38, 142>> <> _) do
+  def decode_call(<<60, 166, 38, 142>> <> _ = calldata) do
     _signature = hex!("0x3ca6268e")
     {:ok, "log", decode_log_3ca6268e_call(calldata)}
   end
 
-  def decode_call(calldata = <<62, 18, 140, 163>> <> _) do
+  def decode_call(<<62, 18, 140, 163>> <> _ = calldata) do
     _signature = hex!("0x3e128ca3")
     {:ok, "log", decode_log_3e128ca3_call(calldata)}
   end
 
-  def decode_call(calldata = <<62, 159, 134, 106>> <> _) do
+  def decode_call(<<62, 159, 134, 106>> <> _ = calldata) do
     _signature = hex!("0x3e9f866a")
     {:ok, "log", decode_log_3e9f866a_call(calldata)}
   end
 
-  def decode_call(calldata = <<63, 138, 112, 29>> <> _) do
+  def decode_call(<<63, 138, 112, 29>> <> _ = calldata) do
     _signature = hex!("0x3f8a701d")
     {:ok, "log", decode_log_3f8a701d_call(calldata)}
   end
 
-  def decode_call(calldata = <<64, 120, 88, 105>> <> _) do
+  def decode_call(<<64, 120, 88, 105>> <> _ = calldata) do
     _signature = hex!("0x40785869")
     {:ok, "log", decode_log_40785869_call(calldata)}
   end
 
-  def decode_call(calldata = <<65, 48, 79, 172>> <> _) do
+  def decode_call(<<65, 48, 79, 172>> <> _ = calldata) do
     _signature = hex!("0x41304fac")
     {:ok, "log", decode_log_41304fac_call(calldata)}
   end
 
-  def decode_call(calldata = <<66, 210, 29, 183>> <> _) do
+  def decode_call(<<66, 210, 29, 183>> <> _ = calldata) do
     _signature = hex!("0x42d21db7")
     {:ok, "log", decode_log_42d21db7_call(calldata)}
   end
 
-  def decode_call(calldata = <<67, 156, 123, 239>> <> _) do
+  def decode_call(<<67, 156, 123, 239>> <> _ = calldata) do
     _signature = hex!("0x439c7bef")
     {:ok, "log", decode_log_439c7bef_call(calldata)}
   end
 
-  def decode_call(calldata = <<68, 136, 48, 168>> <> _) do
+  def decode_call(<<68, 136, 48, 168>> <> _ = calldata) do
     _signature = hex!("0x448830a8")
     {:ok, "log", decode_log_448830a8_call(calldata)}
   end
 
-  def decode_call(calldata = <<69, 77, 84, 165>> <> _) do
+  def decode_call(<<69, 77, 84, 165>> <> _ = calldata) do
     _signature = hex!("0x454d54a5")
     {:ok, "log", decode_log_454d54a5_call(calldata)}
   end
 
-  def decode_call(calldata = <<69, 127, 227, 207>> <> _) do
+  def decode_call(<<69, 127, 227, 207>> <> _ = calldata) do
     _signature = hex!("0x457fe3cf")
     {:ok, "log", decode_log_457fe3cf_call(calldata)}
   end
 
-  def decode_call(calldata = <<70, 96, 11, 224>> <> _) do
+  def decode_call(<<70, 96, 11, 224>> <> _ = calldata) do
     _signature = hex!("0x46600be0")
     {:ok, "log", decode_log_46600be0_call(calldata)}
   end
 
-  def decode_call(calldata = <<70, 130, 107, 93>> <> _) do
+  def decode_call(<<70, 130, 107, 93>> <> _ = calldata) do
     _signature = hex!("0x46826b5d")
     {:ok, "log", decode_log_46826b5d_call(calldata)}
   end
 
-  def decode_call(calldata = <<71, 92, 92, 51>> <> _) do
+  def decode_call(<<71, 92, 92, 51>> <> _ = calldata) do
     _signature = hex!("0x475c5c33")
     {:ok, "log", decode_log_475c5c33_call(calldata)}
   end
 
-  def decode_call(calldata = <<71, 102, 218, 114>> <> _) do
+  def decode_call(<<71, 102, 218, 114>> <> _ = calldata) do
     _signature = hex!("0x4766da72")
     {:ok, "log", decode_log_4766da72_call(calldata)}
   end
 
-  def decode_call(calldata = <<71, 141, 28, 98>> <> _) do
+  def decode_call(<<71, 141, 28, 98>> <> _ = calldata) do
     _signature = hex!("0x478d1c62")
     {:ok, "log", decode_log_478d1c62_call(calldata)}
   end
 
-  def decode_call(calldata = <<72, 61, 4, 22>> <> _) do
+  def decode_call(<<72, 61, 4, 22>> <> _ = calldata) do
     _signature = hex!("0x483d0416")
     {:ok, "log", decode_log_483d0416_call(calldata)}
   end
 
-  def decode_call(calldata = <<74, 40, 192, 23>> <> _) do
+  def decode_call(<<74, 40, 192, 23>> <> _ = calldata) do
     _signature = hex!("0x4a28c017")
     {:ok, "log", decode_log_4a28c017_call(calldata)}
   end
 
-  def decode_call(calldata = <<74, 102, 203, 52>> <> _) do
+  def decode_call(<<74, 102, 203, 52>> <> _ = calldata) do
     _signature = hex!("0x4a66cb34")
     {:ok, "log", decode_log_4a66cb34_call(calldata)}
   end
 
-  def decode_call(calldata = <<75, 92, 66, 119>> <> _) do
+  def decode_call(<<75, 92, 66, 119>> <> _ = calldata) do
     _signature = hex!("0x4b5c4277")
     {:ok, "log", decode_log_4b5c4277_call(calldata)}
   end
 
-  def decode_call(calldata = <<76, 18, 61, 87>> <> _) do
+  def decode_call(<<76, 18, 61, 87>> <> _ = calldata) do
     _signature = hex!("0x4c123d57")
     {:ok, "log", decode_log_4c123d57_call(calldata)}
   end
 
-  def decode_call(calldata = <<76, 237, 167, 90>> <> _) do
+  def decode_call(<<76, 237, 167, 90>> <> _ = calldata) do
     _signature = hex!("0x4ceda75a")
     {:ok, "log", decode_log_4ceda75a_call(calldata)}
   end
 
-  def decode_call(calldata = <<79, 4, 253, 198>> <> _) do
+  def decode_call(<<79, 4, 253, 198>> <> _ = calldata) do
     _signature = hex!("0x4f04fdc6")
     {:ok, "log", decode_log_4f04fdc6_call(calldata)}
   end
 
-  def decode_call(calldata = <<80, 112, 150, 152>> <> _) do
+  def decode_call(<<80, 112, 150, 152>> <> _ = calldata) do
     _signature = hex!("0x50709698")
     {:ok, "log", decode_log_50709698_call(calldata)}
   end
 
-  def decode_call(calldata = <<80, 173, 70, 29>> <> _) do
+  def decode_call(<<80, 173, 70, 29>> <> _ = calldata) do
     _signature = hex!("0x50ad461d")
     {:ok, "log", decode_log_50ad461d_call(calldata)}
   end
 
-  def decode_call(calldata = <<81, 94, 56, 182>> <> _) do
+  def decode_call(<<81, 94, 56, 182>> <> _ = calldata) do
     _signature = hex!("0x515e38b6")
     {:ok, "log", decode_log_515e38b6_call(calldata)}
   end
 
-  def decode_call(calldata = <<81, 151, 62, 201>> <> _) do
+  def decode_call(<<81, 151, 62, 201>> <> _ = calldata) do
     _signature = hex!("0x51973ec9")
     {:ok, "log", decode_log_51973ec9_call(calldata)}
   end
 
-  def decode_call(calldata = <<81, 240, 159, 248>> <> _) do
+  def decode_call(<<81, 240, 159, 248>> <> _ = calldata) do
     _signature = hex!("0x51f09ff8")
     {:ok, "log", decode_log_51f09ff8_call(calldata)}
   end
 
-  def decode_call(calldata = <<83, 142, 6, 171>> <> _) do
+  def decode_call(<<83, 142, 6, 171>> <> _ = calldata) do
     _signature = hex!("0x538e06ab")
     {:ok, "log", decode_log_538e06ab_call(calldata)}
   end
 
-  def decode_call(calldata = <<84, 167, 169, 160>> <> _) do
+  def decode_call(<<84, 167, 169, 160>> <> _ = calldata) do
     _signature = hex!("0x54a7a9a0")
     {:ok, "log", decode_log_54a7a9a0_call(calldata)}
   end
 
-  def decode_call(calldata = <<86, 165, 209, 177>> <> _) do
+  def decode_call(<<86, 165, 209, 177>> <> _ = calldata) do
     _signature = hex!("0x56a5d1b1")
     {:ok, "log", decode_log_56a5d1b1_call(calldata)}
   end
 
-  def decode_call(calldata = <<88, 33, 239, 161>> <> _) do
+  def decode_call(<<88, 33, 239, 161>> <> _ = calldata) do
     _signature = hex!("0x5821efa1")
     {:ok, "log", decode_log_5821efa1_call(calldata)}
   end
 
-  def decode_call(calldata = <<89, 112, 224, 137>> <> _) do
+  def decode_call(<<89, 112, 224, 137>> <> _ = calldata) do
     _signature = hex!("0x5970e089")
     {:ok, "log", decode_log_5970e089_call(calldata)}
   end
 
-  def decode_call(calldata = <<89, 207, 203, 227>> <> _) do
+  def decode_call(<<89, 207, 203, 227>> <> _ = calldata) do
     _signature = hex!("0x59cfcbe3")
     {:ok, "log", decode_log_59cfcbe3_call(calldata)}
   end
 
-  def decode_call(calldata = <<90, 71, 118, 50>> <> _) do
+  def decode_call(<<90, 71, 118, 50>> <> _ = calldata) do
     _signature = hex!("0x5a477632")
     {:ok, "log", decode_log_5a477632_call(calldata)}
   end
 
-  def decode_call(calldata = <<90, 155, 94, 213>> <> _) do
+  def decode_call(<<90, 155, 94, 213>> <> _ = calldata) do
     _signature = hex!("0x5a9b5ed5")
     {:ok, "log", decode_log_5a9b5ed5_call(calldata)}
   end
 
-  def decode_call(calldata = <<90, 184, 78, 31>> <> _) do
+  def decode_call(<<90, 184, 78, 31>> <> _ = calldata) do
     _signature = hex!("0x5ab84e1f")
     {:ok, "log", decode_log_5ab84e1f_call(calldata)}
   end
 
-  def decode_call(calldata = <<90, 189, 153, 42>> <> _) do
+  def decode_call(<<90, 189, 153, 42>> <> _ = calldata) do
     _signature = hex!("0x5abd992a")
     {:ok, "log", decode_log_5abd992a_call(calldata)}
   end
 
-  def decode_call(calldata = <<92, 67, 13, 71>> <> _) do
+  def decode_call(<<92, 67, 13, 71>> <> _ = calldata) do
     _signature = hex!("0x5c430d47")
     {:ok, "log", decode_log_5c430d47_call(calldata)}
   end
 
-  def decode_call(calldata = <<92, 150, 179, 49>> <> _) do
+  def decode_call(<<92, 150, 179, 49>> <> _ = calldata) do
     _signature = hex!("0x5c96b331")
     {:ok, "log", decode_log_5c96b331_call(calldata)}
   end
 
-  def decode_call(calldata = <<92, 205, 78, 55>> <> _) do
+  def decode_call(<<92, 205, 78, 55>> <> _ = calldata) do
     _signature = hex!("0x5ccd4e37")
     {:ok, "log", decode_log_5ccd4e37_call(calldata)}
   end
 
-  def decode_call(calldata = <<93, 2, 197, 11>> <> _) do
+  def decode_call(<<93, 2, 197, 11>> <> _ = calldata) do
     _signature = hex!("0x5d02c50b")
     {:ok, "log", decode_log_5d02c50b_call(calldata)}
   end
 
-  def decode_call(calldata = <<93, 8, 187, 5>> <> _) do
+  def decode_call(<<93, 8, 187, 5>> <> _ = calldata) do
     _signature = hex!("0x5d08bb05")
     {:ok, "log", decode_log_5d08bb05_call(calldata)}
   end
 
-  def decode_call(calldata = <<93, 26, 151, 26>> <> _) do
+  def decode_call(<<93, 26, 151, 26>> <> _ = calldata) do
     _signature = hex!("0x5d1a971a")
     {:ok, "log", decode_log_5d1a971a_call(calldata)}
   end
 
-  def decode_call(calldata = <<93, 162, 151, 235>> <> _) do
+  def decode_call(<<93, 162, 151, 235>> <> _ = calldata) do
     _signature = hex!("0x5da297eb")
     {:ok, "log", decode_log_5da297eb_call(calldata)}
   end
 
-  def decode_call(calldata = <<94, 132, 176, 234>> <> _) do
+  def decode_call(<<94, 132, 176, 234>> <> _ = calldata) do
     _signature = hex!("0x5e84b0ea")
     {:ok, "log", decode_log_5e84b0ea_call(calldata)}
   end
 
-  def decode_call(calldata = <<94, 162, 183, 174>> <> _) do
+  def decode_call(<<94, 162, 183, 174>> <> _ = calldata) do
     _signature = hex!("0x5ea2b7ae")
     {:ok, "log", decode_log_5ea2b7ae_call(calldata)}
   end
 
-  def decode_call(calldata = <<95, 21, 210, 140>> <> _) do
+  def decode_call(<<95, 21, 210, 140>> <> _ = calldata) do
     _signature = hex!("0x5f15d28c")
     {:ok, "log", decode_log_5f15d28c_call(calldata)}
   end
 
-  def decode_call(calldata = <<95, 29, 92, 159>> <> _) do
+  def decode_call(<<95, 29, 92, 159>> <> _ = calldata) do
     _signature = hex!("0x5f1d5c9f")
     {:ok, "log", decode_log_5f1d5c9f_call(calldata)}
   end
 
-  def decode_call(calldata = <<95, 116, 58, 124>> <> _) do
+  def decode_call(<<95, 116, 58, 124>> <> _ = calldata) do
     _signature = hex!("0x5f743a7c")
     {:ok, "log", decode_log_5f743a7c_call(calldata)}
   end
 
-  def decode_call(calldata = <<95, 123, 154, 251>> <> _) do
+  def decode_call(<<95, 123, 154, 251>> <> _ = calldata) do
     _signature = hex!("0x5f7b9afb")
     {:ok, "log", decode_log_5f7b9afb_call(calldata)}
   end
 
-  def decode_call(calldata = <<97, 104, 237, 97>> <> _) do
+  def decode_call(<<97, 104, 237, 97>> <> _ = calldata) do
     _signature = hex!("0x6168ed61")
     {:ok, "log", decode_log_6168ed61_call(calldata)}
   end
 
-  def decode_call(calldata = <<97, 158, 77, 14>> <> _) do
+  def decode_call(<<97, 158, 77, 14>> <> _ = calldata) do
     _signature = hex!("0x619e4d0e")
     {:ok, "log", decode_log_619e4d0e_call(calldata)}
   end
 
-  def decode_call(calldata = <<99, 24, 54, 120>> <> _) do
+  def decode_call(<<99, 24, 54, 120>> <> _ = calldata) do
     _signature = hex!("0x63183678")
     {:ok, "log", decode_log_63183678_call(calldata)}
   end
 
-  def decode_call(calldata = <<99, 203, 65, 249>> <> _) do
+  def decode_call(<<99, 203, 65, 249>> <> _ = calldata) do
     _signature = hex!("0x63cb41f9")
     {:ok, "log", decode_log_63cb41f9_call(calldata)}
   end
 
-  def decode_call(calldata = <<99, 251, 139, 197>> <> _) do
+  def decode_call(<<99, 251, 139, 197>> <> _ = calldata) do
     _signature = hex!("0x63fb8bc5")
     {:ok, "log", decode_log_63fb8bc5_call(calldata)}
   end
 
-  def decode_call(calldata = <<100, 63, 208, 223>> <> _) do
+  def decode_call(<<100, 63, 208, 223>> <> _ = calldata) do
     _signature = hex!("0x643fd0df")
     {:ok, "log", decode_log_643fd0df_call(calldata)}
   end
 
-  def decode_call(calldata = <<100, 181, 187, 103>> <> _) do
+  def decode_call(<<100, 181, 187, 103>> <> _ = calldata) do
     _signature = hex!("0x64b5bb67")
     {:ok, "log", decode_log_64b5bb67_call(calldata)}
   end
 
-  def decode_call(calldata = <<102, 3, 117, 221>> <> _) do
+  def decode_call(<<102, 3, 117, 221>> <> _ = calldata) do
     _signature = hex!("0x660375dd")
     {:ok, "log", decode_log_660375dd_call(calldata)}
   end
 
-  def decode_call(calldata = <<102, 91, 241, 52>> <> _) do
+  def decode_call(<<102, 91, 241, 52>> <> _ = calldata) do
     _signature = hex!("0x665bf134")
     {:ok, "log", decode_log_665bf134_call(calldata)}
   end
 
-  def decode_call(calldata = <<102, 241, 188, 103>> <> _) do
+  def decode_call(<<102, 241, 188, 103>> <> _ = calldata) do
     _signature = hex!("0x66f1bc67")
     {:ok, "log", decode_log_66f1bc67_call(calldata)}
   end
 
-  def decode_call(calldata = <<103, 130, 9, 168>> <> _) do
+  def decode_call(<<103, 130, 9, 168>> <> _ = calldata) do
     _signature = hex!("0x678209a8")
     {:ok, "log", decode_log_678209a8_call(calldata)}
   end
 
-  def decode_call(calldata = <<103, 221, 111, 241>> <> _) do
+  def decode_call(<<103, 221, 111, 241>> <> _ = calldata) do
     _signature = hex!("0x67dd6ff1")
     {:ok, "log", decode_log_67dd6ff1_call(calldata)}
   end
 
-  def decode_call(calldata = <<104, 200, 184, 189>> <> _) do
+  def decode_call(<<104, 200, 184, 189>> <> _ = calldata) do
     _signature = hex!("0x68c8b8bd")
     {:ok, "log", decode_log_68c8b8bd_call(calldata)}
   end
 
-  def decode_call(calldata = <<105, 26, 143, 116>> <> _) do
+  def decode_call(<<105, 26, 143, 116>> <> _ = calldata) do
     _signature = hex!("0x691a8f74")
     {:ok, "log", decode_log_691a8f74_call(calldata)}
   end
 
-  def decode_call(calldata = <<105, 39, 108, 134>> <> _) do
+  def decode_call(<<105, 39, 108, 134>> <> _ = calldata) do
     _signature = hex!("0x69276c86")
     {:ok, "log", decode_log_69276c86_call(calldata)}
   end
 
-  def decode_call(calldata = <<105, 100, 11, 89>> <> _) do
+  def decode_call(<<105, 100, 11, 89>> <> _ = calldata) do
     _signature = hex!("0x69640b59")
     {:ok, "log", decode_log_69640b59_call(calldata)}
   end
 
-  def decode_call(calldata = <<106, 17, 153, 226>> <> _) do
+  def decode_call(<<106, 17, 153, 226>> <> _ = calldata) do
     _signature = hex!("0x6a1199e2")
     {:ok, "log", decode_log_6a1199e2_call(calldata)}
   end
 
-  def decode_call(calldata = <<106, 156, 71, 139>> <> _) do
+  def decode_call(<<106, 156, 71, 139>> <> _ = calldata) do
     _signature = hex!("0x6a9c478b")
     {:ok, "log", decode_log_6a9c478b_call(calldata)}
   end
 
-  def decode_call(calldata = <<107, 14, 93, 83>> <> _) do
+  def decode_call(<<107, 14, 93, 83>> <> _ = calldata) do
     _signature = hex!("0x6b0e5d53")
     {:ok, "log", decode_log_6b0e5d53_call(calldata)}
   end
 
-  def decode_call(calldata = <<108, 222, 64, 184>> <> _) do
+  def decode_call(<<108, 222, 64, 184>> <> _ = calldata) do
     _signature = hex!("0x6cde40b8")
     {:ok, "log", decode_log_6cde40b8_call(calldata)}
   end
 
-  def decode_call(calldata = <<109, 30, 135, 81>> <> _) do
+  def decode_call(<<109, 30, 135, 81>> <> _ = calldata) do
     _signature = hex!("0x6d1e8751")
     {:ok, "log", decode_log_6d1e8751_call(calldata)}
   end
 
-  def decode_call(calldata = <<109, 87, 47, 68>> <> _) do
+  def decode_call(<<109, 87, 47, 68>> <> _ = calldata) do
     _signature = hex!("0x6d572f44")
     {:ok, "log", decode_log_6d572f44_call(calldata)}
   end
 
-  def decode_call(calldata = <<109, 112, 69, 193>> <> _) do
+  def decode_call(<<109, 112, 69, 193>> <> _ = calldata) do
     _signature = hex!("0x6d7045c1")
     {:ok, "log", decode_log_6d7045c1_call(calldata)}
   end
 
-  def decode_call(calldata = <<109, 212, 52, 202>> <> _) do
+  def decode_call(<<109, 212, 52, 202>> <> _ = calldata) do
     _signature = hex!("0x6dd434ca")
     {:ok, "log", decode_log_6dd434ca_call(calldata)}
   end
 
-  def decode_call(calldata = <<111, 26, 89, 78>> <> _) do
+  def decode_call(<<111, 26, 89, 78>> <> _ = calldata) do
     _signature = hex!("0x6f1a594e")
     {:ok, "log", decode_log_6f1a594e_call(calldata)}
   end
 
-  def decode_call(calldata = <<111, 124, 96, 62>> <> _) do
+  def decode_call(<<111, 124, 96, 62>> <> _ = calldata) do
     _signature = hex!("0x6f7c603e")
     {:ok, "log", decode_log_6f7c603e_call(calldata)}
   end
 
-  def decode_call(calldata = <<113, 144, 165, 41>> <> _) do
+  def decode_call(<<113, 144, 165, 41>> <> _ = calldata) do
     _signature = hex!("0x7190a529")
     {:ok, "log", decode_log_7190a529_call(calldata)}
   end
 
-  def decode_call(calldata = <<113, 208, 74, 242>> <> _) do
+  def decode_call(<<113, 208, 74, 242>> <> _ = calldata) do
     _signature = hex!("0x71d04af2")
     {:ok, "log", decode_log_71d04af2_call(calldata)}
   end
 
-  def decode_call(calldata = <<115, 110, 251, 182>> <> _) do
+  def decode_call(<<115, 110, 251, 182>> <> _ = calldata) do
     _signature = hex!("0x736efbb6")
     {:ok, "log", decode_log_736efbb6_call(calldata)}
   end
 
-  def decode_call(calldata = <<116, 45, 110, 231>> <> _) do
+  def decode_call(<<116, 45, 110, 231>> <> _ = calldata) do
     _signature = hex!("0x742d6ee7")
     {:ok, "log", decode_log_742d6ee7_call(calldata)}
   end
 
-  def decode_call(calldata = <<116, 100, 206, 35>> <> _) do
+  def decode_call(<<116, 100, 206, 35>> <> _ = calldata) do
     _signature = hex!("0x7464ce23")
     {:ok, "log", decode_log_7464ce23_call(calldata)}
   end
 
-  def decode_call(calldata = <<117, 159, 134, 187>> <> _) do
+  def decode_call(<<117, 159, 134, 187>> <> _ = calldata) do
     _signature = hex!("0x759f86bb")
     {:ok, "log", decode_log_759f86bb_call(calldata)}
   end
 
-  def decode_call(calldata = <<117, 182, 5, 211>> <> _) do
+  def decode_call(<<117, 182, 5, 211>> <> _ = calldata) do
     _signature = hex!("0x75b605d3")
     {:ok, "log", decode_log_75b605d3_call(calldata)}
   end
 
-  def decode_call(calldata = <<118, 38, 219, 146>> <> _) do
+  def decode_call(<<118, 38, 219, 146>> <> _ = calldata) do
     _signature = hex!("0x7626db92")
     {:ok, "log", decode_log_7626db92_call(calldata)}
   end
 
-  def decode_call(calldata = <<121, 136, 76, 43>> <> _) do
+  def decode_call(<<121, 136, 76, 43>> <> _ = calldata) do
     _signature = hex!("0x79884c2b")
     {:ok, "log", decode_log_79884c2b_call(calldata)}
   end
 
-  def decode_call(calldata = <<122, 246, 171, 37>> <> _) do
+  def decode_call(<<122, 246, 171, 37>> <> _ = calldata) do
     _signature = hex!("0x7af6ab25")
     {:ok, "log", decode_log_7af6ab25_call(calldata)}
   end
 
-  def decode_call(calldata = <<122, 250, 201, 89>> <> _) do
+  def decode_call(<<122, 250, 201, 89>> <> _ = calldata) do
     _signature = hex!("0x7afac959")
     {:ok, "log", decode_log_7afac959_call(calldata)}
   end
 
-  def decode_call(calldata = <<123, 192, 216, 72>> <> _) do
+  def decode_call(<<123, 192, 216, 72>> <> _ = calldata) do
     _signature = hex!("0x7bc0d848")
     {:ok, "log", decode_log_7bc0d848_call(calldata)}
   end
 
-  def decode_call(calldata = <<123, 224, 195, 235>> <> _) do
+  def decode_call(<<123, 224, 195, 235>> <> _ = calldata) do
     _signature = hex!("0x7be0c3eb")
     {:ok, "log", decode_log_7be0c3eb_call(calldata)}
   end
 
-  def decode_call(calldata = <<123, 241, 129, 161>> <> _) do
+  def decode_call(<<123, 241, 129, 161>> <> _ = calldata) do
     _signature = hex!("0x7bf181a1")
     {:ok, "log", decode_log_7bf181a1_call(calldata)}
   end
 
-  def decode_call(calldata = <<124, 70, 50, 164>> <> _) do
+  def decode_call(<<124, 70, 50, 164>> <> _ = calldata) do
     _signature = hex!("0x7c4632a4")
     {:ok, "log", decode_log_7c4632a4_call(calldata)}
   end
 
-  def decode_call(calldata = <<124, 195, 198, 7>> <> _) do
+  def decode_call(<<124, 195, 198, 7>> <> _ = calldata) do
     _signature = hex!("0x7cc3c607")
     {:ok, "log", decode_log_7cc3c607_call(calldata)}
   end
 
-  def decode_call(calldata = <<125, 36, 73, 29>> <> _) do
+  def decode_call(<<125, 36, 73, 29>> <> _ = calldata) do
     _signature = hex!("0x7d24491d")
     {:ok, "log", decode_log_7d24491d_call(calldata)}
   end
 
-  def decode_call(calldata = <<125, 212, 208, 224>> <> _) do
+  def decode_call(<<125, 212, 208, 224>> <> _ = calldata) do
     _signature = hex!("0x7dd4d0e0")
     {:ok, "log", decode_log_7dd4d0e0_call(calldata)}
   end
 
-  def decode_call(calldata = <<127, 155, 188, 162>> <> _) do
+  def decode_call(<<127, 155, 188, 162>> <> _ = calldata) do
     _signature = hex!("0x7f9bbca2")
     {:ok, "log", decode_log_7f9bbca2_call(calldata)}
   end
 
-  def decode_call(calldata = <<128, 10, 28, 103>> <> _) do
+  def decode_call(<<128, 10, 28, 103>> <> _ = calldata) do
     _signature = hex!("0x800a1c67")
     {:ok, "log", decode_log_800a1c67_call(calldata)}
   end
 
-  def decode_call(calldata = <<128, 230, 162, 11>> <> _) do
+  def decode_call(<<128, 230, 162, 11>> <> _ = calldata) do
     _signature = hex!("0x80e6a20b")
     {:ok, "log", decode_log_80e6a20b_call(calldata)}
   end
 
-  def decode_call(calldata = <<130, 17, 42, 66>> <> _) do
+  def decode_call(<<130, 17, 42, 66>> <> _ = calldata) do
     _signature = hex!("0x82112a42")
     {:ok, "log", decode_log_82112a42_call(calldata)}
   end
 
-  def decode_call(calldata = <<130, 194, 91, 116>> <> _) do
+  def decode_call(<<130, 194, 91, 116>> <> _ = calldata) do
     _signature = hex!("0x82c25b74")
     {:ok, "log", decode_log_82c25b74_call(calldata)}
   end
 
-  def decode_call(calldata = <<131, 9, 232, 168>> <> _) do
+  def decode_call(<<131, 9, 232, 168>> <> _ = calldata) do
     _signature = hex!("0x8309e8a8")
     {:ok, "log", decode_log_8309e8a8_call(calldata)}
   end
 
-  def decode_call(calldata = <<133, 11, 122, 214>> <> _) do
+  def decode_call(<<133, 11, 122, 214>> <> _ = calldata) do
     _signature = hex!("0x850b7ad6")
     {:ok, "log", decode_log_850b7ad6_call(calldata)}
   end
 
-  def decode_call(calldata = <<133, 60, 72, 73>> <> _) do
+  def decode_call(<<133, 60, 72, 73>> <> _ = calldata) do
     _signature = hex!("0x853c4849")
     {:ok, "log", decode_log_853c4849_call(calldata)}
   end
 
-  def decode_call(calldata = <<133, 75, 52, 150>> <> _) do
+  def decode_call(<<133, 75, 52, 150>> <> _ = calldata) do
     _signature = hex!("0x854b3496")
     {:ok, "log", decode_log_854b3496_call(calldata)}
   end
 
-  def decode_call(calldata = <<133, 119, 80, 33>> <> _) do
+  def decode_call(<<133, 119, 80, 33>> <> _ = calldata) do
     _signature = hex!("0x85775021")
     {:ok, "log", decode_log_85775021_call(calldata)}
   end
 
-  def decode_call(calldata = <<136, 168, 196, 6>> <> _) do
+  def decode_call(<<136, 168, 196, 6>> <> _ = calldata) do
     _signature = hex!("0x88a8c406")
     {:ok, "log", decode_log_88a8c406_call(calldata)}
   end
 
-  def decode_call(calldata = <<136, 203, 96, 65>> <> _) do
+  def decode_call(<<136, 203, 96, 65>> <> _ = calldata) do
     _signature = hex!("0x88cb6041")
     {:ok, "log", decode_log_88cb6041_call(calldata)}
   end
 
-  def decode_call(calldata = <<136, 246, 228, 178>> <> _) do
+  def decode_call(<<136, 246, 228, 178>> <> _ = calldata) do
     _signature = hex!("0x88f6e4b2")
     {:ok, "log", decode_log_88f6e4b2_call(calldata)}
   end
 
-  def decode_call(calldata = <<137, 90, 248, 197>> <> _) do
+  def decode_call(<<137, 90, 248, 197>> <> _ = calldata) do
     _signature = hex!("0x895af8c5")
     {:ok, "log", decode_log_895af8c5_call(calldata)}
   end
 
-  def decode_call(calldata = <<138, 247, 207, 138>> <> _) do
+  def decode_call(<<138, 247, 207, 138>> <> _ = calldata) do
     _signature = hex!("0x8af7cf8a")
     {:ok, "log", decode_log_8af7cf8a_call(calldata)}
   end
 
-  def decode_call(calldata = <<140, 50, 155, 26>> <> _) do
+  def decode_call(<<140, 50, 155, 26>> <> _ = calldata) do
     _signature = hex!("0x8c329b1a")
     {:ok, "log", decode_log_8c329b1a_call(calldata)}
   end
 
-  def decode_call(calldata = <<140, 78, 93, 230>> <> _) do
+  def decode_call(<<140, 78, 93, 230>> <> _ = calldata) do
     _signature = hex!("0x8c4e5de6")
     {:ok, "log", decode_log_8c4e5de6_call(calldata)}
   end
 
-  def decode_call(calldata = <<141, 166, 222, 245>> <> _) do
+  def decode_call(<<141, 166, 222, 245>> <> _ = calldata) do
     _signature = hex!("0x8da6def5")
     {:ok, "log", decode_log_8da6def5_call(calldata)}
   end
 
-  def decode_call(calldata = <<142, 63, 120, 169>> <> _) do
+  def decode_call(<<142, 63, 120, 169>> <> _ = calldata) do
     _signature = hex!("0x8e3f78a9")
     {:ok, "log", decode_log_8e3f78a9_call(calldata)}
   end
 
-  def decode_call(calldata = <<142, 105, 251, 93>> <> _) do
+  def decode_call(<<142, 105, 251, 93>> <> _ = calldata) do
     _signature = hex!("0x8e69fb5d")
     {:ok, "log", decode_log_8e69fb5d_call(calldata)}
   end
 
-  def decode_call(calldata = <<142, 175, 176, 43>> <> _) do
+  def decode_call(<<142, 175, 176, 43>> <> _ = calldata) do
     _signature = hex!("0x8eafb02b")
     {:ok, "log", decode_log_8eafb02b_call(calldata)}
   end
 
-  def decode_call(calldata = <<142, 243, 243, 153>> <> _) do
+  def decode_call(<<142, 243, 243, 153>> <> _ = calldata) do
     _signature = hex!("0x8ef3f399")
     {:ok, "log", decode_log_8ef3f399_call(calldata)}
   end
 
-  def decode_call(calldata = <<143, 115, 109, 22>> <> _) do
+  def decode_call(<<143, 115, 109, 22>> <> _ = calldata) do
     _signature = hex!("0x8f736d16")
     {:ok, "log", decode_log_8f736d16_call(calldata)}
   end
 
-  def decode_call(calldata = <<143, 234, 197, 37>> <> _) do
+  def decode_call(<<143, 234, 197, 37>> <> _ = calldata) do
     _signature = hex!("0x8feac525")
     {:ok, "log", decode_log_8feac525_call(calldata)}
   end
 
-  def decode_call(calldata = <<144, 195, 10, 86>> <> _) do
+  def decode_call(<<144, 195, 10, 86>> <> _ = calldata) do
     _signature = hex!("0x90c30a56")
     {:ok, "log", decode_log_90c30a56_call(calldata)}
   end
 
-  def decode_call(calldata = <<144, 251, 6, 170>> <> _) do
+  def decode_call(<<144, 251, 6, 170>> <> _ = calldata) do
     _signature = hex!("0x90fb06aa")
     {:ok, "log", decode_log_90fb06aa_call(calldata)}
   end
 
-  def decode_call(calldata = <<145, 67, 219, 177>> <> _) do
+  def decode_call(<<145, 67, 219, 177>> <> _ = calldata) do
     _signature = hex!("0x9143dbb1")
     {:ok, "log", decode_log_9143dbb1_call(calldata)}
   end
 
-  def decode_call(calldata = <<145, 160, 46, 42>> <> _) do
+  def decode_call(<<145, 160, 46, 42>> <> _ = calldata) do
     _signature = hex!("0x91a02e2a")
     {:ok, "log", decode_log_91a02e2a_call(calldata)}
   end
 
-  def decode_call(calldata = <<145, 209, 17, 46>> <> _) do
+  def decode_call(<<145, 209, 17, 46>> <> _ = calldata) do
     _signature = hex!("0x91d1112e")
     {:ok, "log", decode_log_91d1112e_call(calldata)}
   end
 
-  def decode_call(calldata = <<147, 43, 187, 56>> <> _) do
+  def decode_call(<<147, 43, 187, 56>> <> _ = calldata) do
     _signature = hex!("0x932bbb38")
     {:ok, "log", decode_log_932bbb38_call(calldata)}
   end
 
-  def decode_call(calldata = <<147, 94, 9, 191>> <> _) do
+  def decode_call(<<147, 94, 9, 191>> <> _ = calldata) do
     _signature = hex!("0x935e09bf")
     {:ok, "log", decode_log_935e09bf_call(calldata)}
   end
 
-  def decode_call(calldata = <<148, 37, 13, 119>> <> _) do
+  def decode_call(<<148, 37, 13, 119>> <> _ = calldata) do
     _signature = hex!("0x94250d77")
     {:ok, "log", decode_log_94250d77_call(calldata)}
   end
 
-  def decode_call(calldata = <<149, 140, 40, 198>> <> _) do
+  def decode_call(<<149, 140, 40, 198>> <> _ = calldata) do
     _signature = hex!("0x958c28c6")
     {:ok, "log", decode_log_958c28c6_call(calldata)}
   end
 
-  def decode_call(calldata = <<149, 145, 185, 83>> <> _) do
+  def decode_call(<<149, 145, 185, 83>> <> _ = calldata) do
     _signature = hex!("0x9591b953")
     {:ok, "log", decode_log_9591b953_call(calldata)}
   end
 
-  def decode_call(calldata = <<149, 237, 1, 149>> <> _) do
+  def decode_call(<<149, 237, 1, 149>> <> _ = calldata) do
     _signature = hex!("0x95ed0195")
     {:ok, "log", decode_log_95ed0195_call(calldata)}
   end
 
-  def decode_call(calldata = <<151, 211, 148, 216>> <> _) do
+  def decode_call(<<151, 211, 148, 216>> <> _ = calldata) do
     _signature = hex!("0x97d394d8")
     {:ok, "log", decode_log_97d394d8_call(calldata)}
   end
 
-  def decode_call(calldata = <<154, 129, 106, 131>> <> _) do
+  def decode_call(<<154, 129, 106, 131>> <> _ = calldata) do
     _signature = hex!("0x9a816a83")
     {:ok, "log", decode_log_9a816a83_call(calldata)}
   end
 
-  def decode_call(calldata = <<154, 205, 54, 22>> <> _) do
+  def decode_call(<<154, 205, 54, 22>> <> _ = calldata) do
     _signature = hex!("0x9acd3616")
     {:ok, "log", decode_log_9acd3616_call(calldata)}
   end
 
-  def decode_call(calldata = <<155, 66, 84, 226>> <> _) do
+  def decode_call(<<155, 66, 84, 226>> <> _ = calldata) do
     _signature = hex!("0x9b4254e2")
     {:ok, "log", decode_log_9b4254e2_call(calldata)}
   end
 
-  def decode_call(calldata = <<155, 110, 192, 66>> <> _) do
+  def decode_call(<<155, 110, 192, 66>> <> _ = calldata) do
     _signature = hex!("0x9b6ec042")
     {:ok, "log", decode_log_9b6ec042_call(calldata)}
   end
 
-  def decode_call(calldata = <<156, 58, 223, 161>> <> _) do
+  def decode_call(<<156, 58, 223, 161>> <> _ = calldata) do
     _signature = hex!("0x9c3adfa1")
     {:ok, "log", decode_log_9c3adfa1_call(calldata)}
   end
 
-  def decode_call(calldata = <<156, 79, 153, 251>> <> _) do
+  def decode_call(<<156, 79, 153, 251>> <> _ = calldata) do
     _signature = hex!("0x9c4f99fb")
     {:ok, "log", decode_log_9c4f99fb_call(calldata)}
   end
 
-  def decode_call(calldata = <<156, 186, 143, 255>> <> _) do
+  def decode_call(<<156, 186, 143, 255>> <> _ = calldata) do
     _signature = hex!("0x9cba8fff")
     {:ok, "log", decode_log_9cba8fff_call(calldata)}
   end
 
-  def decode_call(calldata = <<157, 34, 213, 221>> <> _) do
+  def decode_call(<<157, 34, 213, 221>> <> _ = calldata) do
     _signature = hex!("0x9d22d5dd")
     {:ok, "log", decode_log_9d22d5dd_call(calldata)}
   end
 
-  def decode_call(calldata = <<159, 27, 195, 110>> <> _) do
+  def decode_call(<<159, 27, 195, 110>> <> _ = calldata) do
     _signature = hex!("0x9f1bc36e")
     {:ok, "log", decode_log_9f1bc36e_call(calldata)}
   end
 
-  def decode_call(calldata = <<159, 251, 47, 147>> <> _) do
+  def decode_call(<<159, 251, 47, 147>> <> _ = calldata) do
     _signature = hex!("0x9ffb2f93")
     {:ok, "log", decode_log_9ffb2f93_call(calldata)}
   end
 
-  def decode_call(calldata = <<160, 78, 47, 135>> <> _) do
+  def decode_call(<<160, 78, 47, 135>> <> _ = calldata) do
     _signature = hex!("0xa04e2f87")
     {:ok, "log", decode_log_a04e2f87_call(calldata)}
   end
 
-  def decode_call(calldata = <<160, 164, 121, 99>> <> _) do
+  def decode_call(<<160, 164, 121, 99>> <> _ = calldata) do
     _signature = hex!("0xa0a47963")
     {:ok, "log", decode_log_a0a47963_call(calldata)}
   end
 
-  def decode_call(calldata = <<161, 188, 201, 179>> <> _) do
+  def decode_call(<<161, 188, 201, 179>> <> _ = calldata) do
     _signature = hex!("0xa1bcc9b3")
     {:ok, "log", decode_log_a1bcc9b3_call(calldata)}
   end
 
-  def decode_call(calldata = <<161, 239, 76, 187>> <> _) do
+  def decode_call(<<161, 239, 76, 187>> <> _ = calldata) do
     _signature = hex!("0xa1ef4cbb")
     {:ok, "log", decode_log_a1ef4cbb_call(calldata)}
   end
 
-  def decode_call(calldata = <<161, 242, 232, 170>> <> _) do
+  def decode_call(<<161, 242, 232, 170>> <> _ = calldata) do
     _signature = hex!("0xa1f2e8aa")
     {:ok, "log", decode_log_a1f2e8aa_call(calldata)}
   end
 
-  def decode_call(calldata = <<163, 27, 253, 204>> <> _) do
+  def decode_call(<<163, 27, 253, 204>> <> _ = calldata) do
     _signature = hex!("0xa31bfdcc")
     {:ok, "log", decode_log_a31bfdcc_call(calldata)}
   end
 
-  def decode_call(calldata = <<165, 180, 252, 153>> <> _) do
+  def decode_call(<<165, 180, 252, 153>> <> _ = calldata) do
     _signature = hex!("0xa5b4fc99")
     {:ok, "log", decode_log_a5b4fc99_call(calldata)}
   end
 
-  def decode_call(calldata = <<165, 202, 218, 148>> <> _) do
+  def decode_call(<<165, 202, 218, 148>> <> _ = calldata) do
     _signature = hex!("0xa5cada94")
     {:ok, "log", decode_log_a5cada94_call(calldata)}
   end
 
-  def decode_call(calldata = <<166, 245, 11, 15>> <> _) do
+  def decode_call(<<166, 245, 11, 15>> <> _ = calldata) do
     _signature = hex!("0xa6f50b0f")
     {:ok, "log", decode_log_a6f50b0f_call(calldata)}
   end
 
-  def decode_call(calldata = <<167, 60, 29, 182>> <> _) do
+  def decode_call(<<167, 60, 29, 182>> <> _ = calldata) do
     _signature = hex!("0xa73c1db6")
     {:ok, "log", decode_log_a73c1db6_call(calldata)}
   end
 
-  def decode_call(calldata = <<167, 92, 89, 222>> <> _) do
+  def decode_call(<<167, 92, 89, 222>> <> _ = calldata) do
     _signature = hex!("0xa75c59de")
     {:ok, "log", decode_log_a75c59de_call(calldata)}
   end
 
-  def decode_call(calldata = <<167, 168, 120, 83>> <> _) do
+  def decode_call(<<167, 168, 120, 83>> <> _ = calldata) do
     _signature = hex!("0xa7a87853")
     {:ok, "log", decode_log_a7a87853_call(calldata)}
   end
 
-  def decode_call(calldata = <<168, 38, 202, 235>> <> _) do
+  def decode_call(<<168, 38, 202, 235>> <> _ = calldata) do
     _signature = hex!("0xa826caeb")
     {:ok, "log", decode_log_a826caeb_call(calldata)}
   end
 
-  def decode_call(calldata = <<170, 101, 64, 200>> <> _) do
+  def decode_call(<<170, 101, 64, 200>> <> _ = calldata) do
     _signature = hex!("0xaa6540c8")
     {:ok, "log", decode_log_aa6540c8_call(calldata)}
   end
 
-  def decode_call(calldata = <<170, 188, 154, 49>> <> _) do
+  def decode_call(<<170, 188, 154, 49>> <> _ = calldata) do
     _signature = hex!("0xaabc9a31")
     {:ok, "log", decode_log_aabc9a31_call(calldata)}
   end
 
-  def decode_call(calldata = <<171, 8, 90, 230>> <> _) do
+  def decode_call(<<171, 8, 90, 230>> <> _ = calldata) do
     _signature = hex!("0xab085ae6")
     {:ok, "log", decode_log_ab085ae6_call(calldata)}
   end
 
-  def decode_call(calldata = <<171, 247, 58, 152>> <> _) do
+  def decode_call(<<171, 247, 58, 152>> <> _ = calldata) do
     _signature = hex!("0xabf73a98")
     {:ok, "log", decode_log_abf73a98_call(calldata)}
   end
 
-  def decode_call(calldata = <<173, 224, 82, 199>> <> _) do
+  def decode_call(<<173, 224, 82, 199>> <> _ = calldata) do
     _signature = hex!("0xade052c7")
     {:ok, "log", decode_log_ade052c7_call(calldata)}
   end
 
-  def decode_call(calldata = <<174, 46, 197, 129>> <> _) do
+  def decode_call(<<174, 46, 197, 129>> <> _ = calldata) do
     _signature = hex!("0xae2ec581")
     {:ok, "log", decode_log_ae2ec581_call(calldata)}
   end
 
-  def decode_call(calldata = <<176, 40, 201, 189>> <> _) do
+  def decode_call(<<176, 40, 201, 189>> <> _ = calldata) do
     _signature = hex!("0xb028c9bd")
     {:ok, "log", decode_log_b028c9bd_call(calldata)}
   end
 
-  def decode_call(calldata = <<176, 118, 132, 127>> <> _) do
+  def decode_call(<<176, 118, 132, 127>> <> _ = calldata) do
     _signature = hex!("0xb076847f")
     {:ok, "log", decode_log_b076847f_call(calldata)}
   end
 
-  def decode_call(calldata = <<176, 224, 249, 181>> <> _) do
+  def decode_call(<<176, 224, 249, 181>> <> _ = calldata) do
     _signature = hex!("0xb0e0f9b5")
     {:ok, "log", decode_log_b0e0f9b5_call(calldata)}
   end
 
-  def decode_call(calldata = <<177, 21, 97, 31>> <> _) do
+  def decode_call(<<177, 21, 97, 31>> <> _ = calldata) do
     _signature = hex!("0xb115611f")
     {:ok, "log", decode_log_b115611f_call(calldata)}
   end
 
-  def decode_call(calldata = <<179, 166, 182, 189>> <> _) do
+  def decode_call(<<179, 166, 182, 189>> <> _ = calldata) do
     _signature = hex!("0xb3a6b6bd")
     {:ok, "log", decode_log_b3a6b6bd_call(calldata)}
   end
 
-  def decode_call(calldata = <<180, 195, 20, 255>> <> _) do
+  def decode_call(<<180, 195, 20, 255>> <> _ = calldata) do
     _signature = hex!("0xb4c314ff")
     {:ok, "log", decode_log_b4c314ff_call(calldata)}
   end
 
-  def decode_call(calldata = <<181, 157, 189, 96>> <> _) do
+  def decode_call(<<181, 157, 189, 96>> <> _ = calldata) do
     _signature = hex!("0xb59dbd60")
     {:ok, "log", decode_log_b59dbd60_call(calldata)}
   end
 
-  def decode_call(calldata = <<182, 14, 114, 204>> <> _) do
+  def decode_call(<<182, 14, 114, 204>> <> _ = calldata) do
     _signature = hex!("0xb60e72cc")
     {:ok, "log", decode_log_b60e72cc_call(calldata)}
   end
 
-  def decode_call(calldata = <<182, 155, 202, 246>> <> _) do
+  def decode_call(<<182, 155, 202, 246>> <> _ = calldata) do
     _signature = hex!("0xb69bcaf6")
     {:ok, "log", decode_log_b69bcaf6_call(calldata)}
   end
 
-  def decode_call(calldata = <<182, 245, 119, 161>> <> _) do
+  def decode_call(<<182, 245, 119, 161>> <> _ = calldata) do
     _signature = hex!("0xb6f577a1")
     {:ok, "log", decode_log_b6f577a1_call(calldata)}
   end
 
-  def decode_call(calldata = <<183, 185, 20, 202>> <> _) do
+  def decode_call(<<183, 185, 20, 202>> <> _ = calldata) do
     _signature = hex!("0xb7b914ca")
     {:ok, "log", decode_log_b7b914ca_call(calldata)}
   end
 
-  def decode_call(calldata = <<184, 87, 22, 58>> <> _) do
+  def decode_call(<<184, 87, 22, 58>> <> _ = calldata) do
     _signature = hex!("0xb857163a")
     {:ok, "log", decode_log_b857163a_call(calldata)}
   end
 
-  def decode_call(calldata = <<186, 83, 93, 156>> <> _) do
+  def decode_call(<<186, 83, 93, 156>> <> _ = calldata) do
     _signature = hex!("0xba535d9c")
     {:ok, "log", decode_log_ba535d9c_call(calldata)}
   end
 
-  def decode_call(calldata = <<188, 11, 97, 254>> <> _) do
+  def decode_call(<<188, 11, 97, 254>> <> _ = calldata) do
     _signature = hex!("0xbc0b61fe")
     {:ok, "log", decode_log_bc0b61fe_call(calldata)}
   end
 
-  def decode_call(calldata = <<188, 253, 155, 224>> <> _) do
+  def decode_call(<<188, 253, 155, 224>> <> _ = calldata) do
     _signature = hex!("0xbcfd9be0")
     {:ok, "log", decode_log_bcfd9be0_call(calldata)}
   end
 
-  def decode_call(calldata = <<190, 85, 52, 129>> <> _) do
+  def decode_call(<<190, 85, 52, 129>> <> _ = calldata) do
     _signature = hex!("0xbe553481")
     {:ok, "log", decode_log_be553481_call(calldata)}
   end
 
-  def decode_call(calldata = <<190, 152, 67, 83>> <> _) do
+  def decode_call(<<190, 152, 67, 83>> <> _ = calldata) do
     _signature = hex!("0xbe984353")
     {:ok, "log", decode_log_be984353_call(calldata)}
   end
 
-  def decode_call(calldata = <<191, 1, 248, 145>> <> _) do
+  def decode_call(<<191, 1, 248, 145>> <> _ = calldata) do
     _signature = hex!("0xbf01f891")
     {:ok, "log", decode_log_bf01f891_call(calldata)}
   end
 
-  def decode_call(calldata = <<192, 163, 2, 216>> <> _) do
+  def decode_call(<<192, 163, 2, 216>> <> _ = calldata) do
     _signature = hex!("0xc0a302d8")
     {:ok, "log", decode_log_c0a302d8_call(calldata)}
   end
 
-  def decode_call(calldata = <<194, 31, 100, 199>> <> _) do
+  def decode_call(<<194, 31, 100, 199>> <> _ = calldata) do
     _signature = hex!("0xc21f64c7")
     {:ok, "log", decode_log_c21f64c7_call(calldata)}
   end
 
-  def decode_call(calldata = <<195, 113, 199, 219>> <> _) do
+  def decode_call(<<195, 113, 199, 219>> <> _ = calldata) do
     _signature = hex!("0xc371c7db")
     {:ok, "log", decode_log_c371c7db_call(calldata)}
   end
 
-  def decode_call(calldata = <<195, 168, 166, 84>> <> _) do
+  def decode_call(<<195, 168, 166, 84>> <> _ = calldata) do
     _signature = hex!("0xc3a8a654")
     {:ok, "log", decode_log_c3a8a654_call(calldata)}
   end
 
-  def decode_call(calldata = <<195, 181, 86, 53>> <> _) do
+  def decode_call(<<195, 181, 86, 53>> <> _ = calldata) do
     _signature = hex!("0xc3b55635")
     {:ok, "log", decode_log_c3b55635_call(calldata)}
   end
 
-  def decode_call(calldata = <<195, 252, 57, 112>> <> _) do
+  def decode_call(<<195, 252, 57, 112>> <> _ = calldata) do
     _signature = hex!("0xc3fc3970")
     {:ok, "log", decode_log_c3fc3970_call(calldata)}
   end
 
-  def decode_call(calldata = <<196, 100, 62, 32>> <> _) do
+  def decode_call(<<196, 100, 62, 32>> <> _ = calldata) do
     _signature = hex!("0xc4643e20")
     {:ok, "log", decode_log_c4643e20_call(calldata)}
   end
 
-  def decode_call(calldata = <<197, 152, 209, 133>> <> _) do
+  def decode_call(<<197, 152, 209, 133>> <> _ = calldata) do
     _signature = hex!("0xc598d185")
     {:ok, "log", decode_log_c598d185_call(calldata)}
   end
 
-  def decode_call(calldata = <<197, 173, 133, 249>> <> _) do
+  def decode_call(<<197, 173, 133, 249>> <> _ = calldata) do
     _signature = hex!("0xc5ad85f9")
     {:ok, "log", decode_log_c5ad85f9_call(calldata)}
   end
 
-  def decode_call(calldata = <<198, 126, 169, 209>> <> _) do
+  def decode_call(<<198, 126, 169, 209>> <> _ = calldata) do
     _signature = hex!("0xc67ea9d1")
     {:ok, "log", decode_log_c67ea9d1_call(calldata)}
   end
 
-  def decode_call(calldata = <<198, 172, 199, 168>> <> _) do
+  def decode_call(<<198, 172, 199, 168>> <> _ = calldata) do
     _signature = hex!("0xc6acc7a8")
     {:ok, "log", decode_log_c6acc7a8_call(calldata)}
   end
 
-  def decode_call(calldata = <<201, 29, 94, 212>> <> _) do
+  def decode_call(<<201, 29, 94, 212>> <> _ = calldata) do
     _signature = hex!("0xc91d5ed4")
     {:ok, "log", decode_log_c91d5ed4_call(calldata)}
   end
 
-  def decode_call(calldata = <<201, 89, 88, 214>> <> _) do
+  def decode_call(<<201, 89, 88, 214>> <> _ = calldata) do
     _signature = hex!("0xc95958d6")
     {:ok, "log", decode_log_c95958d6_call(calldata)}
   end
 
-  def decode_call(calldata = <<202, 71, 196, 235>> <> _) do
+  def decode_call(<<202, 71, 196, 235>> <> _ = calldata) do
     _signature = hex!("0xca47c4eb")
     {:ok, "log", decode_log_ca47c4eb_call(calldata)}
   end
 
-  def decode_call(calldata = <<202, 119, 51, 177>> <> _) do
+  def decode_call(<<202, 119, 51, 177>> <> _ = calldata) do
     _signature = hex!("0xca7733b1")
     {:ok, "log", decode_log_ca7733b1_call(calldata)}
   end
 
-  def decode_call(calldata = <<202, 196, 52, 121>> <> _) do
+  def decode_call(<<202, 196, 52, 121>> <> _ = calldata) do
     _signature = hex!("0xcac43479")
     {:ok, "log", decode_log_cac43479_call(calldata)}
   end
 
-  def decode_call(calldata = <<204, 50, 171, 7>> <> _) do
+  def decode_call(<<204, 50, 171, 7>> <> _ = calldata) do
     _signature = hex!("0xcc32ab07")
     {:ok, "log", decode_log_cc32ab07_call(calldata)}
   end
 
-  def decode_call(calldata = <<204, 247, 144, 161>> <> _) do
+  def decode_call(<<204, 247, 144, 161>> <> _ = calldata) do
     _signature = hex!("0xccf790a1")
     {:ok, "log", decode_log_ccf790a1_call(calldata)}
   end
 
-  def decode_call(calldata = <<206, 181, 244, 215>> <> _) do
+  def decode_call(<<206, 181, 244, 215>> <> _ = calldata) do
     _signature = hex!("0xceb5f4d7")
     {:ok, "log", decode_log_ceb5f4d7_call(calldata)}
   end
 
-  def decode_call(calldata = <<207, 0, 152, 128>> <> _) do
+  def decode_call(<<207, 0, 152, 128>> <> _ = calldata) do
     _signature = hex!("0xcf009880")
     {:ok, "log", decode_log_cf009880_call(calldata)}
   end
 
-  def decode_call(calldata = <<207, 2, 15, 177>> <> _) do
+  def decode_call(<<207, 2, 15, 177>> <> _ = calldata) do
     _signature = hex!("0xcf020fb1")
     {:ok, "log", decode_log_cf020fb1_call(calldata)}
   end
 
-  def decode_call(calldata = <<207, 24, 16, 92>> <> _) do
+  def decode_call(<<207, 24, 16, 92>> <> _ = calldata) do
     _signature = hex!("0xcf18105c")
     {:ok, "log", decode_log_cf18105c_call(calldata)}
   end
 
-  def decode_call(calldata = <<207, 57, 68, 133>> <> _) do
+  def decode_call(<<207, 57, 68, 133>> <> _ = calldata) do
     _signature = hex!("0xcf394485")
     {:ok, "log", decode_log_cf394485_call(calldata)}
   end
 
-  def decode_call(calldata = <<209, 237, 122, 60>> <> _) do
+  def decode_call(<<209, 237, 122, 60>> <> _ = calldata) do
     _signature = hex!("0xd1ed7a3c")
     {:ok, "log", decode_log_d1ed7a3c_call(calldata)}
   end
 
-  def decode_call(calldata = <<210, 118, 54, 103>> <> _) do
+  def decode_call(<<210, 118, 54, 103>> <> _ = calldata) do
     _signature = hex!("0xd2763667")
     {:ok, "log", decode_log_d2763667_call(calldata)}
   end
 
-  def decode_call(calldata = <<210, 212, 35, 205>> <> _) do
+  def decode_call(<<210, 212, 35, 205>> <> _ = calldata) do
     _signature = hex!("0xd2d423cd")
     {:ok, "log", decode_log_d2d423cd_call(calldata)}
   end
 
-  def decode_call(calldata = <<213, 131, 198, 2>> <> _) do
+  def decode_call(<<213, 131, 198, 2>> <> _ = calldata) do
     _signature = hex!("0xd583c602")
     {:ok, "log", decode_log_d583c602_call(calldata)}
   end
 
-  def decode_call(calldata = <<214, 1, 159, 28>> <> _) do
+  def decode_call(<<214, 1, 159, 28>> <> _ = calldata) do
     _signature = hex!("0xd6019f1c")
     {:ok, "log", decode_log_d6019f1c_call(calldata)}
   end
 
-  def decode_call(calldata = <<214, 174, 250, 210>> <> _) do
+  def decode_call(<<214, 174, 250, 210>> <> _ = calldata) do
     _signature = hex!("0xd6aefad2")
     {:ok, "log", decode_log_d6aefad2_call(calldata)}
   end
 
-  def decode_call(calldata = <<216, 18, 161, 103>> <> _) do
+  def decode_call(<<216, 18, 161, 103>> <> _ = calldata) do
     _signature = hex!("0xd812a167")
     {:ok, "log", decode_log_d812a167_call(calldata)}
   end
 
-  def decode_call(calldata = <<218, 240, 212, 170>> <> _) do
+  def decode_call(<<218, 240, 212, 170>> <> _ = calldata) do
     _signature = hex!("0xdaf0d4aa")
     {:ok, "log", decode_log_daf0d4aa_call(calldata)}
   end
 
-  def decode_call(calldata = <<219, 180, 194, 71>> <> _) do
+  def decode_call(<<219, 180, 194, 71>> <> _ = calldata) do
     _signature = hex!("0xdbb4c247")
     {:ok, "log", decode_log_dbb4c247_call(calldata)}
   end
 
-  def decode_call(calldata = <<220, 94, 147, 91>> <> _) do
+  def decode_call(<<220, 94, 147, 91>> <> _ = calldata) do
     _signature = hex!("0xdc5e935b")
     {:ok, "log", decode_log_dc5e935b_call(calldata)}
   end
 
-  def decode_call(calldata = <<221, 176, 101, 33>> <> _) do
+  def decode_call(<<221, 176, 101, 33>> <> _ = calldata) do
     _signature = hex!("0xddb06521")
     {:ok, "log", decode_log_ddb06521_call(calldata)}
   end
 
-  def decode_call(calldata = <<221, 219, 149, 97>> <> _) do
+  def decode_call(<<221, 219, 149, 97>> <> _ = calldata) do
     _signature = hex!("0xdddb9561")
     {:ok, "log", decode_log_dddb9561_call(calldata)}
   end
 
-  def decode_call(calldata = <<222, 3, 231, 116>> <> _) do
+  def decode_call(<<222, 3, 231, 116>> <> _ = calldata) do
     _signature = hex!("0xde03e774")
     {:ok, "log", decode_log_de03e774_call(calldata)}
   end
 
-  def decode_call(calldata = <<222, 104, 242, 10>> <> _) do
+  def decode_call(<<222, 104, 242, 10>> <> _ = calldata) do
     _signature = hex!("0xde68f20a")
     {:ok, "log", decode_log_de68f20a_call(calldata)}
   end
 
-  def decode_call(calldata = <<222, 154, 146, 112>> <> _) do
+  def decode_call(<<222, 154, 146, 112>> <> _ = calldata) do
     _signature = hex!("0xde9a9270")
     {:ok, "log", decode_log_de9a9270_call(calldata)}
   end
 
-  def decode_call(calldata = <<223, 196, 162, 232>> <> _) do
+  def decode_call(<<223, 196, 162, 232>> <> _ = calldata) do
     _signature = hex!("0xdfc4a2e8")
     {:ok, "log", decode_log_dfc4a2e8_call(calldata)}
   end
 
-  def decode_call(calldata = <<224, 98, 91, 41>> <> _) do
+  def decode_call(<<224, 98, 91, 41>> <> _ = calldata) do
     _signature = hex!("0xe0625b29")
     {:ok, "log", decode_log_e0625b29_call(calldata)}
   end
 
-  def decode_call(calldata = <<224, 233, 91, 152>> <> _) do
+  def decode_call(<<224, 233, 91, 152>> <> _ = calldata) do
     _signature = hex!("0xe0e95b98")
     {:ok, "log", decode_log_e0e95b98_call(calldata)}
   end
 
-  def decode_call(calldata = <<224, 233, 173, 79>> <> _) do
+  def decode_call(<<224, 233, 173, 79>> <> _ = calldata) do
     _signature = hex!("0xe0e9ad4f")
     {:ok, "log", decode_log_e0e9ad4f_call(calldata)}
   end
 
-  def decode_call(calldata = <<226, 29, 226, 120>> <> _) do
+  def decode_call(<<226, 29, 226, 120>> <> _ = calldata) do
     _signature = hex!("0xe21de278")
     {:ok, "log", decode_log_e21de278_call(calldata)}
   end
 
-  def decode_call(calldata = <<226, 152, 244, 125>> <> _) do
+  def decode_call(<<226, 152, 244, 125>> <> _ = calldata) do
     _signature = hex!("0xe298f47d")
     {:ok, "log", decode_log_e298f47d_call(calldata)}
   end
 
-  def decode_call(calldata = <<226, 191, 214, 11>> <> _) do
+  def decode_call(<<226, 191, 214, 11>> <> _ = calldata) do
     _signature = hex!("0xe2bfd60b")
     {:ok, "log", decode_log_e2bfd60b_call(calldata)}
   end
 
-  def decode_call(calldata = <<227, 81, 20, 15>> <> _) do
+  def decode_call(<<227, 81, 20, 15>> <> _ = calldata) do
     _signature = hex!("0xe351140f")
     {:ok, "log", decode_log_e351140f_call(calldata)}
   end
 
-  def decode_call(calldata = <<227, 169, 202, 47>> <> _) do
+  def decode_call(<<227, 169, 202, 47>> <> _ = calldata) do
     _signature = hex!("0xe3a9ca2f")
     {:ok, "log", decode_log_e3a9ca2f_call(calldata)}
   end
 
-  def decode_call(calldata = <<228, 27, 111, 111>> <> _) do
+  def decode_call(<<228, 27, 111, 111>> <> _ = calldata) do
     _signature = hex!("0xe41b6f6f")
     {:ok, "log", decode_log_e41b6f6f_call(calldata)}
   end
 
-  def decode_call(calldata = <<229, 231, 11, 43>> <> _) do
+  def decode_call(<<229, 231, 11, 43>> <> _ = calldata) do
     _signature = hex!("0xe5e70b2b")
     {:ok, "log", decode_log_e5e70b2b_call(calldata)}
   end
 
-  def decode_call(calldata = <<232, 211, 1, 141>> <> _) do
+  def decode_call(<<232, 211, 1, 141>> <> _ = calldata) do
     _signature = hex!("0xe8d3018d")
     {:ok, "log", decode_log_e8d3018d_call(calldata)}
   end
 
-  def decode_call(calldata = <<232, 222, 251, 169>> <> _) do
+  def decode_call(<<232, 222, 251, 169>> <> _ = calldata) do
     _signature = hex!("0xe8defba9")
     {:ok, "log", decode_log_e8defba9_call(calldata)}
   end
 
-  def decode_call(calldata = <<235, 27, 255, 128>> <> _) do
+  def decode_call(<<235, 27, 255, 128>> <> _ = calldata) do
     _signature = hex!("0xeb1bff80")
     {:ok, "log", decode_log_eb1bff80_call(calldata)}
   end
 
-  def decode_call(calldata = <<235, 127, 111, 210>> <> _) do
+  def decode_call(<<235, 127, 111, 210>> <> _ = calldata) do
     _signature = hex!("0xeb7f6fd2")
     {:ok, "log", decode_log_eb7f6fd2_call(calldata)}
   end
 
-  def decode_call(calldata = <<235, 131, 12, 146>> <> _) do
+  def decode_call(<<235, 131, 12, 146>> <> _ = calldata) do
     _signature = hex!("0xeb830c92")
     {:ok, "log", decode_log_eb830c92_call(calldata)}
   end
 
-  def decode_call(calldata = <<235, 146, 141, 127>> <> _) do
+  def decode_call(<<235, 146, 141, 127>> <> _ = calldata) do
     _signature = hex!("0xeb928d7f")
     {:ok, "log", decode_log_eb928d7f_call(calldata)}
   end
 
-  def decode_call(calldata = <<237, 143, 40, 246>> <> _) do
+  def decode_call(<<237, 143, 40, 246>> <> _ = calldata) do
     _signature = hex!("0xed8f28f6")
     {:ok, "log", decode_log_ed8f28f6_call(calldata)}
   end
 
-  def decode_call(calldata = <<239, 28, 239, 231>> <> _) do
+  def decode_call(<<239, 28, 239, 231>> <> _ = calldata) do
     _signature = hex!("0xef1cefe7")
     {:ok, "log", decode_log_ef1cefe7_call(calldata)}
   end
 
-  def decode_call(calldata = <<239, 82, 144, 24>> <> _) do
+  def decode_call(<<239, 82, 144, 24>> <> _ = calldata) do
     _signature = hex!("0xef529018")
     {:ok, "log", decode_log_ef529018_call(calldata)}
   end
 
-  def decode_call(calldata = <<239, 114, 197, 19>> <> _) do
+  def decode_call(<<239, 114, 197, 19>> <> _ = calldata) do
     _signature = hex!("0xef72c513")
     {:ok, "log", decode_log_ef72c513_call(calldata)}
   end
 
-  def decode_call(calldata = <<240, 135, 68, 232>> <> _) do
+  def decode_call(<<240, 135, 68, 232>> <> _ = calldata) do
     _signature = hex!("0xf08744e8")
     {:ok, "log", decode_log_f08744e8_call(calldata)}
   end
 
-  def decode_call(calldata = <<241, 22, 153, 237>> <> _) do
+  def decode_call(<<241, 22, 153, 237>> <> _ = calldata) do
     _signature = hex!("0xf11699ed")
     {:ok, "log", decode_log_f11699ed_call(calldata)}
   end
 
-  def decode_call(calldata = <<242, 166, 98, 134>> <> _) do
+  def decode_call(<<242, 166, 98, 134>> <> _ = calldata) do
     _signature = hex!("0xf2a66286")
     {:ok, "log", decode_log_f2a66286_call(calldata)}
   end
 
-  def decode_call(calldata = <<244, 93, 125, 44>> <> _) do
+  def decode_call(<<244, 93, 125, 44>> <> _ = calldata) do
     _signature = hex!("0xf45d7d2c")
     {:ok, "log", decode_log_f45d7d2c_call(calldata)}
   end
 
-  def decode_call(calldata = <<244, 136, 14, 164>> <> _) do
+  def decode_call(<<244, 136, 14, 164>> <> _ = calldata) do
     _signature = hex!("0xf4880ea4")
     {:ok, "log", decode_log_f4880ea4_call(calldata)}
   end
 
-  def decode_call(calldata = <<245, 188, 34, 73>> <> _) do
+  def decode_call(<<245, 188, 34, 73>> <> _ = calldata) do
     _signature = hex!("0xf5bc2249")
     {:ok, "log", decode_log_f5bc2249_call(calldata)}
   end
 
-  def decode_call(calldata = <<246, 102, 113, 90>> <> _) do
+  def decode_call(<<246, 102, 113, 90>> <> _ = calldata) do
     _signature = hex!("0xf666715a")
     {:ok, "log", decode_log_f666715a_call(calldata)}
   end
 
-  def decode_call(calldata = <<247, 227, 98, 69>> <> _) do
+  def decode_call(<<247, 227, 98, 69>> <> _ = calldata) do
     _signature = hex!("0xf7e36245")
     {:ok, "log", decode_log_f7e36245_call(calldata)}
   end
 
-  def decode_call(calldata = <<248, 8, 218, 32>> <> _) do
+  def decode_call(<<248, 8, 218, 32>> <> _ = calldata) do
     _signature = hex!("0xf808da20")
     {:ok, "log", decode_log_f808da20_call(calldata)}
   end
 
-  def decode_call(calldata = <<248, 44, 80, 241>> <> _) do
+  def decode_call(<<248, 44, 80, 241>> <> _ = calldata) do
     _signature = hex!("0xf82c50f1")
     {:ok, "log", decode_log_f82c50f1_call(calldata)}
   end
 
-  def decode_call(calldata = <<248, 245, 27, 30>> <> _) do
+  def decode_call(<<248, 245, 27, 30>> <> _ = calldata) do
     _signature = hex!("0xf8f51b1e")
     {:ok, "log", decode_log_f8f51b1e_call(calldata)}
   end
 
-  def decode_call(calldata = <<249, 173, 43, 137>> <> _) do
+  def decode_call(<<249, 173, 43, 137>> <> _ = calldata) do
     _signature = hex!("0xf9ad2b89")
     {:ok, "log", decode_log_f9ad2b89_call(calldata)}
   end
 
-  def decode_call(calldata = <<250, 129, 133, 175>> <> _) do
+  def decode_call(<<250, 129, 133, 175>> <> _ = calldata) do
     _signature = hex!("0xfa8185af")
     {:ok, "log", decode_log_fa8185af_call(calldata)}
   end
 
-  def decode_call(calldata = <<251, 119, 34, 101>> <> _) do
+  def decode_call(<<251, 119, 34, 101>> <> _ = calldata) do
     _signature = hex!("0xfb772265")
     {:ok, "log", decode_log_fb772265_call(calldata)}
   end
 
-  def decode_call(calldata = <<252, 72, 69, 240>> <> _) do
+  def decode_call(<<252, 72, 69, 240>> <> _ = calldata) do
     _signature = hex!("0xfc4845f0")
     {:ok, "log", decode_log_fc4845f0_call(calldata)}
   end
 
-  def decode_call(calldata = <<252, 236, 117, 224>> <> _) do
+  def decode_call(<<252, 236, 117, 224>> <> _ = calldata) do
     _signature = hex!("0xfcec75e0")
     {:ok, "log", decode_log_fcec75e0_call(calldata)}
   end
 
-  def decode_call(calldata = <<253, 180, 249, 144>> <> _) do
+  def decode_call(<<253, 180, 249, 144>> <> _ = calldata) do
     _signature = hex!("0xfdb4f990")
     {:ok, "log", decode_log_fdb4f990_call(calldata)}
   end
 
-  def decode_call(calldata = <<254, 221, 31, 255>> <> _) do
+  def decode_call(<<254, 221, 31, 255>> <> _ = calldata) do
     _signature = hex!("0xfedd1fff")
     {:ok, "log", decode_log_fedd1fff_call(calldata)}
   end
 
-  def decode_call(calldata = <<95, 145, 176, 175>> <> _) do
+  def decode_call(<<95, 145, 176, 175>> <> _ = calldata) do
     _signature = hex!("0x5f91b0af")
     {:ok, "logAddress", decode_log_address_call(calldata)}
   end
 
-  def decode_call(calldata = <<186, 122, 184, 78>> <> _) do
+  def decode_call(<<186, 122, 184, 78>> <> _ = calldata) do
     _signature = hex!("0xba7ab84e")
     {:ok, "logBool", decode_log_bool_call(calldata)}
   end
 
-  def decode_call(calldata = <<225, 123, 249, 86>> <> _) do
+  def decode_call(<<225, 123, 249, 86>> <> _ = calldata) do
     _signature = hex!("0xe17bf956")
     {:ok, "logBytes", decode_log_bytes_call(calldata)}
   end
 
-  def decode_call(calldata = <<111, 65, 113, 201>> <> _) do
+  def decode_call(<<111, 65, 113, 201>> <> _ = calldata) do
     _signature = hex!("0x6f4171c9")
     {:ok, "logBytes1", decode_log_bytes1_call(calldata)}
   end
 
-  def decode_call(calldata = <<157, 194, 168, 151>> <> _) do
+  def decode_call(<<157, 194, 168, 151>> <> _ = calldata) do
     _signature = hex!("0x9dc2a897")
     {:ok, "logBytes10", decode_log_bytes10_call(calldata)}
   end
 
-  def decode_call(calldata = <<220, 8, 182, 167>> <> _) do
+  def decode_call(<<220, 8, 182, 167>> <> _ = calldata) do
     _signature = hex!("0xdc08b6a7")
     {:ok, "logBytes11", decode_log_bytes11_call(calldata)}
   end
 
-  def decode_call(calldata = <<118, 86, 214, 199>> <> _) do
+  def decode_call(<<118, 86, 214, 199>> <> _ = calldata) do
     _signature = hex!("0x7656d6c7")
     {:ok, "logBytes12", decode_log_bytes12_call(calldata)}
   end
 
-  def decode_call(calldata = <<52, 193, 216, 27>> <> _) do
+  def decode_call(<<52, 193, 216, 27>> <> _ = calldata) do
     _signature = hex!("0x34c1d81b")
     {:ok, "logBytes13", decode_log_bytes13_call(calldata)}
   end
 
-  def decode_call(calldata = <<60, 234, 186, 101>> <> _) do
+  def decode_call(<<60, 234, 186, 101>> <> _ = calldata) do
     _signature = hex!("0x3ceaba65")
     {:ok, "logBytes14", decode_log_bytes14_call(calldata)}
   end
 
-  def decode_call(calldata = <<89, 26, 61, 162>> <> _) do
+  def decode_call(<<89, 26, 61, 162>> <> _ = calldata) do
     _signature = hex!("0x591a3da2")
     {:ok, "logBytes15", decode_log_bytes15_call(calldata)}
   end
 
-  def decode_call(calldata = <<31, 141, 115, 18>> <> _) do
+  def decode_call(<<31, 141, 115, 18>> <> _ = calldata) do
     _signature = hex!("0x1f8d7312")
     {:ok, "logBytes16", decode_log_bytes16_call(calldata)}
   end
 
-  def decode_call(calldata = <<248, 154, 83, 47>> <> _) do
+  def decode_call(<<248, 154, 83, 47>> <> _ = calldata) do
     _signature = hex!("0xf89a532f")
     {:ok, "logBytes17", decode_log_bytes17_call(calldata)}
   end
 
-  def decode_call(calldata = <<216, 101, 38, 66>> <> _) do
+  def decode_call(<<216, 101, 38, 66>> <> _ = calldata) do
     _signature = hex!("0xd8652642")
     {:ok, "logBytes18", decode_log_bytes18_call(calldata)}
   end
 
-  def decode_call(calldata = <<0, 245, 107, 201>> <> _) do
+  def decode_call(<<0, 245, 107, 201>> <> _ = calldata) do
     _signature = hex!("0x00f56bc9")
     {:ok, "logBytes19", decode_log_bytes19_call(calldata)}
   end
 
-  def decode_call(calldata = <<155, 94, 148, 62>> <> _) do
+  def decode_call(<<155, 94, 148, 62>> <> _ = calldata) do
     _signature = hex!("0x9b5e943e")
     {:ok, "logBytes2", decode_log_bytes2_call(calldata)}
   end
 
-  def decode_call(calldata = <<236, 184, 86, 126>> <> _) do
+  def decode_call(<<236, 184, 86, 126>> <> _ = calldata) do
     _signature = hex!("0xecb8567e")
     {:ok, "logBytes20", decode_log_bytes20_call(calldata)}
   end
 
-  def decode_call(calldata = <<48, 82, 192, 143>> <> _) do
+  def decode_call(<<48, 82, 192, 143>> <> _ = calldata) do
     _signature = hex!("0x3052c08f")
     {:ok, "logBytes21", decode_log_bytes21_call(calldata)}
   end
 
-  def decode_call(calldata = <<128, 122, 180, 52>> <> _) do
+  def decode_call(<<128, 122, 180, 52>> <> _ = calldata) do
     _signature = hex!("0x807ab434")
     {:ok, "logBytes22", decode_log_bytes22_call(calldata)}
   end
 
-  def decode_call(calldata = <<73, 121, 176, 55>> <> _) do
+  def decode_call(<<73, 121, 176, 55>> <> _ = calldata) do
     _signature = hex!("0x4979b037")
     {:ok, "logBytes23", decode_log_bytes23_call(calldata)}
   end
 
-  def decode_call(calldata = <<9, 119, 174, 252>> <> _) do
+  def decode_call(<<9, 119, 174, 252>> <> _ = calldata) do
     _signature = hex!("0x0977aefc")
     {:ok, "logBytes24", decode_log_bytes24_call(calldata)}
   end
 
-  def decode_call(calldata = <<174, 169, 150, 63>> <> _) do
+  def decode_call(<<174, 169, 150, 63>> <> _ = calldata) do
     _signature = hex!("0xaea9963f")
     {:ok, "logBytes25", decode_log_bytes25_call(calldata)}
   end
 
-  def decode_call(calldata = <<211, 99, 86, 40>> <> _) do
+  def decode_call(<<211, 99, 86, 40>> <> _ = calldata) do
     _signature = hex!("0xd3635628")
     {:ok, "logBytes26", decode_log_bytes26_call(calldata)}
   end
 
-  def decode_call(calldata = <<252, 55, 47, 159>> <> _) do
+  def decode_call(<<252, 55, 47, 159>> <> _ = calldata) do
     _signature = hex!("0xfc372f9f")
     {:ok, "logBytes27", decode_log_bytes27_call(calldata)}
   end
 
-  def decode_call(calldata = <<56, 47, 154, 52>> <> _) do
+  def decode_call(<<56, 47, 154, 52>> <> _ = calldata) do
     _signature = hex!("0x382f9a34")
     {:ok, "logBytes28", decode_log_bytes28_call(calldata)}
   end
 
-  def decode_call(calldata = <<122, 24, 118, 65>> <> _) do
+  def decode_call(<<122, 24, 118, 65>> <> _ = calldata) do
     _signature = hex!("0x7a187641")
     {:ok, "logBytes29", decode_log_bytes29_call(calldata)}
   end
 
-  def decode_call(calldata = <<119, 130, 250, 45>> <> _) do
+  def decode_call(<<119, 130, 250, 45>> <> _ = calldata) do
     _signature = hex!("0x7782fa2d")
     {:ok, "logBytes3", decode_log_bytes3_call(calldata)}
   end
 
-  def decode_call(calldata = <<196, 52, 14, 246>> <> _) do
+  def decode_call(<<196, 52, 14, 246>> <> _ = calldata) do
     _signature = hex!("0xc4340ef6")
     {:ok, "logBytes30", decode_log_bytes30_call(calldata)}
   end
 
-  def decode_call(calldata = <<129, 252, 134, 72>> <> _) do
+  def decode_call(<<129, 252, 134, 72>> <> _ = calldata) do
     _signature = hex!("0x81fc8648")
     {:ok, "logBytes31", decode_log_bytes31_call(calldata)}
   end
 
-  def decode_call(calldata = <<45, 33, 214, 247>> <> _) do
+  def decode_call(<<45, 33, 214, 247>> <> _ = calldata) do
     _signature = hex!("0x2d21d6f7")
     {:ok, "logBytes32", decode_log_bytes32_call(calldata)}
   end
 
-  def decode_call(calldata = <<251, 163, 173, 57>> <> _) do
+  def decode_call(<<251, 163, 173, 57>> <> _ = calldata) do
     _signature = hex!("0xfba3ad39")
     {:ok, "logBytes4", decode_log_bytes4_call(calldata)}
   end
 
-  def decode_call(calldata = <<85, 131, 190, 46>> <> _) do
+  def decode_call(<<85, 131, 190, 46>> <> _ = calldata) do
     _signature = hex!("0x5583be2e")
     {:ok, "logBytes5", decode_log_bytes5_call(calldata)}
   end
 
-  def decode_call(calldata = <<73, 66, 173, 198>> <> _) do
+  def decode_call(<<73, 66, 173, 198>> <> _ = calldata) do
     _signature = hex!("0x4942adc6")
     {:ok, "logBytes6", decode_log_bytes6_call(calldata)}
   end
 
-  def decode_call(calldata = <<69, 116, 175, 171>> <> _) do
+  def decode_call(<<69, 116, 175, 171>> <> _ = calldata) do
     _signature = hex!("0x4574afab")
     {:ok, "logBytes7", decode_log_bytes7_call(calldata)}
   end
 
-  def decode_call(calldata = <<153, 2, 228, 127>> <> _) do
+  def decode_call(<<153, 2, 228, 127>> <> _ = calldata) do
     _signature = hex!("0x9902e47f")
     {:ok, "logBytes8", decode_log_bytes8_call(calldata)}
   end
 
-  def decode_call(calldata = <<80, 161, 56, 223>> <> _) do
+  def decode_call(<<80, 161, 56, 223>> <> _ = calldata) do
     _signature = hex!("0x50a138df")
     {:ok, "logBytes9", decode_log_bytes9_call(calldata)}
   end
 
-  def decode_call(calldata = <<101, 37, 181, 245>> <> _) do
+  def decode_call(<<101, 37, 181, 245>> <> _ = calldata) do
     _signature = hex!("0x6525b5f5")
     {:ok, "logInt", decode_log_int_call(calldata)}
   end
 
-  def decode_call(calldata = <<11, 181, 99, 214>> <> _) do
+  def decode_call(<<11, 181, 99, 214>> <> _ = calldata) do
     _signature = hex!("0x0bb563d6")
     {:ok, "logString", decode_log_string_call(calldata)}
   end
 
-  def decode_call(calldata = <<153, 5, 183, 68>> <> _) do
+  def decode_call(<<153, 5, 183, 68>> <> _ = calldata) do
     _signature = hex!("0x9905b744")
     {:ok, "logUint", decode_log_uint_call(calldata)}
   end
@@ -28150,11 +28074,11 @@ defmodule Cartouche.Contract.IConsole do
     end
   end
 
-  def bytecode() do
+  def bytecode do
     hex!("0x")
   end
 
-  def deployed_bytecode() do
+  def deployed_bytecode do
     hex!("0x")
   end
 end

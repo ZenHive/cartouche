@@ -18,9 +18,11 @@ defmodule Cartouche.Solana.RPC do
       {:ok, %{blockhash: bh}} = Cartouche.Solana.RPC.get_latest_blockhash()
   """
 
-  require Logger
-
   import Cartouche.Util, only: [normalize_finch_result: 1]
+
+  alias Cartouche.Solana.Transaction
+
+  require Logger
 
   @default_timeout Application.compile_env(:cartouche, :solana_timeout, 30_000)
 
@@ -66,9 +68,7 @@ defmodule Cartouche.Solana.RPC do
     request = Finch.build(:post, url, headers, Jason.encode!(body))
 
     finch_result =
-      normalize_finch_result(
-        http_client().request(request, finch_name(), receive_timeout: timeout)
-      )
+      normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
 
     with {:ok, %Finch.Response{body: resp_body}} <- finch_result do
       decode_response(resp_body, id, method)
@@ -285,7 +285,8 @@ defmodule Cartouche.Solana.RPC do
 
     with {:ok, result} <- send_rpc("getSignatureStatuses", params, opts) do
       statuses =
-        unwrap_value(result)
+        result
+        |> unwrap_value()
         |> Enum.map(fn
           nil ->
             nil
@@ -333,8 +334,7 @@ defmodule Cartouche.Solana.RPC do
   for 1500000 with 6 decimals).
   """
   @spec get_token_account_balance(<<_::256>>, keyword()) ::
-          {:ok,
-           %{amount: non_neg_integer(), decimals: non_neg_integer(), ui_amount_string: String.t()}}
+          {:ok, %{amount: non_neg_integer(), decimals: non_neg_integer(), ui_amount_string: String.t()}}
           | {:error, term()}
   def get_token_account_balance(pubkey, opts \\ []) do
     with {:ok, result} <-
@@ -387,7 +387,8 @@ defmodule Cartouche.Solana.RPC do
     with {:ok, result} <-
            send_rpc("getTokenAccountsByOwner", [encode_pubkey(owner), filter_obj, config], opts) do
       accounts =
-        unwrap_value(result)
+        result
+        |> unwrap_value()
         |> Enum.map(fn item ->
           %{
             pubkey: item["pubkey"],
@@ -469,12 +470,12 @@ defmodule Cartouche.Solana.RPC do
 
   Returns the transaction signature (Base58 string).
   """
-  @spec send_transaction(binary() | Cartouche.Solana.Transaction.t(), keyword()) ::
+  @spec send_transaction(binary() | Transaction.t(), keyword()) ::
           {:ok, String.t()} | {:error, term()}
   def send_transaction(transaction, opts \\ [])
 
-  def send_transaction(%Cartouche.Solana.Transaction{} = trx, opts) do
-    send_transaction(Cartouche.Solana.Transaction.serialize(trx), opts)
+  def send_transaction(%Transaction{} = trx, opts) do
+    send_transaction(Transaction.serialize(trx), opts)
   end
 
   def send_transaction(bytes, opts) when is_binary(bytes) do
@@ -509,12 +510,12 @@ defmodule Cartouche.Solana.RPC do
 
   Returns simulation result including logs, compute units consumed, and errors.
   """
-  @spec simulate_transaction(binary() | Cartouche.Solana.Transaction.t(), keyword()) ::
+  @spec simulate_transaction(binary() | Transaction.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
   def simulate_transaction(transaction, opts \\ [])
 
-  def simulate_transaction(%Cartouche.Solana.Transaction{} = trx, opts) do
-    simulate_transaction(Cartouche.Solana.Transaction.serialize(trx), opts)
+  def simulate_transaction(%Transaction{} = trx, opts) do
+    simulate_transaction(Transaction.serialize(trx), opts)
   end
 
   def simulate_transaction(bytes, opts) when is_binary(bytes) do
@@ -571,7 +572,7 @@ defmodule Cartouche.Solana.RPC do
   - `:poll_interval` - Poll interval in ms (default: 500)
   - All options from `send_transaction/2`
   """
-  @spec send_and_confirm(Cartouche.Solana.Transaction.t() | binary(), keyword()) ::
+  @spec send_and_confirm(Transaction.t() | binary(), keyword()) ::
           {:ok, String.t()} | {:error, term()}
   def send_and_confirm(transaction, opts \\ []) do
     target_commitment = Keyword.get(opts, :commitment, :confirmed)

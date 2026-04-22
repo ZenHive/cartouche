@@ -1,7 +1,9 @@
 defmodule Cartouche.Solana.TokenTest do
   use ExUnit.Case
 
-  alias Cartouche.Solana.{Token, ATA, Programs}
+  alias Cartouche.Solana.ATA
+  alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.Token
 
   setup do
     prev_client = Application.get_env(:cartouche, :client)
@@ -110,9 +112,7 @@ defmodule Cartouche.Solana.TokenTest do
       mint = <<3::256>>
 
       [create_ix, transfer_ix] =
-        Token.transfer_instructions(from_wallet, to_wallet, mint, 100, 9,
-          token_program: Programs.token_2022_program()
-        )
+        Token.transfer_instructions(from_wallet, to_wallet, mint, 100, 9, token_program: Programs.token_2022_program())
 
       # ATA create should use Token-2022 as the token program account
       assert List.last(create_ix.accounts).pubkey == Programs.token_2022_program()

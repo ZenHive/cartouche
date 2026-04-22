@@ -6,6 +6,7 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     import Cartouche.Hash, only: [keccak: 1]
 
     alias GoogleApi.CloudKMS.V1.Api.Projects, as: CloudKMSApi
+    alias GoogleApi.CloudKMS.V1.Connection
 
     @doc ~S"""
     Get the Ethereum address associated with the given KMS key version.
@@ -78,11 +79,11 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
-    defp client(token) when is_binary(token), do: GoogleApi.CloudKMS.V1.Connection.new(token)
+    defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do
       %{token: token, type: "Bearer"} = Goth.fetch!(cred)
-      GoogleApi.CloudKMS.V1.Connection.new(token)
+      Connection.new(token)
     end
   end
 end

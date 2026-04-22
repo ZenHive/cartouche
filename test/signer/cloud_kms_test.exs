@@ -1,5 +1,6 @@
 defmodule Cartouche.Signer.CloudKMSTest do
   use ExUnit.Case, async: true
+
   doctest Cartouche.Signer.CloudKMS
 
   setup do

@@ -16,9 +16,11 @@ defmodule Cartouche.Contract.RockTest do
 
   """
   use ExUnit.Case, async: true
-  doctest Cartouche.Contract.Rock
-  alias Cartouche.Contract.Rock
   use Cartouche.Hex
+
+  alias Cartouche.Contract.Rock
+
+  doctest Rock
 
   test "returns correct contract name" do
     assert Rock.contract_name() == "Rock"
@@ -48,8 +50,7 @@ defmodule Cartouche.Contract.RockTest do
     end
 
     test "exec_vm_raw" do
-      assert {:revert,
-              ~h[0xd331ba980000000000000000000000000000000000000000000000000000000000000037]} =
+      assert {:revert, ~h[0xd331ba980000000000000000000000000000000000000000000000000000000000000037]} =
                Rock.exec_vm_stumble_144e59d6_raw()
     end
   end

@@ -128,30 +128,28 @@ defmodule Cartouche.Solana.PDA do
     <<y_raw::little-unsigned-256>> = bytes
     y = y_raw &&& (1 <<< 255) - 1
 
-    cond do
-      # y must be a valid field element
-      y >= @p ->
-        false
-
+    # y must be a valid field element
+    if y >= @p do
+      false
+    else
       # y = 0: u = p-1, v = 1, x² = p-1 which is NOT a QR (so off-curve)
       # Actually let's just compute it uniformly
-      true ->
-        y2 = mod_pow(y, 2)
-        u = rem(y2 - 1 + @p, @p)
-        v = rem(@d * y2 + 1, @p)
-        v_inv = mod_pow(v, @p - 2)
-        x2 = rem(u * v_inv, @p)
+      y2 = mod_pow(y, 2)
+      u = rem(y2 - 1 + @p, @p)
+      v = rem(@d * y2 + 1, @p)
+      v_inv = mod_pow(v, @p - 2)
+      x2 = rem(u * v_inv, @p)
 
-        if x2 == 0 do
-          true
-        else
-          # Euler's criterion: x2^((p-1)/2) ≡ 1 mod p means QR (on curve)
-          mod_pow(x2, @euler_exp) == 1
-        end
+      if x2 == 0 do
+        true
+      else
+        # Euler's criterion: x2^((p-1)/2) ≡ 1 mod p means QR (on curve)
+        mod_pow(x2, @euler_exp) == 1
+      end
     end
   end
 
   defp mod_pow(base, exp) do
-    :crypto.mod_pow(base, exp, @p) |> :binary.decode_unsigned()
+    base |> :crypto.mod_pow(exp, @p) |> :binary.decode_unsigned()
   end
 end

@@ -7,6 +7,7 @@ defmodule Cartouche.Hex do
   """
 
   defmodule HexError do
+    @moduledoc false
     defexception message: "invalid hex"
   end
 
@@ -14,11 +15,12 @@ defmodule Cartouche.Hex do
 
   defmacro __using__(_opts) do
     quote do
-      require Cartouche.Hex
-      alias Cartouche.Hex
-
       import Cartouche.Hex,
         only: [sigil_h: 2, hex!: 1, to_hex: 1, to_address: 1, from_hex: 1, from_hex!: 1]
+
+      alias Cartouche.Hex
+
+      require Hex
     end
   end
 
@@ -322,10 +324,9 @@ defmodule Cartouche.Hex do
     ** (Cartouche.Hex.HexError) Expected 20-byte address for in `Cartouche.Hex.encode_address/1`
   """
   @spec encode_address(t()) :: String.t()
-  def encode_address(b = <<_::160>>), do: Cartouche.Util.checksum_address(encode_hex(b))
+  def encode_address(<<_::160>> = b), do: Cartouche.Util.checksum_address(encode_hex(b))
 
-  def encode_address(_),
-    do: raise(HexError, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
+  def encode_address(_), do: raise(HexError, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
 
   @doc """
   Alias for `encode_address`.
@@ -383,7 +384,7 @@ defmodule Cartouche.Hex do
       end
 
     case Base.decode16(hex_padded, case: :mixed) do
-      res = {:ok, _} ->
+      {:ok, _} = res ->
         res
 
       :error ->
@@ -395,8 +396,7 @@ defmodule Cartouche.Hex do
   def deep_encode_binaries(x) when is_binary(x), do: to_hex(x)
   def deep_encode_binaries(l) when is_list(l), do: Enum.map(l, &deep_encode_binaries/1)
 
-  def deep_encode_binaries(t) when is_tuple(t),
-    do: List.to_tuple(Enum.map(Tuple.to_list(t), &deep_encode_binaries/1))
+  def deep_encode_binaries(t) when is_tuple(t), do: List.to_tuple(Enum.map(Tuple.to_list(t), &deep_encode_binaries/1))
 
   def deep_encode_binaries(els), do: els
 end

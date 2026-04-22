@@ -88,11 +88,7 @@ defmodule Cartouche.FeeHistory do
   """
   @spec deserialize(map()) :: t() | no_return()
   def deserialize(
-        params = %{
-          "oldestBlock" => oldest_block,
-          "baseFeePerGas" => base_fee_per_gas,
-          "gasUsedRatio" => gas_used_ratio
-        }
+        %{"oldestBlock" => oldest_block, "baseFeePerGas" => base_fee_per_gas, "gasUsedRatio" => gas_used_ratio} = params
       ) do
     %__MODULE__{
       oldest_block: Cartouche.Hex.decode_hex_number!(oldest_block),

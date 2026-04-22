@@ -6,8 +6,9 @@ defmodule Cartouche.Solana.SystemProgram do
   handles basic operations like SOL transfers and account creation.
   """
 
-  alias Cartouche.Solana.Transaction.{Instruction, AccountMeta}
   alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Instruction
 
   @doc """
   Returns the System Program pubkey (32 zero bytes).
@@ -31,8 +32,7 @@ defmodule Cartouche.Solana.SystemProgram do
       12
   """
   @spec transfer(<<_::256>>, <<_::256>>, non_neg_integer()) :: Instruction.t()
-  def transfer(<<from::binary-32>>, <<to::binary-32>>, lamports)
-      when is_integer(lamports) and lamports >= 0 do
+  def transfer(<<from::binary-32>>, <<to::binary-32>>, lamports) when is_integer(lamports) and lamports >= 0 do
     %Instruction{
       program_id: Programs.system_program(),
       accounts: [
@@ -58,13 +58,7 @@ defmodule Cartouche.Solana.SystemProgram do
   """
   @spec create_account(<<_::256>>, <<_::256>>, non_neg_integer(), non_neg_integer(), <<_::256>>) ::
           Instruction.t()
-  def create_account(
-        <<from::binary-32>>,
-        <<new_account::binary-32>>,
-        lamports,
-        space,
-        <<owner::binary-32>>
-      )
+  def create_account(<<from::binary-32>>, <<new_account::binary-32>>, lamports, space, <<owner::binary-32>>)
       when is_integer(lamports) and lamports >= 0 and is_integer(space) and space >= 0 do
     %Instruction{
       program_id: Programs.system_program(),
@@ -72,9 +66,7 @@ defmodule Cartouche.Solana.SystemProgram do
         %AccountMeta{pubkey: from, is_signer: true, is_writable: true},
         %AccountMeta{pubkey: new_account, is_signer: true, is_writable: true}
       ],
-      data:
-        <<0::little-unsigned-32, lamports::little-unsigned-64, space::little-unsigned-64,
-          owner::binary-32>>
+      data: <<0::little-unsigned-32, lamports::little-unsigned-64, space::little-unsigned-64, owner::binary-32>>
     }
   end
 end

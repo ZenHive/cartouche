@@ -1,10 +1,11 @@
 defmodule Cartouche.Solana.TokenProgramTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.TokenProgram
 
+  alias Cartouche.Solana.Programs
   alias Cartouche.Solana.TokenProgram
   alias Cartouche.Solana.Transaction.AccountMeta
-  alias Cartouche.Solana.Programs
+
+  doctest TokenProgram
 
   @source <<1::256>>
   @destination <<2::256>>
@@ -39,9 +40,7 @@ defmodule Cartouche.Solana.TokenProgramTest do
 
     test "token_program option" do
       ix =
-        TokenProgram.transfer(@source, @destination, @authority, 100,
-          token_program: Programs.token_2022_program()
-        )
+        TokenProgram.transfer(@source, @destination, @authority, 100, token_program: Programs.token_2022_program())
 
       assert ix.program_id == Programs.token_2022_program()
     end

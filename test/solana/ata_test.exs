@@ -1,12 +1,16 @@
 defmodule Cartouche.Solana.ATATest do
   use ExUnit.Case, async: true
   use Cartouche.Base58
-  doctest Cartouche.Solana.ATA
 
-  alias Cartouche.Solana.{ATA, PDA, Programs}
-  alias Cartouche.Solana.Transaction.{AccountMeta}
+  alias Cartouche.Solana.ATA
+  alias Cartouche.Solana.Keys
+  alias Cartouche.Solana.PDA
+  alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.Transaction.AccountMeta
 
-  @wallet elem(Cartouche.Solana.Keys.from_seed(<<1::256>>), 0)
+  doctest ATA
+
+  @wallet elem(Keys.from_seed(<<1::256>>), 0)
   @mint Programs.wrapped_sol_mint()
 
   describe "find_address/3" do
@@ -34,7 +38,7 @@ defmodule Cartouche.Solana.ATATest do
     end
 
     test "different wallets produce different ATAs" do
-      {pub2, _} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {pub2, _} = Keys.from_seed(<<2::256>>)
       {ata1, _} = ATA.find_address(@wallet, @mint)
       {ata2, _} = ATA.find_address(pub2, @mint)
       assert ata1 != ata2

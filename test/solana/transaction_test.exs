@@ -1,9 +1,13 @@
 defmodule Cartouche.Solana.TransactionTest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.Transaction
 
+  alias Cartouche.Solana.Keys
+  alias Cartouche.Solana.SystemProgram
   alias Cartouche.Solana.Transaction
-  alias Cartouche.Solana.Transaction.{AccountMeta, Instruction}
+  alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Instruction
+
+  doctest Transaction
 
   # ---------------------------------------------------------------------------
   # Compact-u16 encoding/decoding
@@ -20,18 +24,18 @@ defmodule Cartouche.Solana.TransactionTest do
       assert Transaction.encode_compact_u16(128) == <<0x80, 0x01>>
       assert Transaction.encode_compact_u16(255) == <<0xFF, 0x01>>
       assert Transaction.encode_compact_u16(256) == <<0x80, 0x02>>
-      assert Transaction.encode_compact_u16(16383) == <<0xFF, 0x7F>>
+      assert Transaction.encode_compact_u16(16_383) == <<0xFF, 0x7F>>
     end
 
     test "three-byte values (16384-65535)" do
-      assert Transaction.encode_compact_u16(16384) == <<0x80, 0x80, 0x01>>
-      assert Transaction.encode_compact_u16(65535) == <<0xFF, 0xFF, 0x03>>
+      assert Transaction.encode_compact_u16(16_384) == <<0x80, 0x80, 0x01>>
+      assert Transaction.encode_compact_u16(65_535) == <<0xFF, 0xFF, 0x03>>
     end
   end
 
   describe "decode_compact_u16/1" do
     test "roundtrip for all boundary values" do
-      values = [0, 1, 127, 128, 255, 256, 16383, 16384, 65535]
+      values = [0, 1, 127, 128, 255, 256, 16_383, 16_384, 65_535]
 
       for v <- values do
         encoded = Transaction.encode_compact_u16(v)
@@ -200,11 +204,11 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 500_000)
+      ix = SystemProgram.transfer(fee_payer, recipient, 500_000)
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
       # Sign with a known seed
-      {_pub, seed} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
+      {_pub, seed} = Keys.from_seed(<<1::256>>)
       trx = Transaction.sign(msg, [seed])
 
       # Serialize
@@ -229,7 +233,7 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(
+        SystemProgram.create_account(
           fee_payer,
           new_account,
           1_000_000,
@@ -240,8 +244,8 @@ defmodule Cartouche.Solana.TransactionTest do
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
       # Two signers needed
-      {_pub1, seed1} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
-      {_pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {_pub1, seed1} = Keys.from_seed(<<1::256>>)
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
       trx = Transaction.sign(msg, [seed1, seed2])
 
       bytes = Transaction.serialize(trx)
@@ -257,7 +261,7 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 42)
+      ix = SystemProgram.transfer(fee_payer, recipient, 42)
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
       msg_bytes = Transaction.serialize_message(msg)
@@ -277,10 +281,10 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 1_000_000)
+      ix = SystemProgram.transfer(fee_payer, recipient, 1_000_000)
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
-      {pub, seed} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
+      {pub, seed} = Keys.from_seed(<<1::256>>)
       trx = Transaction.sign(msg, [seed])
 
       # Verify the signature against the serialized message
@@ -297,12 +301,12 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+        SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
 
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
-      {pub1, seed1} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
-      {pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {pub1, seed1} = Keys.from_seed(<<1::256>>)
+      {pub2, seed2} = Keys.from_seed(<<2::256>>)
       trx = Transaction.sign(msg, [seed1, seed2])
 
       msg_bytes = Transaction.serialize_message(msg)
@@ -316,9 +320,9 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 100)
+      ix = SystemProgram.transfer(fee_payer, recipient, 100)
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
-      {_pub, seed} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
+      {_pub, seed} = Keys.from_seed(<<1::256>>)
 
       trx1 = Transaction.sign(msg, [seed])
       trx2 = Transaction.sign(msg, [seed])
@@ -338,12 +342,12 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+        SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
 
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
       # Only sign position 1 (new_account), leave position 0 (fee_payer) empty
-      {_pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
       partial = Transaction.sign_partial(msg, %{1 => seed2})
 
       assert length(partial.signatures) == 2
@@ -359,11 +363,11 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+        SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
 
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
-      {pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {pub2, seed2} = Keys.from_seed(<<2::256>>)
       partial = Transaction.sign_partial(msg, %{1 => seed2})
 
       msg_bytes = Transaction.serialize_message(msg)
@@ -381,12 +385,12 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+        SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
 
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
-      {_pub1, seed1} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
-      {_pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {_pub1, seed1} = Keys.from_seed(<<1::256>>)
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
 
       full = Transaction.sign(msg, [seed1, seed2])
       partial_all = Transaction.sign_partial(msg, %{0 => seed1, 1 => seed2})
@@ -403,17 +407,17 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       ix =
-        Cartouche.Solana.SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+        SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
 
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
 
       # User signs position 1
-      {_pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
       partial = Transaction.sign_partial(msg, %{1 => seed2})
       assert Enum.at(partial.signatures, 0) == <<0::512>>
 
       # Sponsor adds signature at position 0
-      {_pub1, seed1} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
+      {_pub1, seed1} = Keys.from_seed(<<1::256>>)
       msg_bytes = Transaction.serialize_message(msg)
       sponsor_sig = :crypto.sign(:eddsa, :none, msg_bytes, [seed1, :ed25519])
       full = Transaction.add_signature(partial, 0, sponsor_sig)
@@ -431,11 +435,11 @@ defmodule Cartouche.Solana.TransactionTest do
       blockhash = <<99::256>>
 
       # User builds a transfer where sponsor pays fees
-      ix = Cartouche.Solana.SystemProgram.transfer(user_pub, recipient, 500_000)
+      ix = SystemProgram.transfer(user_pub, recipient, 500_000)
       msg = Transaction.build_message(sponsor_pub, [ix], blockhash)
 
       # User signs their position
-      {pub2, seed2} = Cartouche.Solana.Keys.from_seed(<<2::256>>)
+      {pub2, seed2} = Keys.from_seed(<<2::256>>)
       partial = Transaction.sign_partial(msg, %{1 => seed2})
 
       # Serialize and "send to sponsor"
@@ -445,7 +449,7 @@ defmodule Cartouche.Solana.TransactionTest do
       {:ok, received} = Transaction.deserialize(bytes)
 
       # Sponsor adds their signature
-      {pub1, seed1} = Cartouche.Solana.Keys.from_seed(<<1::256>>)
+      {pub1, seed1} = Keys.from_seed(<<1::256>>)
       msg_bytes = Transaction.serialize_message(received.message)
       sponsor_sig = :crypto.sign(:eddsa, :none, msg_bytes, [seed1, :ed25519])
       full = Transaction.add_signature(received, 0, sponsor_sig)
@@ -475,7 +479,7 @@ defmodule Cartouche.Solana.TransactionTest do
 
   describe "known serialization" do
     test "transfer instruction data layout" do
-      ix = Cartouche.Solana.SystemProgram.transfer(<<1::256>>, <<2::256>>, 1_000_000_000)
+      ix = SystemProgram.transfer(<<1::256>>, <<2::256>>, 1_000_000_000)
 
       # instruction index 2 (u32 LE) + lamports (u64 LE)
       assert ix.data ==
@@ -486,7 +490,7 @@ defmodule Cartouche.Solana.TransactionTest do
 
     test "create_account instruction data layout" do
       ix =
-        Cartouche.Solana.SystemProgram.create_account(
+        SystemProgram.create_account(
           <<1::256>>,
           <<2::256>>,
           1_461_600,
@@ -507,7 +511,7 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 42)
+      ix = SystemProgram.transfer(fee_payer, recipient, 42)
 
       msg1 = Transaction.build_message(fee_payer, [ix], blockhash)
       msg2 = Transaction.build_message(fee_payer, [ix], blockhash)
@@ -520,7 +524,7 @@ defmodule Cartouche.Solana.TransactionTest do
       recipient = <<2::256>>
       blockhash = <<99::256>>
 
-      ix = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 42)
+      ix = SystemProgram.transfer(fee_payer, recipient, 42)
       msg = Transaction.build_message(fee_payer, [ix], blockhash)
       bytes = Transaction.serialize_message(msg)
 

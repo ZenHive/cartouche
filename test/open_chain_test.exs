@@ -1,11 +1,13 @@
 defmodule Cartouche.OpenChainTest do
   use ExUnit.Case, async: true
   use Cartouche.Hex
+
   doctest Cartouche.OpenChain
   doctest Cartouche.OpenChain.Signatures
   doctest Cartouche.OpenChain.API
 
   defmodule TestClient do
+    @moduledoc false
     @lookup_success ~S"""
     {
       "ok": true,
@@ -26,11 +28,7 @@ defmodule Cartouche.OpenChainTest do
     """
 
     def request(
-          %Finch.Request{
-            method: "GET",
-            host: "example.com",
-            path: "/open-chain/signature-database/v1/lookup"
-          },
+          %Finch.Request{method: "GET", host: "example.com", path: "/open-chain/signature-database/v1/lookup"},
           _finch_name,
           _opts
         ) do

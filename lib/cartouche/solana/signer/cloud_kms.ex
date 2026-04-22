@@ -16,9 +16,10 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     """
 
     alias GoogleApi.CloudKMS.V1.Api.Projects, as: CloudKMSApi
-
     # Ed25519 SubjectPublicKeyInfo DER prefix (12 bytes):
     # SEQUENCE { SEQUENCE { OID 1.3.101.112 (id-Ed25519) } BIT STRING ... }
+    alias GoogleApi.CloudKMS.V1.Connection
+
     @ed25519_der_prefix <<0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21, 0x00>>
 
     @doc """
@@ -56,8 +57,7 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     """
     @spec sign(binary(), term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
             {:ok, <<_::512>>} | {:error, term()}
-    def sign(message, cred, project, location, keychain, key, version)
-        when is_binary(message) do
+    def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
       message_enc = Base.encode64(message)
 
       with {:ok, response} <-
@@ -90,11 +90,11 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
-    defp client(token) when is_binary(token), do: GoogleApi.CloudKMS.V1.Connection.new(token)
+    defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do
       %{token: token, type: "Bearer"} = Goth.fetch!(cred)
-      GoogleApi.CloudKMS.V1.Connection.new(token)
+      Connection.new(token)
     end
   end
 end

@@ -1,4 +1,5 @@
 defmodule Cartouche.VmTestHelpers do
+  @moduledoc false
   def word(x, sz \\ nil)
 
   def word(x, nil) when is_integer(x) and x >= 0 do

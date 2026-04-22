@@ -15,7 +15,7 @@ defmodule Cartouche.Erc20 do
   when parsing error messages from contract calls.
   """
   @spec errors() :: [String.t()]
-  def errors(), do: @errors
+  def errors, do: @errors
 
   @spec exec_trx(Cartouche.contract(), binary(), [exec_opts()]) :: term()
   def exec_trx(token, call_data, exec_opts) do
@@ -28,7 +28,9 @@ defmodule Cartouche.Erc20 do
 
   @spec call_trx(Cartouche.contract(), binary(), [call_opts()]) :: term()
   def call_trx(token, call_data, call_opts) do
-    Cartouche.Transaction.build_trx(Cartouche.get_contract_address(token), 0, call_data, 0, nil, 0)
+    token
+    |> Cartouche.get_contract_address()
+    |> Cartouche.Transaction.build_trx(0, call_data, 0, nil, 0)
     |> Cartouche.RPC.call_trx(Keyword.put_new(call_opts, :errors, errors()))
   end
 

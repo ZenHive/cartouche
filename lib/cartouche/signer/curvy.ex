@@ -59,7 +59,8 @@ defmodule Cartouche.Signer.Curvy do
   def sign_digest(message_hash, private_key) when is_binary(message_hash) do
     priv_key = Curvy.Key.from_privkey(private_key)
 
-    Curvy.sign(message_hash, priv_key, hash: :keccak)
+    message_hash
+    |> Curvy.sign(priv_key, hash: :keccak)
     |> Curvy.Signature.parse()
     |> ok!()
   end

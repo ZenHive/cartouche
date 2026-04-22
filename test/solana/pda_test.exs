@@ -1,8 +1,10 @@
 defmodule Cartouche.Solana.PDATest do
   use ExUnit.Case, async: true
-  doctest Cartouche.Solana.PDA
 
+  alias Cartouche.Solana.Keys
   alias Cartouche.Solana.PDA
+
+  doctest PDA
 
   describe "on_curve?/1" do
     test "known Ed25519 public keys are on curve" do
@@ -22,7 +24,7 @@ defmodule Cartouche.Solana.PDATest do
 
     test "freshly generated keypairs are on curve" do
       for _ <- 1..10 do
-        {pub, _} = Cartouche.Solana.Keys.generate_keypair()
+        {pub, _} = Keys.generate_keypair()
         assert PDA.on_curve?(pub)
       end
     end
@@ -89,7 +91,7 @@ defmodule Cartouche.Solana.PDATest do
     end
 
     test "works with binary seeds (pubkeys)" do
-      {pub, _} = Cartouche.Solana.Keys.generate_keypair()
+      {pub, _} = Keys.generate_keypair()
       assert {:ok, {address, _bump}} = PDA.find_program_address([pub], <<0::256>>)
       assert byte_size(address) == 32
     end
