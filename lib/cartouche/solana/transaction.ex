@@ -343,10 +343,10 @@ defmodule Cartouche.Solana.Transaction do
   defp read_instructions(rest, n, acc) when n > 0 do
     <<program_id_index, rest::binary>> = rest
     {num_accounts, rest} = decode_compact_u16(rest)
-    <<account_bytes::binary-size(num_accounts), rest::binary>> = rest
+    <<account_bytes::binary-size(^num_accounts), rest::binary>> = rest
     accounts = :binary.bin_to_list(account_bytes)
     {data_len, rest} = decode_compact_u16(rest)
-    <<data::binary-size(data_len), rest::binary>> = rest
+    <<data::binary-size(^data_len), rest::binary>> = rest
 
     ix = %CompiledInstruction{
       program_id_index: program_id_index,

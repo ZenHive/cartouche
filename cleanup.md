@@ -8,6 +8,12 @@ Overflow tasks from the `mix credo --strict` / `mix doctor` / `mix dialyzer.json
 - `B` = impact magnitude (noise reduction, CI signal-to-noise, onchain unblocks).
 - `U` = unlock leverage (makes future dialyzer/credo/doctor runs actionable; enables a quality gate).
 
+**When closing a task here:**
+1. Mark it ✅ in this file (don't delete — keep for traceability until cleanup.md itself is retired).
+2. If the same change also closes a task in [ROADMAP.md](ROADMAP.md) (Phases 1–6 overlap with real-code dialyzer fixes in particular), mark the ROADMAP task ✅ too and add the changelog entry per `~/.claude/includes/task-prioritization.md`.
+3. When every task in a phase here is ✅, collapse the phase to a one-line summary.
+4. When all phases are ✅, delete `cleanup.md` — the green-tool state is the living record.
+
 ---
 
 ## Audit snapshot
@@ -17,7 +23,7 @@ Overflow tasks from the `mix credo --strict` / `mix doctor` / `mix dialyzer.json
 | `mix credo --strict` | 72 | 72 | 0 | **72** |
 | `mix doctor` | 13 failing modules | 13 | 0 | **13** |
 | `mix dialyzer.json` | 6 620 warnings | 142 real + 6 478 generated | 142 (Phases 1–6) | **6 478 + misc** |
-| `mix compile` (1.20-rc.4) | 2 warnings | 2 | 0 | **2** |
+| `mix compile` (1.20-rc.4) | 2 warnings | 2 | 0 | ~~2~~ 0 (C1 ✅; unrelated `@doc` redefinition at `signer.ex:30` remains) |
 
 The 6 478 `i_console.ex` warnings are one root cause amplified across 1 130 auto-generated decode functions. Fix the generator or the helper signature and most evaporate in a single change.
 
@@ -30,6 +36,18 @@ The 6 478 `i_console.ex` warnings are one root cause amplified across 1 130 auto
 Phase B (credo quick wins) and Phase C (Elixir 1.20 compile warnings) are small and independent — run them in parallel worktrees after Phase A lands.
 
 Doctor coverage (Phase D) is the longest slog and purely QoL for consumers — defer until `0.1.0` ships and Phases 1–6 are closed.
+
+---
+
+## Documentation policy
+
+This repo treats AI agents as first-class consumers alongside humans. All public modules follow:
+
+1. **`api()` for agents** — every public function uses the `descripex` `api()` macro to declare params (with `:kind` — `:value` vs `:exchange_data`), return shape, errors, and composition hints. This generates the machine-readable `@doc hints:` slot consumed by MCP tools, EIP-8004 validators, and the manifest endpoint. See `~/.claude/includes/agent-economy.md`.
+2. **`@doc` for humans** — plain-prose docstring placed *after* `api()` so it overwrites slot 4 only, leaving slot 5 (hints) intact.
+3. **Avoid `@moduledoc false` / `@doc false`** — hiding from ExDoc also hides from `Code.fetch_docs/1`, which breaks agent discovery. Mark internal-only modules with `api(..., kind: :internal, ...)` plus a short `@moduledoc` explaining scope. Use `false` only when there's a specific, documented reason (e.g., test-support shims, truly private compile-time helpers).
+
+Auto-generated code (IConsole, Sleuth contract bindings) must emit `api()` from the generator — see Task D1 below. Verify `:descripex` is in `mix.exs` deps before starting D1/D2/D5.
 
 ---
 
@@ -109,8 +127,16 @@ Big dispatch tables on opcodes/methods are legitimate — the alternative is a s
 
 ## Phase C — Elixir 1.20-rc.4 compile warnings
 
-- [ ] **C1: Pin bitstring size vars in `solana/transaction.ex`** [D:1/B:5/U:7 → Eff:6.0] 🎯
-      Lines 346, 349 in `read_instructions/3` — 1.20 requires `^num_accounts` / `^data_len` when reusing a match-binding as a bitstring size. One-line fix × 2. Blocks a clean 1.20 compile once 1.20 ships stable.
+- [x] **C1: Pin bitstring size vars across the codebase** [D:1/B:5/U:7 → Eff:6.0] 🎯 ✅ 2026-04-22
+      Originally scoped to lines 346, 349 in `solana/transaction.ex`'s `read_instructions/3`. On fix, the same 1.20 rule was firing in more places — all pinned in one pass:
+      - `lib/cartouche/solana/transaction.ex:346,349` — `^num_accounts`, `^data_len`
+      - `lib/cartouche/assembly.ex:287` — `^n` in `disassemble_opcode/1`
+      - `lib/cartouche/vm.ex:479` — `^index`, `^count` in `Memory.read_memory/3`
+      - `lib/cartouche/vm.ex:490` — `^offset`, `^value_size` in `Memory.write_memory/3`
+      - `lib/cartouche/vm.ex:508` — `^val_len` (×2) in `Operations.sign_extend/2`
+      - `lib/cartouche/vm.ex:524` — `^i` (×2) in `Operations.get_byte/2`
+      - `lib/cartouche/vm.ex:546` — `^ret_size` in `static_call/1`
+      Behaviour-preserving: pinned form reads the already-bound value from surrounding scope as size, which is exactly what the un-pinned form did pre-1.20. Verified with 166 tests passing across `test/solana/transaction_test.exs`, `test/assembly_test.exs`, `test/vm_test.exs`. Clean on `mix compile` under Elixir 1.20-rc.4 for these sites — only remaining compile warning is the unrelated `@doc` redefinition at `signer.ex:30` (tracked separately).
 
 ---
 
@@ -133,17 +159,33 @@ Failing modules ranked by function count × current gap:
 
 ### Tasks
 
-- [ ] **D1: Add `@doc` + `@spec` emission to `Cartouche.Contract.IConsole` generator** [D:5/B:7/U:7 → Eff:1.4] 📋
-      Edit `lib/mix/cartouche.gen.ex` to generate `@doc` (pulled from the Solidity NatSpec where present, else function name) and `@spec` from the ABI types. Regenerate `i_console.ex`. This alone fixes the single biggest module and lifts overall coverage above 50%.
+- [ ] **D1: Add `api()` + `@doc` + `@spec` emission to the `Cartouche.Contract.*` generator** [D:6/B:9/U:9 → Eff:1.5] 🚀
+      Edit `lib/mix/cartouche.gen.ex` to emit, for every generated contract function:
+      - `api(name, description, params: [...], returns: %{...}, errors: [...])` — params built from ABI inputs (kind: `:value` for scalars, `:exchange_data` for `bytes32` ids / addresses the agent must fetch), returns from ABI outputs, errors from Solidity custom errors where available.
+      - `@doc` — NatSpec prose where present, else ``"Calls `<contract>.<function>` (selector `0x...`)."``.
+      - `@spec` from ABI types.
+      Regenerate `lib/cartouche/contract/i_console.ex` and `lib/cartouche/contract/sleuth.ex`. Covers D1 + D3's "document if reachable" path in one pass. Lifts doctor coverage above 50% AND makes every onchain method visible to MCP tool generation.
 
-- [ ] **D2: `@moduledoc false` for genuine internals** [D:1/B:3/U:3 → Eff:3.0] 🚀
-      `Cartouche.VM.{Operations, Memory, FFIs, Context, ExecutionResult}`, `Cartouche.Filter.Log` — audit which are public. Non-public get `@moduledoc false`, which doctor exempts. One line each.
+- [ ] **D2: Minimal `api()` + `@moduledoc` for VM internals and `Filter.Log`** [D:2/B:3/U:5 → Eff:2.0] 🚀
+      Per the documentation policy, avoid `@moduledoc false`. Audit `Cartouche.VM.{Operations, Memory, FFIs, Context, ExecutionResult}` and `Cartouche.Filter.Log`:
+      - Add a one-paragraph `@moduledoc` describing scope (e.g., "internal to VM — not part of the public API").
+      - For each public function, add `api(name, description, params: [...], returns: %{...})` with a short description — enough that an agent slicing a VM bug via `mix reach.impact` can read what the helper does.
+      - Only use `@moduledoc false` if the module is genuinely a private compile-time artifact (none of these six qualify).
 
 - [ ] **D3: Document or remove `Cartouche.Sleuth` internals** [D:3/B:3/U:3 → Eff:1.0] 📋
       3 fns (`try_decode/3`, `try_decode_bytes/1`, `postprocess/3`) are flagged `unused_fun` by dialyzer. Delete if dead, document if reachable via dynamic dispatch. See E1.
 
 - [ ] **D4: Fill remaining small gaps** [D:3/B:3/U:3 → Eff:1.0] 📋
       `Cartouche.OpenChain.API` (3 fns), `Mix.Tasks.Cartouche.Gen` public `run/1`, `Cartouche.VM` core API. Tie to ROADMAP Phase 4/5 when those files are open anyway.
+
+- [ ] **D5: `api()` annotation sweep for public modules** [D:7/B:7/U:7 → Eff:1.0] 📋
+      Module-by-module: add `api()` to every public function in the public Cartouche API surface. Priority order by agent-utility:
+      1. `Cartouche.RPC` — external surface most agents call first
+      2. `Cartouche.Transaction` (+ `V1`, `V2`), `Cartouche.Signer`, `Cartouche.Hex`, `Cartouche.Base58`
+      3. `Cartouche.Solana.{RPC, Keys, PDA, ATA, Token, Programs, Transaction.*}`
+      4. `Cartouche.{Erc20, Filter, Receipt, Block, FeeHistory, OpenChain, Typed, DebugTrace, Trace, Recover, Assembly}`
+      5. `Cartouche.VM` — core entry points (`exec/2`, `run/1` etc.); internals covered by D2
+      Add `use Descripex, namespace: "/..."` per module. Wire a `Cartouche.Manifest` wrapper (`Descripex.Manifest.build([...])`) and a `Cartouche.describe/{0,1,2}` facade per `agent-economy.md` progressive disclosure pattern. Bundle with whatever file is already open during other cleanup work — don't block on a single sweep PR.
 
 ---
 
@@ -168,6 +210,77 @@ ROADMAP Phases 1–6 cover `invalid_contract` + most `no_return` / `call` / `pat
 4. **Phase B1 + B2 + B8** (half day) — batch credo quick wins as one PR.
 5. **Phase E1 + E2** (half day) — clean up dialyzer tail.
 6. **Phase B4–B7** — case-by-case, bundle with whatever file is open.
-7. **Phase D** — after `0.1.0` ships.
+7. **Phase D** — D1 first (generator emits `api()`, unblocks IConsole + Sleuth automatically). D2, D4, D5 bundled opportunistically during normal work. Full completion deferred until after `0.1.0`.
 
 A–C + E1 + E2 roughly = 3 focused days. B and D are background work to bundle opportunistically.
+
+---
+
+## Natural session bundles
+
+Cleanup tasks cluster by the *file set they touch* and *the tool they're gated on*. Each bundle below is sized to one Claude Code session (one fresh context, one PR, one review).
+
+### Session 1 — "Compile clean" (~30 min, 1 PR)
+**Tasks:** C1.
+**Files:** `lib/cartouche/solana/transaction.ex` only.
+**Why bundled:** both warnings are in one function (`read_instructions/3`), both are the same fix pattern (`^num_accounts` / `^data_len`). Zero coupling to anything else.
+**Verification:** `time mix compile` under 1.20-rc.4 shows 0 warnings.
+
+### Session 2 — "Kill the noise floor" (1–2 days, 1 PR)
+**Tasks:** A1 + A2 (+ A3 only if A1 falls short).
+**Files:** `lib/mix/cartouche.gen.ex`, callee whose spec is the root cause (candidates: `lib/cartouche/hex.ex`, `lib/cartouche/rpc.ex`, or the `:ex_abi` wrapper), regenerated `lib/cartouche/contract/i_console.ex`.
+**Why bundled:** A1 and A2 are inseparable — fixing the generator without regenerating leaves stale output; regenerating without the fix rewrites the same broken output. Use `mix reach.impact` on shared callees as the entry point.
+**Verification:** `mix dialyzer.json --summary-only` — i_console count ≪ 100.
+
+### Session 3 — "Credo quick wins" (half day, 1 PR)
+**Tasks:** B1 + B2 + B8.
+**Files:** `lib/cartouche/receipt.ex`, `lib/mix/cartouche.gen.ex`, `lib/cartouche/block.ex`, `lib/cartouche/solana/signer.ex`, `lib/cartouche/vm.ex`, `lib/cartouche/base58.ex`, `lib/cartouche/sleuth.ex`, `test/support/client.ex`.
+**Why bundled:** all mechanical or one-line changes, all verified by a single `mix credo --strict --format json` run. B8 (raise → reraise) is correctness-adjacent and worth landing next to style fixes for a cleaner commit log.
+**Verification:** `mix credo --strict --format json` — targeted issues gone; count drops from 72 to ~30.
+
+### Session 4 — "Dialyzer tail" (half day, 1 PR)
+**Tasks:** E1 + E2 + D3.
+**Files:** `lib/cartouche/sleuth.ex`, `lib/cartouche/vm.ex`.
+**Why bundled:** D3 ("document or remove Sleuth internals") and E1's Sleuth deletion check overlap completely — same three functions, same decision (dead or reachable via dynamic dispatch). The VM half of E1 lives in the same module as Phase 5 ROADMAP work, so either run this *after* Phase 5 (if Phase 5 deletes them) or run it *with* Phase 5 (fold E1 VM items into that session).
+**Verification:** `mix dialyzer.json --summary-only` — `unused_fun` at 0, `unknown_type` at 0.
+
+### Session 5 — "Generator emits api()" (1 day, 1 PR) — D1
+**Tasks:** D1 alone.
+**Files:** `lib/mix/cartouche.gen.ex`, regenerated `lib/cartouche/contract/{i_console,sleuth}.ex`. Also `mix.exs` if `:descripex` isn't a dep yet.
+**Why solo:** touches codegen and produces the largest diff in the repo (1,130+ functions gain `api()` + `@doc` + `@spec`). Mixing with anything else makes the diff unreviewable. Depends on Session 2 landing first (so the generated file is clean before we pile `api()` into it).
+**Verification:** `mix doctor` passes > 50% on IConsole + Sleuth; `Cartouche.Contract.IConsole.__api__/0` returns a populated map.
+
+### Session 6 — "VM internals annotation" (half day, 1 PR) — D2
+**Tasks:** D2 (+ optionally E1's VM half if not done in Session 4).
+**Files:** `lib/cartouche/vm/{operations,memory,ffis,context,execution_result}.ex`, `lib/cartouche/filter/log.ex`.
+**Why bundled:** same conceptual layer (VM internals + one filter helper), same doctor pass for verification, same `@moduledoc`/`api()` pattern applied six times. Small enough to hold in one context window end-to-end.
+**Verification:** `mix doctor` — all six modules pass; `Cartouche.VM.Operations.__api__/0` returns populated.
+
+### Session 7+ — "Public API annotation sweep" (D5, chunked)
+D5 does NOT fit in one session. Chunk by the priority tiers already listed in D5:
+- **Session 7a:** `Cartouche.RPC` alone (large module, high agent impact). Wire `Cartouche.Manifest` + `Cartouche.describe/{0,1,2}` here — this is where the agent-discovery entry points land.
+- **Session 7b:** tier 2 — Transaction + V1/V2 + Signer + Hex + Base58.
+- **Session 7c:** tier 3 — all Solana modules.
+- **Session 7d:** tier 4 — remaining standalone modules (Erc20, Filter, Receipt, Block, FeeHistory, OpenChain, Typed, DebugTrace, Trace, Recover, Assembly).
+- **Session 7e:** tier 5 — `Cartouche.VM` public entry points.
+Each sub-session is one namespace + its tests + one doctor run. Bundle with ROADMAP work when a tier-N file is already open for other reasons.
+
+### Session "drift" — case-by-case (bundle opportunistically)
+**Tasks:** B3, B4, B5, B6, B7, D4.
+**Rule:** when a file from these tasks is already open for ROADMAP work or a bug fix, pay down its cleanup items in the same PR. Never schedule a dedicated session for these — the context-switch cost exceeds the fix.
+
+### Session dependency graph
+
+```
+S1 (C1) ──────────────────┐
+                          ├── independent, can run in parallel worktrees
+S3 (B1+B2+B8) ────────────┘
+
+S2 (A1+A2) ──► S5 (D1) ──► S7a..e (D5, chunked)
+                                │
+                                └── S6 (D2) can run anytime after S1; independent of D1
+
+S4 (E1+E2+D3) ──► run after or during ROADMAP Phase 5 (same VM files)
+```
+
+Critical path: **S1 → S2 → ROADMAP 1–6 → S5 → S7 sweep**. Everything else is bolt-on.

@@ -284,7 +284,7 @@ defmodule Cartouche.Assembly do
     if byte_size(rest) < n do
       raise InvalidCode, message: "unsufficient data for push#{n}: `#{to_hex(op)}`"
     else
-      <<v::binary-size(n), rest::binary>> = rest
+      <<v::binary-size(^n), rest::binary>> = rest
       {{:push, n, v}, rest}
     end
   end

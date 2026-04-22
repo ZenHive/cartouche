@@ -476,7 +476,7 @@ defmodule Cartouche.VM do
             {:ok, binary(), binary()} | {:error, Cartouche.VM.vm_error()}
     def read_memory(memory, index, count) do
       with {:ok, memory_expanded} <- expand_memory(memory, index + count) do
-        <<_::binary-size(index), res::binary-size(count), _::binary>> = memory_expanded
+        <<_::binary-size(^index), res::binary-size(^count), _::binary>> = memory_expanded
         {:ok, memory_expanded, res}
       end
     end
@@ -487,7 +487,7 @@ defmodule Cartouche.VM do
       value_size = byte_size(value)
 
       with {:ok, memory_expanded} <- expand_memory(context.memory, offset + value_size) do
-        <<start::binary-size(offset), _::binary-size(value_size), final::binary>> =
+        <<start::binary-size(^offset), _::binary-size(^value_size), final::binary>> =
           memory_expanded
 
         memory_final = <<start::binary, value::binary, final::binary>>
@@ -505,7 +505,7 @@ defmodule Cartouche.VM do
           {:ok, x}
         else
           val_len = b_int + 1
-          <<_::binary-size(32 - val_len), low_word::binary-size(val_len)>> = x
+          <<_::binary-size(32 - ^val_len), low_word::binary-size(^val_len)>> = x
 
           if Bitwise.band(Bitwise.bsr(:binary.decode_unsigned(low_word), 8 * val_len - 1), 1) == 1 do
             # Fill in top bits
@@ -521,7 +521,7 @@ defmodule Cartouche.VM do
     def get_byte(i, x) do
       with {:ok, i} <- Cartouche.VM.word_to_uint(i) do
         if i < 32 do
-          <<_::binary-size(i), word::binary-size(1), _::binary-size(31 - i)>> = x
+          <<_::binary-size(^i), word::binary-size(1), _::binary-size(31 - ^i)>> = x
           Cartouche.VM.pad_to_word(word)
         else
           {:ok, <<0::256>>}
@@ -543,7 +543,7 @@ defmodule Cartouche.VM do
           return_data_to_copy =
             if byte_size(return_data) >= ret_size do
               # Take left N bytes
-              <<v::binary-size(ret_size), _::binary>> = return_data
+              <<v::binary-size(^ret_size), _::binary>> = return_data
 
               v
             else
