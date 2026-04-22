@@ -1,0 +1,923 @@
+defmodule Cartouche.Transaction do
+  @moduledoc """
+  A module to help build, sign and encode Ethereum transactions.
+  """
+
+  defmodule V1 do
+    @moduledoc """
+    Represents a V1 or "Legacy" (that is, pre-EIP-1559) transaction.
+    """
+
+    @type t :: %__MODULE__{
+            nonce: integer(),
+            gas_price: integer(),
+            gas_limit: integer(),
+            to: <<_::160>>,
+            value: integer(),
+            data: binary(),
+            v: integer(),
+            r: integer(),
+            s: integer()
+          }
+
+    defstruct [
+      :nonce,
+      :gas_price,
+      :gas_limit,
+      :to,
+      :value,
+      :data,
+      :v,
+      :r,
+      :s
+    ]
+
+    @doc ~S"""
+    Constructs a new V1 (Legacy) Ethereum transaction.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        %Cartouche.Transaction.V1{
+          nonce: 1,
+          gas_price: 100000000000,
+          gas_limit: 100000,
+          to: <<1::160>>,
+          value: 2,
+          data: <<1, 2, 3>>,
+          v: 42,
+          r: 0,
+          s: 0
+        }
+    """
+    def new(nonce, gas_price, gas_limit, to, value, data, chain_id \\ nil) do
+      %__MODULE__{
+        nonce: nonce,
+        gas_price: if(!is_nil(gas_price), do: Cartouche.Util.to_wei(gas_price), else: nil),
+        gas_limit: gas_limit,
+        to: to,
+        value: Cartouche.Util.to_wei(value),
+        data: data,
+        v:
+          if(is_nil(chain_id),
+            do: Cartouche.Application.chain_id(),
+            else: Cartouche.Util.parse_chain_id(chain_id)
+          ),
+        r: 0,
+        s: 0
+      }
+    end
+
+    @doc ~S"""
+    Build an RLP-encoded transaction. Note: transactions can be encoded before they are signed, which
+    uses `[chain_id, 0, 0]` in the signature fields, otherwise those fields are `[v, r, s]`.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.encode()
+        ...> |> Base.encode16()
+        "E80185174876E800830186A094000000000000000000000000000000000000000102830102032A8080"
+    """
+    def encode(%__MODULE__{
+          nonce: nonce,
+          gas_price: gas_price,
+          gas_limit: gas_limit,
+          to: to,
+          value: value,
+          data: data,
+          v: v,
+          r: r,
+          s: s
+        }) do
+      ExRLP.encode([nonce, gas_price, gas_limit, to, value, data, v, r, s])
+    end
+
+    @doc ~S"""
+    Decode an RLP-encoded transaction.
+
+    ## Examples
+
+        iex> use Cartouche.Hex
+        iex> ~h[0xE80185174876E800830186A094000000000000000000000000000000000000000102830102032A8080]
+        ...> |> Cartouche.Transaction.V1.decode()
+        {:ok, %Cartouche.Transaction.V1{
+          nonce: 1,
+          gas_price: 100000000000,
+          gas_limit: 100000,
+          to: <<1::160>>,
+          value: 2,
+          data: <<1, 2, 3>>,
+          v: 42,
+          r: 0,
+          s: 0
+        }}
+    """
+    def decode(trx_enc) do
+      case ExRLP.decode(trx_enc) do
+        [nonce, gas_price, gas_limit, to, value, data, v, r, s] ->
+          {:ok,
+           %__MODULE__{
+             nonce: :binary.decode_unsigned(nonce),
+             gas_price: :binary.decode_unsigned(gas_price),
+             gas_limit: :binary.decode_unsigned(gas_limit),
+             to: to,
+             value: :binary.decode_unsigned(value),
+             data: data,
+             v: :binary.decode_unsigned(v),
+             r: :binary.decode_unsigned(r),
+             s: :binary.decode_unsigned(s)
+           }}
+
+        _ ->
+          {:error, "invalid legacy transaction"}
+      end
+    end
+
+    @doc ~S"""
+    Adds a signature to a transaction. This overwrites the `[chain_id, 0, 0]` fields, as per EIP-155.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.add_signature(<<1::256, 2::256, 3::8>>)
+        %Cartouche.Transaction.V1{
+          nonce: 1,
+          gas_price: 100000000000,
+          gas_limit: 100000,
+          to: <<1::160>>,
+          value: 2,
+          data: <<1, 2, 3>>,
+          v: 3,
+          r: <<1::256>>,
+          s: <<2::256>>
+        }
+    """
+    def add_signature(
+          transaction = %__MODULE__{},
+          <<r::binary-size(32), s::binary-size(32), v::binary>>
+        ) do
+      %{transaction | v: :binary.decode_unsigned(v), r: r, s: s}
+    end
+
+    @doc ~S"""
+    Recovers a signature from a transaction, if it's been signed. Otherwise returns an error.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.add_signature(<<1::256, 2::256, 3::8>>)
+        ...> |> Cartouche.Transaction.V1.get_signature()
+        {:ok, <<1::256, 2::256, 3::8>>}
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.add_signature(<<1::256, 2::256, 0x05f5e0ff::32>>)
+        ...> |> Cartouche.Transaction.V1.get_signature()
+        {:ok, <<1::256, 2::256, 0x05f5e0ff::32>>}
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.get_signature()
+        {:error, "transaction missing signature"}
+    """
+    def get_signature(%__MODULE__{v: _v, r: 0, s: 0}),
+      do: {:error, "transaction missing signature"}
+
+    def get_signature(%__MODULE__{v: v, r: r, s: s}) do
+      v_enc = :binary.encode_unsigned(v)
+      {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
+    end
+
+    @doc ~S"""
+    Recovers the signer from a given transaction, if it's been signed.
+
+    ## Examples
+
+        iex> {:ok, address} =
+        ...> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.add_signature(<<1::256, 2::256, 3::8>>)
+        ...> |> Cartouche.Transaction.V1.recover_signer(:kovan)
+        ...> Cartouche.Hex.to_address(address)
+        "0x47643AC1194d7e8C6d04dD631D456137028bBc1F"
+
+        iex> Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        ...> |> Cartouche.Transaction.V1.recover_signer(:kovan)
+        {:error, "transaction missing signature"}
+    """
+    def recover_signer(transaction, chain_id) do
+      trx_encoded = encode(%{transaction | v: Cartouche.Util.parse_chain_id(chain_id), r: 0, s: 0})
+
+      with {:ok, signature} <- get_signature(transaction) do
+        {:ok, Cartouche.Recover.recover_eth(trx_encoded, signature)}
+      end
+    end
+  end
+
+  defmodule V2 do
+    @moduledoc """
+    Represents a V2 or EIP-1559 transaction.
+    """
+
+    @type t :: %__MODULE__{
+            chain_id: integer(),
+            nonce: integer(),
+            max_priority_fee_per_gas: integer(),
+            max_fee_per_gas: integer(),
+            gas_limit: integer(),
+            destination: <<_::160>>,
+            amount: integer(),
+            data: binary(),
+            access_list: [{<<_::160>>, [<<_::256>>]}],
+            signature_y_parity: boolean(),
+            signature_r: <<_::256>>,
+            signature_s: <<_::256>>
+          }
+
+    defstruct [
+      :chain_id,
+      :nonce,
+      :max_priority_fee_per_gas,
+      :max_fee_per_gas,
+      :gas_limit,
+      :destination,
+      :amount,
+      :data,
+      :access_list,
+      :signature_y_parity,
+      :signature_r,
+      :signature_s
+    ]
+
+    @doc ~S"""
+    Constructs a new V2 (EIP-1559) Ethereum transaction.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}], :goerli)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}],
+          signature_y_parity: nil,
+          signature_r: nil,
+          signature_s: nil
+        }
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}], true, <<0x01::256>>, <<0x02::256>>, :goerli)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+    """
+    def new(
+          nonce,
+          max_priority_fee_per_gas,
+          max_fee_per_gas,
+          gas_limit,
+          destination,
+          amount,
+          data,
+          access_list,
+          chain_id \\ nil
+        ),
+        do:
+          new(
+            nonce,
+            max_priority_fee_per_gas,
+            max_fee_per_gas,
+            gas_limit,
+            destination,
+            amount,
+            data,
+            access_list,
+            nil,
+            nil,
+            nil,
+            chain_id
+          )
+
+    def new(
+          nonce,
+          max_priority_fee_per_gas,
+          max_fee_per_gas,
+          gas_limit,
+          destination,
+          amount,
+          data,
+          access_list,
+          signature_y_parity,
+          signature_r,
+          signature_s,
+          chain_id \\ nil
+        ) do
+      %__MODULE__{
+        chain_id:
+          if(is_nil(chain_id),
+            do: Cartouche.Application.chain_id(),
+            else: Cartouche.Util.parse_chain_id(chain_id)
+          ),
+        nonce: nonce,
+        max_priority_fee_per_gas:
+          if(!is_nil(max_priority_fee_per_gas),
+            do: Cartouche.Util.to_wei(max_priority_fee_per_gas),
+            else: nil
+          ),
+        max_fee_per_gas:
+          if(!is_nil(max_fee_per_gas), do: Cartouche.Util.to_wei(max_fee_per_gas), else: nil),
+        gas_limit: gas_limit,
+        destination: destination,
+        amount: Cartouche.Util.to_wei(amount),
+        data: data,
+        access_list: access_list,
+        signature_y_parity: signature_y_parity,
+        signature_r: signature_r,
+        signature_s: signature_s
+      }
+    end
+
+    @doc ~S"""
+    Build an RLP-encoded transaction. Note: if the transaction does not have a signature
+    set (that is, `signature_y_parity`, `signature_r` or `signature_s` are `nil`), then
+    we will encode a partial transaction (which can be used for signing).
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], :goerli)
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02EC0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203C0"
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], true, <<0x01::256>>, <<0x02::256>>, :goerli)
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02EF0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203C0010102"
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}], true, <<0x01::256>>, <<0x00, 0x02::248>>, :goerli)
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02F87F0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203F84FF7940000000000000000000000000000000000000002E1A00000000000000000000000000000000000000000000000000000000000000016D6940000000000000000000000000000000000000003C0010102"
+
+        iex> use Cartouche.Hex
+        iex> %Cartouche.Transaction.V2{
+        ...>   chain_id: 8453,
+        ...>   nonce: 1,
+        ...>   max_priority_fee_per_gas: 1000000000,
+        ...>   max_fee_per_gas: 1008963825,
+        ...>   gas_limit: 300000,
+        ...>   destination: ~h[0x00aea4b2242abc8bb4bb78d537a67a245a7bec64],
+        ...>   amount: 0,
+        ...>   data: ~h[0xdeff4b240000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000003b72952436d0dcacfa7d7691c0cf4de6dd5baa7e0000000000000000000000003b72952436d0dcacfa7d7691c0cf4de6dd5baa7e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda0291300000000000000000000000000000000000000000000000000000000000aae6000000000000000000000000000000000000000000000000000000000000aae60000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000002ada240000000000000000000000000000000000000000000000000000000067d38314000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000],
+        ...>   access_list: [],
+        ...>   signature_y_parity: false,
+        ...>   signature_r: ~h[0x019c8102cb582c309b0d2ababb6aeb683a8fbc7e2044665f84669f0a73865b9a],
+        ...>   signature_s: ~h[0x3732eb6644fc11e850a0fed8ebe403b4c2f5d1f1aec961eaccf1f7baa55615a6]
+        ...> }
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02F9027382210501843B9ACA00843C2390F1830493E09400AEA4B2242ABC8BB4BB78D537A67A245A7BEC6480B90204DEFF4B240000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000A000000000000000000000000000000000000000000000000000000000000007B0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000B2C639C533813F4AA9D7837CAF62653D097FF85000000000000000000000000833589FCD6EDB6E08F4C7C32D4F71B54BDA0291300000000000000000000000000000000000000000000000000000000000AAE6000000000000000000000000000000000000000000000000000000000000AAE60000000000000000000000000000000000000000000000000000000000000000A00000000000000000000000000000000000000000000000000000000002ADA240000000000000000000000000000000000000000000000000000000067D38314000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000C080A0019C8102CB582C309B0D2ABABB6AEB683A8FBC7E2044665F84669F0A73865B9AA03732EB6644FC11E850A0FED8EBE403B4C2F5D1F1AEC961EACCF1F7BAA55615A6"
+    """
+    def encode(%__MODULE__{
+          chain_id: chain_id,
+          nonce: nonce,
+          max_priority_fee_per_gas: max_priority_fee_per_gas,
+          max_fee_per_gas: max_fee_per_gas,
+          gas_limit: gas_limit,
+          destination: destination,
+          amount: amount,
+          data: data,
+          access_list: access_list,
+          signature_y_parity: signature_y_parity,
+          signature_r: signature_r,
+          signature_s: signature_s
+        })
+        when is_nil(signature_y_parity) or is_nil(signature_r) or is_nil(signature_s) do
+      <<0x02>> <>
+        ExRLP.encode([
+          chain_id,
+          nonce,
+          max_priority_fee_per_gas,
+          max_fee_per_gas,
+          gas_limit,
+          destination,
+          amount,
+          data,
+          access_list
+        ])
+    end
+
+    def encode(%__MODULE__{
+          chain_id: chain_id,
+          nonce: nonce,
+          max_priority_fee_per_gas: max_priority_fee_per_gas,
+          max_fee_per_gas: max_fee_per_gas,
+          gas_limit: gas_limit,
+          destination: destination,
+          amount: amount,
+          data: data,
+          access_list: access_list,
+          signature_y_parity: signature_y_parity,
+          signature_r: signature_r,
+          signature_s: signature_s
+        }) do
+      <<0x02>> <>
+        ExRLP.encode([
+          chain_id,
+          nonce,
+          max_priority_fee_per_gas,
+          max_fee_per_gas,
+          gas_limit,
+          destination,
+          amount,
+          data,
+          Enum.map(access_list, fn {address, storage} ->
+            [address, storage]
+          end),
+          if(signature_y_parity, do: 1, else: 0),
+          String.trim_leading(signature_r, <<0>>),
+          String.trim_leading(signature_s, <<0>>)
+        ])
+    end
+
+    @doc ~S"""
+    Decode an RLP-encoded transaction. Note: the signature must have been
+    signed (i.e. properly encoded), not simply encoded for signing.
+
+    ## Examples
+
+        iex> use Cartouche.Hex
+        iex> Cartouche.Transaction.V2.decode(~h[0x02EF0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203C0010102])
+        {:ok, %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }}
+
+        iex> use Cartouche.Hex
+        iex> Cartouche.Transaction.V2.decode(~h[0x02F87F0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203F84FF7940000000000000000000000000000000000000002E1A00000000000000000000000000000000000000000000000000000000000000016D6940000000000000000000000000000000000000003C0010102])
+        {:ok, %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }}
+
+        iex> use Cartouche.Hex
+        iex> Cartouche.Transaction.V2.decode(~h[0x02F9027382210501843B9ACA00843C2390F1830493E09400AEA4B2242ABC8BB4BB78D537A67A245A7BEC6480B90204DEFF4B240000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000A000000000000000000000000000000000000000000000000000000000000007B0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000B2C639C533813F4AA9D7837CAF62653D097FF85000000000000000000000000833589FCD6EDB6E08F4C7C32D4F71B54BDA0291300000000000000000000000000000000000000000000000000000000000AAE6000000000000000000000000000000000000000000000000000000000000AAE60000000000000000000000000000000000000000000000000000000000000000A00000000000000000000000000000000000000000000000000000000002ADA240000000000000000000000000000000000000000000000000000000067D38314000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000C080A0019C8102CB582C309B0D2ABABB6AEB683A8FBC7E2044665F84669F0A73865B9AA03732EB6644FC11E850A0FED8EBE403B4C2F5D1F1AEC961EACCF1F7BAA55615A6])
+        {:ok, %Cartouche.Transaction.V2{
+          chain_id: 8453,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 1008963825,
+          gas_limit: 300000,
+          destination: ~h[0x00aea4b2242abc8bb4bb78d537a67a245a7bec64],
+          amount: 0,
+          data: ~h[0xdeff4b240000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000003b72952436d0dcacfa7d7691c0cf4de6dd5baa7e0000000000000000000000003b72952436d0dcacfa7d7691c0cf4de6dd5baa7e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda0291300000000000000000000000000000000000000000000000000000000000aae6000000000000000000000000000000000000000000000000000000000000aae60000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000002ada240000000000000000000000000000000000000000000000000000000067d38314000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000],
+          access_list: [],
+          signature_y_parity: false,
+          signature_r: ~h[0x019c8102cb582c309b0d2ababb6aeb683a8fbc7e2044665f84669f0a73865b9a],
+          signature_s: ~h[0x3732eb6644fc11e850a0fed8ebe403b4c2f5d1f1aec961eaccf1f7baa55615a6]
+        }}
+    """
+    def decode(<<0x02, trx_enc::binary>>) do
+      case ExRLP.decode(trx_enc) do
+        [
+          chain_id,
+          nonce,
+          max_priority_fee_per_gas,
+          max_fee_per_gas,
+          gas_limit,
+          destination,
+          amount,
+          data,
+          access_list,
+          signature_y_parity,
+          signature_r,
+          signature_s
+        ] ->
+          {:ok,
+           %__MODULE__{
+             chain_id: :binary.decode_unsigned(chain_id),
+             nonce: :binary.decode_unsigned(nonce),
+             max_priority_fee_per_gas: :binary.decode_unsigned(max_priority_fee_per_gas),
+             max_fee_per_gas: :binary.decode_unsigned(max_fee_per_gas),
+             gas_limit: :binary.decode_unsigned(gas_limit),
+             destination: Cartouche.Util.pad(destination, 20),
+             amount: :binary.decode_unsigned(amount),
+             data: data,
+             access_list:
+               Enum.map(access_list, fn [address, storage] ->
+                 {Cartouche.Util.pad(address, 20), Enum.map(storage, &Cartouche.Util.pad(&1, 32))}
+               end),
+             signature_y_parity: :binary.decode_unsigned(signature_y_parity) == 1,
+             signature_r: Cartouche.Util.pad(signature_r, 32),
+             signature_s: Cartouche.Util.pad(signature_s, 32)
+           }}
+
+        _ ->
+          {:error, "invalid v2 transaction"}
+      end
+    end
+
+    @doc ~S"""
+    Adds a signature to a transaction. This overwrites the `signature_y_parity`, `signature_r` and `signature_s` fields.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], 1, 0x01, 0x02, :goerli)
+        ...> |> Cartouche.Transaction.V2.add_signature(true, <<1::256>>, <<2::256>>)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [<<2::160>>, <<3::160>>],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], 1, 0x01, 0x02, :goerli)
+        ...> |> Cartouche.Transaction.V2.add_signature(<<1::256, 2::256, 1::8>>)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [<<2::160>>, <<3::160>>],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], 1, 0x01, 0x02, :goerli)
+        ...> |> Cartouche.Transaction.V2.add_signature(<<1::256, 2::256, 27::8>>)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [<<2::160>>, <<3::160>>],
+          signature_y_parity: false,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], 1, 0x01, 0x02, :goerli)
+        ...> |> Cartouche.Transaction.V2.add_signature(<<1::256, 2::256, 38::8>>)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [<<2::160>>, <<3::160>>],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], 1, 0x01, 0x02, :goerli)
+        ...> |> Cartouche.Transaction.V2.add_signature(<<1::256, 2::256, 3838::16>>)
+        %Cartouche.Transaction.V2{
+          chain_id: 5,
+          nonce: 1,
+          max_priority_fee_per_gas: 1000000000,
+          max_fee_per_gas: 100000000000,
+          gas_limit: 100000,
+          destination: <<1::160>>,
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [<<2::160>>, <<3::160>>],
+          signature_y_parity: true,
+          signature_r: <<0x01::256>>,
+          signature_s: <<0x02::256>>
+        }
+    """
+    def add_signature(
+          transaction = %__MODULE__{},
+          v,
+          r = <<_::256>>,
+          s = <<_::256>>
+        )
+        when is_boolean(v) do
+      %{transaction | signature_y_parity: v, signature_r: r, signature_s: s}
+    end
+
+    def add_signature(
+          transaction = %__MODULE__{},
+          <<r::binary-size(32), s::binary-size(32), v_bin::binary>>
+        ) do
+      v = :binary.decode_unsigned(v_bin)
+
+      y_parity =
+        if v < 2 do
+          v == 1
+        else
+          rem(v, 2) == 0
+        end
+
+      %{transaction | signature_y_parity: y_parity, signature_r: r, signature_s: s}
+    end
+
+    @doc ~S"""
+    Recovers a signature from a transaction, if it's been signed. Otherwise returns an error.
+
+    ## Examples
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], true, <<0x01::256>>, <<0x02::256>>, :goerli)
+        ...> |> Cartouche.Transaction.V2.get_signature()
+        {:ok, <<1::256, 2::256, 1::8>>}
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], :goerli)
+        ...> |> Cartouche.Transaction.V2.get_signature()
+        {:error, "transaction missing signature"}
+    """
+    def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
+        when is_nil(v) or is_nil(r) or is_nil(s),
+        do: {:error, "transaction missing signature"}
+
+    def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
+      v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
+      {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
+    end
+
+    @doc ~S"""
+    Recovers the signer from a given transaction, if it's been signed.
+
+    ## Examples
+
+        iex> {:ok, address} =
+        ...>   Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], true, <<0x01::256>>, <<0x02::256>>, :goerli)
+        ...>   |> Cartouche.Transaction.V2.recover_signer()
+        ...> Cartouche.Hex.to_address(address)
+        "0xC002Ca628F93e1550b5f30Ed10902A9e7783364B"
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], :goerli)
+        ...> |> Cartouche.Transaction.V2.recover_signer()
+        {:error, "transaction missing signature"}
+    """
+    def recover_signer(transaction) do
+      trx_encoded =
+        encode(%{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil})
+
+      with {:ok, signature} <- get_signature(transaction) do
+        {:ok, Cartouche.Recover.recover_eth(trx_encoded, signature)}
+      end
+    end
+  end
+
+  @doc """
+  Builds a v1-style call to a given contract
+
+  ## Examples
+
+      iex> use Cartouche.Hex
+      iex> Cartouche.Transaction.build_trx(<<1::160>>, 5, {"baz(uint,address)", [50, :binary.decode_unsigned(<<1::160>>)]}, {50, :gwei}, 100_000, 0, 5)
+      %Cartouche.Transaction.V1{
+        nonce: 5,
+        gas_price: 50000000000,
+        gas_limit: 100000,
+        to: <<1::160>>,
+        value: 0,
+        data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
+        v: 5,
+        r: 0,
+        s: 0
+      }
+
+      iex> use Cartouche.Hex
+      iex> call_data = ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001]
+      ...> Cartouche.Transaction.build_trx(<<1::160>>, 5, call_data, {50, :gwei}, 100_000, 0, 5)
+      %Cartouche.Transaction.V1{
+        nonce: 5,
+        gas_price: 50000000000,
+        gas_limit: 100000,
+        to: <<1::160>>,
+        value: 0,
+        data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
+        v: 5,
+        r: 0,
+        s: 0
+      }
+  """
+  def build_trx(address, nonce, call_data, gas_price, gas_limit, value, chain_id \\ nil) do
+    data =
+      case call_data do
+        {abi, params} ->
+          ABI.encode(abi, params)
+
+        call_data when is_binary(call_data) ->
+          call_data
+      end
+
+    V1.new(nonce, gas_price, gas_limit, address, value, data, chain_id)
+  end
+
+  @doc """
+  Builds a v2 (eip-1559)-style call to a given contract
+
+  ## Examples
+
+      iex> use Cartouche.Hex
+      iex> Cartouche.Transaction.build_trx_v2(<<1::160>>, 6, {"baz(uint,address)", [50, :binary.decode_unsigned(<<1::160>>)]}, {50, :gwei}, {10, :gwei}, 100_000, 0, [<<1::160>>], :goerli)
+      %Cartouche.Transaction.V2{
+        chain_id: 5,
+        nonce: 6,
+        max_priority_fee_per_gas: 50000000000,
+        max_fee_per_gas: 10000000000,
+        gas_limit: 100000,
+        destination: <<1::160>>,
+        amount: 0,
+        data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
+        access_list: [<<1::160>>],
+        signature_y_parity: nil,
+        signature_r: nil,
+        signature_s: nil
+      }
+
+      iex> use Cartouche.Hex
+      iex> call_data = ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001]
+      ...> Cartouche.Transaction.build_trx_v2(<<1::160>>, 5, call_data, {50, :gwei}, {10, :gwei}, 100_000, 0, [<<1::160>>], :goerli)
+      %Cartouche.Transaction.V2{
+        chain_id: 5,
+        nonce: 5,
+        max_priority_fee_per_gas: 50000000000,
+        max_fee_per_gas: 10000000000,
+        gas_limit: 100000,
+        destination: <<1::160>>,
+        amount: 0,
+        data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
+        access_list: [<<1::160>>],
+        signature_y_parity: nil,
+        signature_r: nil,
+        signature_s: nil
+      }
+  """
+  def build_trx_v2(
+        address,
+        nonce,
+        call_data,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        amount,
+        access_list,
+        chain_id \\ nil
+      )
+      when is_list(access_list) do
+    data =
+      case call_data do
+        {abi, params} ->
+          ABI.encode(abi, params)
+
+        call_data when is_binary(call_data) ->
+          call_data
+      end
+
+    V2.new(
+      nonce,
+      max_priority_fee_per_gas,
+      max_fee_per_gas,
+      gas_limit,
+      address,
+      amount,
+      data,
+      access_list,
+      chain_id
+    )
+  end
+
+  @doc ~S"""
+  Builds and signs a transaction, to be ready to be passed to JSON-RPC.
+
+  Optionally takes a callback to modify the transaction before it is signed.
+
+  ## Examples
+
+      iex> signer_proc = Cartouche.Test.Signer.start_signer()
+      iex> {:ok, signed_trx} = Cartouche.Transaction.build_signed_trx(<<1::160>>, 5, {"baz(uint,address)", [50, :binary.decode_unsigned(<<1::160>>)]}, {50, :gwei}, 100_000, 0, signer: signer_proc, chain_id: :goerli)
+      iex> {:ok, signer} = Cartouche.Transaction.V1.recover_signer(signed_trx, 5)
+      iex> Cartouche.Hex.to_address(signer)
+      "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
+  """
+  def build_signed_trx(
+        address,
+        nonce,
+        call_data,
+        gas_price,
+        gas_limit,
+        value,
+        opts \\ []
+      ) do
+    signer = Keyword.get(opts, :signer, Cartouche.Signer.Default)
+    chain_id = Keyword.get(opts, :chain_id, nil)
+    callback = Keyword.get(opts, :callback, nil)
+
+    transaction = build_trx(address, nonce, call_data, gas_price, gas_limit, value, chain_id)
+    callback = if(is_nil(callback), do: fn trx -> {:ok, trx} end, else: callback)
+
+    with {:ok, transaction} <- callback.(transaction),
+         transaction_encoded <- V1.encode(transaction),
+         {:ok, signature} <- Cartouche.Signer.sign(transaction_encoded, signer, chain_id: chain_id) do
+      {:ok, V1.add_signature(transaction, signature)}
+    end
+  end
+
+  @doc ~S"""
+  Builds and signs a V2 transaction, to be ready to be passed to JSON-RPC.
+
+  Optionally takes a callback to modify the transaction before it is signed.
+
+  ## Examples
+
+      iex> signer_proc = Cartouche.Test.Signer.start_signer()
+      iex> {:ok, signed_trx} = Cartouche.Transaction.build_signed_trx_v2(<<1::160>>, 5, {"baz(uint,address)", [50, :binary.decode_unsigned(<<1::160>>)]}, {50, :gwei}, {10, :gwei}, 100_000, 0, [], signer: signer_proc, chain_id: :goerli)
+      iex> {:ok, signer} = Cartouche.Transaction.V2.recover_signer(signed_trx)
+      iex> Cartouche.Hex.to_address(signer)
+      "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
+  """
+  def build_signed_trx_v2(
+        address,
+        nonce,
+        call_data,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        amount,
+        access_list,
+        opts \\ []
+      )
+      when is_list(access_list) do
+    signer = Keyword.get(opts, :signer, Cartouche.Signer.Default)
+    chain_id = Keyword.get(opts, :chain_id, nil)
+    callback = Keyword.get(opts, :callback, nil)
+
+    transaction =
+      build_trx_v2(
+        address,
+        nonce,
+        call_data,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        amount,
+        access_list,
+        chain_id
+      )
+
+    callback = if(is_nil(callback), do: fn trx -> {:ok, trx} end, else: callback)
+
+    with {:ok, transaction} <- callback.(transaction),
+         transaction_encoded <- V2.encode(transaction),
+         {:ok, signature} <- Cartouche.Signer.sign(transaction_encoded, signer, chain_id: chain_id) do
+      {:ok, V2.add_signature(transaction, signature)}
+    end
+  end
+end

@@ -1,29 +1,34 @@
 defmodule Cartouche do
   @moduledoc """
-  Cartouche is an attributed fork of
-  [hayesgm/signet](https://github.com/hayesgm/signet) — an Ethereum key
-  manager and RPC client for Elixir, maintained by
-  [ZenHive](https://github.com/ZenHive).
-
-  This is the `0.0.1` placeholder release that claims the hex namespace.
-  Active development lands in `0.1.x`, which ports the signet codebase
-  under the `Cartouche` module tree.
-
-  See the project `README.md` and `CHANGELOG.md` for the relationship to
-  upstream signet and the attribution details.
+  Cartouche is a library for interacting with private keys, signatures, and Etheruem.
   """
 
-  @version Mix.Project.config()[:version]
+  @type address :: <<_::160>>
+  @type signature :: <<_::520>>
+  @type bytes32 :: <<_::256>>
+  @type contract :: address() | atom()
 
-  @doc """
-  Returns the compile-time version string of the cartouche package.
+  @doc ~S"""
+  Returns a contract address, that may have been set in configuration.
 
   ## Examples
 
-      iex> is_binary(Cartouche.version())
-      true
+      iex> Cartouche.get_contract_address(<<1::160>>)
+      <<1::160>>
 
+      iex> Cartouche.get_contract_address("0x0000000000000000000000000000000000000001")
+      <<1::160>>
+
+      iex> Application.put_env(:cartouche, :contracts, [test: "0x0000000000000000000000000000000000000001"])
+      iex> Cartouche.get_contract_address(:test)
+      <<1::160>>
   """
-  @spec version() :: String.t()
-  def version, do: @version
+  def get_contract_address(address) when is_binary(address),
+    do: Cartouche.Util.decode_hex_input!(address)
+
+  def get_contract_address(contract) when is_atom(contract) do
+    Application.get_env(:cartouche, :contracts, [])
+    |> Keyword.fetch!(contract)
+    |> Cartouche.Util.decode_hex_input!()
+  end
 end
