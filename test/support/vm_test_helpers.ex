@@ -8,7 +8,7 @@ defmodule Cartouche.VmTestHelpers do
   end
 
   def word(x, sz) when is_integer(x) and x >= 0 do
-    <<_::binary-size(32 - sz), res::binary-size(sz)>> = word(x)
+    <<_::binary-size(32 - ^sz), res::binary-size(^sz)>> = word(x)
     res
   end
 

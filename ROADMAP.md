@@ -41,9 +41,13 @@ Resist "while we're here, just this once" helpers — they belong in onchain.
 
 ## 🎯 Current Focus
 
-**Phase 0 — ship `0.1.0`.** The code is ported under `Cartouche.*` (26 modules in `lib/cartouche/`). `mix.exs` still carries the inherited `1.6.1` from signet's fork point and needs to drop to `0.1.0-dev`. Test suite, dialyzer, and `mix docs` need a clean pass before publish. Nothing else is gated until `0.1.0` is on hex and onchain can resolve `{:cartouche, "~> 0.1"}`.
+**Phase 0 — ship `0.1.0`.** Prep pass complete (Tasks 1–4, 2026-04-24): version at `0.1.0-dev`, 665 tests green, dialyzer inventory matches the pre-rename audit exactly (11/11 `invalid_contract` accounted for), `mix docs` builds cleanly with the cartouche module tree. What's left:
 
-After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins), then parallel work through Phases 2–9 as priority dictates.
+- **Task 5** — README installation section (gated on Task 6).
+- **Task 6** — `mix hex.publish`. **Blocked** on the `:abi` path dep (`mix.exs` currently uses `path: "../abi", override: true` pending the upstream typespec PR; hex rejects path/git deps).
+- **Task 36** — Pre-ship polish: silence ex_doc warnings about hidden-module type references in `Cartouche.VM` public specs.
+
+After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins; Phase 1.4 scope narrows to just `from_hex/1` per the 2026-04-24 re-run), then parallel work through Phases 2–9 as priority dictates.
 
 ---
 
@@ -51,12 +55,13 @@ After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins)
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 1 | Reset `mix.exs` version `1.6.1` → `0.1.0-dev` [D:1/B:3/U:7 → Eff:5.0] 🎯 | ⬜ | One-line change. `CHANGELOG.md` already declares `0.1.x` as the active-dev line |
-| 2 | Full `mix test.json --quiet` pass on the ported code [D:3/B:5/U:7 → Eff:2.0] 🚀 | ⬜ | Catch anything that broke in the signet→cartouche rename |
-| 3 | `mix dialyzer.json --quiet` — inventory remaining `invalid_contract` warnings, confirm they match the pre-rename audit (Phases 1, 3, 4, 6 below) [D:2/B:3/U:6 → Eff:2.25] 🚀 | ⬜ | Regression check; warnings that weren't in the old audit need investigation |
-| 4 | `mix docs` clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0] 🚀 | ⬜ | Verify module tree, `llms.txt` output, no broken links |
+| 1 | Reset `mix.exs` version `1.6.1` → `0.1.0-dev` [D:1/B:3/U:7 → Eff:5.0] 🎯 | ✅ | Done 2026-04-24 |
+| 2 | Full `mix test.json --quiet` pass on the ported code [D:3/B:5/U:7 → Eff:2.0] 🚀 | ✅ | 665 passed / 0 failed on 2026-04-24. Also cleared two stale test warnings (`test/support/vm_test_helpers.ex:11` missed by C1 pin sweep, `test/solana/pda_test.exs:137` underscored-then-used var) |
+| 3 | `mix dialyzer.json --quiet` — inventory remaining `invalid_contract` warnings, confirm they match the pre-rename audit (Phases 1, 3, 4, 6 below) [D:2/B:3/U:6 → Eff:2.25] 🚀 | ✅ | 2026-04-24: 11/11 `invalid_contract` accounted for; total 1,626 matches the post-abi-fix benchmark. Phase 1.4 scope narrows to `from_hex/1` only (see Phase 1.4 note below) |
+| 4 | `mix docs` clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0] 🚀 | ✅ | Done 2026-04-24; `doc/index.html`, `doc/llms.txt`, `doc/Cartouche.epub` all build; `llms.txt` header reads `Cartouche v0.1.0-dev`; 54 `Cartouche.*` entries in `api-reference.html`; only `signet`/`hayesgm` hits in `doc/` are the README attribution links. Pre-existing ex_doc type-ref warnings split out as Task 36 |
 | 5 | Update `README.md` installation section — replace the "not recommended yet" placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0] 🎯 | ⬜ | Conditional on Task 6 — do right before publish |
 | 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | 🔶 | **Blocked:** `:abi` is currently a path dep (`../abi`, see `mix.exs` TODO) pending the upstream typespec PR — hex rejects path/git deps. `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
+| 36 | Silence ex_doc `documentation references type "X" but the module is hidden` warnings surfaced by `mix docs` [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Public specs in `Cartouche.VM` (pop_unsigned/1, push_word/2, run_single_op/3) reference `Cartouche.VM.Context.t()` and `Cartouche.VM.Input.t()` from modules declared `@moduledoc false`. Either expose those modules in the docs tree, move the shared types into `Cartouche.VM`, or narrow the public specs. Discovered during Task 4. Not a ship blocker but should land before publish for clean `hex.pm` docs |
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
 
@@ -75,25 +80,21 @@ Two specs declare the literal atom `:no_return` instead of the type `no_return()
 | `RecoveryBit.normalize/2` | `util.ex:388` | `\| :no_return` | `\| no_return()` |
 | `RecoveryBit.normalize_signature/2` | `util.ex:419` | `\| :no_return` | `\| no_return()` |
 
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 7 | Fix both `:no_return` atom typos [D:1/B:2/U:6 → Eff:4.0] 🎯 | ⬜ | Two-line change in `lib/cartouche/util.ex`. No test needed |
-
 ### 1.2 `Cartouche.Util.to_wei/1` — narrow `number()` → `non_neg_integer()`
 
 `@spec to_wei/1 :: number()` (line 257) but every clause returns `integer()` and amounts are non-negative by domain (wei is a discrete count).
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 8 | Narrow `to_wei/1` return type [D:1/B:1/U:5 → Eff:3.0] 🎯 | ⬜ | One-line change. No test needed |
 
 ### 1.3 `Cartouche.Signer.sign_direct/4` — `mfa()` → `{module(), atom(), list()}`
 
 Dialyzer reports `signer.ex:141 invalid_contract`. 3rd arg specced as `mfa()` (which Elixir defines as `{module(), atom(), arity :: non_neg_integer()}`) but the impl receives `{module(), atom(), args :: list()}`. The third element type does not overlap.
 
+### 1.1–1.3 bundled task
+
+All three are surgical `@spec`-only edits across `util.ex` + `signer.ex`. ~4 line changes + 1 doctest; same release, same verification (`mix dialyzer.json` before/after).
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 9 | Replace `mfa()` with `{module(), atom(), [any()]}` in the `@spec` [D:1/B:3/U:5 → Eff:4.0] 🎯 | ⬜ | One-line + one doctest covering the `{m, f, args}` path |
+| 7+8+9 | Phase 1.1–1.3 surgical spec fixes [D:1/B:3/U:6 → Eff:4.5] 🎯 | ⬜ | Fix both `:no_return` atom typos (Phase 1.1), narrow `to_wei/1` return (Phase 1.2), replace `mfa()` with `{module(), atom(), [any()]}` (Phase 1.3). One doctest for the `{m, f, args}` path on `sign_direct/4`. Verification: `mix dialyzer.json` loses the `signer.ex:141 invalid_contract`; others are typo-only (silent in dialyzer today) |
 
 ### 1.4 `Cartouche.Hex` return-type specs
 
@@ -108,12 +109,11 @@ Dialyzer reports `signer.ex:141 invalid_contract`. 3rd arg specced as `mfa()` (w
 
 Doctests and `@doc` examples already show the correct shape; only the `@spec` lines disagree. Fix is surgical — update the four specs, no implementation change.
 
+**Scope update (2026-04-24 dialyzer re-run):** only `from_hex/1` (now at `hex.ex:93`) still fires `invalid_contract`. The `decode_hex/1`, `decode_hex_number/1`, and private `decode_hex_/1` warnings are no longer flagged — but the specs themselves still mismatch the runtime: `hex.ex:82` (`decode_hex/1`), `hex.ex:247` (`decode_hex_number/1`), and `hex.ex:375` (private `decode_hex_/1`) all declare `:error` while the body returns `:invalid_hex` (verified 2026-04-24). Dialyzer's silence is a PLT / cascade artifact, not an incidental fix — all four Phase 1.4 specs remain load-bearing for onchain's `@dialyzer` strip.
+
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 10 | Fix `decode_hex/1` + private `decode_hex_/1` spec [D:1/B:7/U:9 → Eff:8.0] 🎯 | ⬜ | Load-bearing for onchain Hex/ABI strips |
-| 11 | Fix `decode_hex_number/1` spec [D:1/B:7/U:9 → Eff:8.0] 🎯 | ⬜ | Same module, bundle with Task 10 |
-| 12 | Fix `from_hex/1` + `from_hex!/1` specs [D:1/B:7/U:9 → Eff:8.0] 🎯 | ⬜ | Confirmed by dialyzer: `hex.ex:91 invalid_contract` |
-| 13 | Doctest coverage proving the real return shape for each of the four specs [D:2/B:7/U:9 → Eff:4.0] 🎯 | ⬜ | Required for upstream acceptance if pitched (see Phase 10); also grounds the local fix |
+| 10+11+12+13 | Phase 1.4 Hex spec audit + `from_hex/1` fix + doctest coverage [D:2/B:7/U:9 → Eff:4.0] 🎯 | ⬜ | Fix `decode_hex/1` + private `decode_hex_/1` (Task 10, `hex.ex:82` + `hex.ex:375`: `:error` → `:invalid_hex`) and `decode_hex_number/1` (Task 11, `hex.ex:247`) — specs still wrong per the table above, dialyzer is just not flagging them right now. Fix `from_hex/1` + `from_hex!/1` (`hex.ex:93 invalid_contract` — the only live warning, Task 12). Add doctest coverage for all four specs proving the real return shape (Task 13) — required for upstream acceptance if pitched (see Phase 10); also grounds the local fix |
 
 **Downstream impact once shipped in `0.1.x`:** onchain strips its `@dialyzer {:no_match, …}` blocks from `Onchain.Hex` and (via cascade through `Contract.call/5 → ABI.decode_response/2`) from the ABI / ERC / ENS / Multicall modules. Full downstream strip additionally needs the external `abi` fix tracked in Phase 10.
 
@@ -140,9 +140,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 14 | Re-audit `send_rpc/3` `@spec` vs runtime error shapes on the ported code [D:3/B:6/U:7 → Eff:2.17] 🚀 | ⬜ | Confirm table above; some shapes may have been tightened in intervening signet commits before the fork |
-| 15 | Widen error type (or split into tagged errors) with doctest coverage per shape [D:3/B:7/U:7 → Eff:2.33] 🚀 | ⬜ | Depends on Task 14. Keep `%{code, message}` as the JSON-RPC-error branch; union in the others |
-| 35 | Rescue `Jason.EncodeError` / `Protocol.UndefinedError` at the `Jason.encode!(body)` call (`rpc.ex:162`) → `{:error, {:invalid_params, _}}`, so non-JSON-encodable inputs honor the `{:ok,_}\|{:error,_}` contract instead of raising [D:2/B:4/U:5 → Eff:2.25] 🚀 | ⬜ | Discovered 2026-04-24 during onchain Task 59 (`Onchain.RPC.call/3` — generic JSON-RPC passthrough). Triggers: `<<255>>` method binary (non-UTF-8 passes `is_binary/1` but Jason raises); params containing tuples / atom-keyed maps. Doctests per trigger. Blocks a downstream onchain doc-hardening pass — once this lands, all `Onchain.RPC.*` wrappers automatically honor their `@spec`. Couples to Task 15's tagged-error split: the new `{:invalid_params, _}` branch joins the union |
+| 14+15+35 | Phase 2 RPC error-shape widening [D:4/B:7/U:7 → Eff:1.75] 🚀 | ⬜ | **Step 1 (Task 14):** re-audit `send_rpc/3` `@spec` vs runtime shapes on the ported code — confirm the table above; some shapes may have been tightened in intervening signet commits before the fork. **Step 2 (Task 15):** widen or tag-split the error type with doctest coverage per shape. Keep `%{code, message}` as the JSON-RPC-error branch; union in the others. **Step 3 (Task 35):** rescue `Jason.EncodeError` / `Protocol.UndefinedError` at `Jason.encode!(body)` (`rpc.ex:162`) → `{:error, {:invalid_params, _}}`, so non-JSON-encodable inputs honor the `{:ok,_}\|{:error,_}` contract instead of raising. Task 35 triggers: `<<255>>` method binary (non-UTF-8 passes `is_binary/1` but Jason raises); params containing tuples / atom-keyed maps. Doctests per trigger. The new `{:invalid_params, _}` joins the union from Step 2. Discovered 2026-04-24 during onchain Task 59 (`Onchain.RPC.call/3` — generic JSON-RPC passthrough); once this lands, all `Onchain.RPC.*` wrappers automatically honor their `@spec` |
 
 **Blast radius** (from `mix reach.impact Cartouche.RPC.send_rpc/3`, pre-rename): 6 direct callers break on signature change (`get_balance/2`, `get_transaction_count/2`, `eth_block_number/1`, `eth_chain_id/1`, `set_filter/1`, `Cartouche.Filter.handle_info/2`), 1 transitive (`Cartouche.Signer.init/1`), no return-value dependents. Behavior-preserving spec-widening is low-risk; a union-type split needs all 6 direct callers to still type-check.
 
@@ -154,9 +152,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 16 | Update `Cartouche.Trace.@type t` (and nested `Cartouche.Trace.Action` type) to match dialyzer's inferred shape [D:3/B:2/U:4 → Eff:1.0] 📋 | ⬜ | Extend fields to `nil \| …` where runtime proves it |
-| 17 | Update `Cartouche.TraceCall.@type t` analogously [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Piggybacks on Task 16 if `TraceCall` embeds `Trace.t()` |
-| 18 | Unit tests exercising `deserialize/1` on representative JSON (with and without optional fields) [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Grounds the widened type in runtime behaviour |
+| 16+17+18 | Phase 3 Trace + TraceCall deserialize specs + tests [D:3/B:2/U:4 → Eff:1.0] 📋 | ⬜ | Update `Cartouche.Trace.@type t` (and nested `Cartouche.Trace.Action` type) to match dialyzer's inferred shape — extend fields to `nil \| …` where runtime proves it (Task 16). Update `Cartouche.TraceCall.@type t` analogously (Task 17) — piggybacks on Task 16 if `TraceCall` embeds `Trace.t()`. Ground the widened types with unit tests exercising `deserialize/1` on representative JSON (with and without optional fields) (Task 18) |
 
 ---
 
@@ -169,8 +165,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 19 | Read current impls, derive the true return types, rewrite both `@spec` lines [D:2/B:1/U:3 → Eff:1.0] 📋 | ⬜ | If these really are internal, add `@doc false` — keeps the `@spec` for dialyzer but removes from generated docs |
-| 20 | Decide whether either fn is meant to be public API; if so, adjust impl to match the documented intent instead of changing the spec [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ⬜ | Judgment call; easier under fork ownership since we decide |
+| 19+20 | Phase 4 Typed internal-function specs — rewrite + visibility judgment [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ⬜ | Read current impls, derive the true return types, rewrite both `@spec` lines (Task 19). If these really are internal, add `@doc false` — keeps the `@spec` for dialyzer but removes from generated docs. Then decide whether either fn is meant to be public API (Task 20); if so, adjust impl to match the documented intent instead of changing the spec. Judgment call; easier under fork ownership since we decide |
 
 ---
 
@@ -188,8 +183,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 21 | Trace each Phase 5 warning back through `mix reach.deps` + `mix reach.slice` to find the first callee with `none()` success typing [D:5/B:3/U:3 → Eff:0.6] ⚠️ | ⬜ | Half-day to day. Only pursue if a concrete refactor target emerges |
-| 22 | If root cause is a genuinely fixable spec narrowing: fix it. If it's structural (`raise`-heavy helpers): add `@dialyzer {:no_contracts, …}` locally in cartouche [D:2/B:4/U:6 → Eff:2.5] 🚀 | ⬜ | Local suppression is a valid terminal state |
+| 21+22 | Phase 5 `none()` cascade investigation + targeted fix or local suppression [D:5/B:4/U:5 → Eff:0.9] ⚠️ | ⬜ | Trace each Phase 5 warning back through `mix reach.deps` + `mix reach.slice` to find the first callee with `none()` success typing (Task 21, half-day to day). If root cause is a genuinely fixable spec narrowing, fix it; if it's structural (`raise`-heavy helpers), add `@dialyzer {:no_contracts, …}` locally in cartouche (Task 22). Local suppression is a valid terminal state |
 
 ---
 
@@ -213,9 +207,8 @@ Single-repo ownership simplifies this — we edit `mix.exs` and `mix.lock` direc
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 24 | Read `google_api_cloud_kms` CHANGELOG 0.38.1 → 0.43.0; flag breaking changes to `get_public_key` / `asymmetric_sign`, and any new key types relevant to Ethereum signing or attestation [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Read every minor; release notes are dense |
-| 25 | Loosen constraint per findings; `mix deps.update google_api_cloud_kms`; verify `mix test` + `mix dialyzer.json` [D:2/B:3/U:4 → Eff:1.75] 🚀 | ⬜ | |
-| 26 | If Task 24 surfaces a relevant new feature (Ed25519, HMAC, new auth), expose it in a follow-up feature task with docs + tests [D:5/B:4/U:4 → Eff:0.8] ⚠️ | ⬜ | Conditional |
+| 24+25 | Phase 7.1 `google_api_cloud_kms` 0.38.1 → 0.43.0 [D:3/B:3/U:4 → Eff:1.17] 📋 | ⬜ | Read CHANGELOG 0.38.1 → 0.43.0 — flag breaking changes to `get_public_key` / `asymmetric_sign`, and any new key types relevant to Ethereum signing or attestation (Task 24; release notes are dense, read every minor). Loosen constraint per findings; `mix deps.update google_api_cloud_kms`; verify `mix test` + `mix dialyzer.json` (Task 25) |
+| 26 | Conditional feature-surface pass — expose Ed25519 / HMAC / new auth in a follow-up with docs + tests if Task 24 flagged anything relevant [D:5/B:4/U:4 → Eff:0.8] ⚠️ | ⬜ | Conditional on Task 24 findings |
 
 ### 7.2 `ex_doc` 0.31.1 → 0.40
 
@@ -227,8 +220,7 @@ Single-repo ownership simplifies this — we edit `mix.exs` and `mix.lock` direc
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 27 | Read `finch` CHANGELOG 0.19 → 0.21; identify options relevant to `Finch.request/3` or error classification [D:2/B:3/U:4 → Eff:1.75] 🚀 | ⬜ | |
-| 28 | If Task 27 finds concrete wins (cleaner error variants, better pool config, HTTP/2 telemetry), adopt them with tests [D:3/B:3/U:3 → Eff:1.0] 📋 | ⬜ | Conditional |
+| 27+28 | Phase 7.3 `finch` 0.19 → 0.21 — audit + conditional adoption [D:2/B:3/U:4 → Eff:1.75] 🚀 | ⬜ | Read CHANGELOG 0.19 → 0.21; identify options relevant to `Finch.request/3` or error classification (Task 27). If concrete wins surface (cleaner error variants, better pool config, HTTP/2 telemetry), adopt with tests (Task 28) |
 
 ### 7.4 Lockfile refresh
 
@@ -244,8 +236,7 @@ Natural extraction: a private helper returning the prefix list from the struct. 
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 29 | Verify both encode clauses have doctest coverage; add one to the unsigned clause if missing [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Refactors without test coverage are risky |
-| 30 | Extract `defp unsigned_rlp_list/1`; rewrite both clauses to call it; verify byte-exact output equivalence via doctests [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ⬜ | |
+| 29+30 | Phase 8 V2 encode dedup — verify doctest coverage + extract helper [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ⬜ | Verify both encode clauses have doctest coverage; add one to the unsigned clause if missing (Task 29) — refactors without test coverage are risky. Then extract `defp unsigned_rlp_list/1`; rewrite both clauses to call it; verify byte-exact output equivalence via doctests (Task 30) |
 
 **Do not run `mix ex_dna --literal-mode abstract` for refactor targets.** It finds near-misses that are often intentional (EIP version pairs, opcode groupings). Type I / exact duplication only.
 
