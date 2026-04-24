@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.1.0-dev",
+      version: "0.1.0",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -15,7 +15,7 @@ defmodule Cartouche.MixProject do
       source_url: "https://github.com/zenhive/cartouche",
       docs: [
         main: "readme",
-        extras: ["README.md"]
+        extras: ["README.md", "CHANGELOG.md"]
       ],
       package: package()
     ]
@@ -28,10 +28,13 @@ defmodule Cartouche.MixProject do
 
   defp package do
     [
-      files: ["lib", "mix.exs", "README*", "LICENSE*", "test/support"],
-      maintainers: ["Geoffrey Hayes"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*", "CHANGELOG*"],
+      maintainers: ["ZenHive"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/zenhive/cartouche"}
+      links: %{
+        "GitHub" => "https://github.com/zenhive/cartouche",
+        "Changelog" => "https://hexdocs.pm/cartouche/changelog.html"
+      }
     ]
   end
 
@@ -61,10 +64,14 @@ defmodule Cartouche.MixProject do
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.3", optional: true},
       {:ex_rlp, "~> 0.6.0"},
-      # TODO: path dep — replace with `{:abi, "~> 1.3", override: true}` once the
-      # typespec PR lands upstream (zenhive/abi fork). Blocks `mix hex.publish`
-      # (hex rejects path/git deps). See CHANGELOG A1, cleanup.md A1b.
-      {:abi, path: "../abi", override: true},
+      # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
+      # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
+      # module namespace remains `ABI`). Switching to hex unblocks
+      # `mix hex.publish` here (which rejects path/git deps).
+      # `override: true` dropped at publish time — no transitive dep
+      # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
+      # hex rejects overrides on published packages.
+      {:hieroglyph, "~> 1.0"},
       {:junit_formatter, "~> 3.3.1", only: [:test]}
     ] ++ zenhive_dev_deps()
   end

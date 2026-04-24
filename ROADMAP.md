@@ -41,11 +41,10 @@ Resist "while we're here, just this once" helpers — they belong in onchain.
 
 ## 🎯 Current Focus
 
-**Phase 0 — ship `0.1.0`.** Prep pass complete (Tasks 1–4, 2026-04-24): version at `0.1.0-dev`, 665 tests green, dialyzer inventory matches the pre-rename audit exactly (11/11 `invalid_contract` accounted for), `mix docs` builds cleanly with the cartouche module tree. What's left:
+**Phase 0 — ship `0.1.0`.** Prep pass complete (Tasks 1–4, 2026-04-24): version at `0.1.0-dev`, 665 tests green, dialyzer inventory matches the pre-rename audit exactly (11/11 `invalid_contract` accounted for), `mix docs` builds cleanly with the cartouche module tree. Publish cut prepared 2026-04-25 (Task 37): version bumped to `0.1.0`, CHANGELOG `[Unreleased]` moved under `[0.1.0] — 2026-04-25`, mix.exs `:package` polished (ZenHive maintainers, test/support dropped from `:files`, CHANGELOG added to docs `:extras` + `:links`), README install section activated. What's left:
 
-- **Task 5** — README installation section (gated on Task 6).
-- **Task 6** — `mix hex.publish`. **Blocked** on the `:abi` path dep (`mix.exs` currently uses `path: "../abi", override: true` pending the upstream typespec PR; hex rejects path/git deps).
-- **Task 36** — Pre-ship polish: silence ex_doc warnings about hidden-module type references in `Cartouche.VM` public specs.
+- **Task 6** — `mix hex.publish`. Staged diff is ready: `mix deps.get && mix test && mix dialyzer.json` → `git tag v0.1.0` → `mix hex.publish`. Requires user to run the publish command (hex API key / OTP).
+- **Task 36** — Pre-ship polish: silence ex_doc warnings about hidden-module type references in `Cartouche.VM` public specs. Not a ship blocker.
 
 After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins; Phase 1.4 scope narrows to just `from_hex/1` per the 2026-04-24 re-run), then parallel work through Phases 2–9 as priority dictates.
 
@@ -59,9 +58,10 @@ After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins;
 | 2 | Full `mix test.json --quiet` pass on the ported code [D:3/B:5/U:7 → Eff:2.0] 🚀 | ✅ | 665 passed / 0 failed on 2026-04-24. Also cleared two stale test warnings (`test/support/vm_test_helpers.ex:11` missed by C1 pin sweep, `test/solana/pda_test.exs:137` underscored-then-used var) |
 | 3 | `mix dialyzer.json --quiet` — inventory remaining `invalid_contract` warnings, confirm they match the pre-rename audit (Phases 1, 3, 4, 6 below) [D:2/B:3/U:6 → Eff:2.25] 🚀 | ✅ | 2026-04-24: 11/11 `invalid_contract` accounted for; total 1,626 matches the post-abi-fix benchmark. Phase 1.4 scope narrows to `from_hex/1` only (see Phase 1.4 note below) |
 | 4 | `mix docs` clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0] 🚀 | ✅ | Done 2026-04-24; `doc/index.html`, `doc/llms.txt`, `doc/Cartouche.epub` all build; `llms.txt` header reads `Cartouche v0.1.0-dev`; 54 `Cartouche.*` entries in `api-reference.html`; only `signet`/`hayesgm` hits in `doc/` are the README attribution links. Pre-existing ex_doc type-ref warnings split out as Task 36 |
-| 5 | Update `README.md` installation section — replace the "not recommended yet" placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0] 🎯 | ⬜ | Conditional on Task 6 — do right before publish |
-| 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | 🔶 | **Blocked:** `:abi` is currently a path dep (`../abi`, see `mix.exs` TODO) pending the upstream typespec PR — hex rejects path/git deps. `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
-| 36 | Silence ex_doc `documentation references type "X" but the module is hidden` warnings surfaced by `mix docs` [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Public specs in `Cartouche.VM` (pop_unsigned/1, push_word/2, run_single_op/3) reference `Cartouche.VM.Context.t()` and `Cartouche.VM.Input.t()` from modules declared `@moduledoc false`. Either expose those modules in the docs tree, move the shared types into `Cartouche.VM`, or narrow the public specs. Discovered during Task 4. Not a ship blocker but should land before publish for clean `hex.pm` docs |
+| 5 | Update `README.md` installation section — replace the "not recommended yet" placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0] 🎯 | ✅ | Done 2026-04-25 as part of Task 37 prep. Status block + install snippet activated |
+| 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | ⬜ | Staged and ready 2026-04-25. Pre-publish sequence: `mix deps.get && mix test && mix dialyzer.json` → `git tag v0.1.0` → `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
+| 36 | Silence ex_doc `documentation references type "X" but the module is hidden` warnings surfaced by `mix docs` [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Public specs in `Cartouche.VM` (pop_unsigned/1, push_word/2, run_single_op/3) reference `Cartouche.VM.Context.t()` and `Cartouche.VM.Input.t()` from modules declared `@moduledoc false`. Either expose those modules in the docs tree, move the shared types into `Cartouche.VM`, or narrow the public specs. Discovered during Task 4. Not a ship blocker |
+| 37 | Publish cut — version bump, CHANGELOG release section, mix.exs `:package` polish, README install activation [D:1/B:3/U:5 → Eff:4.0] 🎯 | ✅ | Done 2026-04-25. `mix.exs` version → `0.1.0`; CHANGELOG `[Unreleased]` moved under `[0.1.0] — 2026-04-25`; `:package` updated (`maintainers: ["ZenHive"]`, dropped `test/support` from `:files`, added `CHANGELOG*`, added `CHANGELOG.md` to `docs[:extras]`, added `Changelog` link); README Status + Installation activated |
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
 
