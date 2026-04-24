@@ -14,6 +14,7 @@
 @~/.claude/includes/dialyzer-json.md
 @~/.claude/includes/reach.md
 @~/.claude/includes/agent-economy.md
+@~/.claude/includes/upstream-pr-workflow.md
 
 
 forked from https://github.com/hayesgm/signet

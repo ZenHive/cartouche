@@ -22,7 +22,7 @@ Overflow tasks from the `mix credo --strict` / `mix doctor` / `mix dialyzer.json
 |---|---|---|---|---|
 | `mix credo --strict` | 72 | 72 | 0 | **72** |
 | `mix doctor` | 13 failing modules | 13 | 0 | **13** |
-| `mix dialyzer.json` | 6 620 warnings | 142 real + 6 478 generated | 142 (Phases 1–6) | **6 478 + misc** |
+| `mix dialyzer.json` | ~~6 620~~ 1 626 post-A1 | 142 real + ~~6 478~~ 1 525 generated | 142 (Phases 1–6) | ~~**6 478**~~ **1 525** + misc (A1b) |
 | `mix compile` (1.20-rc.4) | 2 warnings | 2 | 0 | ~~2~~ 0 (C1 ✅; unrelated `@doc` redefinition at `signer.ex:30` remains) |
 
 The 6 478 `i_console.ex` warnings are one root cause amplified across 1 130 auto-generated decode functions. Fix the generator or the helper signature and most evaporate in a single change.
@@ -53,14 +53,21 @@ Auto-generated code (IConsole, Sleuth contract bindings) must emit `api()` from 
 
 ## Phase A — Auto-generated file noise floor
 
-- [ ] **A1: Root-cause the `i_console.ex` no_return / call cascade** [D:3/B:9/U:9 → Eff:3.0] 🎯
-      `lib/cartouche/contract/i_console.ex` produces 5 715 `no_return` + 762 `call` + 1 `pattern_match` = 6 478 dialyzer warnings across ~1 130 auto-generated `decode_log_*` / `exec_vm_*` / `execute_*` functions. Likely one-or-two upstream causes (`Cartouche.Hex.hex!/1` success-typing, `Cartouche.RPC.execute_trx/3` spec, or `ABI.decode/3` inferred to `none()`). Use `mix reach.impact` on the shared callees to find the origin, fix the one signature, regenerate. Verify with `mix dialyzer.json --summary-only` showing i_console count →  ≪100.
+- [x] ✅ **A1: Root-cause the `i_console.ex` no_return / call cascade** [D:3/B:9/U:9 → Eff:3.0]
+      Root cause was upstream in `:abi` (missing `@spec`s + singular-vs-list `returns:` type in `FunctionSelector.t()`). Full investigation narrative + counts in [CHANGELOG.md](CHANGELOG.md) `## [Unreleased]`. Residual ~1 525 warnings tracked in A1b.
 
-- [ ] **A2: Regenerate `i_console.ex` after A1 and commit the diff** [D:1/B:3/U:5 → Eff:4.0] 🎯
-      `mix cartouche.gen` (or whatever command generated it — see `lib/mix/cartouche.gen.ex`). Confirm the @moduledoc banner ("auto-generated … any changes may be lost") still matches — no manual edits.
+- [x] ✅ **A2: Regenerate `i_console.ex` after A1 and commit the diff** [D:1/B:3/U:5 → Eff:4.0]
+      Not needed — runtime data shape was correct all along. The fix lived in the consumer's typespecs, not the generated code. No regen required.
 
-- [ ] **A3: If A1 can't drop warnings below ~50, add `.dialyzer_ignore.exs` pattern for `i_console.ex`** [D:2/B:5/U:7 → Eff:3.0] 🎯
-      Fallback only. Add a file-scoped ignore entry with a comment linking back to A1. DialyzerJSON honours `.dialyzer_ignore.exs` (see `dialyzer-json.md`) — ignored items move to `summary.skipped`, keeping the signal clean.
+- [ ] **A1b: Root-cause the residual i_console no_return cascade in `Cartouche.VM`** [D:5/B:5/U:5 → Eff:1.0] 📋
+      ~1 525 i_console warnings remain. Two hypotheses ruled out by direct measurement (PLT confirmed fresh via `mix dialyzer.json --plt`):
+      - **Not** the `decode_error/1` `if true do … else end` catchall — patching it to `@spec decode_error(binary()) :: {:ok, String.t(), binary()} | :not_found; def decode_error(_), do: :not_found` dropped total by exactly 1 (the dead pattern itself); cascade unaffected.
+      - **Not** `ABI.decode/3` returning narrowly — widening `@spec decode/3 :: [any()] | map()` (to cover `decode_structs: true` returning a map) had zero effect.
+
+      Real source: dialyzer flags `Cartouche.VM.push_n/3` (vm.ex:416), `run_code/3` (vm.ex:903), `exec/2` (vm.ex:932) as `no_return` directly. That cascades through `exec_call/3` into every `exec_vm_*` function in `i_console.ex`. Likely related to bitstring success typing post-C1 (the size-var pins were syntactic; success typing on `<<x::size(^n), rest::binary>>` patterns may still narrow). Investigation needed: (1) read each VM warning chain, (2) determine whether the `no_return` is genuine (function actually has no terminating clause for some input) or a 1.20 type-checker artifact. **Validation:** `mix dialyzer.json --plt` then `jq '[.warnings[] | select(.file | endswith("vm.ex")) | select(.warning_type == "no_return")] | length' /tmp/d.json` — driving this to 0 should collapse the i_console cascade.
+
+- [ ] **A3: If A1b can't drive i_console below ~50, add `.dialyzer_ignore.exs` pattern** [D:2/B:5/U:7 → Eff:3.0] 🎯
+      Fallback only. Add a file-scoped ignore entry with a comment linking back to A1b. DialyzerJSON honours `.dialyzer_ignore.exs` (see `dialyzer-json.md`) — ignored items move to `summary.skipped`, keeping the signal clean.
 
 ---
 
@@ -226,11 +233,11 @@ Cleanup tasks cluster by the *file set they touch* and *the tool they're gated o
 **Why bundled:** both warnings are in one function (`read_instructions/3`), both are the same fix pattern (`^num_accounts` / `^data_len`). Zero coupling to anything else.
 **Verification:** `time mix compile` under 1.20-rc.4 shows 0 warnings.
 
-### Session 2 — "Kill the noise floor" (1–2 days, 1 PR)
-**Tasks:** A1 + A2 (+ A3 only if A1 falls short).
-**Files:** `lib/mix/cartouche.gen.ex`, callee whose spec is the root cause (candidates: `lib/cartouche/hex.ex`, `lib/cartouche/rpc.ex`, or the `:ex_abi` wrapper), regenerated `lib/cartouche/contract/i_console.ex`.
-**Why bundled:** A1 and A2 are inseparable — fixing the generator without regenerating leaves stale output; regenerating without the fix rewrites the same broken output. Use `mix reach.impact` on shared callees as the entry point.
-**Verification:** `mix dialyzer.json --summary-only` — i_console count ≪ 100.
+### Session 2 — "Kill the residual VM cascade" (half–1 day, 1 PR)
+**Tasks:** A1b (+ A3 fallback only if A1b falls short).
+**Files:** `lib/cartouche/vm.ex` — dialyzer flags `push_n/3` (:416), `run_code/3` (:903), `exec/2` (:932) as `no_return`, cascading through `exec_call/3` into every `exec_vm_*` in `i_console.ex`.
+**Why bundled:** A1 + A2 already closed (root cause was upstream in `:abi`, see CHANGELOG `## [Unreleased]`). The residual ~1 525 warnings trace to VM-internal success typing, not the generator — so this is now a VM spec investigation, not a codegen task.
+**Verification:** `mix dialyzer.json --plt` then `jq '[.warnings[] | select(.file | endswith("vm.ex")) | select(.warning_type == "no_return")] | length' /tmp/d.json` → 0 collapses the i_console cascade.
 
 ### Session 3 — "Credo quick wins" (half day, 1 PR)
 **Tasks:** B1 + B2 + B8.

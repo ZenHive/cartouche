@@ -56,7 +56,7 @@ After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins)
 | 3 | `mix dialyzer.json --quiet` — inventory remaining `invalid_contract` warnings, confirm they match the pre-rename audit (Phases 1, 3, 4, 6 below) [D:2/B:3/U:6 → Eff:2.25] 🚀 | ⬜ | Regression check; warnings that weren't in the old audit need investigation |
 | 4 | `mix docs` clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0] 🚀 | ⬜ | Verify module tree, `llms.txt` output, no broken links |
 | 5 | Update `README.md` installation section — replace the "not recommended yet" placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0] 🎯 | ⬜ | Conditional on Task 6 — do right before publish |
-| 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | ⬜ | `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
+| 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | 🔶 | **Blocked:** `:abi` is currently a path dep (`../abi`, see `mix.exs` TODO) pending the upstream typespec PR — hex rejects path/git deps. `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
 
@@ -134,6 +134,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 | Revert with decoded error (code 3) | `{:error, %{code:, message:, revert:, error_abi:, error_params:}}` (extra fields vs spec) |
 | `decode: :hex` path with bad hex | bare `:invalid_hex` atom (not wrapped in `{:error, …}`) |
 | Custom `decode:` fn raises | `{:error, "failed to decode `<method>` response: <inspect>"}` |
+| **Non-JSON-encodable `method` or `params`** | **raises `Protocol.UndefinedError` / `Jason.EncodeError` — bypasses `{:ok,_}\|{:error,_}` contract entirely** (`rpc.ex:162`, `Jason.encode!(body)`) |
 
 ### Tasks
 
@@ -141,6 +142,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 |---|------|--------|-------|
 | 14 | Re-audit `send_rpc/3` `@spec` vs runtime error shapes on the ported code [D:3/B:6/U:7 → Eff:2.17] 🚀 | ⬜ | Confirm table above; some shapes may have been tightened in intervening signet commits before the fork |
 | 15 | Widen error type (or split into tagged errors) with doctest coverage per shape [D:3/B:7/U:7 → Eff:2.33] 🚀 | ⬜ | Depends on Task 14. Keep `%{code, message}` as the JSON-RPC-error branch; union in the others |
+| 35 | Rescue `Jason.EncodeError` / `Protocol.UndefinedError` at the `Jason.encode!(body)` call (`rpc.ex:162`) → `{:error, {:invalid_params, _}}`, so non-JSON-encodable inputs honor the `{:ok,_}\|{:error,_}` contract instead of raising [D:2/B:4/U:5 → Eff:2.25] 🚀 | ⬜ | Discovered 2026-04-24 during onchain Task 59 (`Onchain.RPC.call/3` — generic JSON-RPC passthrough). Triggers: `<<255>>` method binary (non-UTF-8 passes `is_binary/1` but Jason raises); params containing tuples / atom-keyed maps. Doctests per trigger. Blocks a downstream onchain doc-hardening pass — once this lands, all `Onchain.RPC.*` wrappers automatically honor their `@spec`. Couples to Task 15's tagged-error split: the new `{:invalid_params, _}` branch joins the union |
 
 **Blast radius** (from `mix reach.impact Cartouche.RPC.send_rpc/3`, pre-rename): 6 direct callers break on signature change (`get_balance/2`, `get_transaction_count/2`, `eth_block_number/1`, `eth_chain_id/1`, `set_filter/1`, `Cartouche.Filter.handle_info/2`), 1 transitive (`Cartouche.Signer.init/1`), no return-value dependents. Behavior-preserving spec-widening is low-risk; a union-type split needs all 6 direct callers to still type-check.
 

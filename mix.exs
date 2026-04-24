@@ -61,7 +61,10 @@ defmodule Cartouche.MixProject do
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.3", optional: true},
       {:ex_rlp, "~> 0.6.0"},
-      {:abi, "~> 1.3.0"},
+      # TODO: path dep — replace with `{:abi, "~> 1.3", override: true}` once the
+      # typespec PR lands upstream (zenhive/abi fork). Blocks `mix hex.publish`
+      # (hex rejects path/git deps). See CHANGELOG A1, cleanup.md A1b.
+      {:abi, path: "../abi", override: true},
       {:junit_formatter, "~> 3.3.1", only: [:test]}
     ] ++ zenhive_dev_deps()
   end

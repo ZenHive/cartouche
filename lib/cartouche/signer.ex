@@ -1,15 +1,5 @@
 defmodule Cartouche.Signer do
-  @moduledoc false
-  use GenServer
-  use Cartouche.Hex
-
-  import Cartouche.Util, only: [encode_bytes: 2]
-
-  alias Cartouche.Signer.Default
-
-  require Logger
-
-  @doc """
+  @moduledoc """
   Cartouche.Signer is a GenServer which can sign messages. This module takes an
   mfa (mod, func, args triple) which defines how to actually sign messages.
   For instance, `Cartouche.Signer.Curvy` will sign with a public key, or
@@ -27,6 +17,15 @@ defmodule Cartouche.Signer do
 
   Additionally, chain_id is used to return EIP-155 compliant signatures.
   """
+  use GenServer
+  use Cartouche.Hex
+
+  import Cartouche.Util, only: [encode_bytes: 2]
+
+  alias Cartouche.Signer.Default
+
+  require Logger
+
   @doc """
   Starts a new Cartouche.Signer process.
   """
