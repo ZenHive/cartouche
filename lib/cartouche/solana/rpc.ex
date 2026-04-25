@@ -18,7 +18,7 @@ defmodule Cartouche.Solana.RPC do
       {:ok, %{blockhash: bh}} = Cartouche.Solana.RPC.get_latest_blockhash()
   """
 
-  import Cartouche.Util, only: [normalize_finch_result: 1]
+  import Cartouche.HTTP, only: [normalize_finch_result: 1]
 
   alias Cartouche.Solana.Transaction
 

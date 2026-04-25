@@ -55,15 +55,15 @@ defmodule Cartouche.Transaction do
     def new(nonce, gas_price, gas_limit, to, value, data, chain_id \\ nil) do
       %__MODULE__{
         nonce: nonce,
-        gas_price: if(is_nil(gas_price), do: nil, else: Cartouche.Util.to_wei(gas_price)),
+        gas_price: if(is_nil(gas_price), do: nil, else: Cartouche.Wei.to_wei(gas_price)),
         gas_limit: gas_limit,
         to: to,
-        value: Cartouche.Util.to_wei(value),
+        value: Cartouche.Wei.to_wei(value),
         data: data,
         v:
           if(is_nil(chain_id),
             do: Cartouche.Application.chain_id(),
-            else: Cartouche.Util.parse_chain_id(chain_id)
+            else: Cartouche.Chain.parse_id(chain_id)
           ),
         r: 0,
         s: 0
@@ -202,7 +202,7 @@ defmodule Cartouche.Transaction do
         {:error, "transaction missing signature"}
     """
     def recover_signer(transaction, chain_id) do
-      trx_encoded = encode(%{transaction | v: Cartouche.Util.parse_chain_id(chain_id), r: 0, s: 0})
+      trx_encoded = encode(%{transaction | v: Cartouche.Chain.parse_id(chain_id), r: 0, s: 0})
 
       with {:ok, signature} <- get_signature(transaction) do
         {:ok, Cartouche.Recover.recover_eth(trx_encoded, signature)}
@@ -327,18 +327,18 @@ defmodule Cartouche.Transaction do
         chain_id:
           if(is_nil(chain_id),
             do: Cartouche.Application.chain_id(),
-            else: Cartouche.Util.parse_chain_id(chain_id)
+            else: Cartouche.Chain.parse_id(chain_id)
           ),
         nonce: nonce,
         max_priority_fee_per_gas:
           if(is_nil(max_priority_fee_per_gas),
             do: nil,
-            else: Cartouche.Util.to_wei(max_priority_fee_per_gas)
+            else: Cartouche.Wei.to_wei(max_priority_fee_per_gas)
           ),
-        max_fee_per_gas: if(is_nil(max_fee_per_gas), do: nil, else: Cartouche.Util.to_wei(max_fee_per_gas)),
+        max_fee_per_gas: if(is_nil(max_fee_per_gas), do: nil, else: Cartouche.Wei.to_wei(max_fee_per_gas)),
         gas_limit: gas_limit,
         destination: destination,
-        amount: Cartouche.Util.to_wei(amount),
+        amount: Cartouche.Wei.to_wei(amount),
         data: data,
         access_list: access_list,
         signature_y_parity: signature_y_parity,
@@ -530,16 +530,16 @@ defmodule Cartouche.Transaction do
              max_priority_fee_per_gas: :binary.decode_unsigned(max_priority_fee_per_gas),
              max_fee_per_gas: :binary.decode_unsigned(max_fee_per_gas),
              gas_limit: :binary.decode_unsigned(gas_limit),
-             destination: Cartouche.Util.pad(destination, 20),
+             destination: Cartouche.Hex.pad(destination, 20),
              amount: :binary.decode_unsigned(amount),
              data: data,
              access_list:
                Enum.map(access_list, fn [address, storage] ->
-                 {Cartouche.Util.pad(address, 20), Enum.map(storage, &Cartouche.Util.pad(&1, 32))}
+                 {Cartouche.Hex.pad(address, 20), Enum.map(storage, &Cartouche.Hex.pad(&1, 32))}
                end),
              signature_y_parity: :binary.decode_unsigned(signature_y_parity) == 1,
-             signature_r: Cartouche.Util.pad(signature_r, 32),
-             signature_s: Cartouche.Util.pad(signature_s, 32)
+             signature_r: Cartouche.Hex.pad(signature_r, 32),
+             signature_s: Cartouche.Hex.pad(signature_s, 32)
            }}
 
         _ ->

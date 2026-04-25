@@ -14,11 +14,12 @@ defmodule Cartouche.Trace do
 
   use Cartouche.Hex
 
-  import Cartouche.Util, only: [nil_map: 2]
-
   defmodule Action do
-    @moduledoc false
-    import Cartouche.Util, only: [nil_map: 2]
+    @moduledoc """
+    A single sub-action inside a `Cartouche.Trace` — the `call`, `create`,
+    or `suicide` operation the traced transaction performed at one frame of
+    its call graph (from, to, value, gas, input, and call-type metadata).
+    """
 
     @type t() :: %__MODULE__{
             call_type: String.t() | nil,
@@ -165,6 +166,9 @@ defmodule Cartouche.Trace do
         value: Hex.encode_short_hex(action.value)
       }
     end
+
+    defp nil_map(nil, _), do: nil
+    defp nil_map(x, fun), do: fun.(x)
   end
 
   @type t() :: %__MODULE__{
@@ -480,13 +484,13 @@ defmodule Cartouche.Trace do
   def serialize(%__MODULE__{} = trace) do
     %{
       action: Action.serialize(trace.action),
-      blockHash: nil_map(trace.block_hash, &Hex.to_hex(&1)),
-      blockNumber: nil_map(trace.block_number, &Hex.encode_short_hex/1),
+      blockHash: map(trace.block_hash, &Hex.to_hex(&1)),
+      blockNumber: map(trace.block_number, &Hex.encode_short_hex/1),
       result: %{
-        gasUsed: nil_map(trace.gas_used, &Hex.encode_short_hex/1),
-        code: nil_map(trace.result_code, &Hex.to_hex(&1)),
-        address: nil_map(trace.result_address, &Hex.encode_address(&1)),
-        output: nil_map(trace.output, &Hex.to_hex(&1))
+        gasUsed: map(trace.gas_used, &Hex.encode_short_hex/1),
+        code: map(trace.result_code, &Hex.to_hex(&1)),
+        address: map(trace.result_address, &Hex.encode_address(&1)),
+        output: map(trace.output, &Hex.to_hex(&1))
       },
       error: trace.error,
       subtraces: trace.subtraces,
@@ -498,7 +502,7 @@ defmodule Cartouche.Trace do
           trace_address when is_binary(trace_address) ->
             Hex.encode_address(trace_address)
         end),
-      transactionHash: nil_map(trace.transaction_hash, &Hex.to_hex(&1)),
+      transactionHash: map(trace.transaction_hash, &Hex.to_hex(&1)),
       transactionPosition: trace.transaction_position,
       type: trace.type
     }

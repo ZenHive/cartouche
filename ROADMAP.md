@@ -41,10 +41,9 @@ Resist "while we're here, just this once" helpers — they belong in onchain.
 
 ## 🎯 Current Focus
 
-**Phase 0 — ship `0.1.0`.** Prep pass complete (Tasks 1–4, 2026-04-24): version at `0.1.0-dev`, 665 tests green, dialyzer inventory matches the pre-rename audit exactly (11/11 `invalid_contract` accounted for), `mix docs` builds cleanly with the cartouche module tree. Publish cut prepared 2026-04-25 (Task 37): version bumped to `0.1.0`, CHANGELOG `[Unreleased]` moved under `[0.1.0] — 2026-04-25`, mix.exs `:package` polished (ZenHive maintainers, test/support dropped from `:files`, CHANGELOG added to docs `:extras` + `:links`), README install section activated. What's left:
+**Phase 0 — ship `0.1.0`.** Prep pass complete (Tasks 1–4, 2026-04-24): version at `0.1.0-dev`, 665 tests green, dialyzer inventory matches the pre-rename audit exactly (11/11 `invalid_contract` accounted for), `mix docs` builds cleanly with the cartouche module tree. Publish cut prepared 2026-04-25 (Task 37): version bumped to `0.1.0`, CHANGELOG `[Unreleased]` moved under `[0.1.0] — 2026-04-25`, mix.exs `:package` polished (ZenHive maintainers, test/support dropped from `:files`, CHANGELOG added to docs `:extras` + `:links`), README install section activated. Task 36 closed 2026-04-25 — `mix docs` now emits zero warnings. What's left:
 
 - **Task 6** — `mix hex.publish`. Staged diff is ready: `mix deps.get && mix test && mix dialyzer.json` → `git tag v0.1.0` → `mix hex.publish`. Requires user to run the publish command (hex API key / OTP).
-- **Task 36** — Pre-ship polish: silence ex_doc warnings about hidden-module type references in `Cartouche.VM` public specs. Not a ship blocker.
 
 After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins; Phase 1.4 scope narrows to just `from_hex/1` per the 2026-04-24 re-run), then parallel work through Phases 2–9 as priority dictates.
 
@@ -60,8 +59,9 @@ After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins;
 | 4 | `mix docs` clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0] 🚀 | ✅ | Done 2026-04-24; `doc/index.html`, `doc/llms.txt`, `doc/Cartouche.epub` all build; `llms.txt` header reads `Cartouche v0.1.0-dev`; 54 `Cartouche.*` entries in `api-reference.html`; only `signet`/`hayesgm` hits in `doc/` are the README attribution links. Pre-existing ex_doc type-ref warnings split out as Task 36 |
 | 5 | Update `README.md` installation section — replace the "not recommended yet" placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0] 🎯 | ✅ | Done 2026-04-25 as part of Task 37 prep. Status block + install snippet activated |
 | 6 | Tag `0.1.0`, publish to hex [D:1/B:5/U:8 → Eff:6.5] 🎯 | ⬜ | Staged and ready 2026-04-25. Pre-publish sequence: `mix deps.get && mix test && mix dialyzer.json` → `git tag v0.1.0` → `mix hex.publish`. Acceptance: `mix hex.info cartouche` shows `0.1.0` |
-| 36 | Silence ex_doc `documentation references type "X" but the module is hidden` warnings surfaced by `mix docs` [D:2/B:2/U:4 → Eff:1.5] 📋 | ⬜ | Public specs in `Cartouche.VM` (pop_unsigned/1, push_word/2, run_single_op/3) reference `Cartouche.VM.Context.t()` and `Cartouche.VM.Input.t()` from modules declared `@moduledoc false`. Either expose those modules in the docs tree, move the shared types into `Cartouche.VM`, or narrow the public specs. Discovered during Task 4. Not a ship blocker |
+| 36 | Silence ex_doc `documentation references type "X" but the module is hidden` warnings surfaced by `mix docs` [D:2/B:2/U:4 → Eff:1.5] 📋 | ✅ | Done 2026-04-25. Replaced `@moduledoc false` with descriptive `@moduledoc` on the six referenced submodules (`Cartouche.VM.Input`, `Cartouche.VM.Context`, `Cartouche.VM.ExecutionResult`, `Cartouche.Trace.Action`, `Cartouche.Receipt.Log`, `Cartouche.DebugTrace.StructLog`). `mix docs` now emits zero warnings; 665/665 tests still green |
 | 37 | Publish cut — version bump, CHANGELOG release section, mix.exs `:package` polish, README install activation [D:1/B:3/U:5 → Eff:4.0] 🎯 | ✅ | Done 2026-04-25. `mix.exs` version → `0.1.0`; CHANGELOG `[Unreleased]` moved under `[0.1.0] — 2026-04-25`; `:package` updated (`maintainers: ["ZenHive"]`, dropped `test/support` from `:files`, added `CHANGELOG*`, added `CHANGELOG.md` to `docs[:extras]`, added `Changelog` link); README Status + Installation activated |
+| 38 | Delete `Cartouche.Util` grab-bag — redistribute helpers into focused modules, drop `@deprecated` aliases [D:3/B:3/U:5 → Eff:1.33] 📋 | ✅ | Done 2026-04-25. Created `Cartouche.Address`, `Cartouche.Chain`, `Cartouche.Wei`, `Cartouche.HTTP`, and promoted `Cartouche.RecoveryBit`. Absorbed `decode_hex_input!/1`, `encode_bytes/2`, `pad/2`, `nibbles/1`, `checksum_address/1` into `Cartouche.Hex`. Deleted 7 `@deprecated` decode/encode aliases + `keccak/1` defdelegate. `nil_map/2` inlined as module-local private in `Cartouche.Trace` / `Cartouche.Trace.Action`. Also landed the Phase 1.1 `:no_return` atom → `no_return()` fix on `RecoveryBit` during the promotion. 651 tests green; `grep Cartouche.Util` returns zero hits outside history |
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
 
@@ -71,14 +71,20 @@ After `0.1.0`: Phase 1 (spec corrections — immediate onchain `@dialyzer` wins;
 
 **Why:** These are the load-bearing fixes for onchain's `@dialyzer` suppressions. Every one is grounded in `mix dialyzer.json` output from the pre-rename audit (2026-04-21). All are surgical — spec-only edits, no runtime change.
 
-### 1.1 `Cartouche.Util.RecoveryBit` — `:no_return` atom → `no_return()` type
+### 1.1 `Cartouche.RecoveryBit` — `:no_return` atom → `no_return()` type ✅
 
-Two specs declare the literal atom `:no_return` instead of the type `no_return()`. Dialyzer silently accepts unknown atoms in unions, so this isn't flagged — but the specs are semantically meaningless.
+**Landed 2026-04-25 as part of Task 38** (Util grab-bag deletion). Promotion of `Cartouche.Util.RecoveryBit` to a top-level `Cartouche.RecoveryBit` module corrected both specs in flight:
 
-| Function | Line | Current `@spec` fragment | Should be |
-|----------|------|--------------------------|-----------|
-| `RecoveryBit.normalize/2` | `util.ex:388` | `\| :no_return` | `\| no_return()` |
-| `RecoveryBit.normalize_signature/2` | `util.ex:419` | `\| :no_return` | `\| no_return()` |
+| Function | Fix |
+|----------|-----|
+| `RecoveryBit.normalize/2` | `\| :no_return` → `\| no_return()` |
+| `RecoveryBit.normalize_signature/2` | `\| :no_return` → `\| no_return()` |
+
+**Follow-up:** `Cartouche.RecoveryBit` doctests for `normalize/2` (`:eip155` branch, returns `46`) and `recover_base/1` (`v=47` raise message bakes `chain_id=5`) are only correct under `chain_id=:goerli` (the cartouche test-config value). Pre-existing in upstream `Cartouche.Util.RecoveryBit`. Not a correctness bug — tests pass — but a portability/documentation hazard. Tracked as Task 39.
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 39 | RecoveryBit doctest chain-id portability cleanup [D:2/B:1/U:1 → Eff:0.5] ⚠️ | ⬜ | Either parameterize the expected output to read `Cartouche.Application.chain_id()` at doctest time, or rewrite the `:eip155`-branch `normalize/2` doctest and the `recover_base(47)` raise doctest to use chain-agnostic examples. Discovered during Task 38 staged review |
 
 ### 1.2 `Cartouche.Util.to_wei/1` — narrow `number()` → `non_neg_integer()`
 
@@ -90,11 +96,11 @@ Dialyzer reports `signer.ex:141 invalid_contract`. 3rd arg specced as `mfa()` (w
 
 ### 1.1–1.3 bundled task
 
-All three are surgical `@spec`-only edits across `util.ex` + `signer.ex`. ~4 line changes + 1 doctest; same release, same verification (`mix dialyzer.json` before/after).
+Phase 1.1 landed 2026-04-25 (Task 38). Remaining: `to_wei/1` narrowing (now in `Cartouche.Wei`) and `sign_direct/4` `mfa()` fix.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 7+8+9 | Phase 1.1–1.3 surgical spec fixes [D:1/B:3/U:6 → Eff:4.5] 🎯 | ⬜ | Fix both `:no_return` atom typos (Phase 1.1), narrow `to_wei/1` return (Phase 1.2), replace `mfa()` with `{module(), atom(), [any()]}` (Phase 1.3). One doctest for the `{m, f, args}` path on `sign_direct/4`. Verification: `mix dialyzer.json` loses the `signer.ex:141 invalid_contract`; others are typo-only (silent in dialyzer today) |
+| 7+8+9 | Phase 1.1–1.3 surgical spec fixes [D:1/B:3/U:6 → Eff:4.5] 🎯 | 🔶 | Phase 1.1 ✅ done under Task 38 (`Cartouche.RecoveryBit` promotion). Remaining: narrow `Cartouche.Wei.to_wei/1` return to `non_neg_integer()` (Phase 1.2); replace `mfa()` with `{module(), atom(), [any()]}` on `Cartouche.Signer.sign_direct/4` (Phase 1.3) + one doctest for the `{m, f, args}` path. Verification: `mix dialyzer.json` loses the `signer.ex:141 invalid_contract` |
 
 ### 1.4 `Cartouche.Hex` return-type specs
 
@@ -123,7 +129,7 @@ Doctests and `@doc` examples already show the correct shape; only the `@spec` li
 
 **Why:** onchain carries `@dialyzer {:no_match, do_rpc: 3}` because the current spec promises `%{code: int, message: str}` for all errors, but `send_rpc/3` actually returns several other error shapes at runtime.
 
-Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/util.ex:481–495`):
+Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/http.ex` normalize_finch_result/1):
 
 | Source | Returned shape |
 |--------|----------------|
@@ -266,7 +272,7 @@ Narrow, single-concern, lowercase conventional-commit subject (`fix:`, `chore:`,
 
 | Source | Nature | Upstream value |
 |--------|--------|----------------|
-| Phase 1.1 — `RecoveryBit` `:no_return` typo | `fix:` | Pure win; no runtime effect; one line |
+| Phase 1.1 — `RecoveryBit` `:no_return` typo (landed here 2026-04-25 under Task 38) | `fix:` | Pure win; no runtime effect; one line. Port the spec fix only — `Cartouche.Util.RecoveryBit` still exists upstream |
 | Phase 1.2 — `to_wei/1` narrow return | `chore:` | Pure win; one line |
 | Phase 1.3 — `Signer.sign_direct/4` `mfa()` | `fix:` | Real type mismatch; one line + doctest |
 | Phase 1.4 — `Cartouche.Hex` return specs | `fix:` | Four specs + doctests; evidence grounded in dialyzer output |

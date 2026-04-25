@@ -212,7 +212,7 @@ defmodule Cartouche.Typed do
     def deserialize_value!(value, {:uint, _}), do: value
     def deserialize_value!(value, :bool), do: value
 
-    def deserialize_value!(value, {:bytes, sz}), do: Cartouche.Util.pad(from_hex!(value), sz)
+    def deserialize_value!(value, {:bytes, sz}), do: Cartouche.Hex.pad(from_hex!(value), sz)
 
     def deserialize_value!(value, {:array, ty}) when is_list(value), do: Enum.map(value, &deserialize_value!(&1, ty))
 
@@ -254,7 +254,7 @@ defmodule Cartouche.Typed do
 
     def serialize_value(value, {:bytes, sz}) do
       value
-      |> Cartouche.Util.pad(sz)
+      |> Cartouche.Hex.pad(sz)
       |> to_hex()
     end
 
@@ -285,11 +285,11 @@ defmodule Cartouche.Typed do
         ~h[134619415A3C9FE841D99F7CFD5C0BCCFC7CF0DAE90743A3D717C748A3961CF5]
     """
     @spec encode_data_value(term(), primitive()) :: term()
-    def encode_data_value(value, :address), do: Cartouche.Util.pad(value, 32)
-    def encode_data_value(value, {:uint, _}), do: Cartouche.Util.encode_bytes(value, 32)
+    def encode_data_value(value, :address), do: Cartouche.Hex.pad(value, 32)
+    def encode_data_value(value, {:uint, _}), do: Cartouche.Hex.encode_bytes(value, 32)
     def encode_data_value(value, :string), do: Cartouche.Hash.keccak(value)
     def encode_data_value(value, :bytes), do: Cartouche.Hash.keccak(value)
-    def encode_data_value(value, {:bytes, _}), do: Cartouche.Util.pad(value, 32)
+    def encode_data_value(value, {:bytes, _}), do: Cartouche.Hex.pad(value, 32)
 
     def encode_data_value(value, :bool), do: encode_data_value(if(value, do: 1, else: 0), {:uint, 256})
 

@@ -6,7 +6,7 @@ Ethereum key manager and RPC client for Elixir. Cartouche is an **attributed for
 
 ## Status
 
-**`0.1.0` — first active release.** Ports the signet codebase under the `Cartouche` module tree. Active development continues in `0.1.x`; see [CHANGELOG.md](CHANGELOG.md) for what has shipped and [ROADMAP.md](ROADMAP.md) for what's next.
+**`0.1.0` — first active release.** Ports the signet codebase under the `Cartouche` module tree. Active development continues in `0.1.x`; see [CHANGELOG.md](CHANGELOG.md) for what has shipped.
 
 ## Installation
 

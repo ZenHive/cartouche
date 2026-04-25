@@ -62,7 +62,7 @@ defmodule Cartouche.OpenChain do
 
   defmodule API do
     @moduledoc false
-    import Cartouche.Util, only: [normalize_finch_result: 1]
+    import Cartouche.HTTP, only: [normalize_finch_result: 1]
 
     def http_client, do: Application.get_env(:cartouche, :open_chain_client, Finch)
 

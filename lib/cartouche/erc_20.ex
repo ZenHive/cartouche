@@ -44,7 +44,7 @@ defmodule Cartouche.Erc20 do
 
     ## Examples
 
-        iex> Cartouche.Erc20.CallData.balance_of(<<0xDD>>) |> Cartouche.Util.encode_hex()
+        iex> Cartouche.Erc20.CallData.balance_of(<<0xDD>>) |> Cartouche.Hex.encode_hex()
         "0x"
     """
     @spec balance_of(Cartouche.address()) :: binary()
@@ -58,8 +58,8 @@ defmodule Cartouche.Erc20 do
     ## Examples
 
         iex> Cartouche.Erc20.CallData.transfer(<<0xDD>>, 100_000)
-        ...> |> Cartouche.Util.encode_hex()
-        "0x8035F0CE"
+        ...> |> Cartouche.Hex.encode_hex()
+        "0x8035f0ce"
     """
     @spec transfer(Cartouche.address(), non_neg_integer()) :: binary()
     def transfer(destination, amount_wei) do

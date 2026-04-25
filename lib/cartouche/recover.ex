@@ -2,8 +2,8 @@ defmodule Cartouche.Recover do
   @moduledoc false
   use Cartouche.Hex
 
+  import Cartouche.Address, only: [from_public_key: 1]
   import Cartouche.Hash, only: [keccak: 1]
-  import Cartouche.Util, only: [get_eth_address: 1]
 
   defp decode_signature(%Curvy.Signature{} = s), do: s
 
@@ -96,7 +96,7 @@ defmodule Cartouche.Recover do
   def recover_eth(message, signature) do
     message
     |> recover_public_key(signature)
-    |> get_eth_address()
+    |> from_public_key()
   end
 
   @doc """

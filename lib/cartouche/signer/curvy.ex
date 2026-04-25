@@ -21,7 +21,7 @@ defmodule Cartouche.Signer.Curvy do
     private_key
     |> Curvy.Key.from_privkey()
     |> Curvy.Key.to_pubkey(compressed: false)
-    |> Cartouche.Util.get_eth_address()
+    |> Cartouche.Address.from_public_key()
     |> ok!()
   end
 

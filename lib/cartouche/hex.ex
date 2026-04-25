@@ -70,14 +70,14 @@ defmodule Cartouche.Hex do
 
   ## Examples
 
-    iex> Cartouche.Hex.decode_hex("0xaabb")
-    {:ok, <<170, 187>>}
+      iex> Cartouche.Hex.decode_hex("0xaabb")
+      {:ok, <<170, 187>>}
 
-    iex> Cartouche.Hex.decode_hex("aabb")
-    {:ok, <<170, 187>>}
+      iex> Cartouche.Hex.decode_hex("aabb")
+      {:ok, <<170, 187>>}
 
-    iex> Cartouche.Hex.decode_hex("0xgggg")
-    :invalid_hex
+      iex> Cartouche.Hex.decode_hex("0xgggg")
+      :invalid_hex
   """
   @spec decode_hex(String.t()) :: {:ok, t()} | :error
   def decode_hex(b), do: decode_hex_(b)
@@ -87,8 +87,8 @@ defmodule Cartouche.Hex do
 
   ## Examples
 
-    iex> Cartouche.Hex.from_hex("0xaabb")
-    {:ok, <<0xaa, 0xbb>>}
+      iex> Cartouche.Hex.from_hex("0xaabb")
+      {:ok, <<0xaa, 0xbb>>}
   """
   @spec from_hex(t()) :: String.t()
   def from_hex(b), do: decode_hex(b)
@@ -233,16 +233,34 @@ defmodule Cartouche.Hex do
     end
   end
 
+  @doc ~S"""
+  Decodes hex, allowing it to either be `"0x..."` or a raw binary.
+
+  Note: a hex-printed string, in this case, must start with `0x`,
+        otherwise it will be interpreted as its ASCII values.
+
+  ## Examples
+
+      iex> Cartouche.Hex.decode_hex_input!("0x55")
+      <<0x55>>
+
+      iex> Cartouche.Hex.decode_hex_input!(<<0x55>>)
+      <<0x55>>
+  """
+  @spec decode_hex_input!(String.t() | binary()) :: t()
+  def decode_hex_input!("0x" <> _ = hex), do: decode_hex!(hex)
+  def decode_hex_input!(hex) when is_binary(hex), do: hex
+
   @doc """
   Parses hex value as a big-endian integer.
 
   ## Examples
 
-    iex> Cartouche.Hex.decode_hex_number("0xaabb")
-    {:ok, 0xaabb}
+      iex> Cartouche.Hex.decode_hex_number("0xaabb")
+      {:ok, 0xaabb}
 
-    iex> Cartouche.Hex.decode_hex_number("0xgggg")
-    :invalid_hex
+      iex> Cartouche.Hex.decode_hex_number("0xgggg")
+      :invalid_hex
   """
   @spec decode_hex_number(String.t()) :: {:ok, integer()} | :error
   def decode_hex_number(b) do
@@ -312,6 +330,57 @@ defmodule Cartouche.Hex do
 
   def encode_short_hex(v) when is_integer(v), do: encode_short_hex(:binary.encode_unsigned(v))
 
+  @doc ~S"""
+  Pads a binary to a given length.
+
+  ## Examples
+
+      iex> Cartouche.Hex.pad(<<1, 2>>, 2)
+      <<1, 2>>
+
+      iex> Cartouche.Hex.pad(<<1, 2>>, 4)
+      <<0, 0, 1, 2>>
+
+      iex> Cartouche.Hex.pad(<<1, 2>>, 1)
+      ** (FunctionClauseError) no function clause matching in Cartouche.Hex.pad/2
+  """
+  @spec pad(binary(), pos_integer()) :: binary()
+  def pad(bin, size) when size > byte_size(bin) do
+    padding_len_bits = (size - byte_size(bin)) * 8
+    <<0::size(padding_len_bits)>> <> bin
+  end
+
+  def pad(bin, size) when size == byte_size(bin), do: bin
+
+  @doc ~S"""
+  Encodes a number as a binary of a fixed byte length, left-padded with zeros.
+
+  ## Examples
+
+      iex> Cartouche.Hex.encode_bytes(257, 4)
+      <<0, 0, 1, 1>>
+
+      iex> Cartouche.Hex.encode_bytes(nil, 4)
+      nil
+  """
+  @spec encode_bytes(integer() | nil, pos_integer()) :: binary() | nil
+  def encode_bytes(nil, _), do: nil
+  def encode_bytes(b, size), do: pad(:binary.encode_unsigned(b), size)
+
+  @doc ~S"""
+  Returns the nibbles of a binary as a list.
+
+  ## Examples
+
+      iex> Cartouche.Hex.nibbles(<<0xF5, 0xE6, 0xD0>>)
+      [0xF, 0x5, 0xE, 0x6, 0xD, 0x0]
+  """
+  @spec nibbles(binary()) :: [0..15]
+  def nibbles(v), do: Enum.reverse(do_nibbles(v, []))
+
+  defp do_nibbles(<<>>, acc), do: acc
+  defp do_nibbles(<<high::4, low::4, rest::binary>>, acc), do: do_nibbles(rest, [low, high | acc])
+
   @doc """
   Encodes a binary as a checksummed Ethereum address.
 
@@ -324,9 +393,49 @@ defmodule Cartouche.Hex do
     ** (Cartouche.Hex.HexError) Expected 20-byte address for in `Cartouche.Hex.encode_address/1`
   """
   @spec encode_address(t()) :: String.t()
-  def encode_address(<<_::160>> = b), do: Cartouche.Util.checksum_address(encode_hex(b))
+  def encode_address(<<_::160>> = b), do: checksum_address(encode_hex(b))
 
   def encode_address(_), do: raise(HexError, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
+
+  @doc ~S"""
+  Checksums an Ethereum address per [EIP-55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md).
+
+  The result is a string-encoded (mixed-case) version of the address.
+
+  ## Examples
+
+      iex> Cartouche.Hex.checksum_address("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+      "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+
+      iex> Cartouche.Hex.checksum_address("0xFB6916095CA1DF60BB79CE92CE3EA74C37C5D359")
+      "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"
+
+      iex> Cartouche.Hex.checksum_address("0xdbf03b407c01e7cd3cbea99509d93f8dddc8c6fb")
+      "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB"
+
+      iex> Cartouche.Hex.checksum_address("0xd1220a0cf47c7b9be7a2e6ba89f429762e7b9adb")
+      "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"
+  """
+  @spec checksum_address(String.t() | <<_::160>>) :: String.t()
+  def checksum_address("0x" <> _ = address) when byte_size(address) == 42, do: checksum_address(decode_hex!(address))
+
+  def checksum_address(address) when is_binary(address) and byte_size(address) == 20 do
+    # EIP-55 hashes the *string* form of the address, then cases each nibble
+    # of the address based on the matching nibble of the hash.
+    "0x" <> address_enc = encode_big_hex(address)
+    hash = Cartouche.Hash.keccak(String.downcase(address_enc))
+
+    lower = ~c"0123456789abcdef"
+    upper = ~c"0123456789ABCDEF"
+
+    res =
+      for {nibble, hash_val} <- Enum.zip(nibbles(address), nibbles(hash)), into: [] do
+        casing = if hash_val >= 8, do: upper, else: lower
+        Enum.at(casing, nibble)
+      end
+
+    "0x" <> to_string(res)
+  end
 
   @doc """
   Alias for `encode_address`.
@@ -345,11 +454,11 @@ defmodule Cartouche.Hex do
 
   ## Examples
 
-    iex> Cartouche.Hex.encode_hex_result({:ok, <<0xaa, 0xbb>>})
-    {:ok, "0xaabb"}
+      iex> Cartouche.Hex.encode_hex_result({:ok, <<0xaa, 0xbb>>})
+      {:ok, "0xaabb"}
 
-    iex> Cartouche.Hex.encode_hex_result({:error, 55})
-    {:error, 55}
+      iex> Cartouche.Hex.encode_hex_result({:error, 55})
+      {:error, 55}
   """
   @spec encode_hex_result({:ok, t()} | term()) :: {:ok, String.t()} | term()
   def encode_hex_result({:ok, b}) when is_binary(b), do: {:ok, encode_hex(b)}

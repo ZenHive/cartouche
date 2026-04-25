@@ -33,7 +33,7 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
           "EC_SIGN_SECP256K1_SHA256" ->
             [certs] = :public_key.pem_decode(pem)
             {{:ECPoint, public_key}, _} = :public_key.pem_entry_decode(certs)
-            {:ok, Cartouche.Util.get_eth_address(public_key)}
+            {:ok, Cartouche.Address.from_public_key(public_key)}
 
           _ ->
             {:error, "Invalid algorithm: #{algorithm}"}

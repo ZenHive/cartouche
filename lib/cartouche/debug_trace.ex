@@ -14,7 +14,11 @@ defmodule Cartouche.DebugTrace do
   use Cartouche.Hex
 
   defmodule StructLog do
-    @moduledoc false
+    @moduledoc """
+    One execution step inside a `Cartouche.DebugTrace` — the EVM opcode,
+    program counter, call depth, remaining gas, gas cost of this step, and
+    the stack snapshot at that point.
+    """
     @type t() :: %__MODULE__{
             depth: integer(),
             gas: integer(),

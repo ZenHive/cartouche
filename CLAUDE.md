@@ -18,3 +18,7 @@
 
 
 forked from https://github.com/hayesgm/signet
+
+## Hook-flagged issues
+
+When our PostToolUse hooks flag issues on files you touched (credo, format, dialyzer, etc.), fix them in this commit — including pre-existing flags unrelated to your change. See `critical-rules.md` → "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH". Touched-file scope only, not project-wide.

@@ -5,7 +5,7 @@ defmodule Cartouche.Application do
 
   use Application
 
-  def chain_id, do: Cartouche.Util.parse_chain_id(Application.get_env(:cartouche, :chain_id, 1))
+  def chain_id, do: Cartouche.Chain.parse_id(Application.get_env(:cartouche, :chain_id, 1))
 
   def ethereum_node, do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
 
@@ -50,7 +50,7 @@ defmodule Cartouche.Application do
   end
 
   defp signer_mfa({:priv_key, priv_key}) do
-    {Cartouche.Signer.Curvy, :sign, [Cartouche.Util.decode_hex_input!(priv_key)]}
+    {Cartouche.Signer.Curvy, :sign, [Cartouche.Hex.decode_hex_input!(priv_key)]}
   end
 
   defp signer_mfa({:cloud_kms, kms_credentials, key_path, version}) do
@@ -99,7 +99,7 @@ defmodule Cartouche.Application do
       _ ->
         case Cartouche.Base58.decode(key) do
           {:ok, <<decoded::binary-32>>} -> decoded
-          _ -> Cartouche.Util.decode_hex_input!(key)
+          _ -> Cartouche.Hex.decode_hex_input!(key)
         end
     end
   end

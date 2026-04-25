@@ -61,7 +61,10 @@ defmodule Cartouche.VM do
   }
 
   defmodule Input do
-    @moduledoc false
+    @moduledoc """
+    Input to a `Cartouche.VM` execution: the calldata handed to the EVM
+    entrypoint and the call's `msg.value`.
+    """
     defstruct [:calldata, :value]
 
     @type t :: %__MODULE__{
@@ -71,7 +74,11 @@ defmodule Cartouche.VM do
   end
 
   defmodule Context do
-    @moduledoc false
+    @moduledoc """
+    Runtime execution state of a `Cartouche.VM` step: program counter, stack,
+    memory, transient storage, halt/revert flags, return data, and the FFI
+    table available to the VM.
+    """
     defstruct [
       :code,
       :code_encoded,
@@ -166,7 +173,10 @@ defmodule Cartouche.VM do
   end
 
   defmodule ExecutionResult do
-    @moduledoc false
+    @moduledoc """
+    Terminal result of a `Cartouche.VM` run: the final stack, whether the
+    call reverted, and the return data.
+    """
     defstruct [:stack, :reverted, :return_data]
 
     @type t :: %__MODULE__{

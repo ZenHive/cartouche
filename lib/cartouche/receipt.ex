@@ -11,7 +11,11 @@ defmodule Cartouche.Receipt do
   use Cartouche.Hex
 
   defmodule Log do
-    @moduledoc false
+    @moduledoc """
+    An event log entry emitted during the transaction referenced by a
+    `Cartouche.Receipt` — address, data, indexed topics, and the block/tx
+    position needed to locate the log on chain.
+    """
     @type t() :: %__MODULE__{
             # QUANTITY - integer of the log index position in the block. null when its pending log.
             log_index: integer(),

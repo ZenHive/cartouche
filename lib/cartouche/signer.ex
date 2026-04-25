@@ -20,8 +20,6 @@ defmodule Cartouche.Signer do
   use GenServer
   use Cartouche.Hex
 
-  import Cartouche.Util, only: [encode_bytes: 2]
-
   alias Cartouche.Signer.Default
 
   require Logger
@@ -144,10 +142,10 @@ defmodule Cartouche.Signer do
           } = signature} <- apply(mod, fun, [message] ++ args),
          {:ok, recid} <- Cartouche.Recover.find_recid(message, signature, address) do
       # EIP-155
-      chain_id = Cartouche.Util.parse_chain_id(chain_id_or_name)
+      chain_id = Cartouche.Chain.parse_id(chain_id_or_name)
       v = if chain_id == 0, do: 27 + recid, else: chain_id * 2 + 35 + recid
 
-      {:ok, encode_bytes(r, 32) <> encode_bytes(s, 32) <> :binary.encode_unsigned(v)}
+      {:ok, Hex.encode_bytes(r, 32) <> Hex.encode_bytes(s, 32) <> :binary.encode_unsigned(v)}
     end
   end
 end

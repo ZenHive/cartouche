@@ -1,0 +1,47 @@
+defmodule Cartouche.Chain do
+  @moduledoc """
+  Chain registry and chain-id parsing helpers.
+  """
+
+  @chains %{
+    mainnet: 1,
+    ropsten: 2,
+    rinkeby: 4,
+    goerli: 5,
+    kovan: 42,
+    base: 8453,
+    base_sepolia: 84_532,
+    arbitrum: 42_161,
+    arbitrum_sepolia: 421_614,
+    mumbai: 80_001,
+    sepolia: 11_155_111,
+    optimism: 10,
+    optimism_sepolia: 11_155_420,
+    world_chain: 480,
+    world_chain_sepolia: 4801,
+    unichain: 130,
+    avalanche: 43_114,
+    bnb_smart_chain: 56,
+    hyper_evm: 999,
+    lens: 232,
+    polygon: 137,
+    sonic: 146,
+    ink: 57_073,
+    plume: 98_866
+  }
+
+  @doc ~S"""
+  Parses a chain id, which can be given as an integer or an atom of a known network.
+
+  ## Examples
+
+      iex> Cartouche.Chain.parse_id(5)
+      5
+
+      iex> Cartouche.Chain.parse_id(:unichain)
+      130
+  """
+  @spec parse_id(atom() | integer()) :: integer() | no_return()
+  def parse_id(chain_id) when is_atom(chain_id), do: Map.fetch!(@chains, chain_id)
+  def parse_id(chain_id) when is_integer(chain_id), do: chain_id
+end

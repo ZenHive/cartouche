@@ -4,7 +4,8 @@ defmodule Cartouche.RPC do
   """
   use Cartouche.Hex
 
-  import Cartouche.Util, only: [to_wei: 1, normalize_finch_result: 1]
+  import Cartouche.HTTP, only: [normalize_finch_result: 1]
+  import Cartouche.Wei, only: [to_wei: 1]
 
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
