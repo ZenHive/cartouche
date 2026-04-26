@@ -3,6 +3,9 @@ defmodule Cartouche.Test.Client do
   A module for helping tests by providing responses without
   needing to connect to a real Etheruem node.
   """
+  # credo:disable-for-this-file Credo.Check.Readability.FunctionNames
+  # Every `eth_*` / `trace_*` / `debug_*` function mirrors an Ethereum JSON-RPC
+  # method name verbatim. Renaming would break the parity that's the whole point.
   use Cartouche.Hex
 
   alias Cartouche.Transaction.V1

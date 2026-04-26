@@ -82,22 +82,19 @@ defmodule Cartouche.OpenChain do
 
       case finch_result do
         {:ok, %Finch.Response{status: _, body: resp_body}} ->
-          case Jason.decode(resp_body) do
-            {:ok, resp} ->
-              case resp do
-                %{"ok" => true, "result" => result} ->
-                  {:ok, result}
-
-                %{"ok" => false, "error" => error} ->
-                  {:error, error}
-              end
-
-            {:error, json_error} ->
-              {:error, Jason.DecodeError.message(json_error)}
-          end
+          decode_response(resp_body)
 
         {:error, _} = error ->
           error
+      end
+    end
+
+    defp decode_response(resp_body) do
+      case Jason.decode(resp_body) do
+        {:ok, %{"ok" => true, "result" => result}} -> {:ok, result}
+        {:ok, %{"ok" => false, "error" => error}} -> {:error, error}
+        {:ok, other} -> {:error, "unexpected response shape: #{inspect(other)}"}
+        {:error, json_error} -> {:error, Jason.DecodeError.message(json_error)}
       end
     end
 
@@ -187,20 +184,19 @@ defmodule Cartouche.OpenChain do
       end
 
     with {:ok, found_signatures} <- found_signatures_result do
-      case Enum.count(found_signatures) do
-        0 ->
-          {:error, "Signature not found"}
-
-        x when x == 1 or not raise_on_multiple ->
-          {^signature, abi} = List.first(found_signatures)
-
-          {:ok, abi}
-
-        _ ->
-          names = Enum.map_join(found_signatures, ",", fn {_, name} -> name end)
-          {:error, "Multiple matching signatures: #{names}"}
-      end
+      pick_signature(found_signatures, signature, raise_on_multiple)
     end
+  end
+
+  defp pick_signature([], _signature, _raise_on_multiple), do: {:error, "Signature not found"}
+
+  defp pick_signature([{signature, abi}], signature, _raise_on_multiple), do: {:ok, abi}
+
+  defp pick_signature([{signature, abi} | _], signature, false), do: {:ok, abi}
+
+  defp pick_signature(found_signatures, _signature, _raise_on_multiple) do
+    names = Enum.map_join(found_signatures, ",", fn {_, name} -> name end)
+    {:error, "Multiple matching signatures: #{names}"}
   end
 
   @doc ~S"""

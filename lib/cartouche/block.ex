@@ -64,7 +64,8 @@ defmodule Cartouche.Block do
           gas_used: integer(),
           # timestamp: QUANTITY - the unix timestamp for when the block was collated.
           timestamp: integer(),
-          # transactions: Array - Array of transaction objects, or 32 Bytes transaction hashes depending on the last given parameter.
+          # transactions: Array - Array of transaction objects, or 32 Bytes transaction
+          # hashes depending on the last given parameter.
           transactions: [],
           # uncles: Array - Array of uncle hashes.
           uncles: [<<_::256>>]

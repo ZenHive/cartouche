@@ -21,6 +21,8 @@ defmodule Cartouche.Sleuth do
 
   def query_by(mod, fun, opts) when is_atom(mod) and is_atom(fun) and is_list(opts) do
     bytecode = try_apply(mod, :bytecode, [])
+    # `fun` is a developer-supplied atom (already in the atom table); the derived
+    # function names are bounded by the contract module's compile-time API surface.
     query_val = try_apply(mod, String.to_atom("encode_" <> to_string(fun)), [])
     selector = try_apply(mod, String.to_atom(to_string(fun) <> "_selector"), [])
 
@@ -123,33 +125,11 @@ defmodule Cartouche.Sleuth do
           [_more | _than_one] = processed_results ->
             processed_results
             |> Enum.with_index()
-            |> Map.new(fn {{name, it}, i} ->
-              name =
-                if is_nil(name) or name == "" do
-                  "var#{i}"
-                else
-                  name
-                end
-
-              {name, it}
-            end)
+            |> Map.new(&with_indexed_name/1)
         end
 
       processed_results when be_obvious ->
-        if named_returns do
-          Enum.map(processed_results, fn {name, v} ->
-            keyword =
-              if is_nil(name) or name == "" do
-                :__unnamed__
-              else
-                String.to_atom(Macro.underscore(name))
-              end
-
-            {keyword, v}
-          end)
-        else
-          Enum.map(processed_results, fn {_, v} -> v end)
-        end
+        obvious_results(processed_results, named_returns)
     end)
   end
 
@@ -201,6 +181,20 @@ defmodule Cartouche.Sleuth do
     apply(mod, fun, args)
   rescue
     _ ->
-      raise "Sleuth module #{mod} does not define required \"#{fun}/#{Enum.count(args)}\" function"
+      reraise "Sleuth module #{mod} does not define required \"#{fun}/#{Enum.count(args)}\" function",
+              __STACKTRACE__
   end
+
+  defp with_indexed_name({{name, it}, i}), do: {fallback_name(name, i), it}
+
+  defp fallback_name(name, i) when is_nil(name) or name == "", do: "var#{i}"
+  defp fallback_name(name, _i), do: name
+
+  defp to_named_pair({name, v}), do: {name_keyword(name), v}
+
+  defp name_keyword(name) when is_nil(name) or name == "", do: :__unnamed__
+  defp name_keyword(name), do: String.to_atom(Macro.underscore(name))
+
+  defp obvious_results(processed_results, true), do: Enum.map(processed_results, &to_named_pair/1)
+  defp obvious_results(processed_results, false), do: Enum.map(processed_results, fn {_, v} -> v end)
 end

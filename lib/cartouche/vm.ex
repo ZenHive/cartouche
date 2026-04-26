@@ -510,21 +510,23 @@ defmodule Cartouche.VM do
     @moduledoc false
     def sign_extend(b, x) do
       with {:ok, b_int} <- Cartouche.VM.word_to_uint(b) do
-        if b_int >= 31 do
-          # No sign extend beyond 32nd bit
-          {:ok, x}
-        else
-          val_len = b_int + 1
-          <<_::binary-size(32 - ^val_len), low_word::binary-size(^val_len)>> = x
+        do_sign_extend(b_int, x)
+      end
+    end
 
-          if Bitwise.band(Bitwise.bsr(:binary.decode_unsigned(low_word), 8 * val_len - 1), 1) == 1 do
-            # Fill in top bits
-            {:ok, :binary.copy(<<0xFF>>, 32 - val_len) <> low_word}
-          else
-            # Positive
-            {:ok, x}
-          end
-        end
+    defp do_sign_extend(b_int, x) when b_int >= 31, do: {:ok, x}
+
+    defp do_sign_extend(b_int, x) do
+      val_len = b_int + 1
+      <<_::binary-size(32 - ^val_len), low_word::binary-size(^val_len)>> = x
+      extend_with_sign(low_word, val_len, x)
+    end
+
+    defp extend_with_sign(low_word, val_len, x) do
+      if Bitwise.band(Bitwise.bsr(:binary.decode_unsigned(low_word), 8 * val_len - 1), 1) == 1 do
+        {:ok, :binary.copy(<<0xFF>>, 32 - val_len) <> low_word}
+      else
+        {:ok, x}
       end
     end
 
@@ -548,35 +550,34 @@ defmodule Cartouche.VM do
            Memory.read_memory(context.memory, args_offset, args_size),
          context = %{context | memory: memory_expanded},
          {:ok, ffi} <- Context.fetch_ffi(context, address) do
-      case ffi.(args) do
-        {:return, return_data} ->
-          return_data_to_copy =
-            if byte_size(return_data) >= ret_size do
-              # Take left N bytes
-              <<v::binary-size(^ret_size), _::binary>> = return_data
-
-              v
-            else
-              # Pad right with zeros
-              return_data <> :binary.copy(<<0x0>>, ret_size - byte_size(return_data))
-            end
-
-          with {:ok, context} <-
-                 context
-                 |> Map.put(:return_data, return_data)
-                 |> Memory.write_memory(
-                   ret_offset,
-                   return_data_to_copy
-                 ) do
-            push_word(context, @word_one)
-          end
-
-        {:revert, revert} ->
-          context
-          |> Map.merge(%{return_data: revert, halted: true, reverted: true})
-          |> push_word(@word_zero)
-      end
+      handle_static_call_result(ffi.(args), context, ret_offset, ret_size)
     end
+  end
+
+  defp handle_static_call_result({:return, return_data}, context, ret_offset, ret_size) do
+    return_data_to_copy = pad_or_truncate_return(return_data, ret_size)
+
+    with {:ok, context} <-
+           context
+           |> Map.put(:return_data, return_data)
+           |> Memory.write_memory(ret_offset, return_data_to_copy) do
+      push_word(context, @word_one)
+    end
+  end
+
+  defp handle_static_call_result({:revert, revert}, context, _ret_offset, _ret_size) do
+    context
+    |> Map.merge(%{return_data: revert, halted: true, reverted: true})
+    |> push_word(@word_zero)
+  end
+
+  defp pad_or_truncate_return(return_data, ret_size) when byte_size(return_data) >= ret_size do
+    <<v::binary-size(^ret_size), _::binary>> = return_data
+    v
+  end
+
+  defp pad_or_truncate_return(return_data, ret_size) do
+    return_data <> :binary.copy(<<0x0>>, ret_size - byte_size(return_data))
   end
 
   defp pop_call_args(context) do
@@ -597,6 +598,9 @@ defmodule Cartouche.VM do
   end
 
   @spec run_single_op(Context.t(), Input.t(), Keyword.t()) :: context_result()
+  # EVM opcode dispatch table — every opcode needs a clause; splitting into helpers
+  # adds indirection without reducing real complexity. CC reflects the EVM spec.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def run_single_op(context, input, opts) do
     if opts[:verbose] do
       Logger.debug(Context.show(context))
@@ -622,22 +626,22 @@ defmodule Cartouche.VM do
             unsigned_op2(context, &rem(&1 * &2, @two_pow_256))
 
           :div ->
-            unsigned_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
+            unsigned_op2(context, &safe_floor_div/2)
 
           :sdiv ->
-            signed_op2(context, &if(&2 == 0, do: 0, else: Integer.floor_div(&1, &2)))
+            signed_op2(context, &safe_floor_div/2)
 
           :mod ->
-            unsigned_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
+            unsigned_op2(context, &safe_rem/2)
 
           :smod ->
-            signed_op2(context, &if(&2 == 0, do: 0, else: rem(&1, &2)))
+            signed_op2(context, &safe_rem/2)
 
           :addmod ->
-            unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 + &2, &3)))
+            unsigned_op3(context, &safe_addmod/3)
 
           :mulmod ->
-            unsigned_op3(context, &if(&3 == 0, do: 0, else: rem(&1 * &2, &3)))
+            unsigned_op3(context, &safe_mulmod/3)
 
           :exp ->
             unsigned_op2(context, &rem(&1 ** &2, @two_pow_256))
@@ -646,22 +650,22 @@ defmodule Cartouche.VM do
             pop2_and_push(context, &Operations.sign_extend/2)
 
           :lt ->
-            unsigned_op2(context, &if(&1 < &2, do: 1, else: 0))
+            unsigned_op2(context, &int_lt/2)
 
           :gt ->
-            unsigned_op2(context, &if(&1 > &2, do: 1, else: 0))
+            unsigned_op2(context, &int_gt/2)
 
           :slt ->
-            signed_op2(context, &if(&1 < &2, do: 1, else: 0))
+            signed_op2(context, &int_lt/2)
 
           :sgt ->
-            signed_op2(context, &if(&1 > &2, do: 1, else: 0))
+            signed_op2(context, &int_gt/2)
 
           :eq ->
-            unsigned_op2(context, &if(&1 == &2, do: 1, else: 0))
+            unsigned_op2(context, &int_eq/2)
 
           :iszero ->
-            unsigned_op1(context, &if(&1 == 0, do: 1, else: 0))
+            unsigned_op1(context, &int_is_zero/1)
 
           :and ->
             unsigned_op2(context, &Bitwise.band(&1, &2))
@@ -688,167 +692,79 @@ defmodule Cartouche.VM do
             unsigned_signed_op2(context, &(&2 >>> cap_to_range(&1, 0, 255)))
 
           :sha3 ->
-            with {:ok, context, offset, size} <- pop2_unsigned(context),
-                 {:ok, memory_expanded, data} <- Memory.read_memory(context.memory, offset, size) do
-              push_word(%{context | memory: memory_expanded}, Cartouche.Hash.keccak(data))
-            end
+            do_sha3(context)
 
           :callvalue ->
-            with {:ok, value} <- uint_to_word(input.value) do
-              push_word(context, value)
-            end
+            do_callvalue(context, input)
 
           :calldataload ->
-            with {:ok, context, i} <- pop_unsigned(context),
-                 {:ok, _, res} <- Memory.read_memory(input.calldata, i, 32) do
-              push_word(context, res)
-            end
+            do_calldataload(context, input)
 
           :calldatasize ->
-            with {:ok, calldata_size} <- uint_to_word(byte_size(input.calldata)) do
-              push_word(context, calldata_size)
-            end
+            do_calldatasize(context, input)
 
           :calldatacopy ->
-            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-                 {:ok, _, calldata} <- Memory.read_memory(input.calldata, offset, size) do
-              Memory.write_memory(context, dest_offset, calldata)
-            end
+            do_calldatacopy(context, input)
 
           :codesize ->
-            with {:ok, codesize} <- uint_to_word(byte_size(context.code_encoded)) do
-              push_word(context, codesize)
-            end
+            do_codesize(context)
 
           :codecopy ->
-            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-                 {:ok, _, code} <- Memory.read_memory(context.code_encoded, offset, size) do
-              Memory.write_memory(context, dest_offset, code)
-            end
+            do_codecopy(context)
 
           :pop ->
-            with {:ok, context, _} <- pop(context) do
-              {:ok, context}
-            end
+            do_pop_op(context)
 
           :mload ->
-            with {:ok, context, i} <- pop_unsigned(context),
-                 {:ok, memory_expanded, res} <- Memory.read_memory(context.memory, i, 32) do
-              push_word(%{context | memory: memory_expanded}, res)
-            end
+            do_mload(context)
 
           :mstore ->
-            with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
-              Memory.write_memory(context, offset, value)
-            end
+            do_mstore(context)
 
           :mstore8 ->
-            with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
-              <<_::binary-size(31), byte::binary>> = value
-              Memory.write_memory(context, offset, byte)
-            end
+            do_mstore8(context)
 
           :jump ->
-            with {:ok, context, jump_dest} <- pop_unsigned(context) do
-              case Map.get(context.op_map, jump_dest) do
-                :jumpdest ->
-                  {:ok, %{context | pc: jump_dest}}
-
-                _ ->
-                  {:error, :invalid_jump_dest}
-              end
-            end
+            do_jump_op(context)
 
           :jumpi ->
-            with {:ok, context, jump_dest, b} <- pop2_unsigned(context) do
-              if b == 0 do
-                {:ok, context}
-              else
-                case Map.get(context.op_map, jump_dest) do
-                  :jumpdest ->
-                    {:ok, %{context | pc: jump_dest}}
-
-                  _ ->
-                    {:error, :invalid_jump_dest}
-                end
-              end
-            end
+            do_jumpi_op(context)
 
           :pc ->
-            with {:ok, pc} <- uint_to_word(context.pc) do
-              push_word(context, pc)
-            end
+            do_pc(context)
 
           :msize ->
-            with {:ok, memory_sz} <- uint_to_word(byte_size(context.memory)) do
-              push_word(context, memory_sz)
-            end
+            do_msize(context)
 
           :gas ->
-            with {:ok, gas_amount} <- uint_to_word(@gas_amount) do
-              push_word(context, gas_amount)
-            end
+            do_gas(context)
 
           :jumpdest ->
             {:ok, context}
 
           :tload ->
-            with {:ok, context, res} <- pop_unsigned(context) do
-              push_word(context, Map.get(context.tstorage, res, <<0::256>>))
-            end
+            do_tload(context)
 
           :tstore ->
-            with {:ok, context, key, value} <- pop2_unsigned_word(context) do
-              {:ok, %{context | tstorage: Map.put(context.tstorage, key, value)}}
-            end
+            do_tstore(context)
 
           :mcopy ->
-            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-                 {:ok, memory_expanded, value} <- Memory.read_memory(context.memory, offset, size) do
-              Memory.write_memory(%{context | memory: memory_expanded}, dest_offset, value)
-            end
+            do_mcopy(context)
 
           {:push, n, v} ->
             push_n(context, n, v)
 
           {:dup, n} ->
-            with {:ok, val} <- peek(context, n - 1) do
-              push_word(context, val)
-            end
+            do_dup(context, n)
 
           {:swap, n} ->
-            with {:ok, high} <- peek(context, n),
-                 {:ok, low} <- peek(context, 0) do
-              stack =
-                context.stack
-                |> List.replace_at(n, low)
-                |> List.replace_at(0, high)
-
-              {:ok, %{context | stack: stack}}
-            end
+            do_swap(context, n)
 
           :return ->
-            with {:ok, context, offset, size} <- pop2_unsigned(context) do
-              with {:ok, memory_expanded, return_data} <-
-                     Memory.read_memory(context.memory, offset, size) do
-                {:ok, %{context | memory: memory_expanded, return_data: return_data, halted: true}}
-              end
-            end
+            do_return(context)
 
           :revert ->
-            with {:ok, context, offset, size} <- pop2_unsigned(context) do
-              with {:ok, memory_expanded, return_data} <-
-                     Memory.read_memory(context.memory, offset, size) do
-                {:ok,
-                 %{
-                   context
-                   | memory: memory_expanded,
-                     return_data: return_data,
-                     halted: true,
-                     reverted: true
-                 }}
-              end
-            end
+            do_revert(context)
 
           {:invalid, _} ->
             {:error, :invalid_operation}
@@ -857,15 +773,10 @@ defmodule Cartouche.VM do
             static_call(context)
 
           :returndatasize ->
-            with {:ok, return_data_size} <- uint_to_word(byte_size(context.return_data)) do
-              push_word(context, return_data_size)
-            end
+            do_returndatasize(context)
 
           :returndatacopy ->
-            with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
-                 {:ok, _, calldata} <- Memory.read_memory(context.return_data, offset, size) do
-              Memory.write_memory(context, dest_offset, calldata)
-            end
+            do_returndatacopy(context)
 
           op
           when op in [
@@ -907,6 +818,215 @@ defmodule Cartouche.VM do
       inc_pc(case_result, operation)
     end
   end
+
+  defp do_jump(context, jump_dest) do
+    case Map.get(context.op_map, jump_dest) do
+      :jumpdest -> {:ok, %{context | pc: jump_dest}}
+      _ -> {:error, :invalid_jump_dest}
+    end
+  end
+
+  defp do_jumpi(context, _jump_dest, 0), do: {:ok, context}
+  defp do_jumpi(context, jump_dest, _b), do: do_jump(context, jump_dest)
+
+  defp do_returndatacopy(context) do
+    with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+         {:ok, _, calldata} <- Memory.read_memory(context.return_data, offset, size) do
+      Memory.write_memory(context, dest_offset, calldata)
+    end
+  end
+
+  defp do_returndatasize(context) do
+    with {:ok, return_data_size} <- uint_to_word(byte_size(context.return_data)) do
+      push_word(context, return_data_size)
+    end
+  end
+
+  defp do_return(context) do
+    with {:ok, context, offset, size} <- pop2_unsigned(context),
+         {:ok, memory_expanded, return_data} <-
+           Memory.read_memory(context.memory, offset, size) do
+      {:ok, %{context | memory: memory_expanded, return_data: return_data, halted: true}}
+    end
+  end
+
+  defp do_revert(context) do
+    with {:ok, context, offset, size} <- pop2_unsigned(context),
+         {:ok, memory_expanded, return_data} <-
+           Memory.read_memory(context.memory, offset, size) do
+      {:ok,
+       %{
+         context
+         | memory: memory_expanded,
+           return_data: return_data,
+           halted: true,
+           reverted: true
+       }}
+    end
+  end
+
+  defp do_swap(context, n) do
+    with {:ok, high} <- peek(context, n),
+         {:ok, low} <- peek(context, 0) do
+      stack =
+        context.stack
+        |> List.replace_at(n, low)
+        |> List.replace_at(0, high)
+
+      {:ok, %{context | stack: stack}}
+    end
+  end
+
+  defp do_dup(context, n) do
+    with {:ok, val} <- peek(context, n - 1) do
+      push_word(context, val)
+    end
+  end
+
+  defp do_sha3(context) do
+    with {:ok, context, offset, size} <- pop2_unsigned(context),
+         {:ok, memory_expanded, data} <- Memory.read_memory(context.memory, offset, size) do
+      push_word(%{context | memory: memory_expanded}, Cartouche.Hash.keccak(data))
+    end
+  end
+
+  defp do_callvalue(context, input) do
+    with {:ok, value} <- uint_to_word(input.value) do
+      push_word(context, value)
+    end
+  end
+
+  defp do_calldataload(context, input) do
+    with {:ok, context, i} <- pop_unsigned(context),
+         {:ok, _, res} <- Memory.read_memory(input.calldata, i, 32) do
+      push_word(context, res)
+    end
+  end
+
+  defp do_calldatasize(context, input) do
+    with {:ok, calldata_size} <- uint_to_word(byte_size(input.calldata)) do
+      push_word(context, calldata_size)
+    end
+  end
+
+  defp do_calldatacopy(context, input) do
+    with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+         {:ok, _, calldata} <- Memory.read_memory(input.calldata, offset, size) do
+      Memory.write_memory(context, dest_offset, calldata)
+    end
+  end
+
+  defp do_codesize(context) do
+    with {:ok, codesize} <- uint_to_word(byte_size(context.code_encoded)) do
+      push_word(context, codesize)
+    end
+  end
+
+  defp do_codecopy(context) do
+    with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+         {:ok, _, code} <- Memory.read_memory(context.code_encoded, offset, size) do
+      Memory.write_memory(context, dest_offset, code)
+    end
+  end
+
+  defp do_pop_op(context) do
+    with {:ok, context, _} <- pop(context) do
+      {:ok, context}
+    end
+  end
+
+  defp do_mload(context) do
+    with {:ok, context, i} <- pop_unsigned(context),
+         {:ok, memory_expanded, res} <- Memory.read_memory(context.memory, i, 32) do
+      push_word(%{context | memory: memory_expanded}, res)
+    end
+  end
+
+  defp do_mstore(context) do
+    with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
+      Memory.write_memory(context, offset, value)
+    end
+  end
+
+  defp do_mstore8(context) do
+    with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
+      <<_::binary-size(31), byte::binary>> = value
+      Memory.write_memory(context, offset, byte)
+    end
+  end
+
+  defp do_jump_op(context) do
+    with {:ok, context, jump_dest} <- pop_unsigned(context) do
+      do_jump(context, jump_dest)
+    end
+  end
+
+  defp do_jumpi_op(context) do
+    with {:ok, context, jump_dest, b} <- pop2_unsigned(context) do
+      do_jumpi(context, jump_dest, b)
+    end
+  end
+
+  defp do_pc(context) do
+    with {:ok, pc} <- uint_to_word(context.pc) do
+      push_word(context, pc)
+    end
+  end
+
+  defp do_msize(context) do
+    with {:ok, memory_sz} <- uint_to_word(byte_size(context.memory)) do
+      push_word(context, memory_sz)
+    end
+  end
+
+  defp do_gas(context) do
+    with {:ok, gas_amount} <- uint_to_word(@gas_amount) do
+      push_word(context, gas_amount)
+    end
+  end
+
+  defp do_tload(context) do
+    with {:ok, context, res} <- pop_unsigned(context) do
+      push_word(context, Map.get(context.tstorage, res, <<0::256>>))
+    end
+  end
+
+  defp do_tstore(context) do
+    with {:ok, context, key, value} <- pop2_unsigned_word(context) do
+      {:ok, %{context | tstorage: Map.put(context.tstorage, key, value)}}
+    end
+  end
+
+  defp do_mcopy(context) do
+    with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
+         {:ok, memory_expanded, value} <- Memory.read_memory(context.memory, offset, size) do
+      Memory.write_memory(%{context | memory: memory_expanded}, dest_offset, value)
+    end
+  end
+
+  defp safe_floor_div(_a, 0), do: 0
+  defp safe_floor_div(a, b), do: Integer.floor_div(a, b)
+
+  defp safe_rem(_a, 0), do: 0
+  defp safe_rem(a, b), do: rem(a, b)
+
+  defp safe_addmod(_a, _b, 0), do: 0
+  defp safe_addmod(a, b, n), do: rem(a + b, n)
+
+  defp safe_mulmod(_a, _b, 0), do: 0
+  defp safe_mulmod(a, b, n), do: rem(a * b, n)
+
+  defp int_lt(a, b) when a < b, do: 1
+  defp int_lt(_a, _b), do: 0
+
+  defp int_gt(a, b) when a > b, do: 1
+  defp int_gt(_a, _b), do: 0
+
+  defp int_eq(a, b) when a == b, do: 1
+  defp int_eq(_a, _b), do: 0
+
+  defp int_is_zero(0), do: 1
+  defp int_is_zero(_), do: 0
 
   @spec run_code(Context.t(), Input.t(), Keyword.t()) ::
           {:ok, ExecutionResult.t()} | {:error, vm_error()}
@@ -956,9 +1076,9 @@ defmodule Cartouche.VM do
     )
   end
 
-  defmodule VmError do
+  defmodule InvalidVm do
     @moduledoc false
-    defexception message: "VmError"
+    defexception message: "InvalidVm"
   end
 
   @doc ~S"""
@@ -987,7 +1107,7 @@ defmodule Cartouche.VM do
         end
 
       {:error, error} ->
-        raise VmError, "VmError: #{inspect(error)}"
+        raise InvalidVm, "InvalidVm: #{inspect(error)}"
     end
   end
 end

@@ -43,46 +43,51 @@ defmodule Cartouche.RPC do
   defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, fn error ->
-           <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-           prefix == error_hash
-         end) do
-      nil ->
-        :not_found
-
-      error_abi ->
-        params = ABI.decode(error_abi, error_data)
-
-        # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
-        case {error_abi, params} do
-          {"Panic(uint256)", [0x01]} ->
-            {:ok, "assertion failure", nil}
-
-          {"Panic(uint256)", [0x11]} ->
-            {:ok, "arithmetic error: overflow or underflow", nil}
-
-          {"Panic(uint256)", [0x12]} ->
-            {:ok, "failed to convert value to enum", nil}
-
-          {"Panic(uint256)", [0x21]} ->
-            {:ok, "popped from empty array", nil}
-
-          {"Panic(uint256)", [0x32]} ->
-            {:ok, "out-of-bounds array access", nil}
-
-          {"Panic(uint256)", [0x41]} ->
-            {:ok, "out of memory", nil}
-
-          {"Panic(uint256)", [0x51]} ->
-            {:ok, "called a zero-initialized variable of internal function type", nil}
-
-          _ ->
-            {:ok, error_abi, params}
-        end
+    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
+      nil -> :not_found
+      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
     end
   end
 
   defp decode_error(_, _errors), do: :not_found
+
+  defp error_matches?(error, error_hash) do
+    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
+    prefix == error_hash
+  end
+
+  # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
+  defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}
+  defp classify_decoded_error("Panic(uint256)", [0x11]), do: {:ok, "arithmetic error: overflow or underflow", nil}
+  defp classify_decoded_error("Panic(uint256)", [0x12]), do: {:ok, "failed to convert value to enum", nil}
+  defp classify_decoded_error("Panic(uint256)", [0x21]), do: {:ok, "popped from empty array", nil}
+  defp classify_decoded_error("Panic(uint256)", [0x32]), do: {:ok, "out-of-bounds array access", nil}
+  defp classify_decoded_error("Panic(uint256)", [0x41]), do: {:ok, "out of memory", nil}
+
+  defp classify_decoded_error("Panic(uint256)", [0x51]),
+    do: {:ok, "called a zero-initialized variable of internal function type", nil}
+
+  defp classify_decoded_error(error_abi, params), do: {:ok, error_abi, params}
+
+  defp build_revert_data(data_hex, errors) do
+    case Hex.decode_hex(data_hex) do
+      {:ok, data} ->
+        Enum.into(decode_revert_error(data, errors), %{revert: data})
+
+      _ ->
+        %{}
+    end
+  end
+
+  defp decode_revert_error(data, errors) do
+    case decode_error(data, errors) do
+      {:ok, error_abi, error_params} when not is_nil(error_params) ->
+        %{error_abi: error_abi, error_params: error_params}
+
+      _ ->
+        %{}
+    end
+  end
 
   defp decode_response(response, id, errors, method, body) do
     case Jason.decode(response) do
@@ -99,23 +104,7 @@ defmodule Cartouche.RPC do
          },
          "id" => ^id
        }} ->
-        extra_revert_data =
-          case Hex.decode_hex(data_hex) do
-            {:ok, data} ->
-              case_result =
-                case decode_error(data, errors) do
-                  {:ok, error_abi, error_params} when not is_nil(error_params) ->
-                    %{error_abi: error_abi, error_params: error_params}
-
-                  _ ->
-                    %{}
-                end
-
-              Enum.into(case_result, %{revert: data})
-
-            _ ->
-              %{}
-          end
+        extra_revert_data = build_revert_data(data_hex, errors)
 
         {:error, Map.merge(%{code: code, message: message}, extra_revert_data)}
 
@@ -175,37 +164,34 @@ defmodule Cartouche.RPC do
 
     with {:ok, %Finch.Response{body: resp_body}} <- finch_result,
          {:ok, result} <- decode_response(resp_body, body["id"], errors, method, body) do
-      case decode do
-        nil ->
-          {:ok, result}
-
-        :hex ->
-          Hex.decode_hex(result)
-
-        :hex_unsigned ->
-          with {:ok, bin} <- Hex.decode_hex(result) do
-            {:ok, :binary.decode_unsigned(bin)}
-          end
-
-        f when is_function(f) ->
-          try do
-            {:ok, f.(result)}
-          rescue
-            e ->
-              if verbose do
-                Logger.error(
-                  "[Cartouche][RPC][#{method}] Error decoding response. error=#{inspect(e)}, response=#{inspect(result)}"
-                )
-
-                {:error, "failed to decode `#{method}` response: #{inspect(e)}"}
-              else
-                Logger.info("[Cartouche][RPC][#{method}] Error decoding response: #{inspect(e)}")
-
-                {:error, "failed to decode `#{method}` response: #{inspect(e)}"}
-              end
-          end
-      end
+      decode_result(decode, result, method, verbose)
     end
+  end
+
+  defp decode_result(nil, result, _method, _verbose), do: {:ok, result}
+
+  defp decode_result(:hex, result, _method, _verbose), do: Hex.decode_hex(result)
+
+  defp decode_result(:hex_unsigned, result, _method, _verbose) do
+    with {:ok, bin} <- Hex.decode_hex(result), do: {:ok, :binary.decode_unsigned(bin)}
+  end
+
+  defp decode_result(f, result, method, verbose) when is_function(f) do
+    {:ok, f.(result)}
+  rescue
+    e -> log_decode_error(e, method, result, verbose)
+  end
+
+  defp log_decode_error(e, method, result, true) do
+    Logger.error("[Cartouche][RPC][#{method}] Error decoding response. error=#{inspect(e)}, response=#{inspect(result)}")
+
+    {:error, "failed to decode `#{method}` response: #{inspect(e)}"}
+  end
+
+  defp log_decode_error(e, method, _result, false) do
+    Logger.info("[Cartouche][RPC][#{method}] Error decoding response: #{inspect(e)}")
+
+    {:error, "failed to decode `#{method}` response: #{inspect(e)}"}
   end
 
   @doc """
@@ -1393,26 +1379,15 @@ defmodule Cartouche.RPC do
       end
 
     estimate_and_verify = fn trx ->
-      with {:ok, _} <- if(verify, do: call_trx(trx, opts), else: {:ok, nil}),
-           {:ok, gas_limit} <-
-             (case gas_limit do
-                nil ->
-                  with {:ok, limit} <- estimate_gas(trx, opts) do
-                    {:ok, ceil(limit * gas_buffer)}
-                  end
-
-                els ->
-                  {:ok, els}
-              end) do
-        {:ok, %{trx | gas_limit: gas_limit}}
-      else
-        trx_res ->
-          if trace_reverts do
-            show_trace_revert(trx, trx_res, debug_trace, Keyword.merge(opts, trace_opts))
-          else
-            trx_res
-          end
-      end
+      do_estimate_and_verify(trx, %{
+        verify: verify,
+        gas_limit: gas_limit,
+        gas_buffer: gas_buffer,
+        trace_reverts: trace_reverts,
+        debug_trace: debug_trace,
+        opts: opts,
+        trace_opts: trace_opts
+      })
     end
 
     with {:ok, trx_type} <- trx_type_result,
@@ -1449,6 +1424,34 @@ defmodule Cartouche.RPC do
                 )
             end) do
       {:ok, trx, send_opts}
+    end
+  end
+
+  defp resolve_gas_limit(nil, trx, opts, gas_buffer) do
+    with {:ok, limit} <- estimate_gas(trx, opts), do: {:ok, ceil(limit * gas_buffer)}
+  end
+
+  defp resolve_gas_limit(els, _trx, _opts, _gas_buffer), do: {:ok, els}
+
+  defp maybe_trace_revert(trx, trx_res, true, debug_trace, opts, trace_opts),
+    do: show_trace_revert(trx, trx_res, debug_trace, Keyword.merge(opts, trace_opts))
+
+  defp maybe_trace_revert(_trx, trx_res, false, _debug_trace, _opts, _trace_opts), do: trx_res
+
+  defp do_estimate_and_verify(trx, %{
+         verify: verify,
+         gas_limit: gas_limit,
+         gas_buffer: gas_buffer,
+         trace_reverts: trace_reverts,
+         debug_trace: debug_trace,
+         opts: opts,
+         trace_opts: trace_opts
+       }) do
+    with {:ok, _} <- if(verify, do: call_trx(trx, opts), else: {:ok, nil}),
+         {:ok, resolved} <- resolve_gas_limit(gas_limit, trx, opts, gas_buffer) do
+      {:ok, %{trx | gas_limit: resolved}}
+    else
+      trx_res -> maybe_trace_revert(trx, trx_res, trace_reverts, debug_trace, opts, trace_opts)
     end
   end
 
@@ -1576,25 +1579,23 @@ defmodule Cartouche.RPC do
 
   defp show_trace_revert(trx, trx_res, debug_trace, opts) do
     with {:error, %{code: 3, message: "execution reverted" <> _} = error} <- trx_res do
-      if debug_trace do
-        case debug_trace_call(trx, opts) do
-          {:ok, trace} ->
-            {:error, Map.put(error, :trace, trace)}
+      {tracer, label} =
+        if debug_trace,
+          do: {&debug_trace_call/2, "debug_traceCall"},
+          else: {&trace_call/2, "trace_call"}
 
-          err ->
-            Logger.error("Failed to trace revert by `debug_traceCall`: #{inspect(err)}")
-            trx_res
-        end
-      else
-        case trace_call(trx, opts) do
-          {:ok, trace} ->
-            {:error, Map.put(error, :trace, trace)}
+      apply_trace(tracer, label, trx, opts, error, trx_res)
+    end
+  end
 
-          err ->
-            Logger.error("Failed to trace revert by `trace_call`: #{inspect(err)}")
-            trx_res
-        end
-      end
+  defp apply_trace(tracer, label, trx, opts, error, trx_res) do
+    case tracer.(trx, opts) do
+      {:ok, trace} ->
+        {:error, Map.put(error, :trace, trace)}
+
+      err ->
+        Logger.error("Failed to trace revert by `#{label}`: #{inspect(err)}")
+        trx_res
     end
   end
 end

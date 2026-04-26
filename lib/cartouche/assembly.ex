@@ -332,13 +332,7 @@ defmodule Cartouche.Assembly do
     Enum.map(opcodes, fn opcode ->
       case opcode do
         {:jump_ptr, i} ->
-          case Map.fetch(jump_map, i) do
-            {:ok, pc} ->
-              {:push, @jump_sz, pad_to(:binary.encode_unsigned(pc), @jump_sz)}
-
-            _ ->
-              raise InvalidOpcode, message: "could not find jump dest: `#{i}`"
-          end
+          resolve_jump_ptr(jump_map, i)
 
         {:jump_dest, _} ->
           :jumpdest
@@ -350,6 +344,16 @@ defmodule Cartouche.Assembly do
           opcode
       end
     end)
+  end
+
+  defp resolve_jump_ptr(jump_map, i) do
+    case Map.fetch(jump_map, i) do
+      {:ok, pc} ->
+        {:push, @jump_sz, pad_to(:binary.encode_unsigned(pc), @jump_sz)}
+
+      _ ->
+        raise InvalidOpcode, message: "could not find jump dest: `#{i}`"
+    end
   end
 
   @doc """
@@ -500,6 +504,9 @@ defmodule Cartouche.Assembly do
       iex> Cartouche.Assembly.show_opcode({:push, 5, <<1,2,3,4,5>>})
       "PUSH5 0x0102030405"
   """
+  # EVM opcode dispatch table — high cyclomatic complexity reflects the spec, not bad code.
+  # Splitting clauses into helpers would add indirection without reducing real complexity.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def show_opcode(op) do
     case op do
       :stop ->

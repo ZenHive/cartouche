@@ -50,6 +50,9 @@ defmodule Cartouche.Base58 do
   """
   defmacro sigil_B58(term, _modifiers)
 
+  # Elixir requires sigil names to start with a single uppercase letter (sigil_FOO);
+  # credo's snake_case rule is incompatible with the language spec for sigils.
+  # credo:disable-for-next-line Credo.Check.Readability.FunctionNames
   defmacro sigil_B58({:<<>>, _meta, [string]}, _modifiers) when is_binary(string) do
     Cartouche.Base58.decode!(string)
   end

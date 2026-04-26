@@ -199,16 +199,18 @@ defmodule Cartouche.Solana.Transaction do
   defp collect_accounts(fee_payer, instructions) do
     # Start with fee payer as writable + signer
     init = %{fee_payer => {true, true}}
+    Enum.reduce(instructions, init, &merge_instruction_accounts/2)
+  end
 
-    Enum.reduce(instructions, init, fn ix, acc ->
-      # Program ID is a readonly non-signer
-      acc = Map.update(acc, ix.program_id, {false, false}, fn {s, w} -> {s, w} end)
+  defp merge_instruction_accounts(ix, acc) do
+    # Program ID is a readonly non-signer
+    acc = Map.update(acc, ix.program_id, {false, false}, fn {s, w} -> {s, w} end)
+    Enum.reduce(ix.accounts, acc, &merge_account_meta/2)
+  end
 
-      Enum.reduce(ix.accounts, acc, fn am, acc2 ->
-        Map.update(acc2, am.pubkey, {am.is_signer, am.is_writable}, fn {s, w} ->
-          {s or am.is_signer, w or am.is_writable}
-        end)
-      end)
+  defp merge_account_meta(am, acc) do
+    Map.update(acc, am.pubkey, {am.is_signer, am.is_writable}, fn {s, w} ->
+      {s or am.is_signer, w or am.is_writable}
     end)
   end
 

@@ -584,9 +584,7 @@ defmodule Cartouche.Typed do
       |> Enum.sort()
       |> Enum.map(&to_string/1)
 
-    case Enum.filter(types, fn {_name, type} ->
-           type.fields |> Enum.map(fn {k, _v} -> k end) |> Enum.sort() == sorted_field_names
-         end) do
+    case Enum.filter(types, &type_fields_match?(&1, sorted_field_names)) do
       [] ->
         raise "Failed to find matching type for field names #{inspect(field_names)}"
 
@@ -596,6 +594,10 @@ defmodule Cartouche.Typed do
       els ->
         raise "Found multiple types #{inspect(els)}"
     end
+  end
+
+  defp type_fields_match?({_name, type}, sorted_field_names) do
+    type.fields |> Enum.map(fn {k, _v} -> k end) |> Enum.sort() == sorted_field_names
   end
 
   @doc ~S"""

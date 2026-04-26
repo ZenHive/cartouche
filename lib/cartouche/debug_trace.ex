@@ -66,6 +66,8 @@ defmodule Cartouche.DebugTrace do
         depth: params["depth"],
         gas: params["gas"],
         gas_cost: params["gasCost"],
+        # TODO: `op` is unsanitized RPC input — a hostile/buggy node could grow
+        # the atom table. Harden by whitelisting against the known EVM opcode set.
         op: String.to_atom(params["op"]),
         pc: params["pc"],
         stack: Enum.map(params["stack"], &Cartouche.Hex.decode_hex!/1)

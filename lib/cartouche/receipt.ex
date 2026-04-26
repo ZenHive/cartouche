@@ -19,19 +19,23 @@ defmodule Cartouche.Receipt do
     @type t() :: %__MODULE__{
             # QUANTITY - integer of the log index position in the block. null when its pending log.
             log_index: integer(),
-            # QUANTITY - the block number where this log was in. null when its pending. null when its pending log.
+            # QUANTITY - the block number where this log was in. null when its pending log.
             block_number: integer(),
-            # DATA, 32 Bytes - hash of the block where this log was in. null when its pending. null when its pending log.
+            # DATA, 32 Bytes - hash of the block where this log was in.
+            # null when its pending. null when its pending log.
             block_hash: <<_::256>>,
             # DATA, 32 Bytes - hash of the transactions this log was created from. null when its pending log.
             transaction_hash: <<_::256>>,
             # QUANTITY - integer of the transactions index position log was created from. null when its pending log.
             transaction_index: integer(),
-            # DATA, 20 Bytes - address from which this log originated. 
+            # DATA, 20 Bytes - address from which this log originated.
             address: <<_::160>>,
             # DATA - contains zero or more 32 Bytes non-indexed arguments of the log.
             data: binary,
-            # Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments. (In solidity: The first topic is the hash of the signature of the event (e.g. Deposit(address,bytes32,uint256)), except you declared the event with the anonymous specifier.)
+            # Array of DATA - Array of 0 to 4 32 Bytes DATA of indexed log arguments.
+            # (In solidity: The first topic is the hash of the signature of the event
+            # (e.g. Deposit(address,bytes32,uint256)), except you declared the event
+            # with the anonymous specifier.)
             topics: [<<_::256>>]
           }
 
@@ -120,7 +124,8 @@ defmodule Cartouche.Receipt do
           logs: [Log.t()],
           # DATA, 256 Bytes - Bloom filter for light clients to quickly retrieve related logs.
           logs_bloom: <<_::1024>>,
-          # QUANTITY - integer of the transaction type, 0x0 for legacy transactions, 0x1 for access list types, 0x2 for dynamic fees.
+          # QUANTITY - integer of the transaction type:
+          # 0x0 legacy, 0x1 access list, 0x2 dynamic fees.
           type: integer(),
           # QUANTITY either 1 (success) or 0 (failure)
           status: integer()

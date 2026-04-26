@@ -6,7 +6,7 @@ defmodule Cartouche.Hex do
   hex-to-binary compilation.
   """
 
-  defmodule HexError do
+  defmodule InvalidHex do
     @moduledoc false
     defexception message: "invalid hex"
   end
@@ -113,7 +113,7 @@ defmodule Cartouche.Hex do
     <<170, 187>>
 
     iex> Cartouche.Hex.decode_hex!("0xggaabb")
-    ** (Cartouche.Hex.HexError) invalid hex: "0xggaabb"
+    ** (Cartouche.Hex.InvalidHex) invalid hex: "0xggaabb"
   """
   @spec decode_hex!(String.t()) :: t()
   def decode_hex!(b) do
@@ -122,7 +122,7 @@ defmodule Cartouche.Hex do
         hex
 
       _ ->
-        raise HexError, "invalid hex: \"#{b}\""
+        raise InvalidHex, "invalid hex: \"#{b}\""
     end
   end
 
@@ -138,7 +138,7 @@ defmodule Cartouche.Hex do
     <<1::160>>
 
     iex> Cartouche.Hex.decode_address!("0xaabb")
-    ** (Cartouche.Hex.HexError) invalid hex address: "0xaabb"
+    ** (Cartouche.Hex.InvalidHex) invalid hex address: "0xaabb"
   """
   @spec decode_address!(String.t()) :: t() | no_return()
   def decode_address!(hex) do
@@ -157,7 +157,7 @@ defmodule Cartouche.Hex do
     <<1::256>>
 
     iex> Cartouche.Hex.decode_word!("0xaabb")
-    ** (Cartouche.Hex.HexError) invalid hex word: "0xaabb"
+    ** (Cartouche.Hex.InvalidHex) invalid hex word: "0xaabb"
   """
   @spec decode_word!(String.t()) :: t() | no_return()
   def decode_word!(hex) do
@@ -176,7 +176,7 @@ defmodule Cartouche.Hex do
     <<0x00, 0x11, 0x22>>
 
     iex> Cartouche.Hex.decode_sized!("0xaabb", 3)
-    ** (Cartouche.Hex.HexError) invalid 3-byte sized hex: "0xaabb"
+    ** (Cartouche.Hex.InvalidHex) invalid 3-byte sized hex: "0xaabb"
   """
   @spec decode_sized!(String.t(), integer(), String.t() | nil) :: t() | no_return()
   def decode_sized!(hex, sz, msg \\ nil) do
@@ -185,7 +185,7 @@ defmodule Cartouche.Hex do
     if byte_size(res) == sz do
       res
     else
-      raise HexError,
+      raise InvalidHex,
             (case msg do
                nil ->
                  "invalid #{sz}-byte sized hex: \"#{hex}\""
@@ -220,7 +220,7 @@ defmodule Cartouche.Hex do
     0xaabb
 
     iex> Cartouche.Hex.decode_hex_number!("0xgggg")
-    ** (Cartouche.Hex.HexError) invalid hex number: "0xgggg"
+    ** (Cartouche.Hex.InvalidHex) invalid hex number: "0xgggg"
   """
   @spec decode_hex_number!(String.t()) :: integer() | no_return()
   def decode_hex_number!(b) do
@@ -229,7 +229,7 @@ defmodule Cartouche.Hex do
         x
 
       :invalid_hex ->
-        raise HexError, "invalid hex number: \"#{b}\""
+        raise InvalidHex, "invalid hex number: \"#{b}\""
     end
   end
 
@@ -390,12 +390,12 @@ defmodule Cartouche.Hex do
     "0xaABbcC0000000000000000000000000000000000"
 
     iex> Cartouche.Hex.encode_address(<<55>>)
-    ** (Cartouche.Hex.HexError) Expected 20-byte address for in `Cartouche.Hex.encode_address/1`
+    ** (Cartouche.Hex.InvalidHex) Expected 20-byte address for in `Cartouche.Hex.encode_address/1`
   """
   @spec encode_address(t()) :: String.t()
   def encode_address(<<_::160>> = b), do: checksum_address(encode_hex(b))
 
-  def encode_address(_), do: raise(HexError, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
+  def encode_address(_), do: raise(InvalidHex, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
 
   @doc ~S"""
   Checksums an Ethereum address per [EIP-55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md).

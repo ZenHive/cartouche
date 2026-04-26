@@ -222,7 +222,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 23 | Align `Cartouche.VM.Context.@type t` with dialyzer's inferred struct shape, or relax `init_from/2` to return `struct()` [D:2/B:1/U:3 → Eff:1.0] 📋 | ⬜ | **Blocked on Task 46.** Internal type. Bundle with Phase 5 if that opens a VM file anyway |
-| 46 | VM + Erc20.Call coverage push — gate Phases 5 and 6 [D:4/B:5/U:5 → Eff:1.25] 📋 | ⬜ | Three modules below the bar (`mix test.json --cover` 2026-04-26): `Cartouche.VM.Context` 35.71% (Phase 6 target — 9 uncovered), `Cartouche.Erc20.Call` 0% (Phase 5 target — 6 uncovered), `Cartouche.VM.VmError` 0% (1 uncovered, exception module — at minimum a `raise/rescue` round-trip). Cover `VM.Context.init_from/2` happy + edge inputs (the function whose spec Phase 6 narrows); cover `Erc20.Call` entry points used by the `none()`-cascade investigation in Phase 5. Acceptance: all three modules ≥ 80% on `mix test.json --cover` |
+| 46 | VM + Erc20.Call coverage push — gate Phases 5 and 6 [D:4/B:5/U:5 → Eff:1.25] 📋 | ⬜ | Three modules below the bar (`mix test.json --cover` 2026-04-26): `Cartouche.VM.Context` 35.71% (Phase 6 target — 9 uncovered), `Cartouche.Erc20.Call` 0% (Phase 5 target — 6 uncovered), `Cartouche.VM.InvalidVm` 0% (1 uncovered, exception module — at minimum a `raise/rescue` round-trip; renamed from `VmError` in the credo cleanup pass). Cover `VM.Context.init_from/2` happy + edge inputs (the function whose spec Phase 6 narrows); cover `Erc20.Call` entry points used by the `none()`-cascade investigation in Phase 5. Acceptance: all three modules ≥ 80% on `mix test.json --cover` |
 
 ---
 

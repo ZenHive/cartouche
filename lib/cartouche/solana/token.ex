@@ -47,22 +47,21 @@ defmodule Cartouche.Solana.Token do
 
     with {:ok, accounts} <-
            RPC.get_token_accounts_by_owner(wallet, [mint: mint], opts) do
-      case accounts do
-        [] ->
-          {:ok, %{amount: 0, decimals: 0, mint: mint_b58}}
-
-        accounts ->
-          {total, decimals} =
-            Enum.reduce(accounts, {0, 0}, fn acct, {sum, _dec} ->
-              info = get_in(acct, [:account, :data, "parsed", "info"])
-              token_amount = info["tokenAmount"]
-              amount = String.to_integer(token_amount["amount"])
-              {sum + amount, token_amount["decimals"]}
-            end)
-
-          {:ok, %{amount: total, decimals: decimals, mint: mint_b58}}
-      end
+      summarize_balance(accounts, mint_b58)
     end
+  end
+
+  defp summarize_balance([], mint_b58), do: {:ok, %{amount: 0, decimals: 0, mint: mint_b58}}
+
+  defp summarize_balance(accounts, mint_b58) do
+    {total, decimals} = Enum.reduce(accounts, {0, 0}, &accumulate_token_amount/2)
+    {:ok, %{amount: total, decimals: decimals, mint: mint_b58}}
+  end
+
+  defp accumulate_token_amount(acct, {sum, _dec}) do
+    token_amount = get_in(acct, [:account, :data, "parsed", "info", "tokenAmount"])
+    amount = String.to_integer(token_amount["amount"])
+    {sum + amount, token_amount["decimals"]}
   end
 
   @doc """
@@ -94,19 +93,20 @@ defmodule Cartouche.Solana.Token do
              opts
            ) do
       balances = parse_token_accounts(token_accounts)
+      maybe_include_token_2022(balances, include_2022, wallet, opts)
+    end
+  end
 
-      if include_2022 do
-        with {:ok, t22_accounts} <-
-               RPC.get_token_accounts_by_owner(
-                 wallet,
-                 [program_id: Programs.token_2022_program()],
-                 opts
-               ) do
-          {:ok, balances ++ parse_token_accounts(t22_accounts)}
-        end
-      else
-        {:ok, balances}
-      end
+  defp maybe_include_token_2022(balances, false, _wallet, _opts), do: {:ok, balances}
+
+  defp maybe_include_token_2022(balances, true, wallet, opts) do
+    with {:ok, t22_accounts} <-
+           RPC.get_token_accounts_by_owner(
+             wallet,
+             [program_id: Programs.token_2022_program()],
+             opts
+           ) do
+      {:ok, balances ++ parse_token_accounts(t22_accounts)}
     end
   end
 

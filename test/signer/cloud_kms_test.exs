@@ -11,7 +11,8 @@ defmodule Cartouche.Signer.CloudKMSTest do
           "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version/publicKey"
       } ->
         # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/getPublicKey
-        # projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
+        # projects/treasury-stage/locations/global/keyRings/
+        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
         %Tesla.Env{
           status: 200,
           body:
@@ -32,7 +33,8 @@ defmodule Cartouche.Signer.CloudKMSTest do
           "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version:asymmetricSign"
       } ->
         # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/asymmetricSign
-        # projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
+        # projects/treasury-stage/locations/global/keyRings/
+        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
         # {"digest": {"sha256":"nCL/XyHwuBsRPmP3222pT+3vEbIRm0CIuJZk+5o8tlg="}}
         %Tesla.Env{
           status: 200,
