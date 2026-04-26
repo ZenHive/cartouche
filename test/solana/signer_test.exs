@@ -151,6 +151,24 @@ defmodule Cartouche.Solana.SignerTest do
       assert addr1 == addr2
     end
 
+    test "address cache: state gets :address key after first call, second call hits cache clause" do
+      signer = Cartouche.Solana.Test.Signer.start_signer()
+
+      # Pre-cache: state has no :address yet
+      state_before = :sys.get_state(signer)
+      refute Map.has_key?(state_before, :address)
+
+      addr1 = Signer.address(signer)
+
+      # Post-cache: state now has :address (handle_call/3 cache-miss clause populated it)
+      state_after = :sys.get_state(signer)
+      assert Map.fetch!(state_after, :address) == addr1
+
+      # Second call hits the cache-hit clause at signer.ex:102 (matches %{address: ...})
+      addr2 = Signer.address(signer)
+      assert addr2 == addr1
+    end
+
     test "multiple signers with different names" do
       signer1 = Cartouche.Solana.Test.Signer.start_signer()
       signer2 = Cartouche.Solana.Test.Signer.start_signer()

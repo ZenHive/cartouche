@@ -33,3 +33,6 @@ cartouche-*.tar
 
 # macOS Finder metadata
 .DS_Store
+
+# claude plugin remember
+/.remember/

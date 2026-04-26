@@ -5,7 +5,21 @@ defmodule SleuthTest do
   alias Cartouche.Contract.BlockNumber
   alias Cartouche.Sleuth
 
+  defmodule MissingFunsContract do
+    @moduledoc false
+    # Intentionally does not define bytecode/0, encode_query/0, or query_selector/0.
+    # Used to exercise the try_apply rescue clause.
+  end
+
   doctest Sleuth
+
+  describe "try_apply rescue" do
+    test "raises descriptive error when contract module is missing :bytecode/0" do
+      assert_raise RuntimeError,
+                   ~r/Sleuth module .*MissingFunsContract does not define required "bytecode\/0"/,
+                   fn -> Sleuth.query_by(MissingFunsContract) end
+    end
+  end
 
   describe "BlockNumber" do
     test "query()" do

@@ -197,7 +197,8 @@ defmodule Cartouche.OpenChain do
           {:ok, abi}
 
         _ ->
-          {:error, "Multiple matching signatures: #{Enum.join(found_signatures, ",")}"}
+          names = Enum.map_join(found_signatures, ",", fn {_, name} -> name end)
+          {:error, "Multiple matching signatures: #{names}"}
       end
     end
   end
