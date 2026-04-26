@@ -119,51 +119,52 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # but we could make this more complex to rename all of them if there are any dupes;
   # it would just require two passes.
   defp rename_dups(abis) do
-    {abis, _} =
-      Enum.reduce(abis, {[], []}, fn abi, {acc, seen} ->
-        fn_sel =
-          try do
-            ABI.FunctionSelector.parse_specification_item(abi)
-          rescue
-            e ->
-              Logger.warning("Ignoring due to failed parse: #{inspect(abi)}")
-              Logger.error(e)
-
-              {acc, seen}
-          end
-
-        name = abi["name"]
-
-        if is_nil(name) do
-          {[abi | acc], seen}
-        else
-          lower_name = String.downcase(name)
-
-          <<abi_enc_signature::binary-size(4), _::binary>> =
-            Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))
-
-          "0x" <> abi_sig = Cartouche.Hex.encode_hex(abi_enc_signature)
-          seen_tuple = {lower_name, abi_sig}
-
-          if Enum.member?(seen, seen_tuple) do
-            # We've seen this exact item before
-            {acc, seen}
-          else
-            abi_new =
-              if Enum.member?(Enum.map(seen, fn {name, _} -> name end), lower_name) do
-                # We have a separate item with the same name, let's postpend the abi sig
-                Map.put(abi, "fn_name", "#{name}_#{abi_sig}")
-              else
-                # This item is unique, as is.
-                abi
-              end
-
-            {[abi_new | acc], [{lower_name, abi_sig} | seen]}
-          end
-        end
-      end)
-
+    {abis, _} = Enum.reduce(abis, {[], []}, &accumulate_named_abi/2)
     Enum.reverse(abis)
+  end
+
+  defp accumulate_named_abi(abi, {acc, seen}) do
+    fn_sel =
+      try do
+        ABI.FunctionSelector.parse_specification_item(abi)
+      rescue
+        e ->
+          Logger.warning("Ignoring due to failed parse: #{inspect(abi)}")
+          Logger.error(e)
+
+          nil
+      end
+
+    case {fn_sel, abi["name"]} do
+      {_, nil} -> {[abi | acc], seen}
+      {nil, _} -> {[abi | acc], seen}
+      {fs, name} -> dedup_named_abi(abi, name, fs, acc, seen)
+    end
+  end
+
+  defp dedup_named_abi(abi, name, fn_sel, acc, seen) do
+    lower_name = String.downcase(name)
+
+    <<abi_enc_signature::binary-size(4), _::binary>> =
+      Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))
+
+    "0x" <> abi_sig = Cartouche.Hex.encode_hex(abi_enc_signature)
+    seen_tuple = {lower_name, abi_sig}
+
+    if Enum.member?(seen, seen_tuple) do
+      {acc, seen}
+    else
+      abi_new = maybe_rename_dup_fn(abi, name, lower_name, abi_sig, seen)
+      {[abi_new | acc], [{lower_name, abi_sig} | seen]}
+    end
+  end
+
+  defp maybe_rename_dup_fn(abi, name, lower_name, abi_sig, seen) do
+    if Enum.member?(Enum.map(seen, fn {n, _} -> n end), lower_name) do
+      Map.put(abi, "fn_name", "#{name}_#{abi_sig}")
+    else
+      abi
+    end
   end
 
   # Function to take the abi from the output-json and output function defs (e.g. encode and execute)
@@ -171,20 +172,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
     {fns, decoders, events, errors} =
       (full_abi["abi"] || [])
       |> rename_dups()
-      |> Enum.reduce({[], [], [], []}, fn abi, {acc_fns, acc_decoders, acc_events, acc_errors} ->
-        case get_encode_call(abi, has_bytecode) do
-          {functions, generic_call_decoder, nil, nil} ->
-            {acc_fns ++ functions, [generic_call_decoder | acc_decoders], acc_events, acc_errors}
-
-          {functions, nil, generic_event_fn, nil} ->
-            {acc_fns ++ functions, acc_decoders, [generic_event_fn | acc_events], acc_errors}
-
-          {functions, nil, nil, generic_error_fn} ->
-            {acc_fns ++ functions, acc_decoders, acc_events, [generic_error_fn | acc_errors]}
-
-          nil ->
-            {acc_fns, acc_decoders, acc_events, acc_errors}
-        end
+      |> Enum.reduce({[], [], [], []}, fn abi, acc ->
+        merge_encode_call_result(acc, get_encode_call(abi, has_bytecode))
       end)
 
     decoders = [
@@ -217,6 +206,22 @@ defmodule Mix.Tasks.Cartouche.Gen do
     fns ++ Enum.reverse(decoders, Enum.reverse(events, Enum.reverse(errors)))
   end
 
+  defp merge_encode_call_result({acc_fns, acc_decoders, acc_events, acc_errors}, result) do
+    case result do
+      {functions, generic_call_decoder, nil, nil} ->
+        {acc_fns ++ functions, [generic_call_decoder | acc_decoders], acc_events, acc_errors}
+
+      {functions, nil, generic_event_fn, nil} ->
+        {acc_fns ++ functions, acc_decoders, [generic_event_fn | acc_events], acc_errors}
+
+      {functions, nil, nil, generic_error_fn} ->
+        {acc_fns ++ functions, acc_decoders, acc_events, [generic_error_fn | acc_errors]}
+
+      nil ->
+        {acc_fns, acc_decoders, acc_events, acc_errors}
+    end
+  end
+
   # Parses the ABI spec and generates the functions (encode and execute) if we can parse
   # the ABI spec. We've recently updated our ABI parsing library that this doesn't fail
   # nearly as often as it used to (e.g. it can handle tuples)
@@ -245,145 +250,174 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # Generate the encode and execute functions. This is ... complex (read: hacky)
   defp encode_function_call(selector, fn_name, has_bytecode) do
-    # These are the function names we'll define
-    encode_fun_name = String.to_atom("encode_#{Macro.underscore(fn_name)}")
-    encode_event_fun_name = String.to_atom("encode_#{Macro.underscore(fn_name)}_event")
-    build_trx_fun_name = String.to_atom("build_trx_#{Macro.underscore(fn_name)}")
-    call_fun_name = String.to_atom("call_#{Macro.underscore(fn_name)}")
-    estimate_gas_fun_name = String.to_atom("estimate_gas_#{Macro.underscore(fn_name)}")
-    execute_fun_name = String.to_atom("execute_#{Macro.underscore(fn_name)}")
-    prepare_fun_name = String.to_atom("prepare_#{Macro.underscore(fn_name)}")
-    selector_fun_name = String.to_atom("#{Macro.underscore(fn_name)}_selector")
-    event_selector_fun_name = String.to_atom("#{Macro.underscore(fn_name)}_event_selector")
-    decode_event_fun_name = String.to_atom("decode_#{Macro.underscore(fn_name)}_event")
-    decode_error_fun_name = String.to_atom("decode_#{Macro.underscore(fn_name)}_error")
-    decode_call_fun_name = String.to_atom("decode_#{Macro.underscore(fn_name)}_call")
-    exec_vm_fun_name = String.to_atom("exec_vm_#{Macro.underscore(fn_name)}")
-    exec_vm_raw_fun_name = String.to_atom("exec_vm_#{Macro.underscore(fn_name)}_raw")
+    names = function_names(fn_name)
+    argument_types = derive_argument_types(selector)
+    {execute_arguments, encode_arguments, execute_values, encode_values} = build_argument_specs(argument_types)
+    sig = signature_data(selector)
 
-    event_selector = selector
+    if abort?(execute_arguments, selector, has_bytecode) do
+      Logger.warning("Ignoring function #{selector.function} due to unknown argument")
+      nil
+    else
+      ctx = %{
+        names: names,
+        execute_arguments: execute_arguments,
+        encode_arguments: encode_arguments,
+        execute_values: execute_values,
+        encode_values: encode_values,
+        sig: sig,
+        selector: selector
+      }
 
-    argument_types =
-      case selector.function_type do
-        x when x in [:fallback, :receive] ->
-          [%{type: :bytes, name: "data"}]
+      select_emitted_fns(selector, has_bytecode, build_function_quotes(ctx))
+    end
+  end
 
-        _ ->
-          selector.types
-      end
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp function_names(fn_name) do
+    underscored = Macro.underscore(fn_name)
 
-    # We are returning 4 values and will do a double unzip here so we can return
-    # them from one function but get 4 separates lists. A better version of this
-    # code would use a reduction to define 4 lists properly.
+    %{
+      encode: String.to_atom("encode_#{underscored}"),
+      encode_event: String.to_atom("encode_#{underscored}_event"),
+      build_trx: String.to_atom("build_trx_#{underscored}"),
+      call: String.to_atom("call_#{underscored}"),
+      estimate_gas: String.to_atom("estimate_gas_#{underscored}"),
+      execute: String.to_atom("execute_#{underscored}"),
+      prepare: String.to_atom("prepare_#{underscored}"),
+      selector: String.to_atom("#{underscored}_selector"),
+      event_selector: String.to_atom("#{underscored}_event_selector"),
+      decode_event: String.to_atom("decode_#{underscored}_event"),
+      decode_error: String.to_atom("decode_#{underscored}_error"),
+      decode_call: String.to_atom("decode_#{underscored}_call"),
+      exec_vm: String.to_atom("exec_vm_#{underscored}"),
+      exec_vm_raw: String.to_atom("exec_vm_#{underscored}_raw")
+    }
+  end
+
+  defp derive_argument_types(%{function_type: t}) when t in [:fallback, :receive] do
+    [%{type: :bytes, name: "data"}]
+  end
+
+  defp derive_argument_types(selector), do: selector.types
+
+  # We are returning 4 values and will do a double unzip here so we can return
+  # them from one function but get 4 separate lists.
+  defp build_argument_specs(argument_types) do
     {args, vals} =
-      Enum.unzip(
-        Enum.with_index(argument_types, fn argument_type, index ->
-          name =
-            case Map.get(argument_type, :name) do
-              x when is_nil(x) or x == "" ->
-                "var#{index}"
+      argument_types
+      |> Enum.with_index(&build_argument_spec/2)
+      |> Enum.unzip()
 
-              els ->
-                String.trim_leading(els, "_")
-            end
-
-          if Map.has_key?(argument_type, :name) do
-            names =
-              case argument_type.type do
-                {:tuple, tuple_types} ->
-                  Enum.map(tuple_types, fn t -> Map.get(t, :name) end)
-
-                _ ->
-                  [nil]
-              end
-
-            if not Enum.member?(names, nil) and not Enum.member?(names, "") do
-              # For a struct, we're going to make the arguments a map to make it
-              # name and named for the caller. But this is harder since we'll need
-              # to pass the arguments as a `{tuple}` to the encode function, since
-              # they need to be ordered. Thus there's a bunch of insane logic here
-              # in how to gen the map, and the calls, and trying to make sure we
-              # underscore `_unused` vars to prevent compiler warnings.
-              #
-              # HERE BE DRAGONS 🐉🌊🌊🌊🌊🌊🐉
-              #
-              name_var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
-
-              encode_unused_name_var =
-                Macro.var(String.to_atom("_" <> Macro.underscore(name)), __MODULE__)
-
-              encode_els =
-                Enum.map(names, fn el ->
-                  el_atom = String.to_atom(Macro.underscore(el))
-                  el_var = Macro.var(el_atom, __MODULE__)
-
-                  quote do
-                    {unquote(el_atom), unquote(el_var)}
-                  end
-                end)
-
-              execute_els_unused =
-                Enum.map(names, fn el ->
-                  el_atom = String.to_atom(Macro.underscore(el))
-                  el_atom_unused = String.to_atom("_" <> Macro.underscore(el))
-                  el_var_unused = Macro.var(el_atom_unused, __MODULE__)
-
-                  quote do
-                    {unquote(el_atom), unquote(el_var_unused)}
-                  end
-                end)
-
-              encode_value_inners =
-                Enum.map(names, fn el ->
-                  el_atom = String.to_atom(Macro.underscore(el))
-                  el_var = Macro.var(el_atom, __MODULE__)
-
-                  quote do
-                    unquote(el_var)
-                  end
-                end)
-
-              encode_argument =
-                quote do
-                  unquote(encode_unused_name_var) = %{unquote_splicing(encode_els)}
-                end
-
-              execute_argument =
-                quote do
-                  unquote(name_var) = %{unquote_splicing(execute_els_unused)}
-                end
-
-              execute_value = name_var
-
-              encode_value =
-                quote do
-                  {unquote_splicing(encode_value_inners)}
-                end
-
-              {{execute_argument, encode_argument}, {execute_value, encode_value}}
-            else
-              var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
-              {{var, var}, {var, var}}
-            end
-          else
-            # There's no name for this argument, we're going to return nils
-            # here which will mean this function doesn't get included in
-            # the generated code.
-            {{nil, nil}, {nil, nil}}
-          end
-        end)
-      )
-
-    # These are the unzipped list of arguments and values to use with the
-    # encode function and execute functions.
     {execute_arguments, encode_arguments} = Enum.unzip(args)
     {execute_values, encode_values} = Enum.unzip(vals)
+    {execute_arguments, encode_arguments, execute_values, encode_values}
+  end
 
+  defp build_argument_spec(argument_type, index) do
+    if Map.has_key?(argument_type, :name) do
+      name = arg_name(argument_type, index)
+      names = tuple_field_names(argument_type.type)
+
+      if struct_argument?(names) do
+        build_struct_argument_spec(name, names)
+      else
+        build_simple_argument_spec(name)
+      end
+    else
+      {{nil, nil}, {nil, nil}}
+    end
+  end
+
+  defp arg_name(argument_type, index) do
+    case Map.get(argument_type, :name) do
+      x when is_nil(x) or x == "" -> "var#{index}"
+      els -> String.trim_leading(els, "_")
+    end
+  end
+
+  defp tuple_field_names({:tuple, tuple_types}), do: Enum.map(tuple_types, &Map.get(&1, :name))
+  defp tuple_field_names(_), do: [nil]
+
+  defp struct_argument?(names) do
+    not Enum.member?(names, nil) and not Enum.member?(names, "")
+  end
+
+  # For a struct, we make the arguments a map keyed by field name. We need to
+  # pass them as a `{tuple}` to the encode function (positional), and we need
+  # to underscore unused vars to silence compiler warnings.
+  #
+  # HERE BE DRAGONS 🐉🌊🌊🌊🌊🌊🐉
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp build_struct_argument_spec(name, names) do
+    name_var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
+    encode_unused_name_var = Macro.var(String.to_atom("_" <> Macro.underscore(name)), __MODULE__)
+
+    encode_els = Enum.map(names, &name_value_pair/1)
+    execute_els_unused = Enum.map(names, &unused_name_value_pair/1)
+    encode_value_inners = Enum.map(names, &positional_value/1)
+
+    encode_argument =
+      quote do
+        unquote(encode_unused_name_var) = %{unquote_splicing(encode_els)}
+      end
+
+    execute_argument =
+      quote do
+        unquote(name_var) = %{unquote_splicing(execute_els_unused)}
+      end
+
+    encode_value =
+      quote do
+        {unquote_splicing(encode_value_inners)}
+      end
+
+    {{execute_argument, encode_argument}, {name_var, encode_value}}
+  end
+
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp build_simple_argument_spec(name) do
+    var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
+    {{var, var}, {var, var}}
+  end
+
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp name_value_pair(el) do
+    el_atom = String.to_atom(Macro.underscore(el))
+    el_var = Macro.var(el_atom, __MODULE__)
+
+    quote do
+      {unquote(el_atom), unquote(el_var)}
+    end
+  end
+
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp unused_name_value_pair(el) do
+    el_atom = String.to_atom(Macro.underscore(el))
+    el_atom_unused = String.to_atom("_" <> Macro.underscore(el))
+    el_var_unused = Macro.var(el_atom_unused, __MODULE__)
+
+    quote do
+      {unquote(el_atom), unquote(el_var_unused)}
+    end
+  end
+
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp positional_value(el) do
+    el_atom = String.to_atom(Macro.underscore(el))
+    el_var = Macro.var(el_atom, __MODULE__)
+
+    quote do
+      unquote(el_var)
+    end
+  end
+
+  defp signature_data(selector) do
     abi = ABI.FunctionSelector.encode(selector)
 
     signature =
       <<abi_enc_signature::binary-size(4), _::binary>> =
-      Cartouche.Hash.keccak(ABI.FunctionSelector.encode(selector))
+      Cartouche.Hash.keccak(abi)
 
     abi_enc_signature_list = :erlang.binary_to_list(abi_enc_signature)
     abi_enc_signature_hex_base = Cartouche.Hex.encode_hex(abi_enc_signature)
@@ -393,295 +427,328 @@ defmodule Mix.Tasks.Cartouche.Gen do
         _signature = hex!(unquote(abi_enc_signature_hex_base))
       end
 
-    signature_list = :erlang.binary_to_list(signature)
-    error_name = selector.function
+    %{
+      abi: abi,
+      abi_enc_signature_list: abi_enc_signature_list,
+      abi_enc_signature_hex: abi_enc_signature_hex,
+      signature_list: :erlang.binary_to_list(signature),
+      error_name: selector.function
+    }
+  end
 
-    no_bytecode_constructor =
-      selector.function_type == :constructor and
-        not has_bytecode
+  defp abort?(execute_arguments, selector, has_bytecode) do
+    Enum.member?(execute_arguments, nil) or
+      (selector.function_type == :constructor and not has_bytecode)
+  end
 
-    # check if we bailed on any argument and bail generally, if so.
-    if Enum.member?(execute_arguments, nil) or no_bytecode_constructor do
-      Logger.warning("Ignoring function #{selector.function} due to unknown argument")
-      nil
-    else
-      encode_fn =
-        case selector.function_type do
-          :constructor ->
-            quote do
-              def unquote(encode_fun_name)(unquote_splicing(encode_arguments)) do
-                bytecode() <> ABI.encode(unquote(abi), [{unquote_splicing(encode_values)}])
-              end
-            end
+  defp build_function_quotes(ctx) do
+    %{
+      encode_fn: build_encode_fn(ctx),
+      prepare_fn: build_prepare_fn(ctx),
+      build_trx_fn: build_build_trx_fn(ctx),
+      call_fn: build_call_fn(ctx),
+      estimate_gas_fn: build_estimate_gas_fn(ctx),
+      execute_fn: build_execute_fn(ctx),
+      exec_vm_fn: build_exec_vm_fn(ctx),
+      exec_vm_raw_fn: build_exec_vm_raw_fn(ctx),
+      selector_fn: build_selector_fn(ctx),
+      event_selector_fn: build_event_selector_fn(ctx),
+      decode_event_fn: build_decode_event_fn(ctx),
+      decode_call_fn: build_decode_call_fn(ctx),
+      decode_error_fn: build_decode_error_fn(ctx),
+      generic_decode_call_fn: build_generic_decode_call_fn(ctx),
+      generic_error_fn: build_generic_error_fn(ctx),
+      generic_event_fn: build_generic_event_fn(ctx)
+    }
+  end
 
-          x when x in [:fallback, :receive] ->
-            quote do
-              def unquote(encode_fun_name)(unquote_splicing(encode_arguments)) do
-                (unquote_splicing(encode_arguments))
-              end
-            end
+  defp build_encode_fn(%{selector: %{function_type: :constructor}} = ctx) do
+    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values, sig: sig} = ctx
 
-          :event ->
-            quote do
-              def unquote(encode_event_fun_name)(unquote_splicing(encode_arguments)) do
-                ABI.encode(unquote(event_selector_fun_name)(), unquote(encode_values))
-              end
-            end
-
-          _ ->
-            quote do
-              def unquote(encode_fun_name)(unquote_splicing(encode_arguments)) do
-                ABI.encode(unquote(selector_fun_name)(), unquote(encode_values))
-              end
-            end
-        end
-
-      prepare_fn =
-        case selector.function_type do
-          :constructor ->
-            quote do
-              def unquote(prepare_fun_name)(
-                    unquote_splicing(execute_arguments),
-                    opts \\ []
-                  ) do
-                Cartouche.RPC.prepare_trx(
-                  <<0::256>>,
-                  unquote(encode_fun_name)(unquote_splicing(execute_values)),
-                  opts
-                )
-              end
-            end
-
-          _ ->
-            quote do
-              def unquote(prepare_fun_name)(
-                    contract,
-                    unquote_splicing(execute_arguments),
-                    opts \\ []
-                  ) do
-                Cartouche.RPC.prepare_trx(
-                  contract,
-                  unquote(encode_fun_name)(unquote_splicing(execute_values)),
-                  opts
-                )
-              end
-            end
-        end
-
-      build_trx_fn =
-        quote do
-          def unquote(build_trx_fun_name)(contract, unquote_splicing(execute_arguments)) do
-            %Cartouche.Transaction.V2{
-              destination: contract,
-              data: unquote(encode_fun_name)(unquote_splicing(execute_values))
-            }
-          end
-        end
-
-      call_fn =
-        quote do
-          def unquote(call_fun_name)(contract, unquote_splicing(execute_arguments), opts \\ []) do
-            Cartouche.RPC.call_trx(
-              unquote(build_trx_fun_name)(contract, unquote_splicing(execute_values)),
-              opts
-            )
-          end
-        end
-
-      estimate_gas_fn =
-        quote do
-          def unquote(estimate_gas_fun_name)(
-                contract,
-                unquote_splicing(execute_arguments),
-                opts \\ []
-              ) do
-            Cartouche.RPC.estimate_gas(
-              unquote(build_trx_fun_name)(contract, unquote_splicing(execute_values)),
-              opts
-            )
-          end
-        end
-
-      execute_fn =
-        case selector.function_type do
-          :constructor ->
-            quote do
-              def unquote(execute_fun_name)(unquote_splicing(execute_arguments), opts \\ []) do
-                Cartouche.RPC.execute_trx(
-                  <<0::256>>,
-                  unquote(encode_fun_name)(unquote_splicing(execute_values)),
-                  opts
-                )
-              end
-            end
-
-          _ ->
-            quote do
-              def unquote(execute_fun_name)(
-                    contract,
-                    unquote_splicing(execute_arguments),
-                    opts \\ []
-                  ) do
-                Cartouche.RPC.execute_trx(
-                  contract,
-                  unquote(encode_fun_name)(unquote_splicing(execute_values)),
-                  opts
-                )
-              end
-            end
-        end
-
-      exec_vm_fn =
-        quote do
-          def unquote(exec_vm_fun_name)(
-                unquote_splicing(execute_arguments),
-                exec_opts \\ []
-              ) do
-            case Cartouche.VM.exec_call(
-                   deployed_bytecode(),
-                   unquote(encode_fun_name)(unquote_splicing(execute_values)),
-                   exec_opts
-                 ) do
-              {:ok, return_data} ->
-                case ABI.decode(
-                       %ABI.FunctionSelector{types: unquote(selector_fun_name)().returns},
-                       return_data,
-                       decode_structs: true
-                     ) do
-                  m when is_map(m) ->
-                    {:ok, m}
-
-                  [decoded] ->
-                    {:ok, decoded}
-
-                  els ->
-                    {:ok, els}
-                end
-
-              {:revert, revert_data} ->
-                case decode_error(revert_data) do
-                  {:ok, error, data} ->
-                    {:revert, error, data}
-
-                  :not_found ->
-                    {:revert, "Unknown", revert_data}
-                end
-            end
-          end
-        end
-
-      exec_vm_raw_fn =
-        quote do
-          def unquote(exec_vm_raw_fun_name)(
-                unquote_splicing(execute_arguments),
-                exec_opts \\ []
-              ) do
-            Cartouche.VM.exec_call(
-              deployed_bytecode(),
-              unquote(encode_fun_name)(unquote_splicing(execute_values)),
-              exec_opts
-            )
-          end
-        end
-
-      selector_fn =
-        quote do
-          def unquote(selector_fun_name)() do
-            unquote(Macro.escape(selector))
-          end
-        end
-
-      event_selector_fn =
-        quote do
-          def unquote(event_selector_fun_name)() do
-            unquote(Macro.escape(event_selector))
-          end
-        end
-
-      decode_event_fn =
-        quote do
-          def unquote(decode_event_fun_name)(topics, data) when is_list(topics) do
-            unquote(abi_enc_signature_hex)
-            ABI.Event.decode_event(data, topics, unquote(event_selector_fun_name)())
-          end
-        end
-
-      decode_call_fn =
-        quote do
-          def unquote(decode_call_fun_name)(<<unquote_splicing(abi_enc_signature_list)>> <> calldata) do
-            unquote(abi_enc_signature_hex)
-            ABI.decode(unquote(selector_fun_name)(), calldata)
-          end
-        end
-
-      decode_error_fn =
-        quote do
-          def unquote(decode_error_fun_name)(<<unquote_splicing(abi_enc_signature_list)>> <> error) do
-            unquote(abi_enc_signature_hex)
-            ABI.decode(unquote(selector_fun_name)(), error)
-          end
-        end
-
-      generic_decode_call_fn =
-        quote do
-          def decode_call(<<unquote_splicing(abi_enc_signature_list)>> <> _ = calldata) do
-            unquote(abi_enc_signature_hex)
-            {:ok, unquote(error_name), unquote(decode_call_fun_name)(calldata)}
-          end
-        end
-
-      generic_error_fn =
-        quote do
-          def decode_error(<<unquote_splicing(abi_enc_signature_list)>> <> _ = error) do
-            unquote(abi_enc_signature_hex)
-            {:ok, unquote(error_name), unquote(decode_error_fun_name)(error)}
-          end
-        end
-
-      generic_event_fn =
-        quote do
-          def decode_event([<<unquote_splicing(signature_list)>> | _] = topics, data) do
-            unquote(decode_event_fun_name)(topics, data)
-          end
-        end
-
-      case {selector.function_type, selector.state_mutability} do
-        {:error, _} ->
-          {[selector_fn, encode_fn, decode_error_fn], nil, nil, generic_error_fn}
-
-        {:event, _} ->
-          {[event_selector_fn, encode_fn, decode_event_fn], nil, generic_event_fn, nil}
-
-        {x, _} when x in [:constructor, :fallback, :receive] ->
-          {[encode_fn, prepare_fn, execute_fn], nil, nil, nil}
-
-        {_, :pure} ->
-          {[
-             selector_fn,
-             encode_fn,
-             prepare_fn,
-             build_trx_fn,
-             call_fn,
-             estimate_gas_fn,
-             execute_fn,
-             decode_call_fn,
-             exec_vm_fn,
-             exec_vm_raw_fn
-           ], generic_decode_call_fn, nil, nil}
-
-        _ ->
-          {[
-             selector_fn,
-             encode_fn,
-             prepare_fn,
-             build_trx_fn,
-             call_fn,
-             estimate_gas_fn,
-             execute_fn,
-             decode_call_fn
-           ], generic_decode_call_fn, nil, nil}
+    quote do
+      def unquote(names.encode)(unquote_splicing(encode_arguments)) do
+        bytecode() <> ABI.encode(unquote(sig.abi), [{unquote_splicing(encode_values)}])
       end
     end
+  end
+
+  defp build_encode_fn(%{selector: %{function_type: t}} = ctx) when t in [:fallback, :receive] do
+    %{names: names, encode_arguments: encode_arguments} = ctx
+
+    quote do
+      def unquote(names.encode)(unquote_splicing(encode_arguments)) do
+        (unquote_splicing(encode_arguments))
+      end
+    end
+  end
+
+  defp build_encode_fn(%{selector: %{function_type: :event}} = ctx) do
+    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values} = ctx
+
+    quote do
+      def unquote(names.encode_event)(unquote_splicing(encode_arguments)) do
+        ABI.encode(unquote(names.event_selector)(), unquote(encode_values))
+      end
+    end
+  end
+
+  defp build_encode_fn(ctx) do
+    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values} = ctx
+
+    quote do
+      def unquote(names.encode)(unquote_splicing(encode_arguments)) do
+        ABI.encode(unquote(names.selector)(), unquote(encode_values))
+      end
+    end
+  end
+
+  defp build_prepare_fn(%{selector: %{function_type: :constructor}} = ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.prepare)(unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.prepare_trx(
+          <<0::256>>,
+          unquote(names.encode)(unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_prepare_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.prepare)(contract, unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.prepare_trx(
+          contract,
+          unquote(names.encode)(unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_build_trx_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.build_trx)(contract, unquote_splicing(execute_arguments)) do
+        %Cartouche.Transaction.V2{
+          destination: contract,
+          data: unquote(names.encode)(unquote_splicing(execute_values))
+        }
+      end
+    end
+  end
+
+  defp build_call_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.call)(contract, unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.call_trx(
+          unquote(names.build_trx)(contract, unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_estimate_gas_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.estimate_gas)(contract, unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.estimate_gas(
+          unquote(names.build_trx)(contract, unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_execute_fn(%{selector: %{function_type: :constructor}} = ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.execute)(unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.execute_trx(
+          <<0::256>>,
+          unquote(names.encode)(unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_execute_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.execute)(contract, unquote_splicing(execute_arguments), opts \\ []) do
+        Cartouche.RPC.execute_trx(
+          contract,
+          unquote(names.encode)(unquote_splicing(execute_values)),
+          opts
+        )
+      end
+    end
+  end
+
+  defp build_exec_vm_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.exec_vm)(unquote_splicing(execute_arguments), exec_opts \\ []) do
+        case Cartouche.VM.exec_call(
+               deployed_bytecode(),
+               unquote(names.encode)(unquote_splicing(execute_values)),
+               exec_opts
+             ) do
+          {:ok, return_data} ->
+            case ABI.decode(
+                   %ABI.FunctionSelector{types: unquote(names.selector)().returns},
+                   return_data,
+                   decode_structs: true
+                 ) do
+              m when is_map(m) -> {:ok, m}
+              [decoded] -> {:ok, decoded}
+              els -> {:ok, els}
+            end
+
+          {:revert, revert_data} ->
+            case decode_error(revert_data) do
+              {:ok, error, data} -> {:revert, error, data}
+              :not_found -> {:revert, "Unknown", revert_data}
+            end
+        end
+      end
+    end
+  end
+
+  defp build_exec_vm_raw_fn(ctx) do
+    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+
+    quote do
+      def unquote(names.exec_vm_raw)(unquote_splicing(execute_arguments), exec_opts \\ []) do
+        Cartouche.VM.exec_call(
+          deployed_bytecode(),
+          unquote(names.encode)(unquote_splicing(execute_values)),
+          exec_opts
+        )
+      end
+    end
+  end
+
+  defp build_selector_fn(%{names: names, selector: selector}) do
+    quote do
+      def unquote(names.selector)() do
+        unquote(Macro.escape(selector))
+      end
+    end
+  end
+
+  defp build_event_selector_fn(%{names: names, selector: selector}) do
+    quote do
+      def unquote(names.event_selector)() do
+        unquote(Macro.escape(selector))
+      end
+    end
+  end
+
+  defp build_decode_event_fn(%{names: names, sig: sig}) do
+    quote do
+      def unquote(names.decode_event)(topics, data) when is_list(topics) do
+        unquote(sig.abi_enc_signature_hex)
+        ABI.Event.decode_event(data, topics, unquote(names.event_selector)())
+      end
+    end
+  end
+
+  defp build_decode_call_fn(%{names: names, sig: sig}) do
+    quote do
+      def unquote(names.decode_call)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> calldata) do
+        unquote(sig.abi_enc_signature_hex)
+        ABI.decode(unquote(names.selector)(), calldata)
+      end
+    end
+  end
+
+  defp build_decode_error_fn(%{names: names, sig: sig}) do
+    quote do
+      def unquote(names.decode_error)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> error) do
+        unquote(sig.abi_enc_signature_hex)
+        ABI.decode(unquote(names.selector)(), error)
+      end
+    end
+  end
+
+  defp build_generic_decode_call_fn(%{names: names, sig: sig}) do
+    quote do
+      def decode_call(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = calldata) do
+        unquote(sig.abi_enc_signature_hex)
+        {:ok, unquote(sig.error_name), unquote(names.decode_call)(calldata)}
+      end
+    end
+  end
+
+  defp build_generic_error_fn(%{names: names, sig: sig}) do
+    quote do
+      def decode_error(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = error) do
+        unquote(sig.abi_enc_signature_hex)
+        {:ok, unquote(sig.error_name), unquote(names.decode_error)(error)}
+      end
+    end
+  end
+
+  defp build_generic_event_fn(%{names: names, sig: sig}) do
+    quote do
+      def decode_event([<<unquote_splicing(sig.signature_list)>> | _] = topics, data) do
+        unquote(names.decode_event)(topics, data)
+      end
+    end
+  end
+
+  defp select_emitted_fns(%{function_type: :error}, _has_bytecode, fns) do
+    {[fns.selector_fn, fns.encode_fn, fns.decode_error_fn], nil, nil, fns.generic_error_fn}
+  end
+
+  defp select_emitted_fns(%{function_type: :event}, _has_bytecode, fns) do
+    {[fns.event_selector_fn, fns.encode_fn, fns.decode_event_fn], nil, fns.generic_event_fn, nil}
+  end
+
+  defp select_emitted_fns(%{function_type: t}, _has_bytecode, fns) when t in [:constructor, :fallback, :receive] do
+    {[fns.encode_fn, fns.prepare_fn, fns.execute_fn], nil, nil, nil}
+  end
+
+  defp select_emitted_fns(%{state_mutability: :pure}, true, fns) do
+    {[
+       fns.selector_fn,
+       fns.encode_fn,
+       fns.prepare_fn,
+       fns.build_trx_fn,
+       fns.call_fn,
+       fns.estimate_gas_fn,
+       fns.execute_fn,
+       fns.decode_call_fn,
+       fns.exec_vm_fn,
+       fns.exec_vm_raw_fn
+     ], fns.generic_decode_call_fn, nil, nil}
+  end
+
+  defp select_emitted_fns(_selector, _has_bytecode, fns) do
+    {[
+       fns.selector_fn,
+       fns.encode_fn,
+       fns.prepare_fn,
+       fns.build_trx_fn,
+       fns.call_fn,
+       fns.estimate_gas_fn,
+       fns.execute_fn,
+       fns.decode_call_fn
+     ], fns.generic_decode_call_fn, nil, nil}
   end
 
   # Generate the bytecode function
@@ -689,7 +756,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp get_bytecode(abi) do
     bytecode = get_in(abi, ["bytecode", "object"]) || get_in(abi, ["bin"])
 
-    if is_nil(bytecode) do
+    if blank_bytecode?(bytecode) do
       []
     else
       [
@@ -705,7 +772,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     deployed_bytecode =
       get_in(abi, ["deployedBytecode", "object"]) || get_in(abi, ["bin-runtime"])
 
-    if is_nil(deployed_bytecode) do
+    if blank_bytecode?(deployed_bytecode) do
       []
     else
       [
@@ -715,6 +782,23 @@ defmodule Mix.Tasks.Cartouche.Gen do
       ]
     end
   end
+
+  # Treat nil, empty/whitespace strings, and "0x"/"0x"+whitespace as missing
+  # bytecode. Foundry emits "0x" for interfaces with no on-chain bytecode
+  # (e.g. Hardhat's IConsole), and `is_nil` alone wouldn't catch those —
+  # leaving callers to compile-encode <<>> as if it were real code.
+  defp blank_bytecode?(nil), do: true
+
+  defp blank_bytecode?(s) when is_binary(s) do
+    case String.trim(s) do
+      "" -> true
+      "0x" -> true
+      "0x" <> rest -> String.trim(rest) == ""
+      _ -> false
+    end
+  end
+
+  defp blank_bytecode?(_), do: false
 
   # The crux of it. Builds the entire module with function declarations, etc
   # based on the output-json "abi" of a given Solidity contract.
@@ -743,7 +827,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     bytecode_decl = get_bytecode(abi_map)
     deployed_bytecode_decl = get_deployed_bytecode(abi_map)
-    encode_call_decl = get_encode_calls(abi_map, Enum.count(bytecode_decl) > 0)
+    encode_call_decl = get_encode_calls(abi_map, not Enum.empty?(bytecode_decl))
 
     quote_result =
       quote do
@@ -763,9 +847,17 @@ defmodule Mix.Tasks.Cartouche.Gen do
         end
       end
 
-    contents = Macro.to_string(quote_result)
+    contents = quote_result |> Macro.to_string() |> strip_zero_arity_def_parens()
 
     {file_name, contents}
+  end
+
+  # Macro-time `def unquote(name)()` requires the trailing parens for the AST to
+  # form a valid function-name shape, but the formatted output then trips
+  # Credo's ParenthesesOnZeroArityDefs. Strip empty parens from `def`/`defp`
+  # lines as a post-process — text-level only, def-line-anchored.
+  defp strip_zero_arity_def_parens(source) do
+    Regex.replace(~r/^(\s*defp?\s+[a-z_][a-zA-Z0-9_!?]*)\(\)/m, source, "\\1")
   end
 
   # Gets the output-json of all included Solidity files to auto-generate.
