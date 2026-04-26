@@ -22,3 +22,15 @@ forked from https://github.com/hayesgm/signet
 ## Hook-flagged issues
 
 When our PostToolUse hooks flag issues on files you touched (credo, format, dialyzer, etc.), fix them in this commit — including pre-existing flags unrelated to your change. See `critical-rules.md` → "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH". Touched-file scope only, not project-wide.
+
+## Sobelow workflow
+
+After fixing a sobelow finding (or otherwise wanting to refresh `.sobelow-skips`), regenerate the suppression file from live state:
+
+```bash
+mix sobelow --mark-skip-all
+```
+
+That writes a fresh `.sobelow-skips` containing fingerprints for whatever sobelow flags right now. Resolved findings drop out automatically; new ones get added. Confirm with `mix sobelow` (clean output = all findings are accounted for).
+
+`.sobelow-skips` is a per-developer working-set artifact (untracked). Don't hand-edit unless you only want to remove one specific fingerprint without re-scanning.

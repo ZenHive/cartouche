@@ -37,8 +37,48 @@ defmodule Cartouche.DebugTrace do
       :stack
     ]
 
+    # Closed whitelist of EVM opcode strings that real nodes emit in
+    # `eth_debug_traceCall` struct-logs. Atoms are interned at compile time when
+    # the AST is built; runtime lookup uses `Map.fetch/2` so RPC input cannot grow
+    # the BEAM atom table.
+    #
+    # Aliases for opcode 0x20 (`KECCAK256`):
+    #   KECCAK256 — current Geth and most modern clients
+    #   SHA3      — pre-1.8 Geth and some non-Geth nodes (Erigon/Nethermind history)
+    #
+    # Aliases for opcode 0x44 (the post-Merge randomness slot):
+    #   DIFFICULTY  — current go-ethereum mnemonic. The rename to PREVRANDAO is
+    #                 still an open TODO in go-ethereum master (`opCodeToString`
+    #                 in `core/vm/opcodes.go`), so live struct-logs from any
+    #                 current Geth node carry "DIFFICULTY", not "PREVRANDAO".
+    #   PREVRANDAO  — forward-compat for clients (or a future Geth) that emit the
+    #                 post-Merge name; Erigon/Reth historically used it.
+    @single_opcodes ~w(
+      STOP ADD MUL SUB DIV SDIV MOD SMOD ADDMOD MULMOD EXP SIGNEXTEND
+      LT GT SLT SGT EQ ISZERO AND OR XOR NOT BYTE SHL SHR SAR
+      KECCAK256 SHA3
+      ADDRESS BALANCE ORIGIN CALLER CALLVALUE CALLDATALOAD CALLDATASIZE CALLDATACOPY
+      CODESIZE CODECOPY GASPRICE EXTCODESIZE EXTCODECOPY RETURNDATASIZE RETURNDATACOPY
+      EXTCODEHASH BLOCKHASH COINBASE TIMESTAMP NUMBER DIFFICULTY PREVRANDAO GASLIMIT CHAINID
+      SELFBALANCE BASEFEE BLOBHASH BLOBBASEFEE
+      POP MLOAD MSTORE MSTORE8 SLOAD SSTORE JUMP JUMPI PC MSIZE GAS JUMPDEST
+      TLOAD TSTORE MCOPY PUSH0
+      CREATE CALL CALLCODE RETURN DELEGATECALL CREATE2 STATICCALL REVERT INVALID SELFDESTRUCT
+    )
+
+    @ranged_opcodes Enum.map(1..32, &"PUSH#{&1}") ++
+                      Enum.map(1..16, &"DUP#{&1}") ++
+                      Enum.map(1..16, &"SWAP#{&1}") ++
+                      Enum.map(0..4, &"LOG#{&1}")
+
+    @opcode_to_atom Map.new(@single_opcodes ++ @ranged_opcodes, &{&1, String.to_atom(&1)})
+
     @doc ~S"""
     Deserializes a trace's struct-log into a struct.
+
+    Raises `ArgumentError` for unknown opcode strings or non-binary `op` —
+    the whitelist covers Cancun-era opcodes plus the legacy Geth `SHA3` alias;
+    future-fork additions surface as raises rather than silent atom-table growth.
 
     ## Examples
 
@@ -66,12 +106,22 @@ defmodule Cartouche.DebugTrace do
         depth: params["depth"],
         gas: params["gas"],
         gas_cost: params["gasCost"],
-        # TODO: `op` is unsanitized RPC input — a hostile/buggy node could grow
-        # the atom table. Harden by whitelisting against the known EVM opcode set.
-        op: String.to_atom(params["op"]),
+        op: decode_op(params["op"]),
         pc: params["pc"],
         stack: Enum.map(params["stack"], &Cartouche.Hex.decode_hex!/1)
       }
+    end
+
+    @spec decode_op(term()) :: atom() | no_return()
+    defp decode_op(op) when is_binary(op) do
+      case Map.fetch(@opcode_to_atom, op) do
+        {:ok, atom} -> atom
+        :error -> raise ArgumentError, "unknown EVM opcode: #{inspect(op)}"
+      end
+    end
+
+    defp decode_op(op) do
+      raise ArgumentError, "expected binary opcode string, got: #{inspect(op)}"
     end
 
     @doc ~S"""
