@@ -121,6 +121,7 @@ defmodule Cartouche.Block do
         uncles: []
       }
   """
+  @spec deserialize(map()) :: t()
   def deserialize(params) do
     %__MODULE__{
       number: map(get_in(params, ["number"]), &Hex.decode_hex_number!/1),

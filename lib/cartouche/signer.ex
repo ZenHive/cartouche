@@ -27,6 +27,7 @@ defmodule Cartouche.Signer do
   @doc """
   Starts a new Cartouche.Signer process.
   """
+  @spec start_link(mfa: {module(), atom(), [any()]}, name: GenServer.name()) :: GenServer.on_start()
   def start_link(mfa: mfa, name: name) do
     Logger.info("Starting Cartouche.Signer #{name}...")
     chain_id = Cartouche.Application.chain_id()
@@ -38,9 +39,7 @@ defmodule Cartouche.Signer do
     )
   end
 
-  @doc """
-  Initializes a new Cartouche.Signer.
-  """
+  @doc false
   @impl true
   def init(state) do
     {:ok, state}
@@ -62,6 +61,8 @@ defmodule Cartouche.Signer do
       iex> :binary.decode_unsigned(v)
       0x05f5e0ff * 2 + 35 + 1
   """
+  @spec sign(String.t(), GenServer.name(), Keyword.t()) ::
+          {:ok, binary()} | {:error, String.t()}
   def sign(message, name \\ Default, opts \\ []) do
     chain_id = Keyword.get(opts, :chain_id, GenServer.call(name, :get_chain_id))
     GenServer.call(name, {:sign, {message, chain_id}})
@@ -76,6 +77,7 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.address(signer_proc) |> Cartouche.Hex.to_address()
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
+  @spec address(GenServer.name()) :: Cartouche.address()
   def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
@@ -89,14 +91,12 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.chain_id(signer_proc)
       5
   """
+  @spec chain_id(GenServer.name()) :: integer()
   def chain_id(name \\ Default) do
     GenServer.call(name, :get_chain_id)
   end
 
-  @doc """
-  Handles signing a message. Finds and memoizes address on first call. Address
-  is required for finding recovery bit.
-  """
+  @doc false
   @impl true
   def handle_call({:sign, {message, chain_id}}, _from, %{address: address, mfa: mfa} = state) do
     {:reply, sign_direct(message, address, mfa, chain_id), state}
@@ -130,7 +130,7 @@ defmodule Cartouche.Signer do
 
   This is mostly used internally, but can be used safely externally as well.
   """
-  @spec sign_direct(String.t(), binary(), mfa(), integer()) ::
+  @spec sign_direct(String.t(), binary(), {module(), atom(), [any()]}, integer()) ::
           {:ok, binary()} | {:error, String.t()}
   def sign_direct(message, address, {mod, fun, args}, chain_id_or_name) do
     with {:ok,

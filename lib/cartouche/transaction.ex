@@ -52,6 +52,15 @@ defmodule Cartouche.Transaction do
           s: 0
         }
     """
+    @spec new(
+            integer(),
+            integer() | {integer(), :wei | :gwei} | nil,
+            integer(),
+            <<_::160>>,
+            integer() | {integer(), :wei | :gwei},
+            binary(),
+            atom() | integer() | nil
+          ) :: t()
     def new(nonce, gas_price, gas_limit, to, value, data, chain_id \\ nil) do
       %__MODULE__{
         nonce: nonce,
@@ -81,6 +90,7 @@ defmodule Cartouche.Transaction do
         ...> |> Base.encode16()
         "E80185174876E800830186A094000000000000000000000000000000000000000102830102032A8080"
     """
+    @spec encode(t()) :: binary()
     def encode(%__MODULE__{
           nonce: nonce,
           gas_price: gas_price,
@@ -115,6 +125,7 @@ defmodule Cartouche.Transaction do
           s: 0
         }}
     """
+    @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
     def decode(trx_enc) do
       case ExRLP.decode(trx_enc) do
         [nonce, gas_price, gas_limit, to, value, data, v, r, s] ->
@@ -155,6 +166,7 @@ defmodule Cartouche.Transaction do
           s: <<2::256>>
         }
     """
+    @spec add_signature(t(), <<_::512, _::_*8>>) :: t()
     def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v::binary>>) do
       %{transaction | v: :binary.decode_unsigned(v), r: r, s: s}
     end
@@ -178,6 +190,7 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Transaction.V1.get_signature()
         {:error, "transaction missing signature"}
     """
+    @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
     def get_signature(%__MODULE__{v: _v, r: 0, s: 0}), do: {:error, "transaction missing signature"}
 
     def get_signature(%__MODULE__{v: v, r: r, s: s}) do
@@ -201,6 +214,7 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Transaction.V1.recover_signer(:kovan)
         {:error, "transaction missing signature"}
     """
+    @spec recover_signer(t(), atom() | integer()) :: {:ok, <<_::160>>} | {:error, String.t()}
     def recover_signer(transaction, chain_id) do
       trx_encoded = encode(%{transaction | v: Cartouche.Chain.parse_id(chain_id), r: 0, s: 0})
 
@@ -282,6 +296,17 @@ defmodule Cartouche.Transaction do
           signature_s: <<0x02::256>>
         }
     """
+    @spec new(
+            integer(),
+            integer() | {integer(), :wei | :gwei} | nil,
+            integer() | {integer(), :wei | :gwei} | nil,
+            integer(),
+            <<_::160>>,
+            integer() | {integer(), :wei | :gwei},
+            binary(),
+            list(),
+            atom() | integer() | nil
+          ) :: t()
     def new(
           nonce,
           max_priority_fee_per_gas,
@@ -309,6 +334,23 @@ defmodule Cartouche.Transaction do
             chain_id
           )
 
+    @doc """
+    Like `new/9` but also accepts explicit signature fields (`signature_y_parity`, `signature_r`, `signature_s`).
+    """
+    @spec new(
+            integer(),
+            integer() | {integer(), :wei | :gwei} | nil,
+            integer() | {integer(), :wei | :gwei} | nil,
+            integer(),
+            <<_::160>>,
+            integer() | {integer(), :wei | :gwei},
+            binary(),
+            list(),
+            boolean() | nil,
+            <<_::256>> | nil,
+            <<_::256>> | nil,
+            atom() | integer() | nil
+          ) :: t()
     def new(
           nonce,
           max_priority_fee_per_gas,
@@ -388,6 +430,23 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Hex.encode_big_hex()
         "0x02F9027382210501843B9ACA00843C2390F1830493E09400AEA4B2242ABC8BB4BB78D537A67A245A7BEC6480B90204DEFF4B240000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000A000000000000000000000000000000000000000000000000000000000000007B0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E0000000000000000000000003B72952436D0DCACFA7D7691C0CF4DE6DD5BAA7E00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000B2C639C533813F4AA9D7837CAF62653D097FF85000000000000000000000000833589FCD6EDB6E08F4C7C32D4F71B54BDA0291300000000000000000000000000000000000000000000000000000000000AAE6000000000000000000000000000000000000000000000000000000000000AAE60000000000000000000000000000000000000000000000000000000000000000A00000000000000000000000000000000000000000000000000000000002ADA240000000000000000000000000000000000000000000000000000000067D38314000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000000C080A0019C8102CB582C309B0D2ABABB6AEB683A8FBC7E2044665F84669F0A73865B9AA03732EB6644FC11E850A0FED8EBE403B4C2F5D1F1AEC961EACCF1F7BAA55615A6"
     """
+    @spec encode(
+            t()
+            | %__MODULE__{
+                chain_id: integer() | nil,
+                nonce: integer() | nil,
+                max_priority_fee_per_gas: integer() | nil,
+                max_fee_per_gas: integer() | nil,
+                gas_limit: integer() | nil,
+                destination: <<_::160>> | nil,
+                amount: integer() | nil,
+                data: binary() | nil,
+                access_list: list() | nil,
+                signature_y_parity: nil,
+                signature_r: nil,
+                signature_s: nil
+              }
+          ) :: binary()
     def encode(%__MODULE__{
           chain_id: chain_id,
           nonce: nonce,
@@ -507,6 +566,7 @@ defmodule Cartouche.Transaction do
           signature_s: ~h[0x3732eb6644fc11e850a0fed8ebe403b4c2f5d1f1aec961eaccf1f7baa55615a6]
         }}
     """
+    @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
     def decode(<<0x02, trx_enc::binary>>) do
       case ExRLP.decode(trx_enc) do
         [
@@ -637,10 +697,15 @@ defmodule Cartouche.Transaction do
           signature_s: <<0x02::256>>
         }
     """
+    @spec add_signature(t(), boolean(), <<_::256>>, <<_::256>>) :: t()
     def add_signature(%__MODULE__{} = transaction, v, <<_::256>> = r, <<_::256>> = s) when is_boolean(v) do
       %{transaction | signature_y_parity: v, signature_r: r, signature_s: s}
     end
 
+    @doc """
+    Adds a signature to a transaction from a packed binary (`r <> s <> v`), deriving `signature_y_parity` from `v`.
+    """
+    @spec add_signature(t(), <<_::512, _::_*8>>) :: t()
     def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>) do
       v = :binary.decode_unsigned(v_bin)
 
@@ -667,6 +732,7 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Transaction.V2.get_signature()
         {:error, "transaction missing signature"}
     """
+    @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
     def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
         when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
 
@@ -690,6 +756,7 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Transaction.V2.recover_signer()
         {:error, "transaction missing signature"}
     """
+    @spec recover_signer(t()) :: {:ok, <<_::160>>} | {:error, String.t()}
     def recover_signer(transaction) do
       trx_encoded =
         encode(%{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil})
@@ -734,6 +801,15 @@ defmodule Cartouche.Transaction do
         s: 0
       }
   """
+  @spec build_trx(
+          <<_::160>>,
+          integer(),
+          binary() | {String.t(), [term()]},
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer(),
+          integer() | {integer(), :wei | :gwei},
+          atom() | integer() | nil
+        ) :: V1.t()
   def build_trx(address, nonce, call_data, gas_price, gas_limit, value, chain_id \\ nil) do
     data =
       case call_data do
@@ -787,6 +863,17 @@ defmodule Cartouche.Transaction do
         signature_s: nil
       }
   """
+  @spec build_trx_v2(
+          <<_::160>>,
+          integer(),
+          binary() | {String.t(), [term()]},
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer(),
+          integer() | {integer(), :wei | :gwei},
+          list(),
+          atom() | integer() | nil
+        ) :: V2.t()
   def build_trx_v2(
         address,
         nonce,
@@ -834,6 +921,15 @@ defmodule Cartouche.Transaction do
       iex> Cartouche.Hex.to_address(signer)
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
+  @spec build_signed_trx(
+          <<_::160>>,
+          integer(),
+          binary() | {String.t(), [term()]},
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer(),
+          integer() | {integer(), :wei | :gwei},
+          Keyword.t()
+        ) :: {:ok, V1.t()} | {:error, String.t()}
   def build_signed_trx(address, nonce, call_data, gas_price, gas_limit, value, opts \\ []) do
     signer = Keyword.get(opts, :signer, Default)
     chain_id = Keyword.get(opts, :chain_id, nil)
@@ -862,6 +958,17 @@ defmodule Cartouche.Transaction do
       iex> Cartouche.Hex.to_address(signer)
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
+  @spec build_signed_trx_v2(
+          <<_::160>>,
+          integer(),
+          binary() | {String.t(), [term()]},
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer() | {integer(), :wei | :gwei} | nil,
+          integer(),
+          integer() | {integer(), :wei | :gwei},
+          list(),
+          Keyword.t()
+        ) :: {:ok, V2.t()} | {:error, String.t()}
   def build_signed_trx_v2(
         address,
         nonce,

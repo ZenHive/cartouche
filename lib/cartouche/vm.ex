@@ -17,8 +17,9 @@ defmodule Cartouche.VM do
   @type code :: [opcode()]
   @type word :: <<_::256>>
   @type address :: <<_::160>>
-  @type ffis :: %{address() => code()}
-  @type context_result :: {:ok, Context.t()} | {:error, vm_error()}
+  @type ffi :: (binary() -> {:return, binary()} | {:revert, binary()})
+  @type ffis :: %{address() => ffi()}
+  @type context_result :: {:ok, __MODULE__.Context.t()} | {:error, vm_error()}
   @type exec_opts :: [
           callvalue: integer(),
           ffis: ffis()
@@ -43,6 +44,8 @@ defmodule Cartouche.VM do
 
   defmodule FFIs do
     @moduledoc false
+    @doc false
+    @spec log_ffi(binary()) :: {:return, binary()}
     def log_ffi(args) do
       case Cartouche.Contract.IConsole.decode_call(args) do
         {:ok, f, values} ->
@@ -100,7 +103,7 @@ defmodule Cartouche.VM do
             code_encoded: binary(),
             op_map: op_map(),
             pc: integer(),
-            halted: binary(),
+            halted: boolean(),
             stack: [binary()],
             memory: binary(),
             tstorage: %{binary() => binary()},
@@ -109,6 +112,11 @@ defmodule Cartouche.VM do
             ffis: Cartouche.VM.ffis()
           }
 
+    @doc """
+    Builds a fresh `Context` for executing `code` with the given FFI table.
+    Pre-computes the program-counter-keyed `op_map` from the assembled
+    bytecode so subsequent steps can resolve operations in O(1).
+    """
     @spec init_from(Cartouche.VM.code(), Cartouche.VM.ffis()) :: t()
     def init_from(code, ffis) do
       code_encoded = Assembly.assemble(code)
@@ -128,8 +136,12 @@ defmodule Cartouche.VM do
       }
     end
 
+    @doc """
+    Looks up the FFI registered at `address` in the context's FFI table.
+    Returns `{:error, {:unknown_ffi, address}}` when no FFI is registered.
+    """
     @spec fetch_ffi(t(), Cartouche.VM.address()) ::
-            {:ok, Cartouche.VM.code()} | {:error, Cartouche.VM.vm_error()}
+            {:ok, Cartouche.VM.ffi()} | {:error, Cartouche.VM.vm_error()}
     def fetch_ffi(context, address) do
       with :error <- Map.fetch(context.ffis, address) do
         {:error, {:unknown_ffi, address}}
@@ -156,6 +168,11 @@ defmodule Cartouche.VM do
       end
     end
 
+    @doc """
+    Renders the EVM stack as a debugger-style multi-line string with
+    descending offsets and word values in hex.
+    """
+    @spec show_stack([binary()]) :: String.t()
     def show_stack(stack) do
       hex_length = String.length(show_hex(Enum.count(stack) * 32))
 
@@ -167,6 +184,11 @@ defmodule Cartouche.VM do
       |> Enum.join("\n")
     end
 
+    @doc """
+    Renders the context as a multi-line string showing the program counter
+    and stack contents. Used for verbose VM tracing.
+    """
+    @spec show(t()) :: String.t()
     def show(context) do
       Enum.join(["pc=#{context.pc}", "stack:", show_stack(context.stack)], "\n")
     end
@@ -185,6 +207,11 @@ defmodule Cartouche.VM do
             return_data: binary()
           }
 
+    @doc """
+    Projects a halted execution `Context` down to the public-facing
+    `ExecutionResult` — keeping only the final stack, revert flag, and
+    return data.
+    """
     @spec from_context(Cartouche.VM.Context.t()) :: t()
     def from_context(context) do
       %__MODULE__{
@@ -202,6 +229,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pad_to_word(binary()) :: {:ok, <<_::256>>} | {:error, vm_error()}
   def pad_to_word(bin) when is_binary(bin) do
     if byte_size(bin) > 32 do
@@ -212,6 +240,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop(Context.t()) :: {:ok, Context.t(), word()} | {:error, vm_error()}
   def pop(context) do
     case context.stack do
@@ -223,6 +252,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec peek(Context.t(), integer()) :: {:ok, word()} | {:error, vm_error()}
   def peek(context, n) do
     case Enum.at(context.stack, n) do
@@ -234,6 +264,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop_unsigned(Context.t()) ::
           {:ok, Context.t(), unsigned()} | {:error, vm_error()}
   def pop_unsigned(context) do
@@ -248,6 +279,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop2(Context.t()) :: {:ok, Context.t(), word(), word()} | {:error, vm_error()}
   def pop2(context) do
     case context.stack do
@@ -259,6 +291,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop2_unsigned(Context.t()) ::
           {:ok, Context.t(), unsigned(), unsigned()} | {:error, vm_error()}
   def pop2_unsigned(context) do
@@ -274,6 +307,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop3_unsigned(Context.t()) ::
           {:ok, Context.t(), unsigned(), unsigned(), unsigned()} | {:error, vm_error()}
   def pop3_unsigned(context) do
@@ -290,6 +324,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop2_unsigned_word(Context.t()) ::
           {:ok, Context.t(), unsigned(), word()} | {:error, vm_error()}
   def pop2_unsigned_word(context) do
@@ -304,6 +339,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec pop3(Context.t()) :: {:ok, Context.t(), word(), word(), word()} | {:error, vm_error()}
   def pop3(context) do
     case context.stack do
@@ -315,6 +351,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec push_word(Context.t(), word()) :: {:ok, Context.t()} | {:error, vm_error()}
   def push_word(context, v) when is_binary(v) and bit_size(v) == 256 do
     if Enum.count(context.stack) == 1024 do
@@ -324,12 +361,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec word_to_uint(binary()) :: {:ok, unsigned()} | {:error, vm_error()}
   def word_to_uint(v) when is_binary(v) do
     # TODO: Check for overflow?
     {:ok, :binary.decode_unsigned(v)}
   end
 
+  @doc false
   @spec uint_to_word(unsigned()) :: {:ok, binary()} | {:error, vm_error()}
   def uint_to_word(v) when is_integer(v) do
     enc = :binary.encode_unsigned(v)
@@ -337,6 +376,7 @@ defmodule Cartouche.VM do
     pad_to_word(enc)
   end
 
+  @doc false
   @spec word_to_sint(binary()) :: {:ok, signed()} | {:error, vm_error()}
   def word_to_sint(<<value::signed-size(256)>>) do
     {:ok, value}
@@ -346,6 +386,7 @@ defmodule Cartouche.VM do
     {:error, :signed_integer_out_of_bounds}
   end
 
+  @doc false
   @spec sint_to_word(signed()) :: {:ok, binary()} | {:error, atom()}
   def sint_to_word(v) when is_integer(v) do
     min_value = -2 ** 255
@@ -433,6 +474,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec inc_pc(context_result(), opcode()) :: context_result()
   def inc_pc(context_result, operation) do
     with {:ok, context} <- context_result do
@@ -442,6 +484,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @doc false
   @spec cap_to_range(integer(), integer(), integer()) :: integer()
   def cap_to_range(x, min, max) do
     cond do
@@ -482,6 +525,7 @@ defmodule Cartouche.VM do
       end
     end
 
+    @doc false
     @spec read_memory(binary(), Cartouche.VM.unsigned(), Cartouche.VM.unsigned()) ::
             {:ok, binary(), binary()} | {:error, Cartouche.VM.vm_error()}
     def read_memory(memory, index, count) do
@@ -491,6 +535,7 @@ defmodule Cartouche.VM do
       end
     end
 
+    @doc false
     @spec write_memory(Context.t(), Cartouche.VM.unsigned(), binary()) ::
             {:ok, Context.t()} | {:error, Cartouche.VM.vm_error()}
     def write_memory(context, offset, value) do
@@ -508,6 +553,9 @@ defmodule Cartouche.VM do
 
   defmodule Operations do
     @moduledoc false
+    @doc false
+    @spec sign_extend(<<_::256>>, <<_::256>>) ::
+            {:ok, <<_::256>>} | {:error, Cartouche.VM.vm_error()}
     def sign_extend(b, x) do
       with {:ok, b_int} <- Cartouche.VM.word_to_uint(b) do
         do_sign_extend(b_int, x)
@@ -530,6 +578,9 @@ defmodule Cartouche.VM do
       end
     end
 
+    @doc false
+    @spec get_byte(<<_::256>>, <<_::256>>) ::
+            {:ok, <<_::256>>} | {:error, Cartouche.VM.vm_error()}
     def get_byte(i, x) do
       with {:ok, i} <- Cartouche.VM.word_to_uint(i) do
         if i < 32 do
@@ -597,6 +648,7 @@ defmodule Cartouche.VM do
     address
   end
 
+  @doc false
   @spec run_single_op(Context.t(), Input.t(), Keyword.t()) :: context_result()
   # EVM opcode dispatch table — every opcode needs a clause; splitting into helpers
   # adds indirection without reducing real complexity. CC reflects the EVM spec.
@@ -1077,7 +1129,13 @@ defmodule Cartouche.VM do
   end
 
   defmodule InvalidVm do
-    @moduledoc false
+    @moduledoc """
+    Raised by `Cartouche.VM.exec/3` (and friends) when the EVM run terminates
+    in a non-recoverable error state — e.g. invalid opcode, stack underflow,
+    or unhandled exception inside an opcode handler.
+
+    Public callers can `rescue Cartouche.VM.InvalidVm` to handle these.
+    """
     defexception message: "InvalidVm"
   end
 

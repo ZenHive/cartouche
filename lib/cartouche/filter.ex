@@ -28,6 +28,21 @@ defmodule Cartouche.Filter do
       :extra_data
     ]
 
+    @type t :: %__MODULE__{
+            address: binary(),
+            block_hash: binary(),
+            block_number: non_neg_integer(),
+            data: binary(),
+            log_index: non_neg_integer(),
+            removed: boolean(),
+            topics: [binary()],
+            transaction_hash: binary(),
+            transaction_index: non_neg_integer(),
+            extra_data: term()
+          }
+
+    @doc false
+    @spec deserialize(map()) :: t()
     def deserialize(%{
           "address" => address,
           "blockHash" => block_hash,
@@ -53,6 +68,22 @@ defmodule Cartouche.Filter do
     end
   end
 
+  @doc """
+  Starts a Cartouche.Filter GenServer that polls Ethereum logs matching the
+  given filter and forwards parsed events to registered listeners.
+
+  ## Options
+
+    * `:name` — registered name for the GenServer (defaults to `__MODULE__`)
+    * `:address` — contract address to filter on (omit to match any)
+    * `:topics` — list of topic filters
+    * `:events` — list of `ABI.FunctionSelector.t()` or signature strings;
+      events are decoded and dispatched as `{:event, {name, params}, log}`
+    * `:rpc_opts` — keyword list forwarded to `Cartouche.RPC` calls
+    * `:extra_data` — opaque value attached to every log/event message
+    * `:check_delay` — milliseconds between filter polls (default 3000)
+  """
+  @spec start_link(Keyword.t()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
     address = Keyword.get(opts, :address, nil)
@@ -133,6 +164,8 @@ defmodule Cartouche.Filter do
     Map.put(state, :filter_id, filter_id)
   end
 
+  @doc false
+  @impl true
   def init(%{check_delay: check_delay} = state) do
     state = set_filter(state)
 
@@ -141,14 +174,24 @@ defmodule Cartouche.Filter do
     {:ok, state}
   end
 
+  @doc """
+  Registers the calling process as a listener on `filter`. The filter will
+  send `{:event, {name, params}, log}` for matched, decoded events and
+  `{:log, log}` for every raw log it receives.
+  """
+  @spec listen(GenServer.server()) :: :ok
   def listen(filter) do
     GenServer.cast(filter, {:listen, self()})
   end
 
+  @doc false
+  @impl true
   def handle_cast({:listen, pid}, %{listeners: listeners} = state) do
     {:noreply, Map.put(state, :listeners, [pid | listeners])}
   end
 
+  @doc false
+  @impl true
   def handle_info(
         :check_filter,
         %{

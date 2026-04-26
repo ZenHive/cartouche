@@ -30,6 +30,7 @@ defmodule Cartouche.RPC do
   end
 
   @doc false
+  @spec get_body(String.t(), [term()], integer()) :: %{String.t() => term()}
   def get_body(method, params, id) do
     %{
       "jsonrpc" => "2.0",
@@ -203,6 +204,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_nonce(~h[0x407d73d8a49eeb85d32cf465507dd71d507100c1])
       {:ok, 4}
   """
+  @spec get_nonce(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_nonce(account, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
@@ -232,6 +234,7 @@ defmodule Cartouche.RPC do
       iex> {nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to}
       {5, 50000000000, 10000000000, 100000, <<1::160>>}
   """
+  @spec send_trx(V1.t() | V2.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def send_trx(trx, opts \\ [])
 
   def send_trx(%V1{} = trx, opts) do
@@ -291,6 +294,7 @@ defmodule Cartouche.RPC do
       iex> |> Cartouche.RPC.call_trx()
       {:error, %{code: -32602, message: "Failed to decode transaction"}}
   """
+  @spec call_trx(V1.t() | V2.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_trx(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = Keyword.get(opts, :block_number, "latest")
@@ -333,6 +337,7 @@ defmodule Cartouche.RPC do
       iex> |> Cartouche.RPC.estimate_gas()
       {:error, %{code: 3, message: "execution reverted: Dai/insufficient-balance", revert: ~h[0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000184461692f696e73756666696369656e742d62616c616e63650000000000000000]}}
   """
+  @spec estimate_gas(V1.t() | V2.t(), Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = Keyword.get(opts, :block_number, "latest")
@@ -354,6 +359,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.eth_chain_id()
       {:ok, 0x22}
   """
+  @spec eth_chain_id(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def eth_chain_id(opts \\ []) do
     Cartouche.RPC.send_rpc("eth_chainId", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
@@ -366,6 +372,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_code(<<1::160>>)
       {:ok, <<0x11, 0x22, 0x33>>}
   """
+  @spec get_code(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def get_code(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
@@ -386,6 +393,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_balance(~h[0x0000000000000000000000000000000000000001])
       {:ok, 0x55}
   """
+  @spec get_balance(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_balance(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
@@ -406,6 +414,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.get_transaction_count(~h[0x0000000000000000000000000000000000000001])
       {:ok, 0x4}
   """
+  @spec get_transaction_count(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_transaction_count(<<_::160>> = address, opts \\ []) do
     block_number = Keyword.get(opts, :block_number, "latest")
 
@@ -426,6 +435,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.eth_block_number()
       {:ok, 0x44}
   """
+  @spec eth_block_number(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def eth_block_number(opts \\ []) do
     Cartouche.RPC.send_rpc("eth_blockNumber", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
@@ -460,6 +470,8 @@ defmodule Cartouche.RPC do
         uncles: []
       }}
   """
+  @spec get_block_by_number(non_neg_integer() | String.t(), Keyword.t()) ::
+          {:ok, Cartouche.Block.t()} | {:error, term()}
   def get_block_by_number(block_number, opts \\ []) do
     {include_transaction_details, opts} = Keyword.pop(opts, :include_transaction_details, false)
 
@@ -500,6 +512,8 @@ defmodule Cartouche.RPC do
         uncles: []
       }}
   """
+  @spec get_block_by_hash(binary(), Keyword.t()) ::
+          {:ok, Cartouche.Block.t()} | {:error, term()}
   def get_block_by_hash(block_hash, opts \\ []) do
     send_rpc(
       "eth_getBlockByHash",
@@ -718,6 +732,8 @@ defmodule Cartouche.RPC do
         }
       ]}
   """
+  @spec trace_trx(binary() | String.t(), Keyword.t()) ::
+          {:ok, [Cartouche.Trace.t()]} | {:error, term()}
   def trace_trx(trx_id, opts \\ [])
 
   def trace_trx("0x" <> _ = trx_id, opts) when byte_size(trx_id) == 66, do: trace_trx(Hex.decode_hex!(trx_id), opts)
@@ -851,6 +867,8 @@ defmodule Cartouche.RPC do
         }
       }
   """
+  @spec trace_call(V1.t() | V2.t(), Keyword.t()) ::
+          {:ok, Cartouche.TraceCall.t()} | {:error, term()}
   def trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = Keyword.get(opts, :block_number, "latest")
@@ -1032,6 +1050,8 @@ defmodule Cartouche.RPC do
         }
       ]}
   """
+  @spec trace_call_many([V1.t() | V2.t() | {V1.t() | V2.t(), <<_::160>> | nil}], Keyword.t()) ::
+          {:ok, [Cartouche.TraceCall.t()]} | {:error, term()}
   def trace_call_many(trxs, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = Keyword.get(opts, :block_number, "latest")
@@ -1092,6 +1112,8 @@ defmodule Cartouche.RPC do
         ]
       }}
   """
+  @spec debug_trace_call(V1.t() | V2.t(), Keyword.t()) ::
+          {:ok, Cartouche.DebugTrace.t()} | {:error, term()}
   def debug_trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = Keyword.get(opts, :block_number, "latest")
@@ -1111,6 +1133,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.gas_price()
       {:ok, 1000000000}
   """
+  @spec gas_price(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def gas_price(opts \\ []) do
     send_rpc(
       "eth_gasPrice",
@@ -1127,6 +1150,7 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.max_priority_fee_per_gas()
       {:ok, 1000000001}
   """
+  @spec max_priority_fee_per_gas(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def max_priority_fee_per_gas(opts \\ []) do
     send_rpc(
       "eth_maxPriorityFeePerGas",
@@ -1148,6 +1172,7 @@ defmodule Cartouche.RPC do
         reward: [[1000000000, 1000000000, 1500000000], [1000000000, 1000000000, 2000000000], [1000000000, 1000000000, 1000000000], [780000000, 1000000000, 2000000000], [1000000000, 1000000000, 1500000000]]
       }}
   """
+  @spec fee_history(Keyword.t()) :: {:ok, Cartouche.FeeHistory.t()} | {:error, term()}
   def fee_history(opts \\ []) do
     block_count = Keyword.get(opts, :block_count, 1)
     newest_block = Keyword.get(opts, :newest_block, "latest")
@@ -1327,6 +1352,8 @@ defmodule Cartouche.RPC do
         access_list: []
       }
   """
+  @spec prepare_trx(<<_::160>>, binary() | {String.t(), [term()]}, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_trx(contract, call_data, opts \\ []) do
     with {:ok, trx, _send_opts} <- prepare_trx_(contract, call_data, opts) do
       {:ok, trx}
@@ -1493,6 +1520,8 @@ defmodule Cartouche.RPC do
       iex> {nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to}
       {10, 3000000000, 4000000000, 100000, <<10::160>>}
   """
+  @spec execute_trx(<<_::160>>, binary() | {String.t(), [term()]}, Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_trx(contract, call_data, opts \\ []) do
     with {:ok, trx, send_opts} <- prepare_trx_(contract, call_data, opts) do
       send_trx(trx, send_opts)
@@ -1500,6 +1529,7 @@ defmodule Cartouche.RPC do
   end
 
   @doc false
+  @spec to_call_params(V1.t() | V2.t(), <<_::160>> | nil) :: map()
   def to_call_params(%V1{} = trx, from) do
     %{
       from: nil_map(from, &Hex.encode_big_hex/1),

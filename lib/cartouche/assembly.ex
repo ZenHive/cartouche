@@ -50,7 +50,14 @@ defmodule Cartouche.Assembly do
 
   use Cartouche.Hex
 
-  @type opcode :: {atom(), integer(), integer()}
+  @type opcode ::
+          atom()
+          | {:push, non_neg_integer(), binary()}
+          | {:dup, non_neg_integer()}
+          | {:swap, non_neg_integer()}
+          | {:invalid, binary()}
+          | {:jump_ptr, integer()}
+          | {:jump_dest, integer()}
 
   @opcodes %{
     stop: {<<0x00>>, 0, 0},
@@ -178,6 +185,7 @@ defmodule Cartouche.Assembly do
     defexception message: "invalid opcode"
   end
 
+  @spec compile(term()) :: [term()] | atom()
   def compile({opcode, a}) when opcode in @one_operand do
     List.flatten([compile(a), opcode])
   end
@@ -268,6 +276,8 @@ defmodule Cartouche.Assembly do
     Enum.flat_map(operations, &compile/1)
   end
 
+  @doc false
+  @spec assemble_opcode(term()) :: binary()
   def assemble_opcode({:push, n, v}) when byte_size(v) == n, do: <<0x5F + n>> <> v
   def assemble_opcode({:dup, n}), do: <<0x7F + n>>
   def assemble_opcode({:swap, n}), do: <<0x8F + n>>
@@ -278,6 +288,8 @@ defmodule Cartouche.Assembly do
     bin
   end
 
+  @doc false
+  @spec disassemble_opcode(binary()) :: {term(), binary()}
   def disassemble_opcode(<<x::integer-size(8)>> <> rest = op) when x >= 0x5F and x < 0x80 do
     n = x - 0x5F
 
@@ -305,6 +317,8 @@ defmodule Cartouche.Assembly do
     {Map.fetch!(@opcodes_by_code, x), rest}
   end
 
+  @doc false
+  @spec opcode_size(term()) :: pos_integer()
   def opcode_size({:push, n, _v}), do: n + 1
   def opcode_size({:jump_ptr, _}), do: opcode_size({:push, @jump_sz, <<0, 0, 0>>})
   def opcode_size(:self_code_sz), do: opcode_size({:push, @jump_sz, <<0, 0, 0>>})
@@ -314,6 +328,8 @@ defmodule Cartouche.Assembly do
   def opcode_size({:invalid, data}), do: 1 + byte_size(data)
   def opcode_size(opcode) when opcode in @opcode_keys, do: 1
 
+  @doc false
+  @spec transform_jumps([term()]) :: [term()]
   def transform_jumps(opcodes) do
     {end_pc, jump_map} =
       Enum.reduce(opcodes, {0, %{}}, fn opcode, {pc, acc_jump_map} ->
@@ -395,6 +411,7 @@ defmodule Cartouche.Assembly do
       ...> |> Cartouche.Hex.to_hex()
       "0x8192fe010203"
   """
+  @spec assemble([term()]) :: binary()
   def assemble(opcodes) when is_list(opcodes) do
     # We're now going to do multiple passes
     # First, we assign pcs to all jump_dests
@@ -436,6 +453,7 @@ defmodule Cartouche.Assembly do
         {:invalid, ~h[0x010203]}
       ]
   """
+  @spec disassemble(binary()) :: [term()]
   def disassemble(bytes) when is_binary(bytes) do
     disassemble_(bytes, [])
   end
@@ -463,6 +481,7 @@ defmodule Cartouche.Assembly do
       ...> |> to_hex()
       "0x63112233446000526004601cfd"
   """
+  @spec build([term()]) :: binary()
   def build(operations) do
     operations
     |> compile()
@@ -490,6 +509,7 @@ defmodule Cartouche.Assembly do
       ...> |> to_hex()
       "0x60036200000e60003960036000f3aabbcc"
   """
+  @spec constructor(binary()) :: binary()
   def constructor(code),
     do: build([{:codecopy, 0x00, :self_code_sz, byte_size(code)}, {:return, 0x00, byte_size(code)}]) <> code
 
@@ -504,6 +524,7 @@ defmodule Cartouche.Assembly do
       iex> Cartouche.Assembly.show_opcode({:push, 5, <<1,2,3,4,5>>})
       "PUSH5 0x0102030405"
   """
+  @spec show_opcode(term()) :: String.t()
   # EVM opcode dispatch table — high cyclomatic complexity reflects the spec, not bad code.
   # Splitting clauses into helpers would add indirection without reducing real complexity.
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity

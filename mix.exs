@@ -17,6 +17,9 @@ defmodule Cartouche.MixProject do
         main: "readme",
         extras: ["README.md", "CHANGELOG.md"]
       ],
+      # TODO(Task 42)/TODO(Task 41): drop once generator-side fixes land
+      # and IConsole is regenerated — see `.dialyzer_ignore.exs` header.
+      dialyzer: [ignore_warnings: ".dialyzer_ignore.exs"],
       package: package()
     ]
   end

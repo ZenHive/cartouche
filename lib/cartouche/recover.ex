@@ -35,6 +35,7 @@ defmodule Cartouche.Recover do
     iex> Cartouche.Recover.prefix_eth("hello")
     "\x19Ethereum Signed Message:\\n5hello"
   """
+  @spec prefix_eth(String.t()) :: String.t()
   def prefix_eth(msg), do: "\x19Ethereum Signed Message:\n" <> to_string(String.length(msg)) <> msg
 
   @doc """
@@ -71,6 +72,7 @@ defmodule Cartouche.Recover do
     iex> Cartouche.Recover.recover_public_key("test", signature) |> to_hex()
     "0x0480076bfb96955526052b2676dfca87e0b7869ce85e00c5dbce29e76b8429d6dbf0f33b1a0095b2a9a4d9ea2a9746b122995a5b5874ee3161138c9d19f072b2d9"
   """
+  @spec recover_public_key(binary(), Curvy.Signature.t() | binary()) :: binary()
   def recover_public_key(message, signature) do
     signature
     |> decode_signature()
@@ -93,6 +95,7 @@ defmodule Cartouche.Recover do
     ...> |> to_hex()
     "0x63cc7c25e0cdb121abb0fe477a6b9901889f99a7"
   """
+  @spec recover_eth(binary(), Curvy.Signature.t() | binary()) :: <<_::160>>
   def recover_eth(message, signature) do
     message
     |> recover_public_key(signature)
@@ -114,6 +117,8 @@ defmodule Cartouche.Recover do
     ...> |> to_hex()
     "0x63cc7c25e0cdb121abb0fe477a6b9901889f99a7"
   """
+  @spec find_recid(binary(), Curvy.Signature.t(), <<_::160>>) ::
+          {:ok, 0..1} | {:error, String.t()}
   def find_recid(message, signature, address) do
     recid =
       Enum.find(0..3, fn recid ->

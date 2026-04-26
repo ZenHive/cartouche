@@ -5,10 +5,13 @@ defmodule Cartouche.Application do
 
   use Application
 
+  @doc false
   def chain_id, do: Cartouche.Chain.parse_id(Application.get_env(:cartouche, :chain_id, 1))
 
+  @doc false
   def ethereum_node, do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
 
+  @doc false
   def http_client, do: Application.get_env(:cartouche, :client, Finch)
 
   @impl true
@@ -36,6 +39,7 @@ defmodule Cartouche.Application do
 
   # --- Ethereum signers ---
 
+  @doc false
   def get_signer_spec({name, signer_type}) do
     name =
       case name do

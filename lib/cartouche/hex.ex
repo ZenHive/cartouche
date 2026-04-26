@@ -7,7 +7,12 @@ defmodule Cartouche.Hex do
   """
 
   defmodule InvalidHex do
-    @moduledoc false
+    @moduledoc """
+    Raised by `Cartouche.Hex` decode/encode bang functions when input is not
+    valid hex (wrong length, non-hex characters, missing/extra `0x` prefix, etc.).
+
+    Public callers can `rescue Cartouche.Hex.InvalidHex` to handle these.
+    """
     defexception message: "invalid hex"
   end
 
@@ -79,7 +84,7 @@ defmodule Cartouche.Hex do
       iex> Cartouche.Hex.decode_hex("0xgggg")
       :invalid_hex
   """
-  @spec decode_hex(String.t()) :: {:ok, t()} | :error
+  @spec decode_hex(String.t()) :: {:ok, t()} | :invalid_hex
   def decode_hex(b), do: decode_hex_(b)
 
   @doc """
@@ -90,7 +95,7 @@ defmodule Cartouche.Hex do
       iex> Cartouche.Hex.from_hex("0xaabb")
       {:ok, <<0xaa, 0xbb>>}
   """
-  @spec from_hex(t()) :: String.t()
+  @spec from_hex(String.t()) :: {:ok, t()} | :invalid_hex
   def from_hex(b), do: decode_hex(b)
 
   @doc """
@@ -101,7 +106,7 @@ defmodule Cartouche.Hex do
     iex> Cartouche.Hex.from_hex!("0xaabb")
     <<0xaa, 0xbb>>
   """
-  @spec from_hex!(t()) :: String.t()
+  @spec from_hex!(String.t()) :: t()
   def from_hex!(b), do: decode_hex!(b)
 
   @doc """
@@ -262,7 +267,7 @@ defmodule Cartouche.Hex do
       iex> Cartouche.Hex.decode_hex_number("0xgggg")
       :invalid_hex
   """
-  @spec decode_hex_number(String.t()) :: {:ok, integer()} | :error
+  @spec decode_hex_number(String.t()) :: {:ok, integer()} | :invalid_hex
   def decode_hex_number(b) do
     with {:ok, x} <- decode_hex(b), do: {:ok, :binary.decode_unsigned(x)}
   end
@@ -481,7 +486,7 @@ defmodule Cartouche.Hex do
   def maybe_encode_hex(b) when is_binary(b), do: encode_hex(b)
 
   # Core function to decode hex
-  @spec decode_hex_(String.t()) :: {:ok, t()} | :error
+  @spec decode_hex_(String.t()) :: {:ok, t()} | :invalid_hex
   defp decode_hex_("0x" <> b) when is_binary(b), do: decode_hex_(b)
 
   defp decode_hex_(b) when is_binary(b) do
@@ -502,6 +507,7 @@ defmodule Cartouche.Hex do
   end
 
   @doc false
+  @spec deep_encode_binaries(term()) :: term()
   def deep_encode_binaries(x) when is_binary(x), do: to_hex(x)
   def deep_encode_binaries(l) when is_list(l), do: Enum.map(l, &deep_encode_binaries/1)
 

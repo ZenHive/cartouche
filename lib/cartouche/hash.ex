@@ -1,5 +1,10 @@
 defmodule Cartouche.Hash do
-  @moduledoc false
+  @moduledoc """
+  Keccak-256 helpers for hashing arbitrary binaries.
+
+  Returns either the 32-byte binary digest (`keccak/1`) or its unsigned
+  integer interpretation (`keccak_unsigned/1`).
+  """
   @doc ~S"""
   Returns the keccak of the given binary message.
 
@@ -9,6 +14,7 @@ defmodule Cartouche.Hash do
     iex> Cartouche.Hash.keccak("test")
     ~h[0x9C22FF5F21F0B81B113E63F7DB6DA94FEDEF11B2119B4088B89664FB9A3CB658]
   """
+  @spec keccak(binary()) :: <<_::256>>
   def keccak(message), do: ExSha3.keccak_256(message)
 
   @doc ~S"""
@@ -19,6 +25,7 @@ defmodule Cartouche.Hash do
     iex> Cartouche.Hash.keccak_unsigned("test")
     70622639689279718371527342103894932928233838121221666359043189029713682937432
   """
+  @spec keccak_unsigned(binary()) :: non_neg_integer()
   def keccak_unsigned(message) do
     message
     |> keccak()

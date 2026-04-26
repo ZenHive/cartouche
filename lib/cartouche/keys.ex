@@ -12,6 +12,7 @@ defmodule Cartouche.Keys do
       iex> {byte_size(address), byte_size(priv_key)}
       {20, 32}
   """
+  @spec generate_keypair() :: {<<_::160>>, <<_::256>>}
   def generate_keypair do
     {<<4, pub_key::binary-size(64)>>, <<priv_key::binary-size(32)>>} =
       :crypto.generate_key(:ecdh, :secp256k1)

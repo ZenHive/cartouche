@@ -11,14 +11,44 @@ defmodule Cartouche.Sleuth do
 
   @sleuth_address ~h[0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2]
 
+  @doc """
+  Runs a Sleuth contract query: deploys `bytecode` on-chain via `eth_call`
+  with `query` calldata and decodes the result against `selector`. Returns
+  the decoded values without struct annotations.
+  """
+  @spec query(binary(), binary(), ABI.FunctionSelector.t(), Keyword.t()) ::
+          {:ok, term()} | {:error, String.t()}
   def query(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, false, opts)
 
+  @doc """
+  Same as `query/4`, but tags each decoded value with its ABI type for
+  callers that need both type and value (e.g. when re-encoding).
+  """
+  @spec query_annotated(binary(), binary(), ABI.FunctionSelector.t(), Keyword.t()) ::
+          {:ok, term()} | {:error, String.t()}
   def query_annotated(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, true, opts)
 
+  @doc """
+  Convenience wrapper that derives bytecode, query calldata, and selector
+  from a generated contract module. Resolves `mod.bytecode/0`,
+  `mod.encode_<fun>/0`, and `mod.<fun>_selector/0` and forwards the rest
+  to `query/4`.
+  """
+  @spec query_by(module(), atom() | Keyword.t()) :: {:ok, term()} | {:error, String.t()}
   def query_by(mod, fun) when is_atom(mod) and is_atom(fun), do: query_by(mod, fun, [])
   def query_by(mod, opts) when is_atom(mod) and is_list(opts), do: query_by(mod, :query, opts)
+
+  @doc """
+  Single-argument form of `query_by/2`: defaults `fun` to `:query` and
+  `opts` to `[]`.
+  """
+  @spec query_by(module()) :: {:ok, term()} | {:error, String.t()}
   def query_by(mod), do: query_by(mod, :query, [])
 
+  @doc """
+  Three-argument form of `query_by/2`: explicit `fun` and `opts`.
+  """
+  @spec query_by(module(), atom(), Keyword.t()) :: {:ok, term()} | {:error, String.t()}
   def query_by(mod, fun, opts) when is_atom(mod) and is_atom(fun) and is_list(opts) do
     bytecode = try_apply(mod, :bytecode, [])
     # `fun` is a developer-supplied atom (already in the atom table); the derived
@@ -46,6 +76,14 @@ defmodule Cartouche.Sleuth do
     end
   end
 
+  @doc """
+  Variant of `query/4` that exposes the full set of decode options
+  (`:annotated`, `:decode_binaries`, `:decode_structs`, `:named_returns`,
+  `:sleuth_address`) as keyword opts. Returns results with named-return
+  annotations when configured.
+  """
+  @spec query_v2(binary(), binary(), ABI.FunctionSelector.t(), Keyword.t()) ::
+          {:ok, term()} | {:error, String.t()}
   def query_v2(bytecode, query, selector, opts \\ []) do
     {annotated, opts} = Keyword.pop(opts, :annotated, false)
     {sleuth_address, opts} = Keyword.pop(opts, :sleuth_address, @sleuth_address)

@@ -5,8 +5,8 @@ defmodule Cartouche.Erc20 do
   transaction to it.
   """
 
-  @type call_opts() :: nil
-  @type exec_opts() :: {:signer, atom()} | call_opts()
+  @type call_opts() :: Keyword.t()
+  @type exec_opts() :: Keyword.t()
 
   @errors []
 
@@ -17,7 +17,13 @@ defmodule Cartouche.Erc20 do
   @spec errors() :: [String.t()]
   def errors, do: @errors
 
-  @spec exec_trx(Cartouche.contract(), binary(), [exec_opts()]) :: term()
+  @doc ~S"""
+  Executes a transaction against the given ERC-20 token, using the provided
+  ABI-encoded `call_data`. The configured Cartouche signer signs and submits
+  the transaction; `exec_opts` is forwarded to `Cartouche.RPC.execute_trx/3`
+  with this module's known error signatures merged in.
+  """
+  @spec exec_trx(Cartouche.contract(), binary(), exec_opts()) :: term()
   def exec_trx(token, call_data, exec_opts) do
     Cartouche.RPC.execute_trx(
       Cartouche.get_contract_address(token),
@@ -26,11 +32,18 @@ defmodule Cartouche.Erc20 do
     )
   end
 
-  @spec call_trx(Cartouche.contract(), binary(), [call_opts()]) :: term()
+  @doc ~S"""
+  Performs an `eth_call` against the given ERC-20 token with the provided
+  ABI-encoded `call_data` and zero value/gas. Returns the call's return data
+  without sending a transaction. `call_opts` is forwarded to
+  `Cartouche.RPC.call_trx/2` with this module's known error signatures
+  merged in.
+  """
+  @spec call_trx(Cartouche.contract(), binary(), call_opts()) :: term()
   def call_trx(token, call_data, call_opts) do
     token
     |> Cartouche.get_contract_address()
-    |> Cartouche.Transaction.build_trx(0, call_data, 0, nil, 0)
+    |> Cartouche.Transaction.build_trx(0, call_data, 0, 0, 0)
     |> Cartouche.RPC.call_trx(Keyword.put_new(call_opts, :errors, errors()))
   end
 
@@ -80,7 +93,7 @@ defmodule Cartouche.Erc20 do
         iex> Cartouche.Erc20.Call.balance_of(<<0xCC>>, <<0xDD>>)
         {:ok, <<>>}
     """
-    @spec balance_of(Cartouche.contract(), Cartouche.address(), [Cartouche.Erc20.call_opts()]) ::
+    @spec balance_of(Cartouche.contract(), Cartouche.address(), Cartouche.Erc20.call_opts()) ::
             {:ok, number()} | {:error, term()}
     def balance_of(token, address, call_opts \\ []) do
       call_opts = Keyword.put(call_opts, :decode, :hex_unsigned)
@@ -95,9 +108,12 @@ defmodule Cartouche.Erc20 do
         iex> Cartouche.Erc20.Call.transfer(<<0xCC>>, <<0xDD>>, 100_000)
         {:ok, <<>>}
     """
-    @spec transfer(Cartouche.contract(), Cartouche.address(), non_neg_integer(), [
+    @spec transfer(
+            Cartouche.contract(),
+            Cartouche.address(),
+            non_neg_integer(),
             Cartouche.Erc20.call_opts()
-          ]) :: binary()
+          ) :: {:ok, binary()} | {:error, term()}
     def transfer(token, destination, amount_wei, call_opts \\ []) do
       call_opts = Keyword.put(call_opts, :decode, :hex)
       Cartouche.Erc20.call_trx(token, CallData.transfer(destination, amount_wei), call_opts)
@@ -116,7 +132,7 @@ defmodule Cartouche.Erc20 do
 
       iex> {:ok, _trx_id} = Cartouche.Erc20.transfer(<<0xCC>>, <<0xDD>>, 100_000)
   """
-  @spec transfer(Cartouche.contract(), Cartouche.address(), non_neg_integer(), [exec_opts()]) ::
+  @spec transfer(Cartouche.contract(), Cartouche.address(), non_neg_integer(), exec_opts()) ::
           {:ok, binary()} | {:error, term()}
   def transfer(token, destination, amount_wei, exec_opts \\ []) do
     exec_trx(token, CallData.transfer(destination, amount_wei), exec_opts)

@@ -7,15 +7,19 @@ defmodule Cartouche.Typed do
   defstruct [:domain, :types, :value]
 
   @type value_map() :: %{String.t() => term()}
-  @type type_map() :: %{String.t() => Type.t()}
+  @type type_map() :: %{String.t() => __MODULE__.Type.t()}
   @type t() :: %__MODULE__{
-          domain: Domain.t(),
+          domain: __MODULE__.Domain.t(),
           types: type_map(),
           value: value_map()
         }
 
   defmodule Type do
-    @moduledoc false
+    @moduledoc """
+    EIP-712 type definition — an ordered list of `{name, field_type}` field
+    entries. Field types are either primitives (`:address`, `{:uint, 256}`,
+    `:bool`, …) or string references to other named types.
+    """
     defstruct [:fields]
 
     @type primitive() ::
@@ -301,7 +305,11 @@ defmodule Cartouche.Typed do
   end
 
   defmodule Domain do
-    @moduledoc false
+    @moduledoc """
+    EIP-712 domain separator — the standard `EIP712Domain` struct
+    (`name`, `version`, `chainId`, `verifyingContract`, `salt`). Each field is
+    optional; only the populated fields contribute to the encoded domain type.
+    """
     defstruct [:name, :version, :chain_id, :verifying_contract, :salt]
 
     @type t() :: %__MODULE__{
@@ -343,6 +351,7 @@ defmodule Cartouche.Typed do
         ...> |> Cartouche.Typed.Domain.domain_type()
         %{"EIP712Domain" => %Cartouche.Typed.Type{fields: [{"name", :string}, {"version", :string}]}}
     """
+    @spec domain_type(t()) :: %{String.t() => Type.t()}
     def domain_type(domain),
       do: %{
         "EIP712Domain" => %Type{
@@ -382,6 +391,7 @@ defmodule Cartouche.Typed do
           version: "1"
         }
     """
+    @spec deserialize(map()) :: t()
     def deserialize(params) do
       mod_params =
         for {key, value} <- params, into: %{} do
@@ -441,6 +451,7 @@ defmodule Cartouche.Typed do
           "version" => "1"
         }
     """
+    @spec serialize(t()) :: %{String.t() => term()}
     def serialize(%__MODULE__{
           name: name,
           version: version,
@@ -495,6 +506,7 @@ defmodule Cartouche.Typed do
           "version" => "1"
         }
     """
+    @spec serialize_keys(t()) :: %{String.t() => term()}
     def serialize_keys(%__MODULE__{
           name: name,
           version: version,

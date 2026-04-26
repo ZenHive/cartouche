@@ -40,6 +40,7 @@ defmodule Cartouche.OpenChain do
           ]
         }
     """
+    @spec deserialize(%{required(String.t()) => map()}) :: t()
     def deserialize(%{"event" => event_list, "function" => function_list}) do
       %__MODULE__{
         events: decode_entries(event_list),
@@ -64,12 +65,15 @@ defmodule Cartouche.OpenChain do
     @moduledoc false
     import Cartouche.HTTP, only: [normalize_finch_result: 1]
 
+    @doc false
+    @spec http_client() :: module()
     def http_client, do: Application.get_env(:cartouche, :open_chain_client, Finch)
 
     defp base_url, do: Application.get_env(:cartouche, :open_chain_base_url, "https://api.4byte.sourcify.dev")
 
     defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
 
+    @doc false
     @spec get(String.t(), Keyword.t()) :: {:ok, term()} | {:error, String.t()}
     def get(url, opts) do
       headers = Keyword.get(opts, :headers, [])
@@ -167,6 +171,8 @@ defmodule Cartouche.OpenChain do
       iex> Cartouche.OpenChain.lookup(<<8, 195, 121, 160>>, :function)
       {:ok, "Error(string)"}
   """
+  @spec lookup(binary(), :function | :event, Keyword.t()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def lookup(signature, type, opts \\ []) do
     {raise_on_multiple, opts} = Keyword.pop(opts, :raise_on_multiple, false)
 
@@ -207,6 +213,8 @@ defmodule Cartouche.OpenChain do
       iex> Cartouche.OpenChain.lookup_error(~h[0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001b43616c6c6572206e6f74206174746573746572206d616e616765720000000000])
       {:ok, ["Caller not attester manager"]}
   """
+  @spec lookup_error(binary(), Keyword.t()) ::
+          {:ok, [term()]} | {:error, String.t()}
   def lookup_error(_, opts \\ [])
 
   def lookup_error(<<signature::binary-size(4), data::binary>>, opts) do
@@ -227,6 +235,8 @@ defmodule Cartouche.OpenChain do
           iex> Cartouche.OpenChain.lookup_error_and_values(~h[0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001b43616c6c6572206e6f74206174746573746572206d616e616765720000000000])
           {:ok, "Error(string)", ["Caller not attester manager"]}
   """
+  @spec lookup_error_and_values(binary(), Keyword.t()) ::
+          {:ok, String.t(), [term()]} | {:error, String.t()}
   def lookup_error_and_values(_, opts \\ [])
 
   def lookup_error_and_values(<<signature::binary-size(4), data::binary>>, opts) do
