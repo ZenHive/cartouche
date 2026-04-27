@@ -92,7 +92,6 @@ defmodule Cartouche.VM do
       :memory,
       :tstorage,
       :reverted,
-      # TODO: Should return data be a stack
       :return_data,
       :ffis
     ]
@@ -364,7 +363,6 @@ defmodule Cartouche.VM do
   @doc false
   @spec word_to_uint(binary()) :: {:ok, unsigned()} | {:error, vm_error()}
   def word_to_uint(v) when is_binary(v) do
-    # TODO: Check for overflow?
     {:ok, :binary.decode_unsigned(v)}
   end
 

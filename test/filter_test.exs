@@ -50,5 +50,5 @@ defmodule Cartouche.FilterTest do
     assert_received {:log, ^log}
   end
 
-  # TODO: Test expired filter
+  # TODO(Task 58): Test expired filter
 end
