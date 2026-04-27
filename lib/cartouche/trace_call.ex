@@ -17,7 +17,7 @@ defmodule Cartouche.TraceCall do
   @type t :: %__MODULE__{
           output: binary(),
           state_diff: nil,
-          trace: Cartouche.Trace.t(),
+          trace: [Cartouche.Trace.t()],
           vm_trace: nil
         }
 
