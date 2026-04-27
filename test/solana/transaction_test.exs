@@ -272,6 +272,70 @@ defmodule Cartouche.Solana.TransactionTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Malformed-input hardening (Task 56)
+  # ---------------------------------------------------------------------------
+
+  describe "deserialize/1 — malformed input (Task 56)" do
+    test "returns {:error, _} on empty binary" do
+      assert {:error, _} = Transaction.deserialize(<<>>)
+    end
+
+    test "returns {:error, _} on truncated compact-u16 (high-bit byte without continuation)" do
+      assert {:error, _} = Transaction.deserialize(<<0x80>>)
+    end
+
+    test "returns {:error, _} when signature count exceeds available bytes" do
+      # Compact-u16 says 1 signature, but no signature bytes follow
+      assert {:error, _} = Transaction.deserialize(<<0x01>>)
+    end
+
+    test "returns {:error, _} on truncated message header" do
+      # 0 sigs + truncated 3-byte header
+      assert {:error, _} = Transaction.deserialize(<<0x00>>)
+      assert {:error, _} = Transaction.deserialize(<<0x00, 0x01>>)
+    end
+
+    test "returns {:error, _} on truncated pubkey data" do
+      # 0 sigs, 0/0/0 header, says 1 key, no key bytes
+      assert {:error, _} = Transaction.deserialize(<<0x00, 0x00, 0x00, 0x00, 0x01>>)
+    end
+
+    test "returns {:error, _} on truncated blockhash" do
+      # 0 sigs, 0/0/0 header, 0 keys, only 16 of the 32 blockhash bytes
+      binary = <<0x00, 0x00, 0x00, 0x00, 0x00>> <> <<0::128>>
+      assert {:error, _} = Transaction.deserialize(binary)
+    end
+
+    test "returns {:error, _} on truncated instruction header" do
+      # 0 sigs, 0/0/0 header, 0 keys, full blockhash, says 1 ix, no ix body
+      binary = <<0x00, 0x00, 0x00, 0x00, 0x00>> <> <<0::256>> <> <<0x01>>
+      assert {:error, _} = Transaction.deserialize(binary)
+    end
+
+    test "returns {:error, _} on truncated instruction account data" do
+      # 1 ix with program_id_idx=0, says 5 accounts, no account bytes
+      binary = <<0x00, 0x00, 0x00, 0x00, 0x00>> <> <<0::256>> <> <<0x01, 0x00, 0x05>>
+      assert {:error, _} = Transaction.deserialize(binary)
+    end
+
+    test "returns {:error, _} on truncated instruction data payload" do
+      # 1 ix with program_id_idx=0, 0 accounts, says 5 data bytes, none follow
+      binary = <<0x00, 0x00, 0x00, 0x00, 0x00>> <> <<0::256>> <> <<0x01, 0x00, 0x00, 0x05>>
+      assert {:error, _} = Transaction.deserialize(binary)
+    end
+
+    test "returns {:error, _} on trailing bytes after a valid message" do
+      # Minimal valid serialized transaction:
+      # 0 sigs, 0/0/0 header, 0 keys, 32-byte zero blockhash, 0 instructions
+      valid = <<0x00, 0x00, 0x00, 0x00, 0x00>> <> <<0::256>> <> <<0x00>>
+      # Sanity: the minimal txn round-trips
+      assert {:ok, _} = Transaction.deserialize(valid)
+      # Trailing garbage breaks the contract
+      assert {:error, _} = Transaction.deserialize(valid <> <<0xFF>>)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Signing and verification
   # ---------------------------------------------------------------------------
 
@@ -396,6 +460,25 @@ defmodule Cartouche.Solana.TransactionTest do
       partial_all = Transaction.sign_partial(msg, %{0 => seed1, 1 => seed2})
 
       assert full.signatures == partial_all.signatures
+    end
+  end
+
+  describe "sign_partial/2 — zero-signer boundary (Task 57)" do
+    test "returns empty signatures list when num_required_signatures == 0" do
+      msg = %Cartouche.Solana.Transaction.Message{
+        header: %Cartouche.Solana.Transaction.Header{
+          num_required_signatures: 0,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      partial = Transaction.sign_partial(msg, %{})
+      assert partial.signatures == []
+      assert partial.message == msg
     end
   end
 

@@ -119,7 +119,8 @@ defmodule Cartouche.Solana.Transaction do
   @doc """
   Decode a compact-u16 from the beginning of a binary.
 
-  Returns `{value, rest}`.
+  Returns `{value, rest}`. Raises `FunctionClauseError` on empty or truncated
+  input — internal callers that need an error tuple use `safe_decode_compact_u16/1`.
 
   ## Examples
 
@@ -141,6 +142,20 @@ defmodule Cartouche.Solana.Transaction do
   defp decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) do
     {acc ||| byte <<< shift, rest}
   end
+
+  @spec safe_decode_compact_u16(binary()) ::
+          {:ok, non_neg_integer(), binary()} | {:error, :truncated_compact_u16}
+  defp safe_decode_compact_u16(binary), do: safe_decode_compact_u16_acc(binary, 0, 0)
+
+  defp safe_decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) when byte >= 0x80 do
+    safe_decode_compact_u16_acc(rest, acc ||| (byte &&& 0x7F) <<< shift, shift + 7)
+  end
+
+  defp safe_decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) do
+    {:ok, acc ||| byte <<< shift, rest}
+  end
+
+  defp safe_decode_compact_u16_acc(<<>>, _acc, _shift), do: {:error, :truncated_compact_u16}
 
   # ---------------------------------------------------------------------------
   # Building messages
@@ -282,10 +297,21 @@ defmodule Cartouche.Solana.Transaction do
 
   @doc """
   Deserialize a legacy transaction from binary.
+
+  Returns `{:ok, t()}` on a complete, well-formed transaction; `{:error, atom()}`
+  on malformed input. Possible error atoms:
+
+    * `:truncated_compact_u16` — compact-u16 prefix ends mid-byte
+    * `:insufficient_signature_data` — signature-count exceeds remaining bytes
+    * `:insufficient_pubkey_data` — pubkey-count exceeds remaining bytes
+    * `:insufficient_instruction_data` — instruction-count, account-list, or data-payload exceeds remaining bytes
+    * `:invalid_message_header` — fewer than 3 header bytes
+    * `:invalid_message_body` — blockhash truncated or other structural mismatch the inner clauses didn't tag
+    * `:invalid_transaction` — message parsed but trailing bytes remain
   """
   @spec deserialize(binary()) :: {:ok, t()} | {:error, term()}
   def deserialize(binary) do
-    with {num_sigs, rest} <- decode_compact_u16(binary),
+    with {:ok, num_sigs, rest} <- safe_decode_compact_u16(binary),
          {:ok, sigs, rest} <- read_signatures(rest, num_sigs, []),
          {:ok, msg, <<>>} <- deserialize_message(rest) do
       {:ok, %__MODULE__{signatures: sigs, message: msg}}
@@ -297,6 +323,15 @@ defmodule Cartouche.Solana.Transaction do
 
   @doc """
   Deserialize a message from binary.
+
+  Returns `{:ok, Message.t(), rest :: binary()}` on success — `rest` is whatever
+  bytes follow the message (callers like `deserialize/1` enforce `rest == <<>>`).
+
+  Returns `{:error, :invalid_message_header}` when fewer than 3 header bytes are
+  present. Specific atoms surface from inner parse clauses
+  (`:truncated_compact_u16`, `:insufficient_pubkey_data`, `:insufficient_instruction_data`);
+  `{:error, :invalid_message_body}` is the catch-all for structural mismatches the
+  inner clauses didn't tag (notably a truncated blockhash).
   """
   @spec deserialize_message(binary()) :: {:ok, Message.t(), binary()} | {:error, term()}
   def deserialize_message(<<num_required_signatures, num_readonly_signed, num_readonly_unsigned, rest::binary>>) do
@@ -306,10 +341,10 @@ defmodule Cartouche.Solana.Transaction do
       num_readonly_unsigned_accounts: num_readonly_unsigned
     }
 
-    with {num_keys, rest} <- decode_compact_u16(rest),
+    with {:ok, num_keys, rest} <- safe_decode_compact_u16(rest),
          {:ok, keys, rest} <- read_pubkeys(rest, num_keys, []),
          <<recent_blockhash::binary-32, rest::binary>> <- rest,
-         {num_ix, rest} <- decode_compact_u16(rest),
+         {:ok, num_ix, rest} <- safe_decode_compact_u16(rest),
          {:ok, instructions, rest} <- read_instructions(rest, num_ix, []) do
       msg = %Message{
         header: header,
@@ -320,9 +355,12 @@ defmodule Cartouche.Solana.Transaction do
 
       {:ok, msg, rest}
     else
-      _ -> {:error, :invalid_message}
+      {:error, _} = err -> err
+      _ -> {:error, :invalid_message_body}
     end
   end
+
+  def deserialize_message(_), do: {:error, :invalid_message_header}
 
   defp read_signatures(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
@@ -342,22 +380,33 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_instructions(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
-  defp read_instructions(rest, n, acc) when n > 0 do
-    <<program_id_index, rest::binary>> = rest
-    {num_accounts, rest} = decode_compact_u16(rest)
-    <<account_bytes::binary-size(^num_accounts), rest::binary>> = rest
-    accounts = :binary.bin_to_list(account_bytes)
-    {data_len, rest} = decode_compact_u16(rest)
-    <<data::binary-size(^data_len), rest::binary>> = rest
+  defp read_instructions(<<program_id_index, rest::binary>>, n, acc) when n > 0 do
+    with {:ok, num_accounts, rest} <- safe_decode_compact_u16(rest),
+         {:ok, account_bytes, rest} <- read_size_prefixed(rest, num_accounts),
+         {:ok, data_len, rest} <- safe_decode_compact_u16(rest),
+         {:ok, data, rest} <- read_size_prefixed(rest, data_len) do
+      ix = %CompiledInstruction{
+        program_id_index: program_id_index,
+        accounts: :binary.bin_to_list(account_bytes),
+        data: data
+      }
 
-    ix = %CompiledInstruction{
-      program_id_index: program_id_index,
-      accounts: accounts,
-      data: data
-    }
-
-    read_instructions(rest, n - 1, [ix | acc])
+      read_instructions(rest, n - 1, [ix | acc])
+    end
   end
+
+  defp read_instructions(_, _, _), do: {:error, :insufficient_instruction_data}
+
+  # TODO: error tag and @spec couple to read_instructions/3 — generalize (parameterize tag
+  # or rename to `:insufficient_data`) if this helper gets a second callsite.
+  @spec read_size_prefixed(binary(), non_neg_integer()) ::
+          {:ok, binary(), binary()} | {:error, :insufficient_instruction_data}
+  defp read_size_prefixed(binary, size) when byte_size(binary) >= size do
+    <<chunk::binary-size(^size), rest::binary>> = binary
+    {:ok, chunk, rest}
+  end
+
+  defp read_size_prefixed(_, _), do: {:error, :insufficient_instruction_data}
 
   # ---------------------------------------------------------------------------
   # Signing
@@ -412,7 +461,7 @@ defmodule Cartouche.Solana.Transaction do
     num_signers = message.header.num_required_signatures
 
     signatures =
-      Enum.map(0..(num_signers - 1), fn index ->
+      Enum.map(0..(num_signers - 1)//1, fn index ->
         case Map.get(signers, index) do
           nil -> <<0::512>>
           <<seed::binary-32>> -> :crypto.sign(:eddsa, :none, msg_bytes, [seed, :ed25519])
