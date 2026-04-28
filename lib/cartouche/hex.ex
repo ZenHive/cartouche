@@ -94,6 +94,9 @@ defmodule Cartouche.Hex do
 
       iex> Cartouche.Hex.from_hex("0xaabb")
       {:ok, <<0xaa, 0xbb>>}
+
+      iex> Cartouche.Hex.from_hex("0xgggg")
+      :invalid_hex
   """
   @spec from_hex(String.t()) :: {:ok, t()} | :invalid_hex
   def from_hex(b), do: decode_hex(b)
@@ -105,6 +108,9 @@ defmodule Cartouche.Hex do
 
     iex> Cartouche.Hex.from_hex!("0xaabb")
     <<0xaa, 0xbb>>
+
+    iex> Cartouche.Hex.from_hex!("0xggaabb")
+    ** (Cartouche.Hex.InvalidHex) invalid hex: "0xggaabb"
   """
   @spec from_hex!(String.t()) :: t()
   def from_hex!(b), do: decode_hex!(b)

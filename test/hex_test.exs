@@ -19,4 +19,54 @@ defmodule Cartouche.HexTest do
                "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
     end
   end
+
+  describe "spec boundaries (Phase 1.4)" do
+    # Pins the corrected return shapes for the four functions whose @spec
+    # was historically `:error` but actual return is `:invalid_hex`. Doctests
+    # cover the documented examples; this block pins the contract per
+    # `feedback_doctests_not_substitute_for_tests.md` — doctests read as
+    # prose and don't compose for multi-input invariants.
+
+    test "decode_hex/1 returns :invalid_hex on non-hex characters" do
+      assert :invalid_hex = Cartouche.Hex.decode_hex("0xZZ")
+      assert :invalid_hex = Cartouche.Hex.decode_hex("ZZ")
+      assert :invalid_hex = Cartouche.Hex.decode_hex("0xgggg")
+    end
+
+    test "decode_hex_number/1 returns :invalid_hex on non-hex characters" do
+      assert :invalid_hex = Cartouche.Hex.decode_hex_number("0xZZ")
+      assert :invalid_hex = Cartouche.Hex.decode_hex_number("0xgggg")
+    end
+
+    test "from_hex/1 inherits :invalid_hex from decode_hex/1" do
+      assert :invalid_hex = Cartouche.Hex.from_hex("0xZZ")
+      assert Cartouche.Hex.from_hex("0xaabb") == Cartouche.Hex.decode_hex("0xaabb")
+    end
+
+    test "from_hex!/1 raises Cartouche.Hex.InvalidHex on bad input" do
+      assert_raise Cartouche.Hex.InvalidHex, ~s(invalid hex: "0xZZ"), fn ->
+        Cartouche.Hex.from_hex!("0xZZ")
+      end
+    end
+  end
+
+  describe "deep_encode_binaries/1" do
+    test "encodes a binary as 0x-prefixed hex" do
+      assert Cartouche.Hex.deep_encode_binaries(<<0xAA, 0xBB>>) == "0xaabb"
+    end
+
+    test "recurses into lists" do
+      assert Cartouche.Hex.deep_encode_binaries([<<0xAA>>, <<0xBB>>]) == ["0xaa", "0xbb"]
+    end
+
+    test "recurses into tuples" do
+      assert Cartouche.Hex.deep_encode_binaries({<<0xAA>>, <<0xBB>>}) == {"0xaa", "0xbb"}
+    end
+
+    test "passes other terms through unchanged" do
+      assert Cartouche.Hex.deep_encode_binaries(42) == 42
+      assert Cartouche.Hex.deep_encode_binaries(:atom) == :atom
+      assert Cartouche.Hex.deep_encode_binaries(nil) == nil
+    end
+  end
 end
