@@ -128,7 +128,8 @@ defmodule Cartouche.Transaction do
     @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
     def decode(trx_enc) do
       case ExRLP.decode(trx_enc) do
-        [nonce, gas_price, gas_limit, to, value, data, v, r, s] ->
+        [nonce, gas_price, gas_limit, to, value, data, v, r, s]
+        when byte_size(r) <= 32 and byte_size(s) <= 32 ->
           {:ok,
            %__MODULE__{
              nonce: :binary.decode_unsigned(nonce),
@@ -162,13 +163,18 @@ defmodule Cartouche.Transaction do
           value: 2,
           data: <<1, 2, 3>>,
           v: 3,
-          r: <<1::256>>,
-          s: <<2::256>>
+          r: 1,
+          s: 2
         }
     """
     @spec add_signature(t(), <<_::512, _::_*8>>) :: t()
     def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v::binary>>) do
-      %{transaction | v: :binary.decode_unsigned(v), r: r, s: s}
+      %{
+        transaction
+        | v: :binary.decode_unsigned(v),
+          r: :binary.decode_unsigned(r),
+          s: :binary.decode_unsigned(s)
+      }
     end
 
     @doc ~S"""
@@ -195,7 +201,7 @@ defmodule Cartouche.Transaction do
 
     def get_signature(%__MODULE__{v: v, r: r, s: s}) do
       v_enc = :binary.encode_unsigned(v)
-      {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
+      {:ok, <<r::big-256, s::big-256, v_enc::binary>>}
     end
 
     @doc ~S"""
