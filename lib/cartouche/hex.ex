@@ -348,6 +348,17 @@ defmodule Cartouche.Hex do
 
   This matches the JSON-RPC spec for the `QUANTITY` type used in
   `eth_getBlockByNumber`, `eth_getBalance`, `eth_call` block params, etc.
+
+  ## Examples
+
+      iex> Cartouche.Hex.encode_quantity(0)
+      "0x0"
+
+      iex> Cartouche.Hex.encode_quantity(55)
+      "0x37"
+
+      iex> Cartouche.Hex.encode_quantity(24_975_978)
+      "0x17d1a6a"
   """
   @spec encode_quantity(non_neg_integer()) :: String.t()
   def encode_quantity(0), do: "0x0"
