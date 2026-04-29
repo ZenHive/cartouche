@@ -69,4 +69,32 @@ defmodule Cartouche.HexTest do
       assert Cartouche.Hex.deep_encode_binaries(nil) == nil
     end
   end
+
+  describe "encode_quantity/1" do
+    test "zero returns \"0x0\"" do
+      assert Cartouche.Hex.encode_quantity(0) == "0x0"
+    end
+
+    test "small positive integer encodes lowercase, no leading zeros" do
+      assert Cartouche.Hex.encode_quantity(55) == "0x37"
+    end
+
+    test "single hex digit value encodes without leading zero" do
+      assert Cartouche.Hex.encode_quantity(15) == "0xf"
+    end
+
+    test "multi-byte block number encodes lowercase" do
+      # 24_975_978 = 0x17d1a6a — the live-tunnel-verified value from ROADMAP Task 60
+      assert Cartouche.Hex.encode_quantity(24_975_978) == "0x17d1a6a"
+    end
+
+    test "all-letter hex digits stay lowercase" do
+      # 0xabcdef = 11_259_375
+      assert Cartouche.Hex.encode_quantity(11_259_375) == "0xabcdef"
+    end
+
+    test "rejects negative integers via guard" do
+      assert_raise FunctionClauseError, fn -> Cartouche.Hex.encode_quantity(-1) end
+    end
+  end
 end

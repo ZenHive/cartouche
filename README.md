@@ -114,6 +114,7 @@ With the configuration above (a `:default` signer registered), `Cartouche.RPC.ex
 {:ok, nonce}          = Cartouche.RPC.get_nonce(<<1::160>>)
 {:ok, chain_id}       = Cartouche.RPC.eth_chain_id()
 {:ok, block_number}   = Cartouche.RPC.eth_block_number()
+{:ok, %Cartouche.Block{}}   = Cartouche.RPC.get_block_by_number(block_number)
 {:ok, %Cartouche.Block{}}   = Cartouche.RPC.get_block_by_number("latest")
 {:ok, %Cartouche.Receipt{}} = Cartouche.RPC.get_trx_receipt(tx_hash)
 
@@ -227,17 +228,22 @@ Once generated, callsites read like any other Elixir module:
 Solana support mirrors the Ethereum surface. With `:solana_node` and a `:solana_signer` configured:
 
 ```elixir
-fee_payer  = Cartouche.Solana.Signer.address()
+fee_payer  = Cartouche.Solana.Signer.address()  # 32-byte pubkey from configured signer
 recipient  = Cartouche.Base58.decode!("RecipientPublicKeyInBase58...")
 {:ok, %{blockhash: blockhash}} = Cartouche.Solana.RPC.get_latest_blockhash()
 
 instruction = Cartouche.Solana.SystemProgram.transfer(fee_payer, recipient, 1_000_000_000)
+message     = Cartouche.Solana.Transaction.build_message(fee_payer, [instruction], blockhash)
 
-message = Cartouche.Solana.Transaction.build_message(fee_payer, [instruction], blockhash)
-signed  = Cartouche.Solana.Transaction.sign(message, [fee_payer_seed])
+# Sign via the configured GenServer signer (no raw seed handling in app code)
+msg_bytes  = Cartouche.Solana.Transaction.serialize_message(message)
+{:ok, sig} = Cartouche.Solana.Signer.sign(msg_bytes)
+signed     = %Cartouche.Solana.Transaction{signatures: [sig], message: message}
 
 {:ok, signature} = Cartouche.Solana.RPC.send_and_confirm(signed, commitment: :confirmed)
 ```
+
+For offline signing (no GenServer), pass raw 32-byte Ed25519 seeds directly: `Cartouche.Solana.Transaction.sign(message, [fee_payer_seed])`. For sponsored transactions (one party pays fees for another), see `Cartouche.Solana.Transaction.sign_partial/2` and `add_signature/3`.
 
 `Cartouche.Solana.RPC` covers the standard JSON-RPC surface (`get_balance/2`, `get_account_info/2`, `simulate_transaction/2`, `request_airdrop/3`, plus the SPL token and fee queries). `Cartouche.Solana.Keys` handles keypair generation, seed loading, and Base58 conversion; `Cartouche.Solana.Signer` is the GenServer parallel to `Cartouche.Signer` for both Ed25519 and Cloud KMS backends.
 

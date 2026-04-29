@@ -341,6 +341,19 @@ defmodule Cartouche.Hex do
 
   def encode_short_hex(v) when is_integer(v), do: encode_short_hex(:binary.encode_unsigned(v))
 
+  @doc """
+  Encodes a non-negative integer as a JSON-RPC "quantity" string.
+
+  Lowercase hex with `0x` prefix and no leading zeros. `0` becomes `"0x0"`.
+
+  This matches the JSON-RPC spec for the `QUANTITY` type used in
+  `eth_getBlockByNumber`, `eth_getBalance`, `eth_call` block params, etc.
+  """
+  @spec encode_quantity(non_neg_integer()) :: String.t()
+  def encode_quantity(0), do: "0x0"
+
+  def encode_quantity(n) when is_integer(n) and n > 0, do: "0x" <> (n |> Integer.to_string(16) |> String.downcase())
+
   @doc ~S"""
   Pads a binary to a given length.
 

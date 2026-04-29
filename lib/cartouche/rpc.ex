@@ -206,7 +206,7 @@ defmodule Cartouche.RPC do
   """
   @spec get_nonce(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_nonce(account, opts \\ []) do
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "eth_getTransactionCount",
@@ -297,7 +297,7 @@ defmodule Cartouche.RPC do
   @spec call_trx(V1.t() | V2.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_trx(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
     errors = Keyword.get(opts, :errors, [])
     trace_reverts = Keyword.get(opts, :trace_reverts, false)
     debug_trace = Keyword.get(opts, :debug_trace, false)
@@ -340,7 +340,7 @@ defmodule Cartouche.RPC do
   @spec estimate_gas(V1.t() | V2.t(), Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "eth_estimateGas",
@@ -374,7 +374,7 @@ defmodule Cartouche.RPC do
   """
   @spec get_code(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def get_code(<<_::160>> = address, opts \\ []) do
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "eth_getCode",
@@ -395,7 +395,7 @@ defmodule Cartouche.RPC do
   """
   @spec get_balance(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_balance(<<_::160>> = address, opts \\ []) do
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     Cartouche.RPC.send_rpc(
       "eth_getBalance",
@@ -416,7 +416,7 @@ defmodule Cartouche.RPC do
   """
   @spec get_transaction_count(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def get_transaction_count(<<_::160>> = address, opts \\ []) do
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     Cartouche.RPC.send_rpc(
       "eth_getTransactionCount",
@@ -477,10 +477,18 @@ defmodule Cartouche.RPC do
 
     send_rpc(
       "eth_getBlockByNumber",
-      [block_number, include_transaction_details],
+      [normalize_block_param(block_number), include_transaction_details],
       Keyword.put(opts, :decode, &Cartouche.Block.deserialize/1)
     )
   end
+
+  # Normalises a block-tag parameter for JSON-RPC: integers become lowercase
+  # quantity strings (`"0x37"`); strings (`"latest"`, `"0x37"`, etc.) pass
+  # through unchanged. Required because `Jason.encode!/1` would otherwise
+  # serialise an integer as a bare JSON number, which real Ethereum nodes
+  # reject with `-32602 Invalid params`.
+  defp normalize_block_param(n) when is_integer(n), do: Hex.encode_quantity(n)
+  defp normalize_block_param(s) when is_binary(s), do: s
 
   @doc ~S"""
   RPC to get a block by its block hash.
@@ -871,7 +879,7 @@ defmodule Cartouche.RPC do
           {:ok, Cartouche.TraceCall.t()} | {:error, term()}
   def trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "trace_call",
@@ -1054,7 +1062,7 @@ defmodule Cartouche.RPC do
           {:ok, [Cartouche.TraceCall.t()]} | {:error, term()}
   def trace_call_many(trxs, opts \\ []) do
     from = Keyword.get(opts, :from)
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "trace_callMany",
@@ -1116,7 +1124,7 @@ defmodule Cartouche.RPC do
           {:ok, Cartouche.DebugTrace.t()} | {:error, term()}
   def debug_trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
-    block_number = Keyword.get(opts, :block_number, "latest")
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
 
     send_rpc(
       "debug_traceCall",
