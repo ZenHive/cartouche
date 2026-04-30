@@ -137,10 +137,8 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert b.gas_used == @post_london_gas_used
       assert b.timestamp == @post_london_timestamp
 
-      # TODO(integration-gap, ROADMAP Task 63): Cartouche.Block.base_fee_per_gas
-      # is not yet decoded (London+). Strengthen this when the decoder is extended:
-      #   assert b.base_fee_per_gas > 0
-      refute Map.has_key?(b, :base_fee_per_gas)
+      assert is_integer(b.base_fee_per_gas)
+      assert b.base_fee_per_gas > 0
     end
 
     test "post-London (block 15,000,000) by hash" do
@@ -159,12 +157,11 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert b.gas_used == @post_shanghai_gas_used
       assert b.timestamp == @post_shanghai_timestamp
 
-      # TODO(integration-gap, ROADMAP Task 64): Cartouche.Block.withdrawals
-      # and .withdrawals_root not yet decoded (Shanghai+). Strengthen when added:
-      #   assert is_list(b.withdrawals)
-      #   assert byte_size(b.withdrawals_root) == 32
-      refute Map.has_key?(b, :withdrawals)
-      refute Map.has_key?(b, :withdrawals_root)
+      assert is_list(b.withdrawals)
+      assert byte_size(b.withdrawals_root) == 32
+      # The 18M anchor is well past Shanghai (block ≥ 17,034,870), so a real
+      # mainnet block at this height carries at least one validator withdrawal.
+      assert [%Cartouche.Block.Withdrawal{} | _] = b.withdrawals
     end
 
     test "post-Shanghai (block 18,000,000) by hash" do
@@ -183,15 +180,10 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert b.gas_used == @post_cancun_gas_used
       assert b.timestamp == @post_cancun_timestamp
 
-      # TODO(integration-gap, ROADMAP Task 65): Cartouche.Block missing
-      # parent_beacon_block_root, blob_gas_used, excess_blob_gas, mix_hash
-      # (Cancun+). Strengthen when decoder is extended:
-      #   assert byte_size(b.parent_beacon_block_root) == 32
-      #   assert is_integer(b.blob_gas_used)
-      #   assert is_integer(b.excess_blob_gas)
-      refute Map.has_key?(b, :parent_beacon_block_root)
-      refute Map.has_key?(b, :blob_gas_used)
-      refute Map.has_key?(b, :excess_blob_gas)
+      assert byte_size(b.parent_beacon_block_root) == 32
+      assert is_integer(b.blob_gas_used)
+      assert is_integer(b.excess_blob_gas)
+      assert byte_size(b.mix_hash) == 32
     end
 
     test "post-Cancun (block 20,000,000) by hash" do

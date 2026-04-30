@@ -109,7 +109,7 @@ defmodule Cartouche.MixProject do
       tidewave: [
         "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4013) end)'"
       ],
-      integration: ["test --only integration"]
+      integration: ["test.json --only integration"]
     ]
   end
 end

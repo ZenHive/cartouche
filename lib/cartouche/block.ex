@@ -3,9 +3,68 @@ defmodule Cartouche.Block do
   Represents a block from the Ethereum JSON-RPC endpoint.
 
   Defined here: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getblockbyhash
+
+  Fields are nullable when they belong to a hard-fork upgrade and may be
+  absent on pre-upgrade blocks: `base_fee_per_gas` (London, EIP-1559),
+  `withdrawals_root` / `withdrawals` (Shanghai, EIP-4895), and
+  `parent_beacon_block_root` / `blob_gas_used` / `excess_blob_gas`
+  (Cancun, EIP-4788 + EIP-4844). `mix_hash` is present pre-Merge as the
+  PoW mix hash and post-Merge as PREVRANDAO (EIP-4399).
   """
 
   use Cartouche.Hex
+
+  defmodule Withdrawal do
+    @moduledoc """
+    A validator withdrawal entry from a post-Shanghai block (EIP-4895).
+
+    Embedded in `Cartouche.Block.t().withdrawals` when the block is
+    post-Shanghai (block ≥ 17,034,870 on mainnet).
+    """
+
+    @type t :: %__MODULE__{
+            # QUANTITY - the index of the withdrawal in the validator pool.
+            index: integer(),
+            # QUANTITY - the index of the validator that produced the withdrawal.
+            validator_index: integer(),
+            # DATA, 20 Bytes - the recipient address of the withdrawal.
+            address: <<_::160>>,
+            # QUANTITY - the withdrawal amount, in gwei.
+            amount: integer()
+          }
+
+    defstruct [:index, :validator_index, :address, :amount]
+
+    @doc ~S"""
+    Deserializes a withdrawal object from JSON-RPC.
+
+    ## Examples
+
+        iex> use Cartouche.Hex
+        iex> %{
+        ...>   "index" => "0x4d8f7d",
+        ...>   "validatorIndex" => "0xc8a5f",
+        ...>   "address" => "0x1f9090aae28b8a3dceadf281b0f12828e676c326",
+        ...>   "amount" => "0x111c8c2"
+        ...> }
+        ...> |> Cartouche.Block.Withdrawal.deserialize()
+        %Cartouche.Block.Withdrawal{
+          index: 0x4d8f7d,
+          validator_index: 0xc8a5f,
+          address: ~h[0x1f9090aae28b8a3dceadf281b0f12828e676c326],
+          amount: 0x111c8c2
+        }
+    """
+    @spec deserialize(map()) :: t() | no_return()
+    def deserialize(%{} = params) do
+      %__MODULE__{
+        index: Hex.decode_hex_number!(params["index"]),
+        validator_index: Hex.decode_hex_number!(params["validatorIndex"]),
+        address: Hex.decode_address!(params["address"]),
+        amount: Hex.decode_hex_number!(params["amount"])
+      }
+    end
+  end
 
   defstruct [
     :number,
@@ -26,7 +85,19 @@ defmodule Cartouche.Block do
     :gas_used,
     :timestamp,
     :transactions,
-    :uncles
+    :uncles,
+    # Pre-Merge: PoW mix hash; post-Merge: PREVRANDAO (EIP-4399).
+    :mix_hash,
+    # London (EIP-1559).
+    :base_fee_per_gas,
+    # Shanghai (EIP-4895).
+    :withdrawals_root,
+    :withdrawals,
+    # Cancun (EIP-4788).
+    :parent_beacon_block_root,
+    # Cancun (EIP-4844).
+    :blob_gas_used,
+    :excess_blob_gas
   ]
 
   @type t :: %__MODULE__{
@@ -68,7 +139,21 @@ defmodule Cartouche.Block do
           # hashes depending on the last given parameter.
           transactions: [],
           # uncles: Array - Array of uncle hashes.
-          uncles: [<<_::256>>]
+          uncles: [<<_::256>>],
+          # mixHash: DATA, 32 Bytes - pre-Merge PoW mix hash; post-Merge PREVRANDAO (EIP-4399).
+          mix_hash: <<_::256>> | nil,
+          # baseFeePerGas: QUANTITY - the base fee per gas. London+ (EIP-1559); nil pre-London.
+          base_fee_per_gas: integer() | nil,
+          # withdrawalsRoot: DATA, 32 Bytes - root of the withdrawal trie. Shanghai+ (EIP-4895); nil pre-Shanghai.
+          withdrawals_root: <<_::256>> | nil,
+          # withdrawals: Array - validator withdrawals. Shanghai+ (EIP-4895); nil pre-Shanghai.
+          withdrawals: [Withdrawal.t()] | nil,
+          # parentBeaconBlockRoot: DATA, 32 Bytes - parent beacon block root. Cancun+ (EIP-4788); nil pre-Cancun.
+          parent_beacon_block_root: <<_::256>> | nil,
+          # blobGasUsed: QUANTITY - blob gas used in this block. Cancun+ (EIP-4844); nil pre-Cancun.
+          blob_gas_used: integer() | nil,
+          # excessBlobGas: QUANTITY - excess blob gas. Cancun+ (EIP-4844); nil pre-Cancun.
+          excess_blob_gas: integer() | nil
         }
 
   @doc ~S"""
@@ -107,6 +192,7 @@ defmodule Cartouche.Block do
         hash: ~h[0xdc0818cf78f21a8e70579cb46a43643f78291264dda342ae31049421c82d21ae],
         logs_bloom: ~h[0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000],
         miner: ~h[0xbb7b8287f3f0a933474a79eae42cbca977791171],
+        mix_hash: ~h[0x4fffe9ae21f1c9e15207b1f472d5bbdd68c9595d461666602f2be20daf5e7843],
         nonce: 0x689056015818adbe,
         number: 0x1b4,
         parent_hash: ~h[0xe99e022112df268087ea7eafaf4790497fd21dbeeb6bd7a1721df161a6657a54],
@@ -118,7 +204,68 @@ defmodule Cartouche.Block do
         total_difficulty: 0x78ed983323d,
         transactions: [],
         transactions_root: ~h[0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421],
-        uncles: []
+        uncles: [],
+        base_fee_per_gas: nil,
+        withdrawals_root: nil,
+        withdrawals: nil,
+        parent_beacon_block_root: nil,
+        blob_gas_used: nil,
+        excess_blob_gas: nil
+      }
+
+  Post-Cancun block with all fork-tier fields populated:
+
+      iex> %{
+      ...>   "number" => "0x1312d00",
+      ...>   "hash" => "0xd24fd73f794058a3807db926d8898c6481e902b7edb91ce0d479d6760f276183",
+      ...>   "parentHash" => "0xb390d63aac03bbef75de888d16bd56b91c9291c2a7e38d36ac24731351522bd1",
+      ...>   "nonce" => "0x0000000000000000",
+      ...>   "sha3Uncles" => "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+      ...>   "logsBloom" => "0x" <> String.duplicate("00", 256),
+      ...>   "transactionsRoot" => "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      ...>   "stateRoot" => "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      ...>   "receiptsRoot" => "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      ...>   "miner" => "0x95222290dd7278aa3ddd389cc1e1d165cc4bafe5",
+      ...>   "difficulty" => "0x0",
+      ...>   "totalDifficulty" => "0xc70d815d562d3cfa955",
+      ...>   "extraData" => "0x",
+      ...>   "size" => "0x220",
+      ...>   "gasLimit" => "0x1c9c380",
+      ...>   "gasUsed" => "0xa9371c",
+      ...>   "timestamp" => "0x665ba27f",
+      ...>   "transactions" => [],
+      ...>   "uncles" => [],
+      ...>   "mixHash" => "0x4fffe9ae21f1c9e15207b1f472d5bbdd68c9595d461666602f2be20daf5e7843",
+      ...>   "baseFeePerGas" => "0x6f4f8d96",
+      ...>   "withdrawalsRoot" => "0x9d56fa5a08e21cd3ff7f8b6f5b6cb6f5b6cb6f5b6cb6f5b6cb6f5b6cb6f5b6cb",
+      ...>   "withdrawals" => [
+      ...>     %{
+      ...>       "index" => "0x4d8f7d",
+      ...>       "validatorIndex" => "0xc8a5f",
+      ...>       "address" => "0x1f9090aae28b8a3dceadf281b0f12828e676c326",
+      ...>       "amount" => "0x111c8c2"
+      ...>     }
+      ...>   ],
+      ...>   "parentBeaconBlockRoot" => "0xb390d63aac03bbef75de888d16bd56b91c9291c2a7e38d36ac24731351522bd1",
+      ...>   "blobGasUsed" => "0x80000",
+      ...>   "excessBlobGas" => "0x4a0000"
+      ...> }
+      ...> |> Cartouche.Block.deserialize()
+      ...> |> Map.take([:number, :base_fee_per_gas, :withdrawals, :parent_beacon_block_root, :blob_gas_used, :excess_blob_gas])
+      %{
+        number: 20_000_000,
+        base_fee_per_gas: 0x6f4f8d96,
+        withdrawals: [
+          %Cartouche.Block.Withdrawal{
+            index: 0x4d8f7d,
+            validator_index: 0xc8a5f,
+            address: ~h[0x1f9090aae28b8a3dceadf281b0f12828e676c326],
+            amount: 0x111c8c2
+          }
+        ],
+        parent_beacon_block_root: ~h[0xb390d63aac03bbef75de888d16bd56b91c9291c2a7e38d36ac24731351522bd1],
+        blob_gas_used: 0x80000,
+        excess_blob_gas: 0x4a0000
       }
   """
   @spec deserialize(map()) :: t()
@@ -144,9 +291,16 @@ defmodule Cartouche.Block do
       gas_limit: map(get_in(params, ["gasLimit"]), &Hex.decode_hex_number!/1),
       gas_used: map(get_in(params, ["gasUsed"]), &Hex.decode_hex_number!/1),
       timestamp: map(get_in(params, ["timestamp"]), &Hex.decode_hex_number!/1),
-      # TODO
+      # TODO(Task 66): decode params["transactions"] when :include_transaction_details is true
       transactions: [],
-      uncles: map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end)
+      uncles: map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end),
+      mix_hash: map(get_in(params, ["mixHash"]), &Hex.decode_word!/1),
+      base_fee_per_gas: map(get_in(params, ["baseFeePerGas"]), &Hex.decode_hex_number!/1),
+      withdrawals_root: map(get_in(params, ["withdrawalsRoot"]), &Hex.decode_word!/1),
+      withdrawals: map(get_in(params, ["withdrawals"]), fn ws -> Enum.map(ws, &Withdrawal.deserialize/1) end),
+      parent_beacon_block_root: map(get_in(params, ["parentBeaconBlockRoot"]), &Hex.decode_word!/1),
+      blob_gas_used: map(get_in(params, ["blobGasUsed"]), &Hex.decode_hex_number!/1),
+      excess_blob_gas: map(get_in(params, ["excessBlobGas"]), &Hex.decode_hex_number!/1)
     }
   end
 
