@@ -14,8 +14,8 @@ defmodule Cartouche.Wei do
       iex> Cartouche.Wei.to_wei({100, :gwei})
       100000000000
   """
-  @spec to_wei(integer() | {integer(), :wei | :gwei}) :: integer()
-  def to_wei(amount) when is_integer(amount), do: amount
-  def to_wei({amount, :wei}) when is_integer(amount), do: amount
-  def to_wei({amount, :gwei}) when is_integer(amount), do: amount * 1_000_000_000
+  @spec to_wei(non_neg_integer() | {non_neg_integer(), :wei | :gwei}) :: non_neg_integer()
+  def to_wei(amount) when is_integer(amount) and amount >= 0, do: amount
+  def to_wei({amount, :wei}) when is_integer(amount) and amount >= 0, do: amount
+  def to_wei({amount, :gwei}) when is_integer(amount) and amount >= 0, do: amount * 1_000_000_000
 end

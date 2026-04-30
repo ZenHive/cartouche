@@ -419,8 +419,7 @@ defmodule Cartouche.Trace do
       error: if(Map.has_key?(params, "error"), do: params["error"]),
       output: map(get_in(params, ["result", "output"]), &Hex.decode_hex!/1),
       subtraces: subtraces,
-      # TODO(Task 55): Enum.map raises Protocol.UndefinedError when "traceAddress" is missing or nil; deserialize/1 should reject malformed input or default to []
-      trace_address: Enum.map(params["traceAddress"], &decode_address_or_number/1),
+      trace_address: decode_trace_address(params["traceAddress"]),
       transaction_hash: map(get_in(params, ["transactionHash"]), &Hex.decode_word!/1),
       transaction_position: params["transactionPosition"],
       result_code: map(get_in(params, ["result", "code"]), &Hex.decode_hex!/1),
@@ -564,6 +563,10 @@ defmodule Cartouche.Trace do
 
   defp decode_address_or_number(b) when is_binary(b), do: Hex.decode_address!(b)
   defp decode_address_or_number(n) when is_integer(n), do: n
+
+  defp decode_trace_address(list) when is_list(list), do: Enum.map(list, &decode_address_or_number/1)
+
+  defp decode_trace_address(_), do: raise(ArgumentError, "missing traceAddress in trace_transaction result element")
 
   defp map(x, f) do
     if is_nil(x), do: nil, else: f.(x)
