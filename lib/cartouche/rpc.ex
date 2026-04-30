@@ -142,6 +142,18 @@ defmodule Cartouche.RPC do
       iex> use Cartouche.Hex
       iex> Cartouche.RPC.send_rpc("get_balance", ["0x407d73d8a49eeb85d32cf465507dd71d507100c1", "latest"], ethereum_node: "http://example.com")
       {:ok, "0x0234c8a3397aab58"}
+
+  ## Options
+
+  Common options (other RPC wrappers forward `opts` here):
+
+  - `:ethereum_node` — node URL; falls back to `Application.get_env(:cartouche, :ethereum_node)`
+  - `:timeout` — Finch `receive_timeout` in ms
+  - `:headers` — extra request headers
+  - `:verbose` — when `true`, decode failures log at `:error` instead of `:info`
+  - `:client` — HTTP client module (must expose `request/3`); private testing seam, defaults to
+    `Application.get_env(:cartouche, :client, Finch)` so the test env's mock client wins
+    automatically. Set to `Finch` per-call to bypass the mock (see `Cartouche.Test.Live`).
   """
   @spec send_rpc(String.t(), [term()], Keyword.t()) ::
           {:ok, term()} | {:error, %{code: integer(), message: String.t()}}
@@ -152,6 +164,7 @@ defmodule Cartouche.RPC do
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     verbose = Keyword.get(opts, :verbose, false)
     url = Keyword.get(opts, :ethereum_node, ethereum_node())
+    client = Keyword.get(opts, :client, http_client())
     id = Keyword.get_lazy(opts, :id, fn -> System.unique_integer([:positive]) end)
     body = get_body(method, params, id)
 
@@ -160,7 +173,7 @@ defmodule Cartouche.RPC do
     finch_result =
       normalize_finch_result(
         # NOTE: `receive_timeout` is a best-effort maybe-sort-of timeout.
-        http_client().request(request, finch_name(), receive_timeout: timeout)
+        client.request(request, finch_name(), receive_timeout: timeout)
       )
 
     with {:ok, %Finch.Response{body: resp_body}} <- finch_result,
@@ -469,6 +482,15 @@ defmodule Cartouche.RPC do
         transactions_root: ~h[0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421],
         uncles: []
       }}
+
+  ## Options
+
+  - `:include_transaction_details` — when `true`, the node returns full transaction
+    objects in `transactions`; when `false` (default), just hashes. Forwarded to
+    `eth_getBlockByNumber` as the second wire param. Note: `Cartouche.Block.deserialize/1`
+    currently returns `transactions: []` regardless — see ROADMAP Task 66.
+
+  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:client`).
   """
   @spec get_block_by_number(non_neg_integer() | String.t(), Keyword.t()) ::
           {:ok, Cartouche.Block.t()} | {:error, term()}
@@ -519,13 +541,25 @@ defmodule Cartouche.RPC do
         transactions_root: ~h[0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421],
         uncles: []
       }}
+
+  ## Options
+
+  - `:include_transaction_details` — when `true`, the node returns full transaction
+    objects in `transactions`; when `false` (default), just hashes. Forwarded to
+    `eth_getBlockByHash` as the second wire param (real nodes reject single-param
+    calls with `-32602 Invalid params`). Note: `Cartouche.Block.deserialize/1`
+    currently returns `transactions: []` regardless — see ROADMAP Task 66.
+
+  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:client`).
   """
   @spec get_block_by_hash(binary(), Keyword.t()) ::
           {:ok, Cartouche.Block.t()} | {:error, term()}
   def get_block_by_hash(block_hash, opts \\ []) do
+    {include_transaction_details, opts} = Keyword.pop(opts, :include_transaction_details, false)
+
     send_rpc(
       "eth_getBlockByHash",
-      [to_hex(block_hash)],
+      [to_hex(block_hash), include_transaction_details],
       Keyword.put(opts, :decode, &Cartouche.Block.deserialize/1)
     )
   end
@@ -1545,7 +1579,10 @@ defmodule Cartouche.RPC do
       gasPrice: nil_map(trx.gas_price, &Hex.encode_short_hex/1),
       gas: nil_map(trx.gas_limit, &Hex.encode_short_hex/1),
       value: nil_map(trx.value, &Hex.encode_short_hex/1),
-      data: nil_map(trx.data, &Hex.encode_short_hex/1)
+      # DATA type: bytes-preserving (big_hex), not QUANTITY (short_hex which strips
+      # leading zeros and emits "0x0" for empty calldata — rejected by real nodes).
+      # See V2's data encoding for the correct pattern.
+      data: nil_map(trx.data, &Hex.encode_big_hex/1)
     }
   end
 

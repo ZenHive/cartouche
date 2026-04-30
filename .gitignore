@@ -34,6 +34,9 @@ cartouche-*.tar
 # macOS Finder metadata
 .DS_Store
 
+# Claude Code per-session runtime state (lock files, local settings)
+/.claude/
+
 # claude plugin remember
 /.remember/
 

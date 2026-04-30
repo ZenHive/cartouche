@@ -878,7 +878,7 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
-  def eth_getBlockByHash(_block_hash), do: eth_getBlockByNumber("0x55")
+  def eth_getBlockByHash(_block_hash, _full \\ false), do: eth_getBlockByNumber("0x55")
 
   def eth_getBlockByNumber(_block_number, _ \\ false) do
     %{
