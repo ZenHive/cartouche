@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Roadmap
+
+- ROADMAP Task 68 ("`Cartouche.DebugTrace.StructLog` — add EIP-7702 opcodes (`AUTH`, `AUTHCALL`)") closed obsolete 2026-05-01. The task's two technical premises were both wrong, verified against the EIP-7702 spec, ethereum.org/roadmap/pectra, and go-ethereum master `core/vm/opcodes.go` (Codex consultation independently corroborated, pulling geth master + v1.14.12 + the EIP-3074 spec page which now displays a 🛑 Withdrawn badge). (1) `AUTH` (0xf6) and `AUTHCALL` (0xf7) were EIP-3074 opcodes — that spec is withdrawn and never reached any client. EIP-7702 is the *replacement* for 3074, swapping the new-opcode design for delegation indicators (`0xef0100 || address`) on existing CALL-family opcodes (geth's `enable7702` in `core/vm/eips.go:571–575` adjusts gas only, no opcode slots). (2) Pectra activated mainnet 2025-05-07 at epoch 364032 — bundling 10 EIPs that ship zero new opcode mnemonics. The current closed whitelist (`lib/cartouche/debug_trace.ex:56–67`) covers all live mainnet opcodes; 7702 delegation txs decode cleanly because the on-the-wire `op` strings remain standard CALL-family. The "Avoid anchors involving post-EIP-7702 traces until Task 68 lands" reservation in Task 62's notes (downstream of the same misunderstanding) was relaxed in the same edit. No production-code changes — the closure is roadmap hygiene against a corrected technical premise.
+- ROADMAP Task 70 filed (Phase 0.5, 🔶 blocked on Fusaka/Osaka mainnet activation): add `CLZ` (0x1e, EIP-7939) to the DebugTrace opcode whitelist. `CLZ` is in geth master's `newOsakaInstructionSet()` per EIP-7607 Osaka composition; once Osaka activates and the mnemonic emitted in struct-logs is confirmed against an Osaka testnet trace, add the atom + a round-trip regression test. Replaces the abandoned Task 68 with the correctly-scoped forward-compat task surfaced by Codex's read of geth master.
+
 ## [0.1.2] — 2026-05-01
 
 ### Changed
