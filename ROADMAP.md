@@ -388,6 +388,49 @@ Before opening any PR to `hayesgm/signet`:
 
 ---
 
+## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
+
+**Status:** ⬜ pending — planted 2026-05-01 by a hieroglyph session surveying downstream impact.
+
+**Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
+
+### Tasks
+
+| # | Task | Status | D | B | U | Eff | Module |
+|---|------|--------|---|---|---|-----|--------|
+| TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement | ⬜ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
+| TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
+| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
+
+### Audit 1 — `decode_structs: true` and atom existence
+
+Hieroglyph 1.4.0 hardened the `decode_structs: true` path: field-name atoms must already exist in the VM atom table (`String.to_existing_atom/1` instead of `String.to_atom/1`). Decoder raises `ArgumentError` with a migration hint otherwise. Closes a DoS surface (atom-table exhaustion via attacker-controlled ABI field names); behavior change on the opt-in path. Two cartouche call sites:
+
+- `lib/mix/cartouche.gen.ex:611-614` — codegen emits `decode_structs: true` for return decoding in generated bindings. Field-name atoms are constructed from `unquote(names.selector)().returns` at generated-module compile time, so they ARE pre-interned by the time the generated function runs. **Likely safe — verify with a smoke test.**
+- `lib/cartouche/sleuth.ex:91-128` — `query_v2/4` defaults `decode_structs: true` and accepts the selector as a runtime parameter. Atoms only exist if the caller pre-interned them (e.g., codegen-time literal in their own module). If any caller hands a runtime-parsed `ABI.FunctionSelector` whose `:tuple_with_named_fields` came from a runtime ABI JSON parse, decoding will raise. **Audit caller surface, then either pre-intern at the boundary or document the requirement in `query_v2/4`'s `@doc`.**
+
+### Audit 2 — silent bug-fix windfall (1.0.0–1.2.0)
+
+Cartouche flows may have been miscompiling/decoding without symptoms. Re-test:
+
+- **Indexed reference-type event params** (1.0.0) — `lib/cartouche/filter.ex:114` calls `ABI.Event.decode_event/4`. Events with indexed `string` / `bytes` / `T[]` (fixed or dynamic) / tuple params previously returned wrong bytes; now return `{:indexed_hash, <<32 bytes>>}` per the Solidity spec rule for "all complex types."
+- **`:string` decode NUL truncation** (1.2.0) — pre-existing in upstream since 2018. Any decoded string in cartouche flows that contained a NUL codepoint (`U+0000`) was silently truncated at the first NUL. Fix removes the helper entirely.
+- **`encode_int/2` overflow guard** (1.1.0) — `int8`/`int16`/etc. were rejecting all valid values (including `0` for `int8`). If cartouche or any consumer was avoiding small int types because of this, that workaround can be dropped.
+- **`dynamic?/1` crash on `T[0]`** (1.1.0) — zero-length fixed arrays no longer crash the layout query.
+
+### Optional adoption — new hieroglyph public APIs
+
+- `ABI.method_id/1` (1.1.0) — could replace the bespoke `Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))` selector derivation in `lib/mix/cartouche.gen.ex:149,416`. Equivalent semantics; smaller diff.
+- `ABI.decode_error/2` (1.2.0) — Solidity 0.8.4+ custom-error revert decoding. Could replace the manual `error_abi -> ABI.decode(error_abi, error_data)` path in `lib/cartouche/rpc.ex:49`.
+- `ABI.encode_packed/2` (1.2.0) — non-standard packed encoding for Merkle leaves and `keccak256(abi.encodePacked(...))`. Available if any future cartouche caller needs it (no current call site).
+- `function` type encode/decode (1.3.0) — 24-byte external function pointer. Niche; only relevant if cartouche-generated bindings ever surface a `function` typed param.
+
+**Acceptance:** the two `decode_structs` paths audited (with rationale recorded if no change made), bug-fix audit run for any production data that may have been silently miscompiled or truncated, optional new-API adoption taken or formally declined. Score is for the audit itself; if work is needed beyond verification, split into follow-up tasks here.
+
+**Docs:** ROADMAP (this section's status); CHANGELOG `[Unreleased]` if any code change lands. No README/CLAUDE.md changes expected (cartouche public surface unchanged).
+
+---
+
 ## Completed
 
 _None yet beyond `0.0.1` placeholder (see [CHANGELOG.md](CHANGELOG.md))._
