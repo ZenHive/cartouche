@@ -74,7 +74,7 @@ defmodule Cartouche.MixProject do
       # `override: true` dropped at publish time — no transitive dep
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
-      {:hieroglyph, "~> 1.0"},
+      {:hieroglyph, "~> 1.4"},
       {:junit_formatter, "~> 3.3.1", only: [:test]}
     ] ++ zenhive_dev_deps()
   end
@@ -90,8 +90,8 @@ defmodule Cartouche.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.21", only: [:dev, :test], runtime: false},
-      {:ex_dna, "~> 1.3", only: [:dev, :test], runtime: false},
-      {:ex_ast, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:ex_dna, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_ast, "~> 0.8", only: [:dev, :test], runtime: false},
       {:reach, "~> 1.5", only: [:dev, :test], runtime: false},
       {:rename, "~> 0.1.0", only: :dev},
       {:tidewave, "~> 0.5", only: :dev},
