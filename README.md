@@ -13,7 +13,7 @@ It bundles four capabilities into one library:
 
 ## Status
 
-**`0.1.0` — first active release.** Ports the signet codebase under the `Cartouche` module tree, adds the Solana surface, and ships a published-on-hex ABI dependency (`hieroglyph`). Active development continues in `0.1.x`; see [CHANGELOG.md](CHANGELOG.md) for what has shipped.
+**`0.1.1` — current release.** Ports the signet codebase under the `Cartouche` module tree, adds the Solana surface, and ships a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for what has shipped.
 
 ## Installation
 
