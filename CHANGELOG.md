@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-05-01
+
+### Changed
+
+- Refreshed deps to current hex versions and tightened `mix.exs` pins to match what the lockfile (and test suite) is now built against:
+  - `hieroglyph` 1.0.0 → 1.4.0; pin `~> 1.0` → `~> 1.4` (consumer-visible — raises floor to `>= 1.4.0`). Picks up the `decode_structs: true` `String.to_existing_atom` hardening (atom-table DOS guard, see ROADMAP Phase 11 advisory) plus the silent bug-fix windfall from 1.0.0–1.2.0 (indexed reference-type event params returning `{:indexed_hash, _}`, `:string` decode no longer truncating at NUL, `encode_int/2` overflow guard, `dynamic?/1` no longer crashes on `T[0]`).
+  - `ex_dna` 1.4.1 → 1.4.3 (dev/test only, pin `~> 1.3` → `~> 1.4`).
+  - `ex_ast` 0.5.0 → 0.8.1 (dev/test only, pin `~> 0.5` → `~> 0.8`).
+- Hieroglyph 1.4.0 brings two new transitive deps into the lockfile (`descripex 0.6.0`, `json_spec 1.1.1`) — surface-only for hieroglyph's self-describing `api()` macro; cartouche doesn't import either directly.
+- Phase 11 advisory audit (the two `decode_structs: true` callsites at `lib/mix/cartouche.gen.ex:611-614` and `lib/cartouche/sleuth.ex:91-128`) verified safe under the offline test suite — atoms are pre-interned at module-compile time in both paths. Integration coverage for the Sleuth runtime path remains unverified this run.
+
 ## [0.1.1] — 2026-05-01
 
 ### Added

@@ -47,7 +47,9 @@ Before any task that mutates an existing module, that module's `mix test.json --
 
 ## 🎯 Current Focus
 
-**`cartouche 0.1.1` cut 2026-05-01.** Bundles the Block decoder fork fields (Tasks 63 + 64 + 65) and the two wire-format bugs the new mainnet integration suite (Task 61) caught at first run — `get_block_by_hash/2` missing `fullTransactionObjects` and V1 empty-calldata encoded as `"0x0"` instead of `"0x"`. Both pre-existing in upstream signet for years, masked by the mock client. See [CHANGELOG `[0.1.1]`](CHANGELOG.md#011--2026-05-01).
+**`cartouche 0.1.2` cut 2026-05-01.** Dep refresh + `mix.exs` pin tightening — picks up `hieroglyph 1.4.0` (atom-table DOS guard on `decode_structs: true`, plus the silent bug-fix windfall in 1.0.0–1.2.0), `ex_dna 1.4.3`, `ex_ast 0.8.1`. Pin `hieroglyph: "~> 1.4"` raises the consumer floor to match what cartouche is now tested against. See [CHANGELOG `[0.1.2]`](CHANGELOG.md#012--2026-05-01).
+
+**`cartouche 0.1.1` cut 2026-05-01** (superseded same day by 0.1.2 before hex publish). Bundled the Block decoder fork fields (Tasks 63 + 64 + 65) and the two wire-format bugs the new mainnet integration suite (Task 61) caught at first run — `get_block_by_hash/2` missing `fullTransactionObjects` and V1 empty-calldata encoded as `"0x0"` instead of `"0x"`. Both pre-existing in upstream signet for years, masked by the mock client. See [CHANGELOG `[0.1.1]`](CHANGELOG.md#011--2026-05-01).
 
 **Phase 0 fully closed 2026-04-30 — `cartouche 0.1.0` shipped.** First active release under the cartouche namespace. The downstream onchain `@dialyzer {:no_match}` strip across `Onchain.Hex` / ABI / ERC / ENS / Multicall callers is now load-bearing — Phase 1 spec corrections (1.1 RecoveryBit, 1.2 Wei, 1.3 Signer, 1.4 Hex) all in `0.1.0`.
 
