@@ -15,6 +15,8 @@
 @~/.claude/includes/reach.md
 @~/.claude/includes/agent-economy.md
 @~/.claude/includes/upstream-pr-workflow.md
+@~/.claude/includes/linear-workflow.md
+@~/.claude/includes/inetpeople-workspace.md
 
 
 forked from https://github.com/hayesgm/signet
@@ -33,4 +35,4 @@ mix sobelow --mark-skip-all
 
 That writes a fresh `.sobelow-skips` containing fingerprints for whatever sobelow flags right now. Resolved findings drop out automatically; new ones get added. Confirm with `mix sobelow` (clean output = all findings are accounted for).
 
-`.sobelow-skips` is a per-developer working-set artifact (untracked). Don't hand-edit unless you only want to remove one specific fingerprint without re-scanning.
+`.sobelow-skips` is **tracked** — it is the project's accepted-pending-fix security baseline. Each fingerprint should map to a ROADMAP task that, when shipped, will resolve the finding (currently: Task 48 for the `Cartouche.Sleuth` `String.to_atom` cluster; Tasks 41/42/50/59-gen for the generator's `String.to_atom` and `File.{read!,mkdir_p!,write!}` paths). Fingerprints are deterministic (file:line + rule), so the file doesn't churn unless code or sobelow rules change. The CI harness (`.github/workflows/harness.yml`) runs `mix sobelow` against `.sobelow-conf` (`exit: "Low"`, `skip: true`) on every PR — without `.sobelow-skips` tracked, every CI run would fail on the accepted-pending-fix findings, so the file must be in version control. Don't hand-edit; regenerate via `mix sobelow --mark-skip-all` when fingerprints change.
