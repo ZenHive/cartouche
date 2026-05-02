@@ -1,5 +1,5 @@
 defmodule Cartouche.RecoveryBitTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   doctest Cartouche.RecoveryBit
 

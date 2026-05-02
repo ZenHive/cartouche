@@ -14,9 +14,7 @@ defmodule Cartouche.TransactionTest do
   describe "V2.new/9 (no signature)" do
     test "chain_id: nil falls back to Application.chain_id()" do
       trx = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<>>, [])
-      # TODO(Task 39): hardcoded `5` couples this test to `config/test.exs` setting :goerli.
-      # Sweep alongside the RecoveryBit doctest portability cleanup tracked by Task 39.
-      assert trx.chain_id == 5
+      assert trx.chain_id == Cartouche.Application.chain_id()
       assert trx.signature_y_parity == nil
       assert trx.signature_r == nil
       assert trx.signature_s == nil
