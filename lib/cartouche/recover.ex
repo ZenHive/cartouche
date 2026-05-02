@@ -1,5 +1,25 @@
 defmodule Cartouche.Recover do
-  @moduledoc false
+  @moduledoc """
+  EIP-191 (`personal_sign`) signature recovery primitives.
+
+  Given a message and a 65-byte secp256k1 signature, recover the signer's
+  public key (`recover_public_key/2`) or Ethereum address (`recover_eth/2`).
+  When the signature arrived without a recovery bit (e.g. some HSM / KMS
+  backends return only `(r, s)`), `find_recid/3` brute-forces the two valid
+  recids against an expected address.
+
+  Signatures may be supplied either as a `Curvy.Signature` struct (when the
+  recovery bit lives in `:recid`) or as the raw 65-byte
+  `<<r::256, s::256, v::8>>` form. The `v` byte is interpreted as recid `0`/`1`
+  (raw form), `27`/`28` (`personal_sign`), or `35 + 2 * chain_id + recid`
+  (EIP-155).
+
+  Used internally by `Cartouche.Signer` for the recover-and-verify sanity check
+  after each sign call, and exposed as the public surface for consumers
+  verifying user-supplied signatures (e.g. `personal_sign` payloads from
+  MetaMask, WalletConnect, or any wallet implementing EIP-191).
+  """
+
   use Cartouche.Hex
 
   import Cartouche.Address, only: [from_public_key: 1]
@@ -27,8 +47,19 @@ defmodule Cartouche.Recover do
     }
 
   @doc """
-  Prefixes a message with "Etheruem Signed Message" prefix, as per
-  [EIP-191](https://eips.ethereum.org/EIPS/eip-191).
+  Wraps a message in the EIP-191 `personal_sign` envelope.
+
+  The returned binary concatenates four parts:
+
+    * `0x19` — the EIP-191 version byte
+    * `"Ethereum Signed Message:\\n"` — the literal namespace prefix (newline-terminated)
+    * the byte length of `msg`, formatted as decimal ASCII
+    * `msg` itself
+
+  The doctest output below shows `\\x19` and `\\n` as escape sequences — those
+  are the literal `0x19` byte and `0x0A` newline byte in the returned string.
+
+  See [EIP-191](https://eips.ethereum.org/EIPS/eip-191).
 
   ## Examples
 

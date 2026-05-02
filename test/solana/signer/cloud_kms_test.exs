@@ -23,6 +23,17 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
     @test_message "test"
     @test_signature :crypto.sign(:eddsa, :none, @test_message, [@seed, :ed25519])
 
+    # Malformed Ed25519 PEM: valid PEM frame but DER body has the wrong prefix
+    # (RSA SubjectPublicKeyInfo OID instead of Ed25519's 1.3.101.112).
+    @malformed_der_pem (fn ->
+                          rsa_oid_prefix =
+                            <<0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2A, 0x86, 0x48, 0x03, 0x21, 0x00>>
+
+                          der = rsa_oid_prefix <> @pub
+                          b64 = Base.encode64(der)
+                          "-----BEGIN PUBLIC KEY-----\n#{b64}\n-----END PUBLIC KEY-----\n"
+                        end).()
+
     setup do
       Tesla.Mock.mock(fn
         # getPublicKey
@@ -39,6 +50,44 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
                 algorithm: "EC_SIGN_ED25519",
                 pemCrc32c: "0",
                 name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+                protectionLevel: "HSM"
+              })
+          }
+
+        # getPublicKey — wrong algorithm
+        %{
+          method: :get,
+          url:
+            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
+        } ->
+          %Tesla.Env{
+            status: 200,
+            body:
+              Jason.encode!(%{
+                pem: @ed25519_pem,
+                algorithm: "EC_SIGN_SECP256K1_SHA256",
+                pemCrc32c: "0",
+                name:
+                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
+                protectionLevel: "HSM"
+              })
+          }
+
+        # getPublicKey — malformed DER (correct algo, wrong DER prefix)
+        %{
+          method: :get,
+          url:
+            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version/publicKey"
+        } ->
+          %Tesla.Env{
+            status: 200,
+            body:
+              Jason.encode!(%{
+                pem: @malformed_der_pem,
+                algorithm: "EC_SIGN_ED25519",
+                pemCrc32c: "0",
+                name:
+                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version",
                 protectionLevel: "HSM"
               })
           }
@@ -71,6 +120,30 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
 
         assert pub == @pub
         assert byte_size(pub) == 32
+      end
+
+      test "rejects non-Ed25519 algorithms with descriptive error" do
+        assert {:error, "Expected EC_SIGN_ED25519 algorithm, got: EC_SIGN_SECP256K1_SHA256"} =
+                 CloudKMS.get_address(
+                   "token",
+                   "project",
+                   "location",
+                   "keychain",
+                   "wrong-algo",
+                   "version"
+                 )
+      end
+
+      test "rejects malformed Ed25519 DER (wrong SubjectPublicKeyInfo prefix)" do
+        assert {:error, "Unexpected DER format for Ed25519 public key"} =
+                 CloudKMS.get_address(
+                   "token",
+                   "project",
+                   "location",
+                   "keychain",
+                   "bad-der",
+                   "version"
+                 )
       end
     end
 

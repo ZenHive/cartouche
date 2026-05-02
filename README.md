@@ -13,7 +13,7 @@ It bundles four capabilities into one library:
 
 ## Status
 
-**`0.1.1` — current release.** Ports the signet codebase under the `Cartouche` module tree, adds the Solana surface, and ships a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for what has shipped.
+**`0.1.3` — current release** (2026-05-02). Refreshes `google_api_cloud_kms` to 0.43 (internalises the 0.40 arity change in the Ethereum + Solana KMS signers — public API of `Cartouche.{Signer,Solana.Signer}.CloudKMS` preserved). Earlier `0.1.x` releases ported the signet codebase under the `Cartouche` module tree, added the Solana surface, and shipped a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for what has shipped.
 
 ## Installation
 
@@ -42,6 +42,8 @@ config :cartouche,
 ```
 
 Each entry under `:signer` becomes a supervised `Cartouche.Signer` GenServer; the `:default` name is special — it's registered as `Cartouche.Signer.Default` and used when a caller doesn't pass `:signer` explicitly. Solana mirrors this with `:solana_node` and `:solana_signer`.
+
+> **Production tip — direct cartouche use:** if you're embedding cartouche directly to operate a server-side hot wallet (relayer, fee payer, treasury, oracle), prefer the `:cloud_kms` signer spec over `:priv_key` in production — `Cartouche.Signer.Curvy` keeps the key in BEAM memory, while Cloud KMS keeps it in GCP HSM and gives you per-call audit logs. Consumers reaching cartouche through the `onchain` wrapper inherit whatever signer that layer configures.
 
 | Key | Default | Purpose |
 | --- | --- | --- |
@@ -150,6 +152,16 @@ To start a signer manually (e.g. in a test):
 ```
 
 Each signer process keeps its own public key, and signatures are verified against it before they're returned. Cloud KMS doesn't emit a recovery bit, so Cartouche tries all four and picks the one that recovers to the registered address.
+
+### Operator keys vs. end-user wallets
+
+The `Cartouche.Signer` GenServer is for **keys you operate** — relayers, fee payers, treasury wallets, attestation oracles. It is **not** a place to plug in end-user wallets; users on-chain sign in their own wallet (MetaMask, Phantom, Ledger, WalletConnect) and your backend's job is to **verify** what they sent. The relevant primitives:
+
+- **EIP-712 typed data** (`eth_signTypedData_v4`) — `Cartouche.Typed` for domain / type encoding and the digest a wallet would have produced.
+- **`personal_sign` / raw signature recovery** — `Cartouche.Recover.recover_eth/2` (with `prefix_eth/1` for the `\x19Ethereum Signed Message:\n` envelope) and `Cartouche.Recover.find_recid/3` when only `(r, s)` arrived.
+- **Recovery-bit normalisation** — `Cartouche.RecoveryBit` between `:base` / `:ethereum` / `:eip155` representations.
+
+Solana mirrors this with `Cartouche.Solana.Keys` for Phantom-signed payload verification on the user side and `Cartouche.Solana.Signer` (Ed25519 / Cloud KMS) for the operator side.
 
 ### Transactions
 
@@ -279,6 +291,9 @@ Cartouche.Wei.to_wei({2, :gwei})               # 2_000_000_000
 | `Cartouche.RPC` | Ethereum JSON-RPC client; high-level `execute_trx` / `prepare_trx` / `call_trx` |
 | `Cartouche.Signer` | GenServer signer (secp256k1, Cloud KMS) — `sign/3`, `address/1` |
 | `Cartouche.Transaction` | V1 (legacy) and V2 (EIP-1559) builders, encoders, signature recovery |
+| `Cartouche.Typed` | EIP-712 typed-data domain / type encoder, digest builder |
+| `Cartouche.Recover` | EIP-191 `personal_sign` recovery — `recover_eth/2`, `recover_public_key/2`, `find_recid/3` |
+| `Cartouche.RecoveryBit` | Convert `v` between `:base` (`0/1`), `:ethereum` (`27/28`), `:eip155` |
 | `Cartouche.Hex` / `Cartouche.Hash` | `~h` sigil, encode/decode helpers, keccak digests |
 | `Cartouche.Wei` | `to_wei/1` — accepts integers or `{n, :gwei}` |
 | `Cartouche.Solana.RPC` | Solana JSON-RPC client |

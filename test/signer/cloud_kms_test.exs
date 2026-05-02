@@ -1,7 +1,9 @@
 defmodule Cartouche.Signer.CloudKMSTest do
   use ExUnit.Case, async: true
 
-  doctest Cartouche.Signer.CloudKMS
+  alias Cartouche.Signer.CloudKMS
+
+  doctest CloudKMS
 
   setup do
     Tesla.Mock.mock(fn
@@ -24,6 +26,24 @@ defmodule Cartouche.Signer.CloudKMSTest do
               name:
                 "projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1",
               protectionLevel: "HSM"
+            })
+        }
+
+      %{
+        method: :get,
+        url:
+          "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
+      } ->
+        %Tesla.Env{
+          status: 200,
+          body:
+            Jason.encode!(%{
+              pem: "-----BEGIN PUBLIC KEY-----\nIRRELEVANT\n-----END PUBLIC KEY-----\n",
+              algorithm: "RSA_SIGN_PSS_2048_SHA256",
+              pemCrc32c: "0",
+              name:
+                "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
+              protectionLevel: "SOFTWARE"
             })
         }
 
@@ -51,5 +71,12 @@ defmodule Cartouche.Signer.CloudKMSTest do
     end)
 
     :ok
+  end
+
+  describe "get_address/6 algorithm validation" do
+    test "rejects non-secp256k1 algorithms with descriptive error" do
+      assert {:error, "Invalid algorithm: RSA_SIGN_PSS_2048_SHA256"} =
+               CloudKMS.get_address("token", "project", "location", "keychain", "wrong-algo", "version")
+    end
   end
 end

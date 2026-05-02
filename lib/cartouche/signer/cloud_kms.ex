@@ -20,14 +20,12 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     @spec get_address(term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
             {:ok, binary()} | {:error, String.t()}
     def get_address(cred, project, location, keychain, key, version) do
+      name = key_version_name(project, location, keychain, key, version)
+
       with {:ok, %GoogleApi.CloudKMS.V1.Model.PublicKey{algorithm: algorithm, pem: pem}} <-
              CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_get_public_key(
                client(cred),
-               project,
-               location,
-               keychain,
-               key,
-               version
+               name
              ) do
         case algorithm do
           "EC_SIGN_SECP256K1_SHA256" ->
@@ -60,14 +58,12 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
         |> keccak()
         |> Base.encode64()
 
+      name = key_version_name(project, location, keychain, key, version)
+
       with {:ok, response} <-
              CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_asymmetric_sign(
                client(cred),
-               project,
-               location,
-               keychain,
-               key,
-               version,
+               name,
                body: %{
                  digest: %{
                    sha256: message_hash_enc
@@ -77,6 +73,11 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
            {:ok, decoded_sig} <- Base.decode64(response.signature) do
         {:ok, Curvy.Signature.parse(decoded_sig)}
       end
+    end
+
+    defp key_version_name(project, location, keychain, key, version) do
+      "projects/#{project}/locations/#{location}/keyRings/#{keychain}" <>
+        "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
     defp client(token) when is_binary(token), do: Connection.new(token)

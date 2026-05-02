@@ -28,14 +28,12 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     @spec get_address(term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
             {:ok, <<_::256>>} | {:error, term()}
     def get_address(cred, project, location, keychain, key, version) do
+      name = key_version_name(project, location, keychain, key, version)
+
       with {:ok, %GoogleApi.CloudKMS.V1.Model.PublicKey{algorithm: algorithm, pem: pem}} <-
              CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_get_public_key(
                client(cred),
-               project,
-               location,
-               keychain,
-               key,
-               version
+               name
              ) do
         case algorithm do
           "EC_SIGN_ED25519" ->
@@ -59,15 +57,12 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
             {:ok, <<_::512>>} | {:error, term()}
     def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
       message_enc = Base.encode64(message)
+      name = key_version_name(project, location, keychain, key, version)
 
       with {:ok, response} <-
              CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_asymmetric_sign(
                client(cred),
-               project,
-               location,
-               keychain,
-               key,
-               version,
+               name,
                body: %{
                  data: message_enc
                }
@@ -75,6 +70,11 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
            {:ok, <<signature::binary-64>>} <- Base.decode64(response.signature) do
         {:ok, signature}
       end
+    end
+
+    defp key_version_name(project, location, keychain, key, version) do
+      "projects/#{project}/locations/#{location}/keyRings/#{keychain}" <>
+        "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
     defp extract_ed25519_pubkey(pem) do

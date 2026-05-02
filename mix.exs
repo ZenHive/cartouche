@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.1.2",
+      version: "0.1.3",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -62,7 +62,7 @@ defmodule Cartouche.MixProject do
       {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:jason, "~> 1.4.1"},
       {:finch, "~> 0.19"},
-      {:google_api_cloud_kms, "~> 0.38.1", optional: true},
+      {:google_api_cloud_kms, "~> 0.43.0", optional: true},
       {:ex_sha3, "~> 0.1.4"},
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.3", optional: true},
@@ -75,7 +75,7 @@ defmodule Cartouche.MixProject do
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
       {:hieroglyph, "~> 1.4"},
-      {:junit_formatter, "~> 3.3.1", only: [:test]}
+      {:junit_formatter, "~> 3.3", only: [:test]}
     ] ++ zenhive_dev_deps()
   end
 
