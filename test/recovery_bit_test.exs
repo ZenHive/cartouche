@@ -26,6 +26,11 @@ defmodule Cartouche.RecoveryBitTest do
                <<1::256, 2::256, 46>>
     end
 
+    test "recover_base/1 returns 0/1 for valid EIP-155 recovery bits" do
+      assert Cartouche.RecoveryBit.recover_base(45) == 0
+      assert Cartouche.RecoveryBit.recover_base(46) == 1
+    end
+
     test "recover_base/1 reports the configured chain id for invalid EIP-155 values" do
       assert_raise RuntimeError, "Invalid EIP-155 Signature: recovery_bit=47, chain_id=5", fn ->
         Cartouche.RecoveryBit.recover_base(47)
