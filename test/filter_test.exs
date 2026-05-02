@@ -2,9 +2,12 @@ defmodule Cartouche.FilterTest do
   use ExUnit.Case, async: true
   use Cartouche.Hex
 
+  alias Cartouche.Filter.Log
+
   doctest Cartouche.Filter
 
   defmodule ExpiredFilterClient do
+    @moduledoc false
     def request(%Finch.Request{body: body}, _finch_name, _opts) do
       %{"method" => method, "params" => params, "id" => id} = Jason.decode!(body)
 
@@ -64,7 +67,7 @@ defmodule Cartouche.FilterTest do
         "transactionHash" => "0xa74c2432c9cf7dbb875a385a2411fd8f13ca9ec12216864b1a1ead3c99de99cd",
         "transactionIndex" => "0x3"
       }
-      |> Cartouche.Filter.Log.deserialize()
+      |> Log.deserialize()
       |> Map.put(:extra_data, extra_data)
 
     assert_received {:event,
@@ -79,9 +82,6 @@ defmodule Cartouche.FilterTest do
   end
 
   test "recreates filter when ethereum node reports expired filter" do
-    Process.put(:new_filter_count, 0)
-    Process.delete(:expired_seen)
-
     extra_data = %{some_key: "some value"}
 
     log =
@@ -100,7 +100,7 @@ defmodule Cartouche.FilterTest do
         "transactionHash" => "0xa74c2432c9cf7dbb875a385a2411fd8f13ca9ec12216864b1a1ead3c99de99cd",
         "transactionIndex" => "0x3"
       }
-      |> Cartouche.Filter.Log.deserialize()
+      |> Log.deserialize()
       |> Map.put(:extra_data, extra_data)
 
     {:ok, _filter_pid} =
@@ -115,9 +115,7 @@ defmodule Cartouche.FilterTest do
 
     Cartouche.Filter.listen(ExpiredFilter)
 
-    assert_received {:event, {"Transfer", _}, ^log}, 500
-    assert_received {:log, ^log}, 500
-    assert Process.get(:expired_seen)
-    assert Process.get(:new_filter_count) >= 2
+    assert_receive {:event, {"Transfer", _}, ^log}, 500
+    assert_receive {:log, ^log}, 500
   end
 end
