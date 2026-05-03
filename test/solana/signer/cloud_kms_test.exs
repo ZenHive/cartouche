@@ -1,6 +1,6 @@
 if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
   defmodule Cartouche.Solana.Signer.CloudKMSTest do
-    use ExUnit.Case, async: true
+    use ExUnit.Case, async: false
 
     alias Cartouche.Solana.Signer.CloudKMS
 
@@ -178,6 +178,53 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
 
         assert :crypto.verify(:eddsa, :none, @test_message, sig, [@pub, :ed25519])
       end
+    end
+
+    describe "Goth credential path" do
+      setup do
+        # :meck patches the Goth module globally, so these tests cannot run async.
+        :meck.new(Goth, [:passthrough, :no_link])
+
+        on_exit(fn -> :meck.unload(Goth) end)
+
+        :ok
+      end
+
+      test "get_address/6 fetches a token from Goth" do
+        cred = stub_goth_fetch!(:solana_get_address)
+
+        {:ok, pub} =
+          CloudKMS.get_address(cred, "project", "location", "keychain", "key", "version")
+
+        assert pub == @pub
+        assert byte_size(pub) == 32
+        assert :meck.num_calls(Goth, :fetch!, [cred]) == 1
+      end
+
+      test "sign/7 fetches a token from Goth" do
+        cred = stub_goth_fetch!(:solana_sign)
+
+        {:ok, sig} =
+          CloudKMS.sign(
+            @test_message,
+            cred,
+            "project",
+            "location",
+            "keychain",
+            "key",
+            "version"
+          )
+
+        assert byte_size(sig) == 64
+        assert sig == @test_signature
+        assert :meck.num_calls(Goth, :fetch!, [cred]) == 1
+      end
+    end
+
+    defp stub_goth_fetch!(name) do
+      cred = {:goth_credential, name}
+      :meck.expect(Goth, :fetch!, fn ^cred -> %{token: "stubbed-token", type: "Bearer"} end)
+      cred
     end
   end
 end

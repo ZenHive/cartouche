@@ -89,6 +89,7 @@ defmodule Cartouche.MixProject do
       {:dialyzer_json, "~> 0.2", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:meck, "~> 0.9", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.21", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.4", only: [:dev, :test], runtime: false},
