@@ -17,7 +17,7 @@
 @~/.claude/includes/upstream-pr-workflow.md
 @~/.claude/includes/linear-workflow.md
 @~/.claude/includes/cloud-agent-environments.md
-@~/.claude/includes/inetpeople-workspace.md
+@~/.claude/includes/onchain-stack-workspace.md
 
 
 forked from https://github.com/hayesgm/signet
