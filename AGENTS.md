@@ -1873,7 +1873,7 @@ Same shape as the Codex flow with **broader eligibility**. Cursor's cloud enviro
 
 3. **Cursor self-validates before opening the PR** — verified `mix test.json --quiet`, `mix credo --strict`, `mix format --check-formatted`, targeted `mix test test/...` runs all happen in Cursor's harness. PRs ship with the harness already green from Cursor's side. The local `commit-review` reviewer's job becomes the **5-category audit** + acceptance-criteria cross-reference, not "did the harness pass" (that's expected baseline).
 
-4. **Pushing back to Cursor:** post a Linear comment on the issue with `@cursor` mention. The Linear-displayName for Cursor's Background Agent is `cursor` (id `b8668f6b-992f-4152-9e59-13b6fe1f599b`). Cursor picks up `@cursor` mentions on Linear comments and amends the PR. *(Calibration data point in flight: INE-7 has an `@cursor` push-back mention from comment `29beb738` — confirm whether Cursor reliably picks up Linear @-mentions, or whether GitHub PR comment is the more reliable channel. Update this section after observation.)*
+4. **Pushing back to Cursor:** post a Linear comment on the issue with `@cursor` mention. The Linear-displayName for Cursor's Background Agent is `cursor` (id `b8668f6b-992f-4152-9e59-13b6fe1f599b`). **Verified channel** (INE-7 round-trip, 2026-05-02 → 05-03): Cursor picks up `@cursor` mentions on Linear comments within ~5 min, amends the PR with a fresh commit, posts confirmation comments back on the issue, and reruns the harness. The push-back was a verbatim code suggestion (two test assertions); Cursor applied it surgically with no scope creep. Linear @-mention is preferred over GitHub PR comment for Cursor push-back — keeps the conversation thread on the issue.
 
 5. **User merges.** Same rule — verdict is informational, user merges per `critical-rules.md` § "DON'T AUTO-MERGE PRS".
 
@@ -2113,7 +2113,7 @@ mix test                # or `mix test.json --quiet` if ex_unit_json is in deps
 
 #### Linear handle
 
-Cursor's Background Agent has Linear-displayName `cursor` (verified id: `b8668f6b-992f-4152-9e59-13b6fe1f599b`). Reviewers push back via Linear comments with `@cursor` mention; Cursor picks up the mention and amends the PR. (Calibration on this channel is in flight on Cartouche INE-7 — update if observed behavior diverges.)
+Cursor's Background Agent has Linear-displayName `cursor` (verified id: `b8668f6b-992f-4152-9e59-13b6fe1f599b`). Reviewers push back via Linear comments with `@cursor` mention; Cursor picks up the mention within ~5 min and amends the PR with a fresh commit, posting confirmation comments back on the issue. **Verified end-to-end on INE-7 round-trip** (2026-05-02 → 05-03): a verbatim code-suggestion push-back was applied surgically, no scope creep. Linear @-mention preferred over GitHub PR comment — keeps the conversation thread on the issue.
 
 ### AGENTS.md Generation
 
