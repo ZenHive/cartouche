@@ -10,3 +10,6 @@ DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:234,5A84B72
 Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:972,28AB432
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:934,35D266E
 Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:973,40E20BB
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:976,171757D
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:938,1C874F9
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:977,B32973
