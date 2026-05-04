@@ -6,7 +6,7 @@ defmodule Cartouche.Contract.IConsole do
   """
   use Cartouche.Hex
 
-  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.Call
 
   def contract_name do
     "IConsole"
@@ -36,7 +36,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log(p0, p1, p2)}
   end
 
   def call_log(contract, p0, p1, p2, opts \\ []) do
@@ -81,7 +81,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_00dd87b9(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_00dd87b9(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_00dd87b9(p0, p1, p2, p3)}
   end
 
   def call_log_00dd87b9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -125,7 +125,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_018c84c2(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_018c84c2(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_018c84c2(p0, p1, p2)}
   end
 
   def call_log_018c84c2(contract, p0, p1, p2, opts \\ []) do
@@ -170,7 +170,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_031c6f73(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_031c6f73(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_031c6f73(p0, p1, p2, p3)}
   end
 
   def call_log_031c6f73(contract, p0, p1, p2, p3, opts \\ []) do
@@ -215,7 +215,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0454c079(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0454c079(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0454c079(p0, p1, p2, p3)}
   end
 
   def call_log_0454c079(contract, p0, p1, p2, p3, opts \\ []) do
@@ -260,7 +260,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_078287f5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_078287f5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_078287f5(p0, p1, p2, p3)}
   end
 
   def call_log_078287f5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -305,7 +305,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_07831502(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_07831502(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_07831502(p0, p1, p2, p3)}
   end
 
   def call_log_07831502(contract, p0, p1, p2, p3, opts \\ []) do
@@ -349,7 +349,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_088ef9d2(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_088ef9d2(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_088ef9d2(p0, p1, p2)}
   end
 
   def call_log_088ef9d2(contract, p0, p1, p2, opts \\ []) do
@@ -394,7 +394,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_091ffaf5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_091ffaf5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_091ffaf5(p0, p1, p2, p3)}
   end
 
   def call_log_091ffaf5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -439,7 +439,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0aa6cfad(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0aa6cfad(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0aa6cfad(p0, p1, p2, p3)}
   end
 
   def call_log_0aa6cfad(contract, p0, p1, p2, p3, opts \\ []) do
@@ -484,7 +484,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0bb00eab(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0bb00eab(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0bb00eab(p0, p1, p2, p3)}
   end
 
   def call_log_0bb00eab(contract, p0, p1, p2, p3, opts \\ []) do
@@ -529,7 +529,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0c66d1be(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0c66d1be(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0c66d1be(p0, p1, p2, p3)}
   end
 
   def call_log_0c66d1be(contract, p0, p1, p2, p3, opts \\ []) do
@@ -574,7 +574,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0c9cd9c1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0c9cd9c1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0c9cd9c1(p0, p1, p2, p3)}
   end
 
   def call_log_0c9cd9c1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -618,7 +618,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0d26b925(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_0d26b925(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_0d26b925(p0, p1, p2)}
   end
 
   def call_log_0d26b925(contract, p0, p1, p2, opts \\ []) do
@@ -663,7 +663,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0d36fa20(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0d36fa20(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0d36fa20(p0, p1, p2, p3)}
   end
 
   def call_log_0d36fa20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -708,7 +708,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0df12b76(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0df12b76(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0df12b76(p0, p1, p2, p3)}
   end
 
   def call_log_0df12b76(contract, p0, p1, p2, p3, opts \\ []) do
@@ -753,7 +753,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0e378994(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0e378994(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0e378994(p0, p1, p2, p3)}
   end
 
   def call_log_0e378994(contract, p0, p1, p2, p3, opts \\ []) do
@@ -798,7 +798,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_0ef7e050(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_0ef7e050(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_0ef7e050(p0, p1, p2, p3)}
   end
 
   def call_log_0ef7e050(contract, p0, p1, p2, p3, opts \\ []) do
@@ -843,7 +843,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_100f650e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_100f650e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_100f650e(p0, p1, p2, p3)}
   end
 
   def call_log_100f650e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -888,7 +888,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1023f7b2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1023f7b2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1023f7b2(p0, p1, p2, p3)}
   end
 
   def call_log_1023f7b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -932,7 +932,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1078f68d(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_1078f68d(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_1078f68d(p0, p1, p2)}
   end
 
   def call_log_1078f68d(contract, p0, p1, p2, opts \\ []) do
@@ -976,7 +976,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1093ee11(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_1093ee11(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_1093ee11(p0, p1, p2)}
   end
 
   def call_log_1093ee11(contract, p0, p1, p2, opts \\ []) do
@@ -1021,7 +1021,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_12d6c788(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_12d6c788(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_12d6c788(p0, p1, p2, p3)}
   end
 
   def call_log_12d6c788(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1065,7 +1065,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_12f21602(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_12f21602(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_12f21602(p0, p1, p2)}
   end
 
   def call_log_12f21602(contract, p0, p1, p2, opts \\ []) do
@@ -1110,7 +1110,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_136b05dd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_136b05dd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_136b05dd(p0, p1, p2, p3)}
   end
 
   def call_log_136b05dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1155,7 +1155,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1537dc87(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1537dc87(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1537dc87(p0, p1, p2, p3)}
   end
 
   def call_log_1537dc87(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1200,7 +1200,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1596a1ce(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1596a1ce(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1596a1ce(p0, p1, p2, p3)}
   end
 
   def call_log_1596a1ce(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1245,7 +1245,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_159f8927(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_159f8927(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_159f8927(p0, p1, p2, p3)}
   end
 
   def call_log_159f8927(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1290,7 +1290,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_15c127b5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_15c127b5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_15c127b5(p0, p1, p2, p3)}
   end
 
   def call_log_15c127b5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1335,7 +1335,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_15cac476(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_15cac476(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_15cac476(p0, p1, p2, p3)}
   end
 
   def call_log_15cac476(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1380,7 +1380,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1606a393(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1606a393(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1606a393(p0, p1, p2, p3)}
   end
 
   def call_log_1606a393(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1425,7 +1425,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1762e32a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1762e32a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1762e32a(p0, p1, p2, p3)}
   end
 
   def call_log_1762e32a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1469,7 +1469,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_17fe6185(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_17fe6185(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_17fe6185(p0, p1, p2)}
   end
 
   def call_log_17fe6185(contract, p0, p1, p2, opts \\ []) do
@@ -1513,7 +1513,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_18c9c746(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_18c9c746(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_18c9c746(p0, p1, p2)}
   end
 
   def call_log_18c9c746(contract, p0, p1, p2, opts \\ []) do
@@ -1558,7 +1558,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_193fb800(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_193fb800(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_193fb800(p0, p1, p2, p3)}
   end
 
   def call_log_193fb800(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1603,7 +1603,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_19fd4956(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_19fd4956(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_19fd4956(p0, p1, p2, p3)}
   end
 
   def call_log_19fd4956(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1648,7 +1648,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1ad96de6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1ad96de6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1ad96de6(p0, p1, p2, p3)}
   end
 
   def call_log_1ad96de6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1693,7 +1693,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1bb3b09a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1bb3b09a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1bb3b09a(p0, p1, p2, p3)}
   end
 
   def call_log_1bb3b09a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1738,7 +1738,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c41a336(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1c41a336(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1c41a336(p0, p1, p2, p3)}
   end
 
   def call_log_1c41a336(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1782,7 +1782,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c7ec448(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_1c7ec448(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_1c7ec448(p0, p1, p2)}
   end
 
   def call_log_1c7ec448(contract, p0, p1, p2, opts \\ []) do
@@ -1822,7 +1822,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1c9d7eb3(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_1c9d7eb3(p0, p1)}
+    %Call{destination: contract, data: encode_log_1c9d7eb3(p0, p1)}
   end
 
   def call_log_1c9d7eb3(contract, p0, p1, opts \\ []) do
@@ -1867,7 +1867,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1d14d001(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1d14d001(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1d14d001(p0, p1, p2, p3)}
   end
 
   def call_log_1d14d001(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1912,7 +1912,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1da986ea(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1da986ea(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1da986ea(p0, p1, p2, p3)}
   end
 
   def call_log_1da986ea(contract, p0, p1, p2, p3, opts \\ []) do
@@ -1957,7 +1957,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1dc8e1b8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1dc8e1b8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1dc8e1b8(p0, p1, p2, p3)}
   end
 
   def call_log_1dc8e1b8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2002,7 +2002,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_1e4b87e5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_1e4b87e5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_1e4b87e5(p0, p1, p2, p3)}
   end
 
   def call_log_1e4b87e5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2046,7 +2046,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20098014(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_20098014(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_20098014(p0, p1, p2)}
   end
 
   def call_log_20098014(contract, p0, p1, p2, opts \\ []) do
@@ -2091,7 +2091,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_205871c2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_205871c2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_205871c2(p0, p1, p2, p3)}
   end
 
   def call_log_205871c2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2135,7 +2135,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20718650(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_20718650(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_20718650(p0, p1, p2)}
   end
 
   def call_log_20718650(contract, p0, p1, p2, opts \\ []) do
@@ -2180,7 +2180,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_20e3984d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_20e3984d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_20e3984d(p0, p1, p2, p3)}
   end
 
   def call_log_20e3984d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2224,7 +2224,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_212255cc(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_212255cc(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_212255cc(p0, p1, p2)}
   end
 
   def call_log_212255cc(contract, p0, p1, p2, opts \\ []) do
@@ -2269,7 +2269,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_21ad0683(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_21ad0683(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_21ad0683(p0, p1, p2, p3)}
   end
 
   def call_log_21ad0683(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2314,7 +2314,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_21bdaf25(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_21bdaf25(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_21bdaf25(p0, p1, p2, p3)}
   end
 
   def call_log_21bdaf25(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2359,7 +2359,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_223603bd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_223603bd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_223603bd(p0, p1, p2, p3)}
   end
 
   def call_log_223603bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2404,7 +2404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_22f6b999(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_22f6b999(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_22f6b999(p0, p1, p2, p3)}
   end
 
   def call_log_22f6b999(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2449,7 +2449,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_245986f2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_245986f2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_245986f2(p0, p1, p2, p3)}
   end
 
   def call_log_245986f2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2494,7 +2494,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2488b414(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2488b414(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2488b414(p0, p1, p2, p3)}
   end
 
   def call_log_2488b414(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2539,7 +2539,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_24f91465(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_24f91465(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_24f91465(p0, p1, p2, p3)}
   end
 
   def call_log_24f91465(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2583,7 +2583,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2555fa46(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_2555fa46(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_2555fa46(p0, p1, p2)}
   end
 
   def call_log_2555fa46(contract, p0, p1, p2, opts \\ []) do
@@ -2628,7 +2628,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_26f560a8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_26f560a8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_26f560a8(p0, p1, p2, p3)}
   end
 
   def call_log_26f560a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2673,7 +2673,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_27d8afd2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_27d8afd2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_27d8afd2(p0, p1, p2, p3)}
   end
 
   def call_log_27d8afd2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2718,7 +2718,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_28863fcb(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_28863fcb(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_28863fcb(p0, p1, p2, p3)}
   end
 
   def call_log_28863fcb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2758,7 +2758,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2a110e83(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_2a110e83(p0, p1)}
+    %Call{destination: contract, data: encode_log_2a110e83(p0, p1)}
   end
 
   def call_log_2a110e83(contract, p0, p1, opts \\ []) do
@@ -2803,7 +2803,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2ae408d4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2ae408d4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2ae408d4(p0, p1, p2, p3)}
   end
 
   def call_log_2ae408d4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2848,7 +2848,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2b2b18dc(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2b2b18dc(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2b2b18dc(p0, p1, p2, p3)}
   end
 
   def call_log_2b2b18dc(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2893,7 +2893,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c1754ed(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2c1754ed(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2c1754ed(p0, p1, p2, p3)}
   end
 
   def call_log_2c1754ed(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2938,7 +2938,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c1d0746(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2c1d0746(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2c1d0746(p0, p1, p2, p3)}
   end
 
   def call_log_2c1d0746(contract, p0, p1, p2, p3, opts \\ []) do
@@ -2978,7 +2978,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2c2ecbc2(contract, p0) do
-    %V2{destination: contract, data: encode_log_2c2ecbc2(p0)}
+    %Call{destination: contract, data: encode_log_2c2ecbc2(p0)}
   end
 
   def call_log_2c2ecbc2(contract, p0, opts \\ []) do
@@ -3023,7 +3023,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2cd4134a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2cd4134a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2cd4134a(p0, p1, p2, p3)}
   end
 
   def call_log_2cd4134a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3067,7 +3067,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2ced7cef(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_2ced7cef(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_2ced7cef(p0, p1, p2)}
   end
 
   def call_log_2ced7cef(contract, p0, p1, p2, opts \\ []) do
@@ -3107,7 +3107,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2d5b6cb9(contract, p0) do
-    %V2{destination: contract, data: encode_log_2d5b6cb9(p0)}
+    %Call{destination: contract, data: encode_log_2d5b6cb9(p0)}
   end
 
   def call_log_2d5b6cb9(contract, p0, opts \\ []) do
@@ -3152,7 +3152,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2d8e33a4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2d8e33a4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2d8e33a4(p0, p1, p2, p3)}
   end
 
   def call_log_2d8e33a4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3197,7 +3197,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_2dd778e6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_2dd778e6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_2dd778e6(p0, p1, p2, p3)}
   end
 
   def call_log_2dd778e6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3237,7 +3237,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_319af333(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_319af333(p0, p1)}
+    %Call{destination: contract, data: encode_log_319af333(p0, p1)}
   end
 
   def call_log_319af333(contract, p0, p1, opts \\ []) do
@@ -3277,7 +3277,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_32458eed(contract, p0) do
-    %V2{destination: contract, data: encode_log_32458eed(p0)}
+    %Call{destination: contract, data: encode_log_32458eed(p0)}
   end
 
   def call_log_32458eed(contract, p0, opts \\ []) do
@@ -3322,7 +3322,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_33e9dd1d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_33e9dd1d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_33e9dd1d(p0, p1, p2, p3)}
   end
 
   def call_log_33e9dd1d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3367,7 +3367,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_34f0e636(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_34f0e636(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_34f0e636(p0, p1, p2, p3)}
   end
 
   def call_log_34f0e636(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3411,7 +3411,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_35085f7b(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_35085f7b(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_35085f7b(p0, p1, p2)}
   end
 
   def call_log_35085f7b(contract, p0, p1, p2, opts \\ []) do
@@ -3456,7 +3456,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_354c36d6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_354c36d6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_354c36d6(p0, p1, p2, p3)}
   end
 
   def call_log_354c36d6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3501,7 +3501,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_35a5071f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_35a5071f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_35a5071f(p0, p1, p2, p3)}
   end
 
   def call_log_35a5071f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3545,7 +3545,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_37103367(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_37103367(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_37103367(p0, p1, p2)}
   end
 
   def call_log_37103367(contract, p0, p1, p2, opts \\ []) do
@@ -3590,7 +3590,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_374bb4b2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_374bb4b2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_374bb4b2(p0, p1, p2, p3)}
   end
 
   def call_log_374bb4b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3634,7 +3634,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_37aa7d4c(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_37aa7d4c(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_37aa7d4c(p0, p1, p2)}
   end
 
   def call_log_37aa7d4c(contract, p0, p1, p2, opts \\ []) do
@@ -3679,7 +3679,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_386ff5f4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_386ff5f4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_386ff5f4(p0, p1, p2, p3)}
   end
 
   def call_log_386ff5f4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3724,7 +3724,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3971e78c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3971e78c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3971e78c(p0, p1, p2, p3)}
   end
 
   def call_log_3971e78c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3764,7 +3764,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_399174d3(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_399174d3(p0, p1)}
+    %Call{destination: contract, data: encode_log_399174d3(p0, p1)}
   end
 
   def call_log_399174d3(contract, p0, p1, opts \\ []) do
@@ -3809,7 +3809,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3b2279b4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3b2279b4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3b2279b4(p0, p1, p2, p3)}
   end
 
   def call_log_3b2279b4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3854,7 +3854,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3b2a5ce0(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3b2a5ce0(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3b2a5ce0(p0, p1, p2, p3)}
   end
 
   def call_log_3b2a5ce0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3899,7 +3899,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3bf5e537(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3bf5e537(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3bf5e537(p0, p1, p2, p3)}
   end
 
   def call_log_3bf5e537(contract, p0, p1, p2, p3, opts \\ []) do
@@ -3939,7 +3939,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3ca6268e(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_3ca6268e(p0, p1)}
+    %Call{destination: contract, data: encode_log_3ca6268e(p0, p1)}
   end
 
   def call_log_3ca6268e(contract, p0, p1, opts \\ []) do
@@ -3984,7 +3984,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3e128ca3(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3e128ca3(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3e128ca3(p0, p1, p2, p3)}
   end
 
   def call_log_3e128ca3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4029,7 +4029,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3e9f866a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3e9f866a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3e9f866a(p0, p1, p2, p3)}
   end
 
   def call_log_3e9f866a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4074,7 +4074,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_3f8a701d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_3f8a701d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_3f8a701d(p0, p1, p2, p3)}
   end
 
   def call_log_3f8a701d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4119,7 +4119,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_40785869(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_40785869(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_40785869(p0, p1, p2, p3)}
   end
 
   def call_log_40785869(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4159,7 +4159,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_41304fac(contract, p0) do
-    %V2{destination: contract, data: encode_log_41304fac(p0)}
+    %Call{destination: contract, data: encode_log_41304fac(p0)}
   end
 
   def call_log_41304fac(contract, p0, opts \\ []) do
@@ -4204,7 +4204,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_42d21db7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_42d21db7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_42d21db7(p0, p1, p2, p3)}
   end
 
   def call_log_42d21db7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4249,7 +4249,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_439c7bef(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_439c7bef(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_439c7bef(p0, p1, p2, p3)}
   end
 
   def call_log_439c7bef(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4294,7 +4294,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_448830a8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_448830a8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_448830a8(p0, p1, p2, p3)}
   end
 
   def call_log_448830a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4339,7 +4339,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_454d54a5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_454d54a5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_454d54a5(p0, p1, p2, p3)}
   end
 
   def call_log_454d54a5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4384,7 +4384,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_457fe3cf(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_457fe3cf(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_457fe3cf(p0, p1, p2, p3)}
   end
 
   def call_log_457fe3cf(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4429,7 +4429,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_46600be0(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_46600be0(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_46600be0(p0, p1, p2, p3)}
   end
 
   def call_log_46600be0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4474,7 +4474,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_46826b5d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_46826b5d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_46826b5d(p0, p1, p2, p3)}
   end
 
   def call_log_46826b5d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4519,7 +4519,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_475c5c33(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_475c5c33(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_475c5c33(p0, p1, p2, p3)}
   end
 
   def call_log_475c5c33(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4563,7 +4563,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4766da72(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_4766da72(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_4766da72(p0, p1, p2)}
   end
 
   def call_log_4766da72(contract, p0, p1, p2, opts \\ []) do
@@ -4608,7 +4608,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_478d1c62(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_478d1c62(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_478d1c62(p0, p1, p2, p3)}
   end
 
   def call_log_478d1c62(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4653,7 +4653,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_483d0416(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_483d0416(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_483d0416(p0, p1, p2, p3)}
   end
 
   def call_log_483d0416(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4698,7 +4698,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4a28c017(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_4a28c017(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_4a28c017(p0, p1, p2, p3)}
   end
 
   def call_log_4a28c017(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4743,7 +4743,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4a66cb34(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_4a66cb34(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_4a66cb34(p0, p1, p2, p3)}
   end
 
   def call_log_4a66cb34(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4783,7 +4783,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4b5c4277(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_4b5c4277(p0, p1)}
+    %Call{destination: contract, data: encode_log_4b5c4277(p0, p1)}
   end
 
   def call_log_4b5c4277(contract, p0, p1, opts \\ []) do
@@ -4828,7 +4828,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4c123d57(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_4c123d57(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_4c123d57(p0, p1, p2, p3)}
   end
 
   def call_log_4c123d57(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4872,7 +4872,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4ceda75a(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_4ceda75a(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_4ceda75a(p0, p1, p2)}
   end
 
   def call_log_4ceda75a(contract, p0, p1, p2, opts \\ []) do
@@ -4917,7 +4917,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_4f04fdc6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_4f04fdc6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_4f04fdc6(p0, p1, p2, p3)}
   end
 
   def call_log_4f04fdc6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -4957,7 +4957,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_50709698(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_50709698(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_50709698(p0, p1, p2)}
   end
 
   def call_log_50709698(contract, p0, p1, p2, opts \\ []) do
@@ -5002,7 +5002,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_50ad461d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_50ad461d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_50ad461d(p0, p1, p2, p3)}
   end
 
   def call_log_50ad461d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5047,7 +5047,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_515e38b6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_515e38b6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_515e38b6(p0, p1, p2, p3)}
   end
 
   def call_log_515e38b6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5087,7 +5087,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_51973ec9(contract) do
-    %V2{destination: contract, data: encode_log_51973ec9()}
+    %Call{destination: contract, data: encode_log_51973ec9()}
   end
 
   def call_log_51973ec9(contract, opts \\ []) do
@@ -5132,7 +5132,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_51f09ff8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_51f09ff8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_51f09ff8(p0, p1, p2, p3)}
   end
 
   def call_log_51f09ff8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5177,7 +5177,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_538e06ab(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_538e06ab(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_538e06ab(p0, p1, p2, p3)}
   end
 
   def call_log_538e06ab(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5222,7 +5222,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_54a7a9a0(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_54a7a9a0(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_54a7a9a0(p0, p1, p2, p3)}
   end
 
   def call_log_54a7a9a0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5267,7 +5267,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_56a5d1b1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_56a5d1b1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_56a5d1b1(p0, p1, p2, p3)}
   end
 
   def call_log_56a5d1b1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5311,7 +5311,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5821efa1(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_5821efa1(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_5821efa1(p0, p1, p2)}
   end
 
   def call_log_5821efa1(contract, p0, p1, p2, opts \\ []) do
@@ -5355,7 +5355,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5970e089(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_5970e089(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_5970e089(p0, p1, p2)}
   end
 
   def call_log_5970e089(contract, p0, p1, p2, opts \\ []) do
@@ -5400,7 +5400,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_59cfcbe3(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_59cfcbe3(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_59cfcbe3(p0, p1, p2, p3)}
   end
 
   def call_log_59cfcbe3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5445,7 +5445,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5a477632(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5a477632(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5a477632(p0, p1, p2, p3)}
   end
 
   def call_log_5a477632(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5489,7 +5489,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5a9b5ed5(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_5a9b5ed5(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_5a9b5ed5(p0, p1, p2)}
   end
 
   def call_log_5a9b5ed5(contract, p0, p1, p2, opts \\ []) do
@@ -5534,7 +5534,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ab84e1f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5ab84e1f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5ab84e1f(p0, p1, p2, p3)}
   end
 
   def call_log_5ab84e1f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5579,7 +5579,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5abd992a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5abd992a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5abd992a(p0, p1, p2, p3)}
   end
 
   def call_log_5abd992a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5624,7 +5624,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5c430d47(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5c430d47(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5c430d47(p0, p1, p2, p3)}
   end
 
   def call_log_5c430d47(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5668,7 +5668,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5c96b331(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_5c96b331(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_5c96b331(p0, p1, p2)}
   end
 
   def call_log_5c96b331(contract, p0, p1, p2, opts \\ []) do
@@ -5713,7 +5713,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ccd4e37(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5ccd4e37(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5ccd4e37(p0, p1, p2, p3)}
   end
 
   def call_log_5ccd4e37(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5758,7 +5758,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d02c50b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5d02c50b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5d02c50b(p0, p1, p2, p3)}
   end
 
   def call_log_5d02c50b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5803,7 +5803,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d08bb05(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5d08bb05(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5d08bb05(p0, p1, p2, p3)}
   end
 
   def call_log_5d08bb05(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5848,7 +5848,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5d1a971a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5d1a971a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5d1a971a(p0, p1, p2, p3)}
   end
 
   def call_log_5d1a971a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5893,7 +5893,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5da297eb(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5da297eb(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5da297eb(p0, p1, p2, p3)}
   end
 
   def call_log_5da297eb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5938,7 +5938,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5e84b0ea(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5e84b0ea(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5e84b0ea(p0, p1, p2, p3)}
   end
 
   def call_log_5e84b0ea(contract, p0, p1, p2, p3, opts \\ []) do
@@ -5983,7 +5983,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5ea2b7ae(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5ea2b7ae(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5ea2b7ae(p0, p1, p2, p3)}
   end
 
   def call_log_5ea2b7ae(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6028,7 +6028,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f15d28c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5f15d28c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5f15d28c(p0, p1, p2, p3)}
   end
 
   def call_log_5f15d28c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6073,7 +6073,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f1d5c9f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5f1d5c9f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5f1d5c9f(p0, p1, p2, p3)}
   end
 
   def call_log_5f1d5c9f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6118,7 +6118,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f743a7c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_5f743a7c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_5f743a7c(p0, p1, p2, p3)}
   end
 
   def call_log_5f743a7c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6162,7 +6162,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_5f7b9afb(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_5f7b9afb(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_5f7b9afb(p0, p1, p2)}
   end
 
   def call_log_5f7b9afb(contract, p0, p1, p2, opts \\ []) do
@@ -6207,7 +6207,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6168ed61(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6168ed61(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6168ed61(p0, p1, p2, p3)}
   end
 
   def call_log_6168ed61(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6252,7 +6252,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_619e4d0e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_619e4d0e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_619e4d0e(p0, p1, p2, p3)}
   end
 
   def call_log_619e4d0e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6297,7 +6297,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63183678(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_63183678(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_63183678(p0, p1, p2, p3)}
   end
 
   def call_log_63183678(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6341,7 +6341,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63cb41f9(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_63cb41f9(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_63cb41f9(p0, p1, p2)}
   end
 
   def call_log_63cb41f9(contract, p0, p1, p2, opts \\ []) do
@@ -6386,7 +6386,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_63fb8bc5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_63fb8bc5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_63fb8bc5(p0, p1, p2, p3)}
   end
 
   def call_log_63fb8bc5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6426,7 +6426,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_643fd0df(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_643fd0df(p0, p1)}
+    %Call{destination: contract, data: encode_log_643fd0df(p0, p1)}
   end
 
   def call_log_643fd0df(contract, p0, p1, opts \\ []) do
@@ -6471,7 +6471,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_64b5bb67(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_64b5bb67(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_64b5bb67(p0, p1, p2, p3)}
   end
 
   def call_log_64b5bb67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6516,7 +6516,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_660375dd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_660375dd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_660375dd(p0, p1, p2, p3)}
   end
 
   def call_log_660375dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6561,7 +6561,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_665bf134(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_665bf134(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_665bf134(p0, p1, p2, p3)}
   end
 
   def call_log_665bf134(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6606,7 +6606,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_66f1bc67(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_66f1bc67(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_66f1bc67(p0, p1, p2, p3)}
   end
 
   def call_log_66f1bc67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6650,7 +6650,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_678209a8(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_678209a8(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_678209a8(p0, p1, p2)}
   end
 
   def call_log_678209a8(contract, p0, p1, p2, opts \\ []) do
@@ -6694,7 +6694,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_67dd6ff1(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_67dd6ff1(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_67dd6ff1(p0, p1, p2)}
   end
 
   def call_log_67dd6ff1(contract, p0, p1, p2, opts \\ []) do
@@ -6739,7 +6739,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_68c8b8bd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_68c8b8bd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_68c8b8bd(p0, p1, p2, p3)}
   end
 
   def call_log_68c8b8bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6784,7 +6784,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_691a8f74(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_691a8f74(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_691a8f74(p0, p1, p2, p3)}
   end
 
   def call_log_691a8f74(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6824,7 +6824,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_69276c86(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_69276c86(p0, p1)}
+    %Call{destination: contract, data: encode_log_69276c86(p0, p1)}
   end
 
   def call_log_69276c86(contract, p0, p1, opts \\ []) do
@@ -6869,7 +6869,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_69640b59(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_69640b59(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_69640b59(p0, p1, p2, p3)}
   end
 
   def call_log_69640b59(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6914,7 +6914,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6a1199e2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6a1199e2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6a1199e2(p0, p1, p2, p3)}
   end
 
   def call_log_6a1199e2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -6959,7 +6959,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6a9c478b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6a9c478b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6a9c478b(p0, p1, p2, p3)}
   end
 
   def call_log_6a9c478b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7004,7 +7004,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6b0e5d53(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6b0e5d53(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6b0e5d53(p0, p1, p2, p3)}
   end
 
   def call_log_6b0e5d53(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7049,7 +7049,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6cde40b8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6cde40b8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6cde40b8(p0, p1, p2, p3)}
   end
 
   def call_log_6cde40b8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7094,7 +7094,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d1e8751(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6d1e8751(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6d1e8751(p0, p1, p2, p3)}
   end
 
   def call_log_6d1e8751(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7139,7 +7139,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d572f44(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6d572f44(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6d572f44(p0, p1, p2, p3)}
   end
 
   def call_log_6d572f44(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7184,7 +7184,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6d7045c1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6d7045c1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6d7045c1(p0, p1, p2, p3)}
   end
 
   def call_log_6d7045c1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7229,7 +7229,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6dd434ca(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6dd434ca(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6dd434ca(p0, p1, p2, p3)}
   end
 
   def call_log_6dd434ca(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7274,7 +7274,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6f1a594e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6f1a594e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6f1a594e(p0, p1, p2, p3)}
   end
 
   def call_log_6f1a594e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7319,7 +7319,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_6f7c603e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_6f7c603e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_6f7c603e(p0, p1, p2, p3)}
   end
 
   def call_log_6f7c603e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7364,7 +7364,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7190a529(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7190a529(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7190a529(p0, p1, p2, p3)}
   end
 
   def call_log_7190a529(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7408,7 +7408,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_71d04af2(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_71d04af2(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_71d04af2(p0, p1, p2)}
   end
 
   def call_log_71d04af2(contract, p0, p1, p2, opts \\ []) do
@@ -7453,7 +7453,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_736efbb6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_736efbb6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_736efbb6(p0, p1, p2, p3)}
   end
 
   def call_log_736efbb6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7498,7 +7498,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_742d6ee7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_742d6ee7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_742d6ee7(p0, p1, p2, p3)}
   end
 
   def call_log_742d6ee7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7543,7 +7543,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7464ce23(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7464ce23(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7464ce23(p0, p1, p2, p3)}
   end
 
   def call_log_7464ce23(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7583,7 +7583,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_759f86bb(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_759f86bb(p0, p1)}
+    %Call{destination: contract, data: encode_log_759f86bb(p0, p1)}
   end
 
   def call_log_759f86bb(contract, p0, p1, opts \\ []) do
@@ -7623,7 +7623,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_75b605d3(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_75b605d3(p0, p1)}
+    %Call{destination: contract, data: encode_log_75b605d3(p0, p1)}
   end
 
   def call_log_75b605d3(contract, p0, p1, opts \\ []) do
@@ -7668,7 +7668,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7626db92(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7626db92(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7626db92(p0, p1, p2, p3)}
   end
 
   def call_log_7626db92(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7713,7 +7713,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_79884c2b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_79884c2b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_79884c2b(p0, p1, p2, p3)}
   end
 
   def call_log_79884c2b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7758,7 +7758,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7af6ab25(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7af6ab25(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7af6ab25(p0, p1, p2, p3)}
   end
 
   def call_log_7af6ab25(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7802,7 +7802,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7afac959(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_7afac959(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_7afac959(p0, p1, p2)}
   end
 
   def call_log_7afac959(contract, p0, p1, p2, opts \\ []) do
@@ -7846,7 +7846,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7bc0d848(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_7bc0d848(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_7bc0d848(p0, p1, p2)}
   end
 
   def call_log_7bc0d848(contract, p0, p1, p2, opts \\ []) do
@@ -7891,7 +7891,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7be0c3eb(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7be0c3eb(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7be0c3eb(p0, p1, p2, p3)}
   end
 
   def call_log_7be0c3eb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7936,7 +7936,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7bf181a1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7bf181a1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7bf181a1(p0, p1, p2, p3)}
   end
 
   def call_log_7bf181a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -7981,7 +7981,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7c4632a4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7c4632a4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7c4632a4(p0, p1, p2, p3)}
   end
 
   def call_log_7c4632a4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8026,7 +8026,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7cc3c607(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7cc3c607(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7cc3c607(p0, p1, p2, p3)}
   end
 
   def call_log_7cc3c607(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8071,7 +8071,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7d24491d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7d24491d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7d24491d(p0, p1, p2, p3)}
   end
 
   def call_log_7d24491d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8116,7 +8116,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7dd4d0e0(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7dd4d0e0(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7dd4d0e0(p0, p1, p2, p3)}
   end
 
   def call_log_7dd4d0e0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8161,7 +8161,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_7f9bbca2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_7f9bbca2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_7f9bbca2(p0, p1, p2, p3)}
   end
 
   def call_log_7f9bbca2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8206,7 +8206,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_800a1c67(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_800a1c67(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_800a1c67(p0, p1, p2, p3)}
   end
 
   def call_log_800a1c67(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8251,7 +8251,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_80e6a20b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_80e6a20b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_80e6a20b(p0, p1, p2, p3)}
   end
 
   def call_log_80e6a20b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8296,7 +8296,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_82112a42(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_82112a42(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_82112a42(p0, p1, p2, p3)}
   end
 
   def call_log_82112a42(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8341,7 +8341,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_82c25b74(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_82c25b74(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_82c25b74(p0, p1, p2, p3)}
   end
 
   def call_log_82c25b74(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8381,7 +8381,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8309e8a8(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_8309e8a8(p0, p1)}
+    %Call{destination: contract, data: encode_log_8309e8a8(p0, p1)}
   end
 
   def call_log_8309e8a8(contract, p0, p1, opts \\ []) do
@@ -8425,7 +8425,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_850b7ad6(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_850b7ad6(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_850b7ad6(p0, p1, p2)}
   end
 
   def call_log_850b7ad6(contract, p0, p1, p2, opts \\ []) do
@@ -8465,7 +8465,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_853c4849(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_853c4849(p0, p1)}
+    %Call{destination: contract, data: encode_log_853c4849(p0, p1)}
   end
 
   def call_log_853c4849(contract, p0, p1, opts \\ []) do
@@ -8510,7 +8510,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_854b3496(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_854b3496(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_854b3496(p0, p1, p2, p3)}
   end
 
   def call_log_854b3496(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8554,7 +8554,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_85775021(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_85775021(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_85775021(p0, p1, p2)}
   end
 
   def call_log_85775021(contract, p0, p1, p2, opts \\ []) do
@@ -8599,7 +8599,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88a8c406(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_88a8c406(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_88a8c406(p0, p1, p2, p3)}
   end
 
   def call_log_88a8c406(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8644,7 +8644,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88cb6041(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_88cb6041(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_88cb6041(p0, p1, p2, p3)}
   end
 
   def call_log_88cb6041(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8689,7 +8689,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_88f6e4b2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_88f6e4b2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_88f6e4b2(p0, p1, p2, p3)}
   end
 
   def call_log_88f6e4b2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8734,7 +8734,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_895af8c5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_895af8c5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_895af8c5(p0, p1, p2, p3)}
   end
 
   def call_log_895af8c5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8779,7 +8779,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8af7cf8a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8af7cf8a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8af7cf8a(p0, p1, p2, p3)}
   end
 
   def call_log_8af7cf8a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8824,7 +8824,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8c329b1a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8c329b1a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8c329b1a(p0, p1, p2, p3)}
   end
 
   def call_log_8c329b1a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8869,7 +8869,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8c4e5de6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8c4e5de6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8c4e5de6(p0, p1, p2, p3)}
   end
 
   def call_log_8c4e5de6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8914,7 +8914,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8da6def5(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8da6def5(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8da6def5(p0, p1, p2, p3)}
   end
 
   def call_log_8da6def5(contract, p0, p1, p2, p3, opts \\ []) do
@@ -8959,7 +8959,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8e3f78a9(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8e3f78a9(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8e3f78a9(p0, p1, p2, p3)}
   end
 
   def call_log_8e3f78a9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9004,7 +9004,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8e69fb5d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8e69fb5d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8e69fb5d(p0, p1, p2, p3)}
   end
 
   def call_log_8e69fb5d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9049,7 +9049,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8eafb02b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8eafb02b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8eafb02b(p0, p1, p2, p3)}
   end
 
   def call_log_8eafb02b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9094,7 +9094,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8ef3f399(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8ef3f399(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8ef3f399(p0, p1, p2, p3)}
   end
 
   def call_log_8ef3f399(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9139,7 +9139,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8f736d16(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_8f736d16(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_8f736d16(p0, p1, p2, p3)}
   end
 
   def call_log_8f736d16(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9179,7 +9179,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_8feac525(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_8feac525(p0, p1)}
+    %Call{destination: contract, data: encode_log_8feac525(p0, p1)}
   end
 
   def call_log_8feac525(contract, p0, p1, opts \\ []) do
@@ -9224,7 +9224,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_90c30a56(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_90c30a56(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_90c30a56(p0, p1, p2, p3)}
   end
 
   def call_log_90c30a56(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9269,7 +9269,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_90fb06aa(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_90fb06aa(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_90fb06aa(p0, p1, p2, p3)}
   end
 
   def call_log_90fb06aa(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9314,7 +9314,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9143dbb1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9143dbb1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9143dbb1(p0, p1, p2, p3)}
   end
 
   def call_log_9143dbb1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9359,7 +9359,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_91a02e2a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_91a02e2a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_91a02e2a(p0, p1, p2, p3)}
   end
 
   def call_log_91a02e2a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9404,7 +9404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_91d1112e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_91d1112e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_91d1112e(p0, p1, p2, p3)}
   end
 
   def call_log_91d1112e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9448,7 +9448,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_932bbb38(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_932bbb38(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_932bbb38(p0, p1, p2)}
   end
 
   def call_log_932bbb38(contract, p0, p1, p2, opts \\ []) do
@@ -9493,7 +9493,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_935e09bf(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_935e09bf(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_935e09bf(p0, p1, p2, p3)}
   end
 
   def call_log_935e09bf(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9538,7 +9538,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_94250d77(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_94250d77(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_94250d77(p0, p1, p2, p3)}
   end
 
   def call_log_94250d77(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9583,7 +9583,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_958c28c6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_958c28c6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_958c28c6(p0, p1, p2, p3)}
   end
 
   def call_log_958c28c6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9627,7 +9627,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9591b953(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_9591b953(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_9591b953(p0, p1, p2)}
   end
 
   def call_log_9591b953(contract, p0, p1, p2, opts \\ []) do
@@ -9671,7 +9671,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_95ed0195(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_95ed0195(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_95ed0195(p0, p1, p2)}
   end
 
   def call_log_95ed0195(contract, p0, p1, p2, opts \\ []) do
@@ -9716,7 +9716,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_97d394d8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_97d394d8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_97d394d8(p0, p1, p2, p3)}
   end
 
   def call_log_97d394d8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9761,7 +9761,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9a816a83(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9a816a83(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9a816a83(p0, p1, p2, p3)}
   end
 
   def call_log_9a816a83(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9806,7 +9806,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9acd3616(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9acd3616(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9acd3616(p0, p1, p2, p3)}
   end
 
   def call_log_9acd3616(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9851,7 +9851,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9b4254e2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9b4254e2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9b4254e2(p0, p1, p2, p3)}
   end
 
   def call_log_9b4254e2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9895,7 +9895,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9b6ec042(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_9b6ec042(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_9b6ec042(p0, p1, p2)}
   end
 
   def call_log_9b6ec042(contract, p0, p1, p2, opts \\ []) do
@@ -9940,7 +9940,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9c3adfa1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9c3adfa1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9c3adfa1(p0, p1, p2, p3)}
   end
 
   def call_log_9c3adfa1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -9984,7 +9984,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9c4f99fb(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_9c4f99fb(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_9c4f99fb(p0, p1, p2)}
   end
 
   def call_log_9c4f99fb(contract, p0, p1, p2, opts \\ []) do
@@ -10029,7 +10029,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9cba8fff(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9cba8fff(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9cba8fff(p0, p1, p2, p3)}
   end
 
   def call_log_9cba8fff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10074,7 +10074,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9d22d5dd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9d22d5dd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9d22d5dd(p0, p1, p2, p3)}
   end
 
   def call_log_9d22d5dd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10119,7 +10119,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9f1bc36e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9f1bc36e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9f1bc36e(p0, p1, p2, p3)}
   end
 
   def call_log_9f1bc36e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10164,7 +10164,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_9ffb2f93(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_9ffb2f93(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_9ffb2f93(p0, p1, p2, p3)}
   end
 
   def call_log_9ffb2f93(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10209,7 +10209,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a04e2f87(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a04e2f87(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a04e2f87(p0, p1, p2, p3)}
   end
 
   def call_log_a04e2f87(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10254,7 +10254,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a0a47963(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a0a47963(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a0a47963(p0, p1, p2, p3)}
   end
 
   def call_log_a0a47963(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10299,7 +10299,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1bcc9b3(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a1bcc9b3(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a1bcc9b3(p0, p1, p2, p3)}
   end
 
   def call_log_a1bcc9b3(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10344,7 +10344,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1ef4cbb(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a1ef4cbb(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a1ef4cbb(p0, p1, p2, p3)}
   end
 
   def call_log_a1ef4cbb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10388,7 +10388,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a1f2e8aa(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_a1f2e8aa(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_a1f2e8aa(p0, p1, p2)}
   end
 
   def call_log_a1f2e8aa(contract, p0, p1, p2, opts \\ []) do
@@ -10433,7 +10433,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a31bfdcc(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a31bfdcc(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a31bfdcc(p0, p1, p2, p3)}
   end
 
   def call_log_a31bfdcc(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10478,7 +10478,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a5b4fc99(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a5b4fc99(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a5b4fc99(p0, p1, p2, p3)}
   end
 
   def call_log_a5b4fc99(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10523,7 +10523,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a5cada94(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a5cada94(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a5cada94(p0, p1, p2, p3)}
   end
 
   def call_log_a5cada94(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10568,7 +10568,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a6f50b0f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a6f50b0f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a6f50b0f(p0, p1, p2, p3)}
   end
 
   def call_log_a6f50b0f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10613,7 +10613,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a73c1db6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a73c1db6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a73c1db6(p0, p1, p2, p3)}
   end
 
   def call_log_a73c1db6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10658,7 +10658,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a75c59de(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a75c59de(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a75c59de(p0, p1, p2, p3)}
   end
 
   def call_log_a75c59de(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10703,7 +10703,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a7a87853(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a7a87853(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a7a87853(p0, p1, p2, p3)}
   end
 
   def call_log_a7a87853(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10748,7 +10748,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_a826caeb(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_a826caeb(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_a826caeb(p0, p1, p2, p3)}
   end
 
   def call_log_a826caeb(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10793,7 +10793,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_aa6540c8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_aa6540c8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_aa6540c8(p0, p1, p2, p3)}
   end
 
   def call_log_aa6540c8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10838,7 +10838,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_aabc9a31(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_aabc9a31(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_aabc9a31(p0, p1, p2, p3)}
   end
 
   def call_log_aabc9a31(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10883,7 +10883,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ab085ae6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ab085ae6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ab085ae6(p0, p1, p2, p3)}
   end
 
   def call_log_ab085ae6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10928,7 +10928,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_abf73a98(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_abf73a98(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_abf73a98(p0, p1, p2, p3)}
   end
 
   def call_log_abf73a98(contract, p0, p1, p2, p3, opts \\ []) do
@@ -10973,7 +10973,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ade052c7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ade052c7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ade052c7(p0, p1, p2, p3)}
   end
 
   def call_log_ade052c7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11018,7 +11018,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ae2ec581(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ae2ec581(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ae2ec581(p0, p1, p2, p3)}
   end
 
   def call_log_ae2ec581(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11063,7 +11063,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b028c9bd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b028c9bd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b028c9bd(p0, p1, p2, p3)}
   end
 
   def call_log_b028c9bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11107,7 +11107,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b076847f(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_b076847f(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_b076847f(p0, p1, p2)}
   end
 
   def call_log_b076847f(contract, p0, p1, p2, opts \\ []) do
@@ -11151,7 +11151,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b0e0f9b5(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_b0e0f9b5(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_b0e0f9b5(p0, p1, p2)}
   end
 
   def call_log_b0e0f9b5(contract, p0, p1, p2, opts \\ []) do
@@ -11195,7 +11195,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b115611f(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_b115611f(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_b115611f(p0, p1, p2)}
   end
 
   def call_log_b115611f(contract, p0, p1, p2, opts \\ []) do
@@ -11240,7 +11240,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b3a6b6bd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b3a6b6bd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b3a6b6bd(p0, p1, p2, p3)}
   end
 
   def call_log_b3a6b6bd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11285,7 +11285,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b4c314ff(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b4c314ff(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b4c314ff(p0, p1, p2, p3)}
   end
 
   def call_log_b4c314ff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11330,7 +11330,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b59dbd60(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b59dbd60(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b59dbd60(p0, p1, p2, p3)}
   end
 
   def call_log_b59dbd60(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11370,7 +11370,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b60e72cc(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_b60e72cc(p0, p1)}
+    %Call{destination: contract, data: encode_log_b60e72cc(p0, p1)}
   end
 
   def call_log_b60e72cc(contract, p0, p1, opts \\ []) do
@@ -11414,7 +11414,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b69bcaf6(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_b69bcaf6(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_b69bcaf6(p0, p1, p2)}
   end
 
   def call_log_b69bcaf6(contract, p0, p1, p2, opts \\ []) do
@@ -11459,7 +11459,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b6f577a1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b6f577a1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b6f577a1(p0, p1, p2, p3)}
   end
 
   def call_log_b6f577a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11504,7 +11504,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b7b914ca(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b7b914ca(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b7b914ca(p0, p1, p2, p3)}
   end
 
   def call_log_b7b914ca(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11549,7 +11549,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_b857163a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_b857163a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_b857163a(p0, p1, p2, p3)}
   end
 
   def call_log_b857163a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11594,7 +11594,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ba535d9c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ba535d9c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ba535d9c(p0, p1, p2, p3)}
   end
 
   def call_log_ba535d9c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11639,7 +11639,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bc0b61fe(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_bc0b61fe(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_bc0b61fe(p0, p1, p2, p3)}
   end
 
   def call_log_bc0b61fe(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11683,7 +11683,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bcfd9be0(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_bcfd9be0(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_bcfd9be0(p0, p1, p2)}
   end
 
   def call_log_bcfd9be0(contract, p0, p1, p2, opts \\ []) do
@@ -11728,7 +11728,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_be553481(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_be553481(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_be553481(p0, p1, p2, p3)}
   end
 
   def call_log_be553481(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11773,7 +11773,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_be984353(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_be984353(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_be984353(p0, p1, p2, p3)}
   end
 
   def call_log_be984353(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11818,7 +11818,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bf01f891(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_bf01f891(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_bf01f891(p0, p1, p2, p3)}
   end
 
   def call_log_bf01f891(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11863,7 +11863,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c0a302d8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c0a302d8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c0a302d8(p0, p1, p2, p3)}
   end
 
   def call_log_c0a302d8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11908,7 +11908,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c21f64c7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c21f64c7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c21f64c7(p0, p1, p2, p3)}
   end
 
   def call_log_c21f64c7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11953,7 +11953,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c371c7db(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c371c7db(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c371c7db(p0, p1, p2, p3)}
   end
 
   def call_log_c371c7db(contract, p0, p1, p2, p3, opts \\ []) do
@@ -11998,7 +11998,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3a8a654(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c3a8a654(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c3a8a654(p0, p1, p2, p3)}
   end
 
   def call_log_c3a8a654(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12038,7 +12038,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3b55635(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_c3b55635(p0, p1)}
+    %Call{destination: contract, data: encode_log_c3b55635(p0, p1)}
   end
 
   def call_log_c3b55635(contract, p0, p1, opts \\ []) do
@@ -12082,7 +12082,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c3fc3970(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_c3fc3970(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_c3fc3970(p0, p1, p2)}
   end
 
   def call_log_c3fc3970(contract, p0, p1, p2, opts \\ []) do
@@ -12127,7 +12127,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c4643e20(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c4643e20(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c4643e20(p0, p1, p2, p3)}
   end
 
   def call_log_c4643e20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12172,7 +12172,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c598d185(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c598d185(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c598d185(p0, p1, p2, p3)}
   end
 
   def call_log_c598d185(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12217,7 +12217,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c5ad85f9(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c5ad85f9(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c5ad85f9(p0, p1, p2, p3)}
   end
 
   def call_log_c5ad85f9(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12262,7 +12262,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c67ea9d1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c67ea9d1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c67ea9d1(p0, p1, p2, p3)}
   end
 
   def call_log_c67ea9d1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12307,7 +12307,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c6acc7a8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_c6acc7a8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_c6acc7a8(p0, p1, p2, p3)}
   end
 
   def call_log_c6acc7a8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12351,7 +12351,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c91d5ed4(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_c91d5ed4(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_c91d5ed4(p0, p1, p2)}
   end
 
   def call_log_c91d5ed4(contract, p0, p1, p2, opts \\ []) do
@@ -12395,7 +12395,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_c95958d6(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_c95958d6(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_c95958d6(p0, p1, p2)}
   end
 
   def call_log_c95958d6(contract, p0, p1, p2, opts \\ []) do
@@ -12439,7 +12439,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ca47c4eb(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_ca47c4eb(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_ca47c4eb(p0, p1, p2)}
   end
 
   def call_log_ca47c4eb(contract, p0, p1, p2, opts \\ []) do
@@ -12483,7 +12483,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ca7733b1(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_ca7733b1(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_ca7733b1(p0, p1, p2)}
   end
 
   def call_log_ca7733b1(contract, p0, p1, p2, opts \\ []) do
@@ -12528,7 +12528,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cac43479(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_cac43479(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_cac43479(p0, p1, p2, p3)}
   end
 
   def call_log_cac43479(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12573,7 +12573,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cc32ab07(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_cc32ab07(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_cc32ab07(p0, p1, p2, p3)}
   end
 
   def call_log_cc32ab07(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12618,7 +12618,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ccf790a1(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ccf790a1(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ccf790a1(p0, p1, p2, p3)}
   end
 
   def call_log_ccf790a1(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12663,7 +12663,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ceb5f4d7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ceb5f4d7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ceb5f4d7(p0, p1, p2, p3)}
   end
 
   def call_log_ceb5f4d7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12708,7 +12708,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf009880(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_cf009880(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_cf009880(p0, p1, p2, p3)}
   end
 
   def call_log_cf009880(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12752,7 +12752,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf020fb1(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_cf020fb1(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_cf020fb1(p0, p1, p2)}
   end
 
   def call_log_cf020fb1(contract, p0, p1, p2, opts \\ []) do
@@ -12797,7 +12797,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf18105c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_cf18105c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_cf18105c(p0, p1, p2, p3)}
   end
 
   def call_log_cf18105c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12842,7 +12842,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_cf394485(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_cf394485(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_cf394485(p0, p1, p2, p3)}
   end
 
   def call_log_cf394485(contract, p0, p1, p2, p3, opts \\ []) do
@@ -12886,7 +12886,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d1ed7a3c(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_d1ed7a3c(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_d1ed7a3c(p0, p1, p2)}
   end
 
   def call_log_d1ed7a3c(contract, p0, p1, p2, opts \\ []) do
@@ -12930,7 +12930,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d2763667(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_d2763667(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_d2763667(p0, p1, p2)}
   end
 
   def call_log_d2763667(contract, p0, p1, p2, opts \\ []) do
@@ -12975,7 +12975,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d2d423cd(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_d2d423cd(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_d2d423cd(p0, p1, p2, p3)}
   end
 
   def call_log_d2d423cd(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13020,7 +13020,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d583c602(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_d583c602(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_d583c602(p0, p1, p2, p3)}
   end
 
   def call_log_d583c602(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13065,7 +13065,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d6019f1c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_d6019f1c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_d6019f1c(p0, p1, p2, p3)}
   end
 
   def call_log_d6019f1c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13110,7 +13110,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d6aefad2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_d6aefad2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_d6aefad2(p0, p1, p2, p3)}
   end
 
   def call_log_d6aefad2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13155,7 +13155,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_d812a167(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_d812a167(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_d812a167(p0, p1, p2, p3)}
   end
 
   def call_log_d812a167(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13195,7 +13195,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_daf0d4aa(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_daf0d4aa(p0, p1)}
+    %Call{destination: contract, data: encode_log_daf0d4aa(p0, p1)}
   end
 
   def call_log_daf0d4aa(contract, p0, p1, opts \\ []) do
@@ -13239,7 +13239,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dbb4c247(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_dbb4c247(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_dbb4c247(p0, p1, p2)}
   end
 
   def call_log_dbb4c247(contract, p0, p1, p2, opts \\ []) do
@@ -13284,7 +13284,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dc5e935b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_dc5e935b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_dc5e935b(p0, p1, p2, p3)}
   end
 
   def call_log_dc5e935b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13329,7 +13329,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ddb06521(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ddb06521(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ddb06521(p0, p1, p2, p3)}
   end
 
   def call_log_ddb06521(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13374,7 +13374,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dddb9561(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_dddb9561(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_dddb9561(p0, p1, p2, p3)}
   end
 
   def call_log_dddb9561(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13419,7 +13419,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de03e774(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_de03e774(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_de03e774(p0, p1, p2, p3)}
   end
 
   def call_log_de03e774(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13464,7 +13464,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de68f20a(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_de68f20a(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_de68f20a(p0, p1, p2, p3)}
   end
 
   def call_log_de68f20a(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13508,7 +13508,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_de9a9270(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_de9a9270(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_de9a9270(p0, p1, p2)}
   end
 
   def call_log_de9a9270(contract, p0, p1, p2, opts \\ []) do
@@ -13553,7 +13553,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_dfc4a2e8(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_dfc4a2e8(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_dfc4a2e8(p0, p1, p2, p3)}
   end
 
   def call_log_dfc4a2e8(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13598,7 +13598,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0625b29(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e0625b29(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e0625b29(p0, p1, p2, p3)}
   end
 
   def call_log_e0625b29(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13643,7 +13643,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0e95b98(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e0e95b98(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e0e95b98(p0, p1, p2, p3)}
   end
 
   def call_log_e0e95b98(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13687,7 +13687,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e0e9ad4f(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_e0e9ad4f(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_e0e9ad4f(p0, p1, p2)}
   end
 
   def call_log_e0e9ad4f(contract, p0, p1, p2, opts \\ []) do
@@ -13732,7 +13732,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e21de278(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e21de278(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e21de278(p0, p1, p2, p3)}
   end
 
   def call_log_e21de278(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13776,7 +13776,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e298f47d(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_e298f47d(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_e298f47d(p0, p1, p2)}
   end
 
   def call_log_e298f47d(contract, p0, p1, p2, opts \\ []) do
@@ -13821,7 +13821,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e2bfd60b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e2bfd60b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e2bfd60b(p0, p1, p2, p3)}
   end
 
   def call_log_e2bfd60b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13866,7 +13866,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e351140f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e351140f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e351140f(p0, p1, p2, p3)}
   end
 
   def call_log_e351140f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13911,7 +13911,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e3a9ca2f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e3a9ca2f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e3a9ca2f(p0, p1, p2, p3)}
   end
 
   def call_log_e3a9ca2f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -13956,7 +13956,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e41b6f6f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e41b6f6f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e41b6f6f(p0, p1, p2, p3)}
   end
 
   def call_log_e41b6f6f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14001,7 +14001,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e5e70b2b(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e5e70b2b(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e5e70b2b(p0, p1, p2, p3)}
   end
 
   def call_log_e5e70b2b(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14046,7 +14046,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e8d3018d(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_e8d3018d(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_e8d3018d(p0, p1, p2, p3)}
   end
 
   def call_log_e8d3018d(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14090,7 +14090,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_e8defba9(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_e8defba9(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_e8defba9(p0, p1, p2)}
   end
 
   def call_log_e8defba9(contract, p0, p1, p2, opts \\ []) do
@@ -14135,7 +14135,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb1bff80(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_eb1bff80(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_eb1bff80(p0, p1, p2, p3)}
   end
 
   def call_log_eb1bff80(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14180,7 +14180,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb7f6fd2(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_eb7f6fd2(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_eb7f6fd2(p0, p1, p2, p3)}
   end
 
   def call_log_eb7f6fd2(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14224,7 +14224,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb830c92(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_eb830c92(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_eb830c92(p0, p1, p2)}
   end
 
   def call_log_eb830c92(contract, p0, p1, p2, opts \\ []) do
@@ -14269,7 +14269,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_eb928d7f(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_eb928d7f(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_eb928d7f(p0, p1, p2, p3)}
   end
 
   def call_log_eb928d7f(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14314,7 +14314,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ed8f28f6(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ed8f28f6(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ed8f28f6(p0, p1, p2, p3)}
   end
 
   def call_log_ed8f28f6(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14359,7 +14359,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef1cefe7(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ef1cefe7(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ef1cefe7(p0, p1, p2, p3)}
   end
 
   def call_log_ef1cefe7(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14404,7 +14404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef529018(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ef529018(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ef529018(p0, p1, p2, p3)}
   end
 
   def call_log_ef529018(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14449,7 +14449,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_ef72c513(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_ef72c513(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_ef72c513(p0, p1, p2, p3)}
   end
 
   def call_log_ef72c513(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14493,7 +14493,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f08744e8(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_f08744e8(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_f08744e8(p0, p1, p2)}
   end
 
   def call_log_f08744e8(contract, p0, p1, p2, opts \\ []) do
@@ -14537,7 +14537,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f11699ed(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_f11699ed(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_f11699ed(p0, p1, p2)}
   end
 
   def call_log_f11699ed(contract, p0, p1, p2, opts \\ []) do
@@ -14581,7 +14581,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f2a66286(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_f2a66286(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_f2a66286(p0, p1, p2)}
   end
 
   def call_log_f2a66286(contract, p0, p1, p2, opts \\ []) do
@@ -14626,7 +14626,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f45d7d2c(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f45d7d2c(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f45d7d2c(p0, p1, p2, p3)}
   end
 
   def call_log_f45d7d2c(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14671,7 +14671,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f4880ea4(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f4880ea4(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f4880ea4(p0, p1, p2, p3)}
   end
 
   def call_log_f4880ea4(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14716,7 +14716,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f5bc2249(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f5bc2249(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f5bc2249(p0, p1, p2, p3)}
   end
 
   def call_log_f5bc2249(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14756,7 +14756,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f666715a(contract, p0, p1) do
-    %V2{destination: contract, data: encode_log_f666715a(p0, p1)}
+    %Call{destination: contract, data: encode_log_f666715a(p0, p1)}
   end
 
   def call_log_f666715a(contract, p0, p1, opts \\ []) do
@@ -14801,7 +14801,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f7e36245(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f7e36245(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f7e36245(p0, p1, p2, p3)}
   end
 
   def call_log_f7e36245(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14846,7 +14846,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f808da20(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f808da20(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f808da20(p0, p1, p2, p3)}
   end
 
   def call_log_f808da20(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14886,7 +14886,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f82c50f1(contract, p0) do
-    %V2{destination: contract, data: encode_log_f82c50f1(p0)}
+    %Call{destination: contract, data: encode_log_f82c50f1(p0)}
   end
 
   def call_log_f82c50f1(contract, p0, opts \\ []) do
@@ -14931,7 +14931,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f8f51b1e(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f8f51b1e(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f8f51b1e(p0, p1, p2, p3)}
   end
 
   def call_log_f8f51b1e(contract, p0, p1, p2, p3, opts \\ []) do
@@ -14976,7 +14976,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_f9ad2b89(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_f9ad2b89(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_f9ad2b89(p0, p1, p2, p3)}
   end
 
   def call_log_f9ad2b89(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15021,7 +15021,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fa8185af(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_fa8185af(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_fa8185af(p0, p1, p2, p3)}
   end
 
   def call_log_fa8185af(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15065,7 +15065,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fb772265(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_fb772265(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_fb772265(p0, p1, p2)}
   end
 
   def call_log_fb772265(contract, p0, p1, p2, opts \\ []) do
@@ -15110,7 +15110,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fc4845f0(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_fc4845f0(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_fc4845f0(p0, p1, p2, p3)}
   end
 
   def call_log_fc4845f0(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15154,7 +15154,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fcec75e0(contract, p0, p1, p2) do
-    %V2{destination: contract, data: encode_log_fcec75e0(p0, p1, p2)}
+    %Call{destination: contract, data: encode_log_fcec75e0(p0, p1, p2)}
   end
 
   def call_log_fcec75e0(contract, p0, p1, p2, opts \\ []) do
@@ -15199,7 +15199,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fdb4f990(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_fdb4f990(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_fdb4f990(p0, p1, p2, p3)}
   end
 
   def call_log_fdb4f990(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15244,7 +15244,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_fedd1fff(contract, p0, p1, p2, p3) do
-    %V2{destination: contract, data: encode_log_fedd1fff(p0, p1, p2, p3)}
+    %Call{destination: contract, data: encode_log_fedd1fff(p0, p1, p2, p3)}
   end
 
   def call_log_fedd1fff(contract, p0, p1, p2, p3, opts \\ []) do
@@ -15284,7 +15284,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_address(contract, p0) do
-    %V2{destination: contract, data: encode_log_address(p0)}
+    %Call{destination: contract, data: encode_log_address(p0)}
   end
 
   def call_log_address(contract, p0, opts \\ []) do
@@ -15324,7 +15324,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bool(contract, p0) do
-    %V2{destination: contract, data: encode_log_bool(p0)}
+    %Call{destination: contract, data: encode_log_bool(p0)}
   end
 
   def call_log_bool(contract, p0, opts \\ []) do
@@ -15364,7 +15364,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes(p0)}
+    %Call{destination: contract, data: encode_log_bytes(p0)}
   end
 
   def call_log_bytes(contract, p0, opts \\ []) do
@@ -15404,7 +15404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes1(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes1(p0)}
+    %Call{destination: contract, data: encode_log_bytes1(p0)}
   end
 
   def call_log_bytes1(contract, p0, opts \\ []) do
@@ -15444,7 +15444,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes10(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes10(p0)}
+    %Call{destination: contract, data: encode_log_bytes10(p0)}
   end
 
   def call_log_bytes10(contract, p0, opts \\ []) do
@@ -15484,7 +15484,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes11(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes11(p0)}
+    %Call{destination: contract, data: encode_log_bytes11(p0)}
   end
 
   def call_log_bytes11(contract, p0, opts \\ []) do
@@ -15524,7 +15524,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes12(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes12(p0)}
+    %Call{destination: contract, data: encode_log_bytes12(p0)}
   end
 
   def call_log_bytes12(contract, p0, opts \\ []) do
@@ -15564,7 +15564,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes13(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes13(p0)}
+    %Call{destination: contract, data: encode_log_bytes13(p0)}
   end
 
   def call_log_bytes13(contract, p0, opts \\ []) do
@@ -15604,7 +15604,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes14(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes14(p0)}
+    %Call{destination: contract, data: encode_log_bytes14(p0)}
   end
 
   def call_log_bytes14(contract, p0, opts \\ []) do
@@ -15644,7 +15644,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes15(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes15(p0)}
+    %Call{destination: contract, data: encode_log_bytes15(p0)}
   end
 
   def call_log_bytes15(contract, p0, opts \\ []) do
@@ -15684,7 +15684,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes16(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes16(p0)}
+    %Call{destination: contract, data: encode_log_bytes16(p0)}
   end
 
   def call_log_bytes16(contract, p0, opts \\ []) do
@@ -15724,7 +15724,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes17(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes17(p0)}
+    %Call{destination: contract, data: encode_log_bytes17(p0)}
   end
 
   def call_log_bytes17(contract, p0, opts \\ []) do
@@ -15764,7 +15764,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes18(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes18(p0)}
+    %Call{destination: contract, data: encode_log_bytes18(p0)}
   end
 
   def call_log_bytes18(contract, p0, opts \\ []) do
@@ -15804,7 +15804,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes19(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes19(p0)}
+    %Call{destination: contract, data: encode_log_bytes19(p0)}
   end
 
   def call_log_bytes19(contract, p0, opts \\ []) do
@@ -15844,7 +15844,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes2(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes2(p0)}
+    %Call{destination: contract, data: encode_log_bytes2(p0)}
   end
 
   def call_log_bytes2(contract, p0, opts \\ []) do
@@ -15884,7 +15884,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes20(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes20(p0)}
+    %Call{destination: contract, data: encode_log_bytes20(p0)}
   end
 
   def call_log_bytes20(contract, p0, opts \\ []) do
@@ -15924,7 +15924,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes21(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes21(p0)}
+    %Call{destination: contract, data: encode_log_bytes21(p0)}
   end
 
   def call_log_bytes21(contract, p0, opts \\ []) do
@@ -15964,7 +15964,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes22(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes22(p0)}
+    %Call{destination: contract, data: encode_log_bytes22(p0)}
   end
 
   def call_log_bytes22(contract, p0, opts \\ []) do
@@ -16004,7 +16004,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes23(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes23(p0)}
+    %Call{destination: contract, data: encode_log_bytes23(p0)}
   end
 
   def call_log_bytes23(contract, p0, opts \\ []) do
@@ -16044,7 +16044,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes24(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes24(p0)}
+    %Call{destination: contract, data: encode_log_bytes24(p0)}
   end
 
   def call_log_bytes24(contract, p0, opts \\ []) do
@@ -16084,7 +16084,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes25(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes25(p0)}
+    %Call{destination: contract, data: encode_log_bytes25(p0)}
   end
 
   def call_log_bytes25(contract, p0, opts \\ []) do
@@ -16124,7 +16124,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes26(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes26(p0)}
+    %Call{destination: contract, data: encode_log_bytes26(p0)}
   end
 
   def call_log_bytes26(contract, p0, opts \\ []) do
@@ -16164,7 +16164,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes27(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes27(p0)}
+    %Call{destination: contract, data: encode_log_bytes27(p0)}
   end
 
   def call_log_bytes27(contract, p0, opts \\ []) do
@@ -16204,7 +16204,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes28(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes28(p0)}
+    %Call{destination: contract, data: encode_log_bytes28(p0)}
   end
 
   def call_log_bytes28(contract, p0, opts \\ []) do
@@ -16244,7 +16244,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes29(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes29(p0)}
+    %Call{destination: contract, data: encode_log_bytes29(p0)}
   end
 
   def call_log_bytes29(contract, p0, opts \\ []) do
@@ -16284,7 +16284,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes3(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes3(p0)}
+    %Call{destination: contract, data: encode_log_bytes3(p0)}
   end
 
   def call_log_bytes3(contract, p0, opts \\ []) do
@@ -16324,7 +16324,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes30(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes30(p0)}
+    %Call{destination: contract, data: encode_log_bytes30(p0)}
   end
 
   def call_log_bytes30(contract, p0, opts \\ []) do
@@ -16364,7 +16364,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes31(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes31(p0)}
+    %Call{destination: contract, data: encode_log_bytes31(p0)}
   end
 
   def call_log_bytes31(contract, p0, opts \\ []) do
@@ -16404,7 +16404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes32(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes32(p0)}
+    %Call{destination: contract, data: encode_log_bytes32(p0)}
   end
 
   def call_log_bytes32(contract, p0, opts \\ []) do
@@ -16444,7 +16444,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes4(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes4(p0)}
+    %Call{destination: contract, data: encode_log_bytes4(p0)}
   end
 
   def call_log_bytes4(contract, p0, opts \\ []) do
@@ -16484,7 +16484,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes5(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes5(p0)}
+    %Call{destination: contract, data: encode_log_bytes5(p0)}
   end
 
   def call_log_bytes5(contract, p0, opts \\ []) do
@@ -16524,7 +16524,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes6(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes6(p0)}
+    %Call{destination: contract, data: encode_log_bytes6(p0)}
   end
 
   def call_log_bytes6(contract, p0, opts \\ []) do
@@ -16564,7 +16564,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes7(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes7(p0)}
+    %Call{destination: contract, data: encode_log_bytes7(p0)}
   end
 
   def call_log_bytes7(contract, p0, opts \\ []) do
@@ -16604,7 +16604,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes8(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes8(p0)}
+    %Call{destination: contract, data: encode_log_bytes8(p0)}
   end
 
   def call_log_bytes8(contract, p0, opts \\ []) do
@@ -16644,7 +16644,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_bytes9(contract, p0) do
-    %V2{destination: contract, data: encode_log_bytes9(p0)}
+    %Call{destination: contract, data: encode_log_bytes9(p0)}
   end
 
   def call_log_bytes9(contract, p0, opts \\ []) do
@@ -16684,7 +16684,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_int(contract, p0) do
-    %V2{destination: contract, data: encode_log_int(p0)}
+    %Call{destination: contract, data: encode_log_int(p0)}
   end
 
   def call_log_int(contract, p0, opts \\ []) do
@@ -16724,7 +16724,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_string(contract, p0) do
-    %V2{destination: contract, data: encode_log_string(p0)}
+    %Call{destination: contract, data: encode_log_string(p0)}
   end
 
   def call_log_string(contract, p0, opts \\ []) do
@@ -16764,7 +16764,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   def build_trx_log_uint(contract, p0) do
-    %V2{destination: contract, data: encode_log_uint(p0)}
+    %Call{destination: contract, data: encode_log_uint(p0)}
   end
 
   def call_log_uint(contract, p0, opts \\ []) do
