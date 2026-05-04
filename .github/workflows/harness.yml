@@ -91,20 +91,6 @@ jobs:
       - name: Tests + coverage gate (>=85%)
         run: mix test.json --cover --cover-threshold 85 --summary-only --exclude integration
 
-      # Add 16GB swap before dialyzer steps. ubuntu-latest gives 16GB RAM, but
-      # building the deps PLT (881 modules including the heavyweight
-      # google_api_cloud_kms generated API) exceeds that on a fresh cache.
-      # Swap absorbs the peak; dialyzer-on-swap is slower but completes.
-      # Once the PLT is in actions/cache (priv/plts), subsequent runs hit the
-      # cache and don't need the swap headroom.
-      - name: Add swap (16GB) for dialyzer PLT build
-        run: |
-          sudo fallocate -l 16G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
-
       # Build PLT explicitly before the analysis step. On cache hit this is a
       # ~5s no-op. On full miss it costs ~30-60s but with bounded peak memory
       # because dialyzer is only doing PLT construction, not analysis. The

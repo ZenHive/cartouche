@@ -185,13 +185,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     errors = [
       quote do
-        def decode_error(_) do
-          if true do
-            :not_found
-          else
-            {:ok, "Impossible", <<>>}
-          end
-        end
+        def decode_error(_), do: :not_found
       end
       | errors
     ]
