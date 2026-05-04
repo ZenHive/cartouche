@@ -26,11 +26,11 @@ defmodule Cartouche.Trace do
             init: binary() | nil,
             refund_address: binary() | nil,
             balance: integer() | nil,
-            from: <<_::160>>,
-            gas: integer(),
-            input: binary(),
+            from: <<_::160>> | nil,
+            gas: integer() | nil,
+            input: binary() | nil,
             to: <<_::160>> | nil,
-            value: integer()
+            value: integer() | nil
           }
 
     defstruct [
@@ -160,10 +160,10 @@ defmodule Cartouche.Trace do
         callType: action.call_type,
         init: nil_map(action.init, &Hex.to_hex(&1)),
         from: nil_map(action.from, &Hex.encode_address(&1)),
-        gas: Hex.encode_short_hex(action.gas),
+        gas: nil_map(action.gas, &Hex.encode_short_hex/1),
         input: nil_map(action.input, &Hex.to_hex(&1)),
         to: nil_map(action.to, &Hex.encode_address(&1)),
-        value: Hex.encode_short_hex(action.value)
+        value: nil_map(action.value, &Hex.encode_short_hex/1)
       }
     end
 
@@ -173,17 +173,17 @@ defmodule Cartouche.Trace do
 
   @type t() :: %__MODULE__{
           action: Action.t(),
-          block_hash: <<_::256>>,
-          block_number: integer(),
-          gas_used: integer(),
+          block_hash: <<_::256>> | nil,
+          block_number: integer() | nil,
+          gas_used: integer() | nil,
           error: String.t() | nil,
           output: binary() | nil,
           result_code: binary() | nil,
           result_address: <<_::160>> | nil,
-          subtraces: integer(),
+          subtraces: non_neg_integer(),
           trace_address: [<<_::160>> | integer()],
-          transaction_hash: <<_::256>>,
-          transaction_position: integer(),
+          transaction_hash: <<_::256>> | nil,
+          transaction_position: integer() | nil,
           type: String.t()
         }
 
