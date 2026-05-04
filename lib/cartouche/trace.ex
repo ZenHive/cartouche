@@ -160,10 +160,10 @@ defmodule Cartouche.Trace do
         callType: action.call_type,
         init: nil_map(action.init, &Hex.to_hex(&1)),
         from: nil_map(action.from, &Hex.encode_address(&1)),
-        gas: Hex.encode_short_hex(action.gas),
+        gas: nil_map(action.gas, &Hex.encode_short_hex/1),
         input: nil_map(action.input, &Hex.to_hex(&1)),
         to: nil_map(action.to, &Hex.encode_address(&1)),
-        value: Hex.encode_short_hex(action.value)
+        value: nil_map(action.value, &Hex.encode_short_hex/1)
       }
     end
 

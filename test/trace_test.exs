@@ -123,6 +123,23 @@ defmodule Cartouche.TraceTest do
                balance: 0
              } = trace.action
     end
+
+    test "suicide action serializes nil gas and value without raising" do
+      params = %{
+        "balance" => "0x0",
+        "refundAddress" => "0x0000000000b3f879cb30fe243b4dfee438691c04"
+      }
+
+      assert %{
+               callType: nil,
+               from: nil,
+               gas: nil,
+               input: nil,
+               init: nil,
+               to: nil,
+               value: nil
+             } = params |> Action.deserialize() |> Action.serialize()
+    end
   end
 
   describe "deserialize/1 — top-level optional field shape (Task 16/17/18)" do
