@@ -304,21 +304,23 @@ You don't have data either way. The honest framing is: *"I don't know if you'll 
 - When dispatching a subagent that may touch git (implementation, refactor, review), **explicitly include "do NOT run git commit or git push"** in the prompt. Subagents inherit the rule but reinforce it — they're the most common source of accidental commits because their tool calls are less visible to the user.
 - Approval is scope-bound: "commit this fix" authorizes one commit for that fix, not subsequent commits in the same session.
 
-## 🚨 DON'T STEAL `[CX]` TASKS
+## 🚨 DON'T STEAL CLOUD-AGENT-DELEGATED TASKS
 
-**When a task in ROADMAP.md is marked `[CX]`, do NOT execute it locally** unless the user explicitly redirects in this session ("actually, just do this one yourself").
+**When a task in ROADMAP.md is marked with any cloud-agent delegation marker (`[CX]` for Codex, `[CSR]` for Cursor, or any future cloud-agent marker), do NOT execute it locally** unless the user explicitly redirects in this session ("actually, just do this one yourself").
 
-`[CX]` means the task is queued for Codex delegation. Even if it looks small or you have idle context, executing it locally:
-- Burns local tokens that should have been Codex's bill
+A delegation marker means the task is queued for a specific cloud agent's pickup. Even if it looks small or you have idle context, executing it locally:
+- Burns local tokens that should have been the cloud agent's bill
 - Splits the review surface — local commit + cloud PR for the same scope
 - Defeats the parallel-work model the marker exists for
+- Breaks the at-a-glance promise: another session that opens ROADMAP and sees `[CX]` / `[CSR]` trusts the marker is load-bearing
 
 **How to apply:**
-1. When picking from ROADMAP.md, skip `[CX]` rows unless they're already `🔄 in-review` (those need `commit-review`, not implementation).
-2. If you genuinely think a `[CX]` task should be local instead, ask: "Task N is marked `[CX]` — are you sure you want me to do this rather than delegate?" Don't just execute.
+1. When picking from ROADMAP.md, skip every cloud-agent-delegated row (`[CX]`, `[CSR]`, etc.) unless it's already `🔄 in-review` (those need `commit-review`, not implementation).
+2. If you genuinely think a delegated task should be local instead, ask: "Task N is marked `[CX]` (or `[CSR]`) — are you sure you want me to do this rather than delegate?" Don't just execute.
 3. Same discipline shape as `NEVER COMMIT WITHOUT EXPLICIT REQUEST` — the marker is a fence; explicit user override is the gate.
+4. **Per-marker eligibility differs.** Cursor (`[CSR]`) can do strictly more than Codex (`[CX]`) — hex.pm, mix tasks, internet — so the user may have intentionally chosen one over the other. Don't second-guess the marker by reasoning "but Cursor could've done this — let me redirect."
 
-**Why:** Claude's bias is to grab work. Without this rule, `[CX]` markers will silently get executed locally because the local context is "right there" and skipping feels wasteful. The marker has to be load-bearing for the whole delegation model to work.
+**Why:** Claude's bias is to grab work. Without this rule, delegation markers will silently get executed locally because the local context is "right there" and skipping feels wasteful. The marker has to be load-bearing for the whole delegation model to work — and that has to hold across every cloud agent in the lineup, not just the first one (Codex). Adding a third or fourth agent later (Devin, OpenHands, etc.) doesn't loosen the rule; it expands it.
 
 ## 🚨 DON'T AUTO-MERGE PRS
 
@@ -332,6 +334,19 @@ After `staged-review:commit-review` finishes a PR review, surface the verdict ("
 - After `commit-review`, the deliverable is a verdict, not a merge.
 - Approval is scope-bound: "merge this Codex PR" authorizes the one PR being reviewed, not subsequent PRs in the session.
 - Subagents reviewing PRs inherit this rule — explicitly include "do NOT run `gh pr merge`" in delegation prompts.
+
+## 🚨 NEVER PUSH TO A CLOUD-AGENT'S BRANCH
+
+**Never run `git push` to a branch owned by Codex (`codex/...`), Cursor (`cursor/...`), or any future cloud agent**, even when the matrix in `linear-workflow.md` puts the finding in a fix-locally row. Cloud-agent branches are the agent's commit history; mixing Claude commits onto them breaks provenance, breaks the asymmetric push-back model, and bypasses the agent's CI verification cycle.
+
+**Why:** observed failure mode (Cursor PR #16) — a `defp` extraction with ~30 callsites was committed locally and pushed directly to `cursor/...`. The finding belonged to the implementing agent's matrix row (push-back, not fix-locally) and the cleanest channel was a Linear `@cursor` comment. Direct push muddied the branch's commit history, attributed Claude's code to Cursor's authorship, and bypassed Cursor's own harness run on its commits.
+
+**How to apply:**
+- Default action for in-PR findings is push-back via Linear `@cursor` / `@codex` mention. The agent picks it up and amends. See `linear-workflow.md` § "Preferred channel for fix-locally-required findings: paste-as-`@cursor`-comment".
+- For env-constraint rows of the matrix where local fix IS required, prefer paste-as-comment with a verbatim code block. Fallback to a separate branch off the PR's base commit only when the fix can't be safely applied verbatim — never amend the agent's branch directly.
+- Subagents reviewing PRs inherit this rule — explicitly include "do NOT push to the agent's branch" in delegation prompts.
+
+**Override:** the user can authorize a direct push for a specific PR ("just push it"). Authorization is scope-bound to that one PR — same scope rule as commit/merge authorization (`NEVER COMMIT WITHOUT EXPLICIT REQUEST`, `DON'T AUTO-MERGE PRS`). Subsequent PRs revert to push-back default.
 
 ## Shell Safety
 
@@ -506,6 +521,31 @@ Mark tasks suitable for delegation to Codex with `[CX]`. **Default: tasks meetin
 | Task 80 `[CX]` | ⬜              | Delegate to Codex        |
 | Task 81 `[CX]` | 🔄 in-review   | Codex PR open, awaiting review |
 ```
+
+### Ceremony Floor — When NOT to Open a Task
+
+**Scope:** applies to **review-surface findings** (`staged-review:commit-review`, `staged-review:code-review`). Discoveries during `/research`, `/plan`, or implementation follow the promote-to-ROADMAP rules in § Roadmap Maintenance — not this floor.
+
+Findings during code review or PR review have a ceremony floor below which they are NEVER tracked as ROADMAP entries. ROADMAP-as-queue earns its overhead only when work spans sessions; an inline `defp` extraction does not.
+
+| Finding shape                                         | Action                                              |
+|-------------------------------------------------------|-----------------------------------------------------|
+| ≤ 5 LOC, cosmetic / abstraction / nit                 | Push back inline OR drop — never track              |
+| ≤ 5 LOC, **bug or correctness gap**                   | Push back inline — **never drop, never silently track** |
+| > 5 LOC, cosmetic / abstraction / nit                 | Push back if cheap, else drop                       |
+| > 5 LOC, **bug or correctness gap**                   | Push back inline                                    |
+| Cross-session coordination cost (any size)            | ROADMAP candidate (e.g. public-API rename, schema migration, deprecation downstream repos must track) |
+| Scope-affecting / architectural / breaks acceptance criteria | Surface for judgment (`discuss`-tier)        |
+
+**Hard rules:**
+- Bugs and correctness gaps are NEVER silently dropped, regardless of size or score. They are always pushed back inline.
+- Cosmetic / abstraction findings ≤ 5 LOC are NEVER ROADMAP candidates unless they have cross-session coordination cost.
+- "Drop" is permitted ONLY when the diff is genuinely better-as-is AND pushback would generate noise without value (e.g., a stylistic preference the implementing agent's choice is also defensible). When in doubt between drop and push-back, push back.
+- Questions like "File a new ROADMAP task for X (single-line entry under Phase Y, scored [D:N/B:N/U:N])?" are forbidden for findings that fit the current PR — that prompt format implies the floor is broken.
+
+**Why "correctness × size" not "D/B/U × LOC":** D/B/U scores prioritize tracked work; they don't decide whether work should be tracked. A D:1 finding can still be a real bug (3-line missing nil-check) — dropping it because the score is low is exactly the failure mode "iterate fast but error-free" forbids. Correctness vs cosmetic is the load-bearing axis; LOC is just a tiebreaker for tracking-vs-inline.
+
+**Cross-references:** push-back-vs-fix-locally calculus is in `linear-workflow.md` § "Push-Back-vs-Fix-Locally Matrix by Agent". Hard rule against pushing to cloud-agent branches is in `critical-rules.md` § "NEVER PUSH TO A CLOUD-AGENT'S BRANCH".
 
 ### Task Descriptions as Prompts
 
@@ -782,6 +822,48 @@ web --profile "myapp" http://localhost:4000/protected-page
 # ✅ {:ok, user} = MyApp.get_user("id")
 # ✅ users = MyApp.list_users()
 ```
+
+## Marking Internal API Surface
+
+Elixir has no true visibility modifier on `def`. These markers communicate "not public API" to docs tooling, callers, and Dialyzer — none make a function actually private (only `defp` does that).
+
+### Functions
+
+| Marker | Hides from HexDocs? | Importable via `import`? | When to use |
+|---|---|---|---|
+| `defp` | ✅ | N/A (not callable) | True privacy. Default for any helper that doesn't need cross-module visibility. |
+| `@doc false` on `def` | ✅ (function only) | ✅ | `def` that *must* be public (macro target, behaviour callback shim, called by sibling internal module) but isn't part of the consumer contract. |
+| `@moduledoc false` on whole module | ✅ (entire module) | ✅ | Every function in the module is internal. Group internal helpers in `MyLib.Internal` / `MyLib.Impl` and mark the module — cleaner than scattering `@doc false`. **Elixir-core-recommended pattern.** |
+| Leading `_` in name (`_foo`) | ✅ (with `@doc false`) | ❌ — compiler skips on `import` | Strongest "do not depend on this" signal. Compiler-enforced no-import. Rare in practice; reach for it when the function shape looks public-ish and you want a name-level deterrent. |
+| `__foo__/N` (double underscore) | — | — | **Reserved for compile-time metadata / introspection** (`__info__/1`, `__struct__/0`, `__changeset__/0`, `__schema__/1`). Don't use for ordinary internal helpers — confuses readers who associate it with macro-generated metadata. |
+
+**Decision tree:**
+1. Can it be `defp`? → `defp`. Stop.
+2. Must it be `def` (cross-module, macro target, behaviour shim)? → `@doc false`.
+3. Is the *whole module* internal? → put it in `MyLib.Internal` (or similar) with `@moduledoc false`. Skip per-function `@doc false` inside.
+4. Want compiler-enforced no-import? → leading single underscore. Reserve `__foo__/N` for metadata.
+
+### Types
+
+| Marker | Visible in docs? | Usable in other modules' specs? | Internal structure visible? |
+|---|---|---|---|
+| `@type` | ✅ | ✅ | ✅ |
+| `@opaque` | ✅ | ✅ | ❌ — pattern-matching on internals is a contract violation |
+| `@typep` | ❌ | ❌ — module-local only | ✅ (within the module) |
+
+**Decision:**
+- Public type, structure is part of the contract → `@type`.
+- Public type, structure is implementation detail (callers shouldn't pattern-match) → `@opaque`. Use this for tokens, handles, IDs, anything where you want freedom to change the internal representation.
+- Type only used inside this module → `@typep`. Keeps the public type surface clean.
+
+### Specs
+
+**Mandate: every function gets a `@spec` — `def` and `defp` alike.** No exceptions for "trivial" helpers; the spec is one line and pins the contract Dialyzer can't always infer (e.g. `integer() | float()` vs the narrower `integer()` you actually meant).
+
+- **Why mandate, not "publics-only" (the community default):** community default optimizes for team-onboarding cost — irrelevant here. Solo-dev library portfolio with Credo strict + Dialyzer in CI on every repo. Cost is one line per function; payoff is Dialyzer pointing at the spec mismatch (fast) instead of a downstream call site three layers away (slow). Domain is signing / wallet / wire-format code where binary-length, hex-vs-binary, and union-narrowing bugs are exactly what specs on `defp` catch.
+- **CI enforcement:** in `.credo.exs`, configure `{Credo.Check.Readability.Specs, [include_defp: true]}`. **The Credo default is `include_defp: false`** (verified against `rrrene/credo` master and HexDocs as of 2026-05) — publics-only. We override to `true` because the mandate covers every function. Doctor's spec-coverage gate handles publics; this Credo check closes the gap on privates.
+- **Placement:** `@spec` line goes immediately above the `def` / `defp`, after `@doc` / `@doc false`.
+- **The one trade-off:** macro-generated `defp` functions can trip the Credo check. Suppress per-callsite with `# credo:disable-for-next-line Credo.Check.Readability.Specs` rather than dropping `include_defp` back to `false`.
 
 ## Doctests Are Documentation, Not Tests
 
@@ -1791,7 +1873,7 @@ Cross-repo issue tracking via Linear MCP, primarily for **cloud-agent delegation
 Use Linear-as-queue when:
 
 - **Cloud-agent delegation is in active use.** `[CX]` (Codex) or `[CSR]` (Cursor) tasks need a queue the agent can poll; ROADMAP.md alone isn't pollable.
-- **Work spans 2+ repos with cross-cutting issues.** "Hieroglyph release → Cartouche bump" deserves linked issues, not a single sprawling task.
+- **Work spans 2+ repos with cross-cutting issues.** "Library release → downstream-app bump" deserves linked issues, not a single sprawling task.
 - **You want issue state to survive across Claude sessions and the IDE.** Linear's UI/Slack/email integrations beat ROADMAP.md for keeping work top-of-mind.
 
 Don't adopt when:
@@ -1847,7 +1929,7 @@ This builds on `task-prioritization.md` § "Codex Delegation (`[CX]`)" — read 
    - **Body = the prompt.** Sections: Context / Task / Acceptance criteria / Out of scope / File paths / Scoring / Reviewer note. See `task-writing.md` — issue bodies follow the same "WHAT, not HOW" rule as ROADMAP rows.
    - Initial status: `Todo` (not `Backlog` — Codex polls `Todo`+).
 
-2. **Codex picks it up.** *Intended* flow: transitions to `In Progress`, opens a PR on the linked repo, transitions to `In Review` when the PR is open. **Observed** flow: transitions are unreliable — sometimes the issue stays at `Backlog` (no PR auto-open), sometimes the PR auto-opens but status stays at `In Progress`, sometimes the canonical flow fires correctly. Don't rely on `In Review` as the readiness signal.
+2. **Codex picks it up.** *Intended* flow: transitions to `In Progress`, opens a PR on the linked repo, transitions to `In Review` when the PR is open. **Observed** flow: transitions are unreliable — sometimes the issue stays at `Backlog` (no PR auto-open), sometimes the PR auto-opens but status stays at `In Progress`, sometimes the canonical flow fires correctly. Don't rely on `In Review` as the readiness signal. **Canonical fix:** see § "Agent Status-Transition Guidance" — the status flip is the agent's responsibility, not Linear's, and the workspace-level "Additional guidance for agents" is the right place to enforce it.
 
 3. **Local Claude session reviews** via `staged-review:commit-review` skill — fetches the PR, runs the review harness (which Codex couldn't run for itself given its env constraints), posts verdict back to the Linear issue (or to the PR thread).
 
@@ -1859,7 +1941,7 @@ This is the same implementer/reviewer handoff shape from `workflow-philosophy.md
 
 ### Cursor Delegation Flow
 
-Same shape as the Codex flow with **broader eligibility**. Cursor's cloud environment can reach hex.pm and run `mix` tasks (verified on INE-7 round-trip — see § "Cloud Agent Environments"), so the eligibility criteria from `task-prioritization.md` § "Codex Delegation" relax: Cursor can take tasks Codex can't.
+Same shape as the Codex flow with **broader eligibility**. Cursor's cloud environment can reach hex.pm and run `mix` tasks (verified empirically in early Cursor round-trip testing — see § "Cloud Agent Environments"), so the eligibility criteria from `task-prioritization.md` § "Codex Delegation" relax: Cursor can take tasks Codex can't.
 
 1. **Create issue** with:
    - `team: <team>`
@@ -1869,13 +1951,25 @@ Same shape as the Codex flow with **broader eligibility**. Cursor's cloud enviro
    - **Body = the prompt** — same template as Codex (Context / Task / Acceptance criteria / Out of scope / File paths / Scoring / Reviewer note).
    - Initial status: `Todo`.
 
-2. **Cursor picks it up.** *Intended* flow: Cursor's Background Agent transitions `Todo` → `In Progress`, opens a PR with body markers (`<!-- CURSOR_AGENT_PR_BODY_BEGIN -->` / `<!-- CURSOR_AGENT_PR_BODY_END -->`), transitions to `In Review`. **Observed** flow (INE-7): Cursor auto-opened the PR but kept status at `In Progress` — same partial-transition failure mode as Codex. Don't rely on `In Review` as the readiness signal.
+2. **Cursor picks it up.** *Intended* flow: Cursor's Background Agent transitions `Todo` → `In Progress`, opens a PR with body markers (`<!-- CURSOR_AGENT_PR_BODY_BEGIN -->` / `<!-- CURSOR_AGENT_PR_BODY_END -->`), transitions to `In Review`. **Observed** flow: in early Cursor round-trips, the PR auto-opened but status stayed at `In Progress` — same partial-transition failure mode as Codex. Don't rely on `In Review` as the readiness signal. **Canonical fix:** see § "Agent Status-Transition Guidance" — Linear confirmed the status flip is the agent's responsibility, not a built-in Linear behavior, and is enforced via workspace-level "Additional guidance for agents."
 
 3. **Cursor self-validates before opening the PR** — verified `mix test.json --quiet`, `mix credo --strict`, `mix format --check-formatted`, targeted `mix test test/...` runs all happen in Cursor's harness. PRs ship with the harness already green from Cursor's side. The local `commit-review` reviewer's job becomes the **5-category audit** + acceptance-criteria cross-reference, not "did the harness pass" (that's expected baseline).
 
-4. **Pushing back to Cursor:** post a Linear comment on the issue with `@cursor` mention. The Linear-displayName for Cursor's Background Agent is `cursor` (id `b8668f6b-992f-4152-9e59-13b6fe1f599b`). **Verified channel** (INE-7 round-trip, 2026-05-02 → 05-03): Cursor picks up `@cursor` mentions on Linear comments within ~5 min, amends the PR with a fresh commit, posts confirmation comments back on the issue, and reruns the harness. The push-back was a verbatim code suggestion (two test assertions); Cursor applied it surgically with no scope creep. Linear @-mention is preferred over GitHub PR comment for Cursor push-back — keeps the conversation thread on the issue.
+4. **Pushing back to Cursor:** post a Linear comment on the issue with `@cursor` mention. The Linear-displayName for Cursor's Background Agent is `cursor` (id `b8668f6b-992f-4152-9e59-13b6fe1f599b`). **Verified channel** (early Cursor round-trip testing, 2026-05): Cursor picks up `@cursor` mentions on Linear comments within ~5 min, amends the PR with a fresh commit, posts confirmation comments back on the issue, and reruns the harness. A verbatim code-suggestion push-back was applied surgically with no scope creep. Linear @-mention is preferred over GitHub PR comment for Cursor push-back — keeps the conversation thread on the issue.
 
 5. **User merges.** Same rule — verdict is informational, user merges per `critical-rules.md` § "DON'T AUTO-MERGE PRS".
+
+### Codex-Reviews-Cursor Pattern (Review Delegation)
+
+A specific composition of the two flows above: Cursor implements, Codex reviews. Activated by `staged-review:commit-review` Step 10b when the polled PR's source Linear issue has `delegate = Cursor` and CI is green.
+
+**Shape:** `commit-review` creates a second Linear issue (`cx-eligible`, `delegate: "Codex"`, status `Todo`) whose body is a REVIEW-ONLY prompt referencing the Cursor PR (with the diff embedded inline). A tracking comment on the GitHub PR (`Codex Cloud review delegated: <URL>`) stores the delegation issue ID across sessions. On the second `commit-review` invocation, the skill reads Codex's verdict comment from that issue and applies the push-back-vs-fix matrix using **Cursor's row** — the matrix is implementer-keyed, not reviewer-keyed.
+
+**Key constraint:** delegation is gated on CI being green. Red CI → push back to Cursor as normal; the delegation issue is not created until CI passes.
+
+**Pilot guard:** if Codex opens a stray PR despite the REVIEW-ONLY instruction, surface a warning on the next fetch-path invocation. No automated cleanup in v1 — user closes the rogue PR manually.
+
+**State:** no local state files. Linear delegation issue + GitHub PR tracking comment is the full state machine.
 
 ### Cloud Agent Environments
 
@@ -1885,7 +1979,7 @@ Cloud-agent envs differ in what they can reach during their work session. The di
 
 **Codex cloud has no internet access.** Structural, not a configuration gap:
 
-- **No hex.pm.** Codex cannot verify hex-package API signatures. Observed failure: INE-6 shipped `assert_received/2` with a timeout int as 2nd arg (which is the `failure_message :: binary()` slot — should have been `assert_receive/3`). Codex was guessing from training data because it couldn't look up the macro signature.
+- **No hex.pm.** Codex cannot verify hex-package API signatures. Observed failure mode: a Codex PR shipped `assert_received/2` with a timeout int as 2nd arg (which is the `failure_message :: binary()` slot — should have been `assert_receive/3`). Codex was guessing from training data because it couldn't look up the macro signature.
 - **No Tidewave.** Codex cannot run `mcp__tidewave__project_eval`, inspect runtime state, or query live data sources.
 - **No external HTTP.** Codex cannot fetch live API responses, RFCs, EIPs, or reference implementations during its work session.
 - **Allowlist exists but doesn't fix hex.pm.** Per `feedback_codex_sandbox_pr_gap.md`: post-allowlist, hex.pm remains unreachable; PRs frequently arrive without local test evidence (Codex couldn't run `mix test` against current deps).
@@ -1894,7 +1988,7 @@ Cloud-agent envs differ in what they can reach during their work session. The di
 
 #### Cursor Cloud Capabilities
 
-**Cursor cloud has hex.pm + can run mix tasks.** Verified on INE-7 round-trip (PR #4 ran `mix test.json --quiet`, `mix credo --strict`, `mix test test/recovery_bit_test.exs`, `mix format --check-formatted` end-to-end before opening the PR).
+**Cursor cloud has hex.pm + can run mix tasks.** Verified in round-trip testing: a Cursor PR ran `mix test.json --quiet`, `mix credo --strict`, targeted `mix test`, and `mix format --check-formatted` end-to-end before opening.
 
 What Cursor can do that Codex can't:
 
@@ -1911,6 +2005,12 @@ What Cursor still can't do (assume — pending verification):
 
 #### Push-Back-vs-Fix-Locally Matrix by Agent
 
+**Default flow is review-only.** The reviewer reads the diff via `gh pr view`, `gh pr diff`, and `gh api repos/.../pulls/<n>/comments`. The reviewer does NOT spin up a worktree or run `gh pr checkout` unless the finding lands in a fix-locally row of the matrix below OR CI is absent (forcing local-harness fallback). Branch checkout silently biases toward "I'll amend this," contradicting the push-back default.
+
+**CI is the shared error gate.** Every push to a cloud-agent's branch triggers `harness.yml` (per `cloud-agent-environments.md` § "CI as the Shared Harness"). Push-back → agent re-pushes → CI runs → green = ready / red = next push-back round. The reviewer doesn't need to run the harness locally; CI does. Local checkout + local fix + local push to the agent's branch attributes the code to the agent without the agent's own verification cycle catching anything — bypassing the error gate.
+
+**The matrix is the exception list, not the default.** Default action on a blocker is push-back to the agent (PR review comment for line-level findings, Linear comment for scope/intent drift — see `staged-review:commit-review` § "Asymmetric Push-Back Channels"). Local fix is reserved for items in the rows below — typically env-constraint cases the agent fundamentally can't verify (hex.pm for Codex, Tidewave for both, external specs for Codex). With CI handling the mechanical harness gates (see `elixir-ci-harness` skill in the marketplace), the local-fix surface shrinks further: format / credo / dialyzer / coverage drift becomes a CI failure that pushes back to the agent automatically, not a local fix-up step.
+
 When `commit-review` finds blockers in a cloud-agent PR, classify by what the agent can fix from its env:
 
 | Bug class | Codex action | Cursor action |
@@ -1919,29 +2019,107 @@ When `commit-review` finds blockers in a cloud-agent PR, classify by what the ag
 | Hex-package API correctness (ExUnit, Phoenix, Ecto, third-party signatures) | **Fix locally** — Codex has no hex.pm | **Push back** — Cursor has hex.pm |
 | Test failure / coverage gap on new code | Push back (best Codex can do without `mix test`) | **Push back** — Cursor runs `mix test` |
 | Coverage gap on legacy code surfaced by the PR | **Fix locally** — pre-existing debt, not the agent's fault | **Fix locally** — same |
-| Live-data / runtime-state diagnosis (Tidewave, IEx) | **Fix locally** | **Fix locally** — neither has Tidewave |
+| Live-data / runtime-state diagnosis — verification only | **Push back with Tidewave evidence** | **Push back with Tidewave evidence** — Claude verifies, agent fixes |
+| Live-data / runtime-state diagnosis — fix requires verifier's runtime context | **Fix locally** (paste-as-comment if viable) | **Fix locally** (paste-as-comment if viable) — same fallback rule |
 | External spec / RFC / EIP correctness (wire format, gas costs) | **Fix locally** — Codex has no external HTTP | Push back (Cursor likely has HTTP — pending verification) |
 | Acceptance criteria not met (diff didn't do the thing) | Push back | Push back |
 
+**Tidewave is verification, not necessarily fix.** Local Claude has `mcp__tidewave__project_eval` and live runtime/database access; neither Codex nor Cursor does. When reviewing their PRs, this asymmetry is a **push-back strengthener**, not a fix-locally trigger.
+
+**Read-only Tidewave verification flow:**
+
+1. Suspect a bug in the PR diff (e.g., "this fails when `params[:user]` is nil," "this query returns wrong shape on empty result").
+2. Open IEx in the **host project** (NOT in a checked-out PR worktree — Tidewave runs against the host's currently-loaded code, fully compatible with the default review-only flow).
+3. Run `mcp__tidewave__project_eval` against the suspected case. Examples:
+   - Verify upstream library behavior: `Phoenix.LiveView.assign(socket, :foo, nil)` — does this raise or return?
+   - Verify live data shape: `Repo.one(from u in User, limit: 1) |> Map.keys()` — what fields does the schema actually expose?
+   - Verify hex-package signature you suspect the agent got wrong: `&ExUnit.Assertions.assert_receive/3 |> Function.info()` — confirm arity, then cite in push-back.
+4. Paste the verified result into the push-back comment as evidence.
+
+**Before** (unverified push-back): "I think `process/1` fails when `user_id` is nil — please verify."
+
+**After** (Tidewave-verified push-back):
+> ```
+> @cursor verified failure case via Tidewave:
+>
+> iex> Acme.Users.process(%{user_id: nil})
+> ** (FunctionClauseError) no function clause matching in Acme.Users.process/1
+>
+> Please add a nil guard or update the spec to exclude nil. Re-pushing should green CI.
+> ```
+
+The implementing agent picks up the comment, applies the fix, re-pushes — the agent still owns the code. Claude's role is **evidence generator**, not implementer. This preserves push-back-default while leveraging the local-only capability.
+
+**When does Tidewave verification trigger fix-locally instead of push-back?** Only when the verification reveals a finding whose CODE FIX is too large to paste verbatim, requires generated artifacts the agent can't reproduce, or requires multi-file coordination. Same fallback rule as the rest of the matrix — paste-as-comment first, separate-branch-off-base only when paste isn't viable. Default remains push-back; Tidewave just makes the push-back evidence-grounded.
+
+**Preferred channel for fix-locally-required findings: paste-as-`@cursor`-comment.**
+
+When a finding lands in a fix-locally matrix row (env-constraint cases — hex.pm for Codex, Tidewave for both, external specs for Codex, pre-existing legacy debt), the local reviewer has done verification work the agent couldn't (hex.pm signature lookup, Tidewave runtime inspection, RFC fetch). The CODE for the fix is usually small. Paste it as a Linear `@cursor` (or `@codex`) comment with a verbatim code block:
+
+> ```
+> @cursor please apply verbatim and re-push:
+>
+> ```elixir
+> # exact code block here, with file:line context above
+> ```
+>
+> Verified against [link to hex docs / RFC / Tidewave query result].
+> ```
+
+The agent applies, re-pushes, CI verifies the combined state in **one** harness run. Authorship preserved. Single error gate. No two-PR coordination dance.
+
+**Fallback: separate branch off the PR's base commit.** Use only when the fix is too large to paste, too context-sensitive to apply verbatim safely, or requires generated artifacts (large Tidewave-derived data, multi-file refactor) the agent can't reproduce. Stage on a new branch off the PR base; user merges/coordinates.
+
+**Never amends the agent's branch.** See `critical-rules.md` § "NEVER PUSH TO A CLOUD-AGENT'S BRANCH".
+
 **Hybrid is fine:** a single PR may have both push-back and fix-locally blockers. Surface them in two groups; the user decides whether to push fixes locally and amend the PR branch, or push back to the agent with the logic bugs and only fix the unreachable-class ones locally.
 
-### Fetch Existing PR Review Comments Before Auditing
+### Fetch Existing Comments Before Auditing
 
-**Before any PR audit, fetch existing review comments** — Copilot, CodeRabbit, Codex's own GitHub bot, human reviewers. Otherwise the audit duplicates their work and misses context they've already documented.
+**Before any cloud-agent PR audit, fetch existing comments from BOTH the GitHub PR and the Linear issue.** Both streams carry context the audit needs — auditing without either duplicates work, misses prior decisions, or re-litigates resolved scope.
 
-Canonical commands:
+**GitHub PR comments** — Copilot, CodeRabbit, Codex's own GitHub bot, human reviewers leaving line-level critique:
 
 ```bash
 gh pr view <number> --json reviews,comments        # PR-level review summaries + issue-style comments
 gh api repos/OWNER/REPO/pulls/<number>/comments    # line-level review comments
 ```
 
-Surface findings before the audit so it can:
-- **Skip** issues already flagged (don't duplicate)
+**Linear issue comments** — the delegating user's clarifications, scope adjustments, prior-reviewer notes, the agent's own summary on PR open, and any `@codex` / `@cursor` push-back exchanges from prior rounds:
+
+```
+mcp__linear-server__list_comments   # filter by issueId
+mcp__linear-server__get_issue       # also returns the comment thread
+```
+
+Surface findings from both before the audit so it can:
+
+- **Skip** issues already flagged (don't duplicate work)
 - **Cross-reference** with own findings (agreement / disagreement)
 - **Defer to** existing reviewers when they've explained something is intentional
+- **Detect scope drift** — if the Linear issue body and a follow-up Linear comment disagree, the comment usually wins (the user added context the agent missed)
+- **Track push-back round-trips** — prior `@codex` / `@cursor` mentions tell you whether this is a fresh review or a revision
 
-This applies to ALL PR reviews — not just Codex's, not just Cursor's, not just `commit-review`. Any cloud-agent or human PR review starts here. Per `feedback_pr_bot_review_calibration.md`: Copilot can fabricate verbatim diff citations (verify before acting); Codex's GitHub bot does evidence-based fact-checking with permalinks (useful counter-reviewer for bot-vs-bot disputes).
+This applies to ALL cloud-agent PR reviews — not just Codex's, not just Cursor's, not just `commit-review`. Per `feedback_pr_bot_review_calibration.md`: Copilot can fabricate verbatim diff citations (verify before acting); Codex's GitHub bot does evidence-based fact-checking with permalinks (useful counter-reviewer for bot-vs-bot disputes).
+
+### Agent Status-Transition Guidance
+
+**The "open PR → flip status to `In Review`" transition is the cloud agent's responsibility, not a built-in Linear behavior.** Linear syncs PR state from GitHub but does not auto-flip issue status when a PR opens — confirmed directly with Linear support:
+
+> "This should be handled by the Cursor agent, not a built-in Linear setting. Linear syncs pull request state from GitHub, but setting the issue status to 'ready for review' when a PR opens is something you'd enforce through agent guidance or the agent's own behavior. In Linear, you can add that instruction under workspace or team **Additional guidance for agents** so Cursor follows your review workflow consistently."
+
+This applies to **every** cloud agent (Codex, Cursor, future) — not just Cursor. The fix is one workspace-config change, not per-flow code.
+
+**How to apply:**
+
+1. In Linear, open **Workspace settings → Additional guidance for agents** (or **Team settings → Additional guidance for agents** if you want it scoped narrower than the whole workspace).
+2. Add an instruction along the lines of:
+
+   > "When you open a pull request linked to an issue, transition that issue's status to **In Review**. When you close or merge a PR, leave the status alone — the GitHub integration handles the merge → Done transition."
+
+3. Cursor (and any other agent reading workspace guidance — Codex via the Linear→Codex integration may behave similarly) will pick this up and start flipping status correctly. Codex's behavior here is less verified than Cursor's; treat it as best-effort until observed.
+
+**Until the workspace guidance is set, OR for any agent that doesn't read it,** the polling shape in § "Polling for 'Ready for Review'" below remains the safety net — broaden the filter to include `In Progress` and trust the PR-attachment as the authoritative signal. The workspace guidance is the canonical fix; the broadened polling is the compensation pattern. Both can coexist — set the guidance AND keep the polling shape, since not every agent reads workspace guidance reliably.
 
 ### Polling for "Ready for Review"
 
@@ -1970,7 +2148,7 @@ This is the polling shape `staged-review:commit-review` Step 2 uses. Future skil
 When work spans repos:
 
 - Use `relatedTo` on `save_issue` to link issues across projects. Loose coupling — "these are about the same thing."
-- Use `blocks` / `blockedBy` for hard ordering — "Hieroglyph release blocks Cartouche bump."
+- Use `blocks` / `blockedBy` for hard ordering — "library release blocks downstream-app bump."
 - **Don't** pile cross-repo work into one issue. Each repo owns its own PR; one issue per repo keeps PR review surface aligned with repo boundaries.
 
 If cross-repo coordination becomes a regular pattern (3+ linked issues per month), promote to a Linear **Initiative** as a grouping overlay. Skip until load-bearing — Initiatives are a UI flourish, not a workflow requirement.
@@ -2007,7 +2185,7 @@ The `Acceptance criteria` and `Reviewer note` sections are what make the issue r
 
 ### Workspace-Specific Layout
 
-The team key, the list of projects, the repo↔project mapping, project IDs, and worked examples (e.g. "INE-5 was the Codex round-trip-verification issue; INE-7 was the Cursor round-trip") are **workspace-specific** — they belong in:
+The team key, the list of projects, the repo↔project mapping, project IDs, and worked examples (e.g. "issue X was the first Codex round-trip-verification issue; issue Y was the first Cursor round-trip") are **workspace-specific** — they belong in:
 
 - A separate include like `<workspace>-workspace.md` (imported only by repos in that workspace's family), or
 - The project-level `CLAUDE.md` of the repo(s) that need it.
@@ -2070,6 +2248,18 @@ Codex PRs that ship without local test evidence are expected — the local revie
 - **Flag uncertainty explicitly** — "I'm assuming `assert_receive/3` here based on training-data recall; please verify against ExUnit's hex docs."
 - **Don't fabricate test counts or runtime claims** you can't verify.
 
+#### Review-only tasks (review delegation)
+
+When you (Codex Cloud) are assigned an issue whose body opens with `REVIEW-ONLY task. Do NOT open a PR, commit code, or edit files`, the deliverable is a Linear comment — not a PR.
+
+1. The issue body embeds the full PR diff inline under "## PR Diff". Read it from the issue body; you do NOT need `gh pr diff`.
+2. Optionally — if `gh` CLI is available in your sandbox — run read-only commands `gh pr view <N> --json reviews,comments`, `gh api repos/<OWNER>/<REPO>/pulls/<N>/comments`, `gh pr checks <N>` for additional context. If `gh` is unavailable, skip this; the embedded diff is sufficient.
+3. Post ONE comment on the delegation issue with: verdict line (APPROVED / BLOCKED / DISCUSS), findings table (`file:line | category | severity (1-10) | description`), one paragraph on acceptance-criteria coverage.
+4. Transition the issue to Done.
+5. Do **not** open a pull request. Do **not** commit code. Do **not** edit any file. Do **not** post review comments on the GitHub PR — verdict goes on the Linear issue only.
+
+**Pilot status (2026-05):** the "no PR" instruction's reliability is unverified. If your harness pushes you toward opening a PR for a review-only issue, **stop and post a Linear comment instead**. Stray review-PRs are a known v1 risk.
+
 ### Cursor Cloud
 
 #### Runtime
@@ -2087,7 +2277,7 @@ The Cursor Background Agent Linux env ships with Erlang and Elixir at non-asdf p
 
 #### Capabilities
 
-Cursor cloud has internet + can run mix tasks (verified on the Cartouche INE-7 round-trip, PR #4):
+Cursor cloud has internet + can run mix tasks (verified in round-trip testing):
 
 - **hex.pm reachable** — third-party hex-package API signatures can be verified directly. The `assert_received` vs `assert_receive` class of bug should not recur on Cursor PRs.
 - **Mix tasks runnable** — `mix deps.get`, `mix compile`, `mix test` (and `mix test.json` if `ex_unit_json` is in deps), `mix credo --strict`, `mix format --check-formatted`, `mix dialyzer` (provided the PLT cache builds — first-run cost on a fresh env).
@@ -2103,17 +2293,31 @@ Recommended pre-PR checklist:
 mix format --check-formatted
 mix compile --warnings-as-errors
 mix credo --strict
-mix test                # or `mix test.json --quiet` if ex_unit_json is in deps
+mix test.json --quiet
 ```
 
 #### Gotchas
 
-- **Credo TODO/FIXME exit code** — Credo flags `TODO:` / `FIXME:` tags as design suggestions and exits with code 2 even when nothing else is wrong. Per `~/.claude/includes/development-philosophy.md` § "TODO Comment Requirements", surfaced TODOs are *tracked debt working as intended*, not regressions. Don't strip them. Treat exit code 2 with only TODO/FIXME findings as expected, not as a blocker.
+- **Credo TODO/FIXME exit code** — Credo flags `TODO:` / `FIXME:` tags as design suggestions and exits with code 2 even when nothing else is wrong. Per `~/.claude/includes/development-philosophy.md` § "TODO Comment Requirements", surfaced TODOs are _tracked debt working as intended_, not regressions. Don't strip them. Treat exit code 2 with only TODO/FIXME findings as expected, not as a blocker.
 - **`mix format --check-formatted` on pre-existing drift** — repos that aren't fully formatted may surface format violations on files outside the diff. Only fix drift on files the PR touches (per `critical-rules.md` § "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH"); leave the rest for the repo owner.
 
 #### Linear handle
 
-Cursor's Background Agent has Linear-displayName `cursor` (verified id: `b8668f6b-992f-4152-9e59-13b6fe1f599b`). Reviewers push back via Linear comments with `@cursor` mention; Cursor picks up the mention within ~5 min and amends the PR with a fresh commit, posting confirmation comments back on the issue. **Verified end-to-end on INE-7 round-trip** (2026-05-02 → 05-03): a verbatim code-suggestion push-back was applied surgically, no scope creep. Linear @-mention preferred over GitHub PR comment — keeps the conversation thread on the issue.
+Cursor's Background Agent has Linear-displayName `cursor` (verified id: `b8668f6b-992f-4152-9e59-13b6fe1f599b`). Reviewers push back via Linear comments with `@cursor` mention; Cursor picks up the mention within ~5 min and amends the PR with a fresh commit, posting confirmation comments back on the issue. **Verified end-to-end** in early Cursor round-trip testing (2026-05): a verbatim code-suggestion push-back was applied surgically, no scope creep. Linear @-mention preferred over GitHub PR comment — keeps the conversation thread on the issue.
+
+### CI as the Shared Harness
+
+When the target repo has a `harness.yml` (see `elixir-ci-harness` skill in `claude-marketplace-elixir`), every PR push runs the full Elixir harness as a GitHub check — visible to user, agent, and PR review tooling. This is the canonical fix for the Codex-Cloud-no-hex.pm gap: even when Codex's env can't run `mix dialyzer` or `mix doctor`, the PR check does. Cursor's env can run mix tasks but doesn't *guarantee* it pre-PR; CI enforces the gate uniformly across both agents.
+
+The shift this enables:
+
+- **Reviewer reads `gh pr checks <n>`** instead of running the full local harness (was 15+ min per PR via local mix; CI runs in parallel with the agent's work and is done by the time the reviewer looks)
+- **Push-back becomes the default for harness drift.** When CI flags a format / credo / dialyzer / coverage issue, the reviewer's job is to point the agent at the failing check — not to fix it locally. The cloud agent (Cursor especially, since it has hex.pm + can run mix) iterates against the same CI signal the reviewer sees
+- **Local fix shrinks to the env-constraint exception cases.** Per `linear-workflow.md` § "Push-Back-vs-Fix-Locally Matrix by Agent", local-fix is reserved for items the agent fundamentally can't verify — hex.pm for Codex, Tidewave for both, external specs for Codex. CI handles everything else
+
+`staged-review:commit-review` defers to CI status when present (Step 6 reads `gh pr checks` and treats green as the harness-gate signal). When CI is absent, it falls back to running the local harness inline and surfaces a `TODO(setup-ci)` finding pointing at this skill so the next iteration of the PR has CI.
+
+**Adoption path for delegation-target repos without CI:** copy `templates/harness.yml` from the `elixir-ci-harness` skill into the target repo's `.github/workflows/`, customize the four marked points (branch, MIX_ENV, coverage threshold, integration tag), commit. The next PR push gets the harness check.
 
 ### AGENTS.md Generation
 
@@ -2137,7 +2341,7 @@ The script reads `./CLAUDE.md`, resolves `@`-imports (including `~/`), inlines c
 
 #### When Cursor auto-generates an AGENTS.md PR
 
-Cursor's setup task can autonomously open a PR scaffolding an `AGENTS.md` for its env (verified on Cartouche PR #3). When this happens in a repo that already uses the `sync-agents-md.sh` workflow:
+Cursor's setup task can autonomously open a PR scaffolding an `AGENTS.md` for its env (observed in round-trip testing). When this happens in a repo that already uses the `sync-agents-md.sh` workflow:
 
 - **Close the auto-generated PR.** The canonical generator is the source of truth.
 - **Extract any genuinely useful env-specific bits** (paths, gotchas, runtime quirks) and add them here in this include — so they auto-flow to every repo's AGENTS.md via the standard `@`-import chain.
@@ -2149,12 +2353,13 @@ Cursor's setup task can autonomously open a PR scaffolding an `AGENTS.md` for it
 - `linear-workflow.md` § "Cursor Delegation Flow" / "Codex Delegation Flow" — issue creation, PR review, merge gate
 - `task-prioritization.md` § "Codex Delegation (`[CX]`)" — eligibility criteria for delegation
 - `critical-rules.md` § "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH" — touched-file scope for harness fixes
+- `elixir-ci-harness` skill (claude-marketplace-elixir) — copy-ready CI workflow that closes the Codex-Cloud-no-hex.pm gap
 - `feedback_codex_sandbox_pr_gap.md` — observed Codex env gaps post-allowlist
 
-<!-- @-import: ~/.claude/includes/inetpeople-workspace.md -->
-## Inetpeople Linear Workspace
+<!-- @-import: ~/.claude/includes/onchain-stack-workspace.md -->
+## Onchain Stack — Linear Workspace
 
-Workspace-specific layout for the Inetpeople / ZenHive portfolio. Imported only by repos in this family. Generic workflow shape lives in `linear-workflow.md` — read that first; this file fills in the specifics.
+Workspace-specific layout for the onchain primitive stack — the seven repos under ZenHive that share the Inetpeople Linear workspace. Imported only by repos in this family. Generic workflow shape lives in `linear-workflow.md` — read that first; this file fills in the specifics.
 
 ### Workspace at a Glance
 
@@ -2211,6 +2416,21 @@ The first issue routed through the Linear-as-queue pipeline — used as the roun
 
 If INE-5 is still pending pickup or in review, check `mcp__linear-server__get_issue(id: "INE-5", includeRelations: true)` to see current state and PR link.
 
+### Title Convention
+
+Prefix every issue title with `[<repo-name>]` — lowercase, matching the on-disk repo directory name:
+
+- `[cartouche] Fix expired-filter test cross-process pdict bridge`
+- `[hieroglyph] Add EIP-7702 typed-tx ABI decoder`
+- `[onchain_aave] Bump aave-address-book to 2026-Q2 release`
+- `[onchain_evm] Wire revm 0.x → 1.0 migration shim`
+
+**Why:** the team key `INE` is a global counter across all 7 repos (see § "Workspace at a Glance"). Without a prefix, `INE-12` says nothing about scope until you click into Linear. The prefix makes scope legible everywhere the title surfaces — issue lists, branch names (Codex/Cursor derive PR branches from issue title), PR titles (agents copy the issue title verbatim), commit messages, Linear search results, and the `staged-review:commit-review` verdict output.
+
+**Cross-repo work:** when an issue spans repos (e.g. coordinating a Hieroglyph release with a Cartouche bump), the *primary* repo's prefix wins — the one hosting the bulk of the work. Linked issues in the other repo carry their own prefix.
+
+**Pre-convention issues** (`INE-1` through whatever's the latest at adoption) are not renamed retroactively. Going-forward only.
+
 ### Cross-Repo Patterns Specific to This Family
 
 - **Hieroglyph release → Cartouche bump**: Hieroglyph publishes a new minor; Cartouche needs a `mix.exs` bump + lockfile refresh + release. File one issue per repo, link with `blocks` (Hieroglyph blocks Cartouche). Don't bundle into a single issue.
@@ -2223,7 +2443,7 @@ If INE-5 is still pending pickup or in review, check `mcp__linear-server__get_is
 mcp__linear-server__save_issue(
   team: "INE",
   project: "Cartouche",                      # match repo
-  title: "Brief, action-oriented",
+  title: "[cartouche] Brief, action-oriented",   # [<repo-name>] prefix — see § "Title Convention"
   description: """
   ## Context
   ...
@@ -2278,29 +2498,3 @@ mix sobelow --mark-skip-all
 That writes a fresh `.sobelow-skips` containing fingerprints for whatever sobelow flags right now. Resolved findings drop out automatically; new ones get added. Confirm with `mix sobelow` (clean output = all findings are accounted for).
 
 `.sobelow-skips` is **tracked** — it is the project's accepted-pending-fix security baseline. Each fingerprint should map to a ROADMAP task that, when shipped, will resolve the finding (currently: Task 48 for the `Cartouche.Sleuth` `String.to_atom` cluster; Tasks 41/42/50/59-gen for the generator's `String.to_atom` and `File.{read!,mkdir_p!,write!}` paths). Fingerprints are deterministic (file:line + rule), so the file doesn't churn unless code or sobelow rules change. The CI harness (`.github/workflows/harness.yml`) runs `mix sobelow` against `.sobelow-conf` (`exit: "Low"`, `skip: true`) on every PR — without `.sobelow-skips` tracked, every CI run would fail on the accepted-pending-fix findings, so the file must be in version control. Don't hand-edit; regenerate via `mix sobelow --mark-skip-all` when fingerprints change.
-
-## Cursor Cloud specific instructions
-
-This is a pure Elixir library (no Phoenix, no database, no Docker). The VM has Elixir 1.18.4 and Erlang/OTP 27.3.4.11 installed via `mise`, matching `.tool-versions`.
-
-### Quick reference
-
-| Task | Command |
-|------|---------|
-| Fetch deps | `mix deps.get` |
-| Compile | `mix compile` |
-| Run tests | `mix test` |
-| Run tests (JSON output) | `mix test.json --quiet` |
-| Format check | `mix format --check-formatted` |
-| Credo | `mix credo --strict` |
-| Sobelow | `mix sobelow` |
-| Dialyzer | `mix dialyzer` |
-| IEx console | `iex -S mix` |
-
-### Gotchas
-
-- `Cartouche.Wei.to_wei/1` only accepts integer amounts (e.g. `{3, :gwei}`), not floats.
-- The `.tool-versions` specifies stable `1.18.4` / OTP `27.3.4.11`. The CI harness (`.github/workflows/harness.yml`) uses `1.18.4` / OTP `27.3`. Both work; `mix.exs` requires `~> 1.17`.
-- Tests use mock HTTP clients (`Cartouche.Test.Client`), so no live Ethereum/Solana node is needed.
-- `mix format --check-formatted` may report a pre-existing formatting difference in `lib/cartouche/transaction.ex` (the `styler` plugin reformats differently from the committed code). This is a known state of the repo.
-- No services need to be started; this is a library that compiles and tests standalone.
