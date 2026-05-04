@@ -1,6 +1,6 @@
 if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
   defmodule Cartouche.Solana.Signer.CloudKMSTest do
-    use ExUnit.Case, async: true
+    use ExUnit.Case, async: false
 
     alias Cartouche.Solana.Signer.CloudKMS
 
@@ -22,6 +22,7 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
     # Pre-compute a known signature for "test" using the seed
     @test_message "test"
     @test_signature :crypto.sign(:eddsa, :none, @test_message, [@seed, :ed25519])
+    @credential_ref {:goth_credential, __MODULE__}
 
     # Malformed Ed25519 PEM: valid PEM frame but DER body has the wrong prefix
     # (RSA SubjectPublicKeyInfo OID instead of Ed25519's 1.3.101.112).
@@ -113,6 +114,16 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
       :ok
     end
 
+    setup do
+      # :meck patches Goth globally, so this test module cannot run async.
+      :meck.new(Goth, [:no_link, :passthrough])
+      :meck.expect(Goth, :fetch!, fn @credential_ref -> %{token: "stubbed-token", type: "Bearer"} end)
+
+      on_exit(fn -> :meck.unload(Goth) end)
+
+      {:ok, credential: @credential_ref}
+    end
+
     describe "get_address/6" do
       test "extracts Ed25519 public key from PEM" do
         {:ok, pub} =
@@ -120,6 +131,17 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
 
         assert pub == @pub
         assert byte_size(pub) == 32
+      end
+
+      test "fetches Goth token and extracts Ed25519 public key through the credential path", %{
+        credential: credential
+      } do
+        {:ok, pub} =
+          CloudKMS.get_address(credential, "project", "location", "keychain", "key", "version")
+
+        assert pub == @pub
+        assert byte_size(pub) == 32
+        assert :meck.num_calls(Goth, :fetch!, [credential]) == 1
       end
 
       test "rejects non-Ed25519 algorithms with descriptive error" do
@@ -162,6 +184,25 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
 
         assert byte_size(sig) == 64
         assert sig == @test_signature
+      end
+
+      test "fetches Goth token and returns 64-byte signature through the credential path", %{
+        credential: credential
+      } do
+        {:ok, sig} =
+          CloudKMS.sign(
+            @test_message,
+            credential,
+            "project",
+            "location",
+            "keychain",
+            "key",
+            "version"
+          )
+
+        assert byte_size(sig) == 64
+        assert sig == @test_signature
+        assert :meck.num_calls(Goth, :fetch!, [credential]) == 1
       end
 
       test "signature verifies" do
