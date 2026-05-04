@@ -366,8 +366,8 @@ defmodule Cartouche.Receipt do
         ),
       cumulative_gas_used: Hex.decode_hex_number!(params["cumulativeGasUsed"]),
       effective_gas_price: Hex.decode_hex_number!(params["effectiveGasPrice"]),
-      blob_gas_used: map(params["blobGasUsed"], &Hex.decode_hex_number!/1),
-      blob_gas_price: map(params["blobGasPrice"], &Hex.decode_hex_number!/1),
+      blob_gas_used: Hex.decode_maybe_hex_number!(params["blobGasUsed"]),
+      blob_gas_price: Hex.decode_maybe_hex_number!(params["blobGasPrice"]),
       gas_used: Hex.decode_hex_number!(params["gasUsed"]),
       contract_address:
         if(is_nil(params["contractAddress"]),
@@ -379,9 +379,5 @@ defmodule Cartouche.Receipt do
       type: Hex.decode_hex_number!(params["type"]),
       status: Hex.decode_hex_number!(params["status"])
     }
-  end
-
-  defp map(x, f) do
-    if is_nil(x), do: nil, else: f.(x)
   end
 end

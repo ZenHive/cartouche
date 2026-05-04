@@ -244,6 +244,24 @@ defmodule Cartouche.Hex do
     end
   end
 
+  @doc """
+  Parses a hex value as a big-endian integer if not nil, otherwise returns `nil`.
+
+  Useful for JSON-RPC fields that are absent on pre-fork blocks (e.g.
+  `blobGasUsed` / `blobGasPrice` on pre-Cancun receipts).
+
+  ## Examples
+
+    iex> Cartouche.Hex.decode_maybe_hex_number!("0xaabb")
+    0xaabb
+
+    iex> Cartouche.Hex.decode_maybe_hex_number!(nil)
+    nil
+  """
+  @spec decode_maybe_hex_number!(String.t() | nil) :: integer() | nil | no_return()
+  def decode_maybe_hex_number!(b) when is_nil(b), do: nil
+  def decode_maybe_hex_number!(b) when is_binary(b), do: decode_hex_number!(b)
+
   @doc ~S"""
   Decodes hex, allowing it to either be `"0x..."` or a raw binary.
 
