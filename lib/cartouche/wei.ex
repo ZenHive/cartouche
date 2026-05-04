@@ -2,9 +2,10 @@ defmodule Cartouche.Wei do
   @moduledoc """
   Conversions between Ethereum denominations and wei.
 
-  Supports integer `:wei`, integer `:gwei`, and integer or `Decimal` `:eth`
-  inputs. `:eth` is the only ETH-denomination atom accepted; `:ether` is not
-  supported so callers use the same short form as `:wei` and `:gwei`.
+  Supports bare non-negative integer inputs treated as wei, integer `:wei`,
+  integer `:gwei`, and integer or `Decimal` `:eth` inputs. `:eth` is the only
+  ETH-denomination atom accepted; `:ether` is not supported so callers use the
+  same short form as `:wei` and `:gwei`.
   """
 
   @wei_per_gwei 1_000_000_000
