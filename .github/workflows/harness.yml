@@ -40,7 +40,7 @@ jobs:
           elixir-version: ${{ matrix.elixir }}
           otp-version: ${{ matrix.otp }}
 
-      - name: Cache deps & _build (covers dialyxir PLT default path)
+      - name: Cache deps & _build
         uses: actions/cache@v4
         with:
           path: |
@@ -49,6 +49,20 @@ jobs:
           key: mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
             mix-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
+
+      # Separate PLT cache: keyed on Elixir+OTP+mix.lock, with version-only
+      # restore-keys fallback. Incremental PLT update on dep change is cheap;
+      # full PLT rebuild from stdlib OOMs the 7GB GitHub runner. PLT lives at
+      # priv/plts/ per the dialyzer: [plt_*_path: ...] pin in mix.exs — keeps
+      # PLT outside _build/ so the deps cache (which invalidates on mix.lock)
+      # doesn't churn the stable PLT cache.
+      - name: Cache dialyzer PLT
+        uses: actions/cache@v4
+        with:
+          path: priv/plts
+          key: plt-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            plt-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
 
       - run: mix deps.get
 
@@ -76,6 +90,14 @@ jobs:
       # current ~87%. Per-module 95% gating for critical paths is a separate ratchet.
       - name: Tests + coverage gate (>=85%)
         run: mix test.json --cover --cover-threshold 85 --summary-only --exclude integration
+
+      # Build PLT explicitly before the analysis step. On cache hit this is a
+      # ~5s no-op. On full miss it costs ~30-60s but with bounded peak memory
+      # because dialyzer is only doing PLT construction, not analysis. The
+      # Dialyzer step below then runs against a warm PLT at ~5GB peak instead
+      # of OOM'ing at ~80GB doing both at once.
+      - name: Build PLT (warm or rebuild)
+        run: mix dialyzer --plt
 
       - name: Dialyzer
         run: mix dialyzer
