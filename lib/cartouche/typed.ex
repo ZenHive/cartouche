@@ -575,9 +575,7 @@ defmodule Cartouche.Typed do
   end
 
   # Takes the `value` parameter (a map), and encodes the values per the EIP-712 encode data spec
-  @spec encode_value_map(%{String.t() => term()}, Type.type_list(), type_map()) :: %{
-          String.t() => term()
-        }
+  @spec encode_value_map(%{String.t() => term()}, Type.type_list(), type_map()) :: binary()
   defp encode_value_map(value, fields, types) do
     for {field, type} <- fields, into: <<>> do
       if is_binary(type) do
@@ -589,7 +587,7 @@ defmodule Cartouche.Typed do
   end
 
   # Tries to match a type based on its parameters, which looks to be how EIP-712 libraries work.
-  @spec find_type([String.t()], type_map()) :: Type.t()
+  @spec find_type([String.t()], type_map()) :: {String.t(), Type.t()}
   defp find_type(field_names, types) do
     sorted_field_names =
       field_names

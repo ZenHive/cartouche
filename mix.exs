@@ -15,16 +15,38 @@ defmodule Cartouche.MixProject do
       source_url: "https://github.com/zenhive/cartouche",
       docs: [
         main: "readme",
-        extras: ["README.md", "CHANGELOG.md"]
+        extras: ["README.md", "CHANGELOG.md"],
+        # CHANGELOG entries reference hidden generated modules (e.g.
+        # `Cartouche.Contract.IConsole`, which has `@moduledoc false`) as
+        # historical narrative — not as API documentation. ex_doc otherwise
+        # warns and `mix docs --warnings-as-errors` (the pre-commit hook)
+        # blocks the commit. Skip on CHANGELOG.md only; README and source
+        # docstrings remain strict.
+        skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
       ],
-      # TODO(Task 42)/TODO(Task 41): drop ignore_warnings once generator-side
-      # fixes land and IConsole is regenerated — see `.dialyzer_ignore.exs`
-      # header. plt_*_path pin keeps the PLT outside _build/ so CI can cache
-      # it independently of the deps cache (which invalidates on mix.lock).
+      # plt_*_path pin keeps the PLT outside _build/ so CI can cache it
+      # independently of the deps cache (which invalidates on mix.lock).
+      #
+      # plt_add_apps + plt_ignore_apps trim the deps PLT. Default behavior
+      # pulls every app in the dep tree (~1044 modules), with the GCP cluster
+      # (google_api_cloud_kms generated API + google_gax + goth + tesla +
+      # jose) being the bulk: ~600+ modules. That OOMs both 16GB CI runners
+      # AND 48GB local machines (compressor/swap thrashing). Trade-off:
+      # dialyzer won't type-check Cartouche.Signer.CloudKMS calls into
+      # GoogleApi.* / Goth — acceptable since CloudKMS is an optional signer
+      # exercised in integration tests, and its surface is narrow (a handful
+      # of Goth.Token + GoogleApi.CloudKMS.V1.Api.Projects.* calls).
       dialyzer: [
-        ignore_warnings: ".dialyzer_ignore.exs",
         plt_local_path: "priv/plts",
-        plt_core_path: "priv/plts"
+        plt_core_path: "priv/plts",
+        plt_add_apps: [:mix, :ex_unit],
+        plt_ignore_apps: [
+          :google_api_cloud_kms,
+          :google_gax,
+          :goth,
+          :tesla,
+          :jose
+        ]
       ],
       test_coverage: [ignore_modules: [Cartouche.Contract.IConsole]],
       package: package()

@@ -7,6 +7,7 @@ defmodule Cartouche.RPC do
   import Cartouche.HTTP, only: [normalize_finch_result: 1]
   import Cartouche.Wei, only: [to_wei: 1]
 
+  alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
 
@@ -307,7 +308,7 @@ defmodule Cartouche.RPC do
       iex> |> Cartouche.RPC.call_trx()
       {:error, %{code: -32602, message: "Failed to decode transaction"}}
   """
-  @spec call_trx(V1.t() | V2.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
+  @spec call_trx(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_trx(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
@@ -350,7 +351,7 @@ defmodule Cartouche.RPC do
       iex> |> Cartouche.RPC.estimate_gas()
       {:error, %{code: 3, message: "execution reverted: Dai/insufficient-balance", revert: ~h[0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000184461692f696e73756666696369656e742d62616c616e63650000000000000000]}}
   """
-  @spec estimate_gas(V1.t() | V2.t(), Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
+  @spec estimate_gas(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
     block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
@@ -923,7 +924,7 @@ defmodule Cartouche.RPC do
         }
       }
   """
-  @spec trace_call(V1.t() | V2.t(), Keyword.t()) ::
+  @spec trace_call(V1.t() | V2.t() | Call.t(), Keyword.t()) ::
           {:ok, Cartouche.TraceCall.t()} | {:error, term()}
   def trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
@@ -1106,7 +1107,7 @@ defmodule Cartouche.RPC do
         }
       ]}
   """
-  @spec trace_call_many([V1.t() | V2.t() | {V1.t() | V2.t(), <<_::160>> | nil}], Keyword.t()) ::
+  @spec trace_call_many([V1.t() | V2.t() | Call.t() | {V1.t() | V2.t() | Call.t(), <<_::160>> | nil}], Keyword.t()) ::
           {:ok, [Cartouche.TraceCall.t()]} | {:error, term()}
   def trace_call_many(trxs, opts \\ []) do
     from = Keyword.get(opts, :from)
@@ -1168,7 +1169,7 @@ defmodule Cartouche.RPC do
         ]
       }}
   """
-  @spec debug_trace_call(V1.t() | V2.t(), Keyword.t()) ::
+  @spec debug_trace_call(V1.t() | V2.t() | Call.t(), Keyword.t()) ::
           {:ok, Cartouche.DebugTrace.t()} | {:error, term()}
   def debug_trace_call(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
@@ -1585,7 +1586,7 @@ defmodule Cartouche.RPC do
   end
 
   @doc false
-  @spec to_call_params(V1.t() | V2.t(), <<_::160>> | nil) :: map()
+  @spec to_call_params(V1.t() | V2.t() | Call.t(), <<_::160>> | nil) :: map()
   def to_call_params(%V1{} = trx, from) do
     %{
       from: nil_map(from, &Hex.encode_big_hex/1),
@@ -1609,6 +1610,16 @@ defmodule Cartouche.RPC do
       gas: nil_map(trx.gas_limit, &Hex.encode_short_hex/1),
       value: nil_map(trx.amount, &Hex.encode_short_hex/1),
       data: nil_map(trx.data, &Hex.encode_big_hex/1)
+    }
+  end
+
+  def to_call_params(%Call{} = call, from) do
+    %{
+      from: nil_map(call.from || from, &Hex.encode_big_hex/1),
+      to: Hex.encode_big_hex(call.destination),
+      gas: nil_map(call.gas, &Hex.encode_short_hex/1),
+      value: nil_map(call.value, &Hex.encode_short_hex/1),
+      data: Hex.encode_big_hex(call.data)
     }
   end
 

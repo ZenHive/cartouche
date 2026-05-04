@@ -185,13 +185,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     errors = [
       quote do
-        def decode_error(_) do
-          if true do
-            :not_found
-          else
-            {:ok, "Impossible", <<>>}
-          end
-        end
+        def decode_error(_), do: :not_found
       end
       | errors
     ]
@@ -535,7 +529,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     quote do
       def unquote(names.build_trx)(contract, unquote_splicing(execute_arguments)) do
-        %Cartouche.Transaction.V2{
+        %Call{
           destination: contract,
           data: unquote(names.encode)(unquote_splicing(execute_values))
         }
@@ -835,6 +829,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
           @moduledoc false
           use Cartouche.Hex
 
+          alias Cartouche.Transaction.Call
+
           def contract_name, do: unquote(contract_name)
 
           unquote_splicing(encode_call_decl)
@@ -907,6 +903,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
         end
     end
   end
+
+  defp annotate_stmt({:alias, _, _} = alias_ast, seen), do: {[alias_ast], seen}
 
   defp annotate_stmt(other, seen), do: {[other], seen}
 
