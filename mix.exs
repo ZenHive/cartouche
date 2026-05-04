@@ -119,6 +119,7 @@ defmodule Cartouche.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.21", only: [:dev, :test], runtime: false},
+      {:meck, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.8", only: [:dev, :test], runtime: false},
       {:reach, "~> 1.5", only: [:dev, :test], runtime: false},

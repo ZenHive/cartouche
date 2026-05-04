@@ -1,9 +1,11 @@
 defmodule Cartouche.Signer.CloudKMSTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Cartouche.Signer.CloudKMS
 
   doctest CloudKMS
+
+  @credential_ref {:goth_credential, __MODULE__}
 
   setup do
     Tesla.Mock.mock(fn
@@ -71,6 +73,67 @@ defmodule Cartouche.Signer.CloudKMSTest do
     end)
 
     :ok
+  end
+
+  setup do
+    # :meck patches Goth globally, so this test module cannot run async.
+    :meck.new(Goth, [:passthrough, :no_link])
+    :meck.expect(Goth, :fetch!, fn @credential_ref -> %{token: "stubbed-token", type: "Bearer", expires: 0} end)
+
+    on_exit(fn -> :meck.unload(Goth) end)
+
+    {:ok, credential: @credential_ref}
+  end
+
+  describe "get_address/6" do
+    test "returns address through the token path" do
+      {:ok, address} = CloudKMS.get_address("token", "project", "location", "keychain", "key", "version")
+
+      assert Cartouche.Hex.to_hex(address) == "0xdda641b2a76a4a7c3617815bb13281dd207b74d5"
+    end
+
+    test "fetches Goth token and returns address through the credential path", %{credential: credential} do
+      {:ok, address} = CloudKMS.get_address(credential, "project", "location", "keychain", "key", "version")
+
+      assert Cartouche.Hex.to_hex(address) == "0xdda641b2a76a4a7c3617815bb13281dd207b74d5"
+      assert :meck.num_calls(Goth, :fetch!, [credential]) == 1
+    end
+  end
+
+  describe "sign/7" do
+    test "returns signature through the token path" do
+      {:ok, sig} = CloudKMS.sign("test", "token", "project", "location", "keychain", "key", "version")
+
+      assert {:ok, recid} =
+               Cartouche.Recover.find_recid(
+                 "test",
+                 sig,
+                 Cartouche.Hex.decode_address!("0xDDA641B2A76A4A7c3617815BB13281DD207b74d5")
+               )
+
+      assert "0xDDa641B2A76a4A7c3617815bb13281DD207b74d5" =
+               "test"
+               |> Cartouche.Recover.recover_eth(%{sig | recid: recid})
+               |> Cartouche.Hex.to_address()
+    end
+
+    test "fetches Goth token and returns signature through the credential path", %{credential: credential} do
+      {:ok, sig} = CloudKMS.sign("test", credential, "project", "location", "keychain", "key", "version")
+
+      assert {:ok, recid} =
+               Cartouche.Recover.find_recid(
+                 "test",
+                 sig,
+                 Cartouche.Hex.decode_address!("0xDDA641B2A76A4A7c3617815BB13281DD207b74d5")
+               )
+
+      assert "0xDDa641B2A76a4A7c3617815bb13281DD207b74d5" =
+               "test"
+               |> Cartouche.Recover.recover_eth(%{sig | recid: recid})
+               |> Cartouche.Hex.to_address()
+
+      assert :meck.num_calls(Goth, :fetch!, [credential]) == 1
+    end
   end
 
   describe "get_address/6 algorithm validation" do
