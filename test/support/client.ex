@@ -1,8 +1,5 @@
 defmodule Cartouche.Test.Client do
-  @moduledoc """
-  A module for helping tests by providing responses without
-  needing to connect to a real Etheruem node.
-  """
+  @moduledoc false
   # credo:disable-for-this-file Credo.Check.Readability.FunctionNames
   # Every `eth_*` / `trace_*` / `debug_*` function mirrors an Ethereum JSON-RPC
   # method name verbatim. Renaming would break the parity that's the whole point.
@@ -22,6 +19,8 @@ defmodule Cartouche.Test.Client do
     {method, params, id}
   end
 
+  @doc false
+  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
   def request(%Finch.Request{body: body}, _finch_name, _opts) do
     {method, params, id} = parse_request(Jason.decode!(body))
 
@@ -40,18 +39,26 @@ defmodule Cartouche.Test.Client do
     end
   end
 
+  @doc false
+  @spec net_version() :: String.t()
   def net_version do
     "3"
   end
 
+  @doc false
+  @spec get_balance(term(), term()) :: String.t()
   def get_balance(_address, _block) do
     "0x0234c8a3397aab58"
   end
 
+  @doc false
+  @spec eth_getTransactionCount(term(), term()) :: String.t()
   def eth_getTransactionCount(_address, _block) do
     "0x4"
   end
 
+  @doc false
+  @spec eth_getTransactionReceipt(binary()) :: term()
   def eth_getTransactionReceipt("0x0000000000000000000000000000000000000000000000000000000000000001"), do: %{}
 
   def eth_getTransactionReceipt("0x0000000000000000000000000000000000000000000000000000000000000002"), do: nil
@@ -154,6 +161,8 @@ defmodule Cartouche.Test.Client do
     }
   end
 
+  @doc false
+  @spec eth_feeHistory(term(), term(), term()) :: map()
   def eth_feeHistory(_block_count, _newest_block, _reward_percentiles \\ []) do
     %{
       "oldestBlock" => "0xfd6a75",
@@ -202,6 +211,8 @@ defmodule Cartouche.Test.Client do
     }
   end
 
+  @doc false
+  @spec trace_transaction(binary()) :: list(map())
   def trace_transaction("0x000000000000000000000000000000000000000000000000000000000000000A") do
     [
       %{
@@ -501,6 +512,8 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
+  @doc false
+  @spec trace_call(map(), list(), term()) :: map()
   def trace_call(%{"to" => _} = _trx, ["trace"], _block) do
     %{
       "output" => "0x",
@@ -541,6 +554,8 @@ defmodule Cartouche.Test.Client do
     }
   end
 
+  @doc false
+  @spec trace_callMany(term(), term()) :: list(map())
   def trace_callMany(_trxs, _block) do
     [
       %{
@@ -664,6 +679,8 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
+  @doc false
+  @spec debug_traceCall(map(), term()) :: map()
   def debug_traceCall(%{"to" => _} = _trx, _block) do
     %{
       "failed" => false,
@@ -698,15 +715,21 @@ defmodule Cartouche.Test.Client do
     }
   end
 
+  @doc false
+  @spec eth_gasPrice() :: String.t()
   def eth_gasPrice do
     # 1 gwei
     "0x3b9aca00"
   end
 
+  @doc false
+  @spec eth_maxPriorityFeePerGas() :: String.t()
   def eth_maxPriorityFeePerGas do
     "0x3b9aca01"
   end
 
+  @doc false
+  @spec eth_sendRawTransaction(binary()) :: String.t()
   def eth_sendRawTransaction("0x02" <> _rest = trx_enc) do
     {:ok, trx} =
       trx_enc
@@ -750,6 +773,8 @@ defmodule Cartouche.Test.Client do
     to_hex(<<nonce::integer-size(8), gas_price::integer-size(64), gas_limit::integer-size(24), to::binary>>)
   end
 
+  @doc false
+  @spec eth_call(map(), term()) :: term()
   # Call that fails with simple encoded error
   def eth_call(%{"to" => "0x000000000000000000000000000000000000000A"} = _trx, _block) do
     {:error,
@@ -829,6 +854,8 @@ defmodule Cartouche.Test.Client do
     "0xcc"
   end
 
+  @doc false
+  @spec eth_estimateGas(map(), term()) :: term()
   # Reverting
   def eth_estimateGas(%{"to" => "0x000000000000000000000000000000000000000A"} = _trx, _block) do
     {:error,
@@ -850,14 +877,20 @@ defmodule Cartouche.Test.Client do
     "0xdd"
   end
 
+  @doc false
+  @spec eth_getCode(term(), term()) :: String.t()
   def eth_getCode(_address, _block) do
     "0x112233"
   end
 
+  @doc false
+  @spec eth_newFilter(map()) :: String.t()
   def eth_newFilter(%{}) do
     "0xf11735"
   end
 
+  @doc false
+  @spec eth_getFilterChanges(binary()) :: list(map())
   def eth_getFilterChanges("0xf11735") do
     [
       %{
@@ -878,8 +911,12 @@ defmodule Cartouche.Test.Client do
     ]
   end
 
+  @doc false
+  @spec eth_getBlockByHash(term(), boolean()) :: map()
   def eth_getBlockByHash(_block_hash, _full \\ false), do: eth_getBlockByNumber("0x55")
 
+  @doc false
+  @spec eth_getBlockByNumber(term(), boolean()) :: map()
   def eth_getBlockByNumber(_block_number, _ \\ false) do
     %{
       "difficulty" => "0x4ea3f27bc",
@@ -906,7 +943,15 @@ defmodule Cartouche.Test.Client do
     }
   end
 
+  @doc false
+  @spec eth_chainId() :: String.t()
   def eth_chainId, do: "0x22"
+
+  @doc false
+  @spec eth_getBalance(term(), term()) :: String.t()
   def eth_getBalance(_addr, _block), do: "0x55"
+
+  @doc false
+  @spec eth_blockNumber() :: String.t()
   def eth_blockNumber, do: "0x44"
 end

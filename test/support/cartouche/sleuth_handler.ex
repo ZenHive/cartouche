@@ -1,10 +1,5 @@
 defmodule Cartouche.Test.SleuthHandler do
-  @moduledoc ~S"""
-  Module to handle sending back sleuth responses to our unit tests.
-
-  Note: this could clearly be abstracted to be a little nicer, but it's
-        perfectly adequate the way it is now, I reckon.
-  """
+  @moduledoc false
   use Cartouche.Hex
 
   alias Cartouche.Contract.BlockNumber
@@ -43,6 +38,8 @@ defmodule Cartouche.Test.SleuthHandler do
     raise "Unknown sleuth query: #{to_hex(query)}"
   end
 
+  @doc false
+  @spec eth_call(map(), term()) :: binary() | {:error, map()}
   def eth_call(%{"data" => data_hex}, _block) do
     data = from_hex!(data_hex)
 

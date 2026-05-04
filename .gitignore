@@ -39,3 +39,7 @@ cartouche-*.tar
 
 # claude plugin remember
 /.remember/
+
+# Local backups (`.bak.exs`, `.bak`, etc.) — never commit
+*.bak
+*.bak.*

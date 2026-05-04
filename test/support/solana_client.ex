@@ -1,17 +1,13 @@
 defmodule Cartouche.Solana.Test.Client do
-  @moduledoc """
-  Mock Solana JSON-RPC client for testing.
-
-  Uses address-based dispatch to return different responses:
-  - Standard addresses return normal responses
-  - Specific "magic" addresses trigger error cases or edge cases
-  """
+  @moduledoc false
 
   # Known test addresses (Base58-encoded)
   # All-zeros seed → "4zvwRjXUKGfvwnParsHAS3HuSVzV5cA4McphgmoCtajS"
   @nonexistent_account "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
   @error_account "11111111111111111111111111111112"
 
+  @doc false
+  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
   def request(%Finch.Request{body: body}, _finch_name, _opts) do
     %{"jsonrpc" => "2.0", "method" => method, "params" => params, "id" => id} =
       Jason.decode!(body)

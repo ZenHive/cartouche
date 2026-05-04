@@ -1,7 +1,5 @@
 defmodule Cartouche.Solana.Test.Signer do
-  @moduledoc """
-  Test helper for starting a Solana Ed25519 signer with a unique name.
-  """
+  @moduledoc false
 
   # RFC 8032 Test 1 seed
   @test_seed Base.decode16!(
@@ -9,8 +7,12 @@ defmodule Cartouche.Solana.Test.Signer do
                case: :upper
              )
 
+  @doc false
+  @spec test_seed() :: binary()
   def test_seed, do: @test_seed
 
+  @doc false
+  @spec start_signer(atom() | nil) :: atom()
   def start_signer(name \\ nil) do
     name =
       case name do

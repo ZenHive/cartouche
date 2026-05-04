@@ -1,5 +1,8 @@
 defmodule Cartouche.VmTestHelpers do
   @moduledoc false
+
+  @doc false
+  @spec word(integer() | binary(), pos_integer() | nil) :: binary()
   def word(x, sz \\ nil)
 
   def word(x, nil) when is_integer(x) and x >= 0 do
