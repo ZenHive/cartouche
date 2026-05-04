@@ -25,12 +25,36 @@ defmodule Cartouche.Transaction.Call do
   """
   @spec new(<<_::160>>, binary(), Keyword.t()) :: t()
   def new(destination, data, opts \\ []) when is_binary(data) do
+    from = Keyword.get(opts, :from)
+    gas = Keyword.get(opts, :gas)
+    value = Keyword.get(opts, :value)
+
+    # Validate destination is 20 bytes
+    unless byte_size(destination) == 20 do
+      raise ArgumentError, "destination must be 20 bytes, got #{byte_size(destination)}"
+    end
+
+    # Validate from is 20 bytes when present
+    unless is_nil(from) or byte_size(from) == 20 do
+      raise ArgumentError, "from must be 20 bytes, got #{byte_size(from)}"
+    end
+
+    # Validate gas is non-negative when present
+    unless is_nil(gas) or (is_integer(gas) and gas >= 0) do
+      raise ArgumentError, "gas must be a non-negative integer, got #{inspect(gas)}"
+    end
+
+    # Validate value is non-negative when present
+    unless is_nil(value) or (is_integer(value) and value >= 0) do
+      raise ArgumentError, "value must be a non-negative integer, got #{inspect(value)}"
+    end
+
     %__MODULE__{
       destination: destination,
       data: data,
-      from: Keyword.get(opts, :from),
-      gas: Keyword.get(opts, :gas),
-      value: Keyword.get(opts, :value)
+      from: from,
+      gas: gas,
+      value: value
     }
   end
 end
