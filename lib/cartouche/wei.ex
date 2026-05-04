@@ -2,14 +2,14 @@ defmodule Cartouche.Wei do
   @moduledoc """
   Conversions between Ethereum denominations and wei.
 
-  Supports integer `:wei`, integer `:gwei`, and integer or `Decimal` `:eth`
-  inputs. `:eth` is the only ETH-denomination atom accepted; `:ether` is not
-  supported so callers use the same short form as `:wei` and `:gwei`.
+  Supports bare non-negative integers as wei, `{integer, :wei}`, `{integer,
+  :gwei}`, and `{integer | Decimal.t(), :eth}` inputs. `:eth` is the only
+  ETH-denomination atom accepted; `:ether` is not supported so callers use the
+  same short form as `:wei` and `:gwei`.
   """
 
   @wei_per_gwei 1_000_000_000
   @wei_per_eth 1_000_000_000_000_000_000
-  @decimal_wei_per_eth Decimal.new(@wei_per_eth)
 
   @doc ~S"""
   Converts a number to wei, possibly from gwei or eth.
@@ -38,7 +38,11 @@ defmodule Cartouche.Wei do
     end
 
     amount
-    |> Decimal.mult(@decimal_wei_per_eth)
+    |> scale_eth_decimal_to_wei()
     |> Decimal.to_integer()
+  end
+
+  defp scale_eth_decimal_to_wei(%Decimal{sign: sign, coef: coef, exp: exp}) do
+    Decimal.new(sign, coef, exp + 18)
   end
 end

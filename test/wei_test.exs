@@ -47,6 +47,13 @@ defmodule Cartouche.WeiTest do
       assert Wei.to_wei({Decimal.new("0.000000000000000001"), :eth}) == 1
     end
 
+    test "large Decimal eth conversion does not round through Decimal context precision" do
+      amount = Decimal.new("123456789012345678901234567890.123456789012345678")
+
+      assert Wei.to_wei({amount, :eth}) ==
+               123_456_789_012_345_678_901_234_567_890_123_456_789_012_345_678
+    end
+
     test "Decimal eth below one wei raises instead of rounding" do
       assert_raise ArgumentError, fn ->
         Wei.to_wei({Decimal.new("0.0000000000000000001"), :eth})
