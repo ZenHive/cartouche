@@ -18,13 +18,13 @@ defmodule Cartouche.RecoveryBit do
 
   ## Examples
 
-      iex> Cartouche.RecoveryBit.normalize(28, :eip155)
-      46
+      iex> Cartouche.RecoveryBit.normalize(28, :ethereum)
+      28
 
       iex> Cartouche.RecoveryBit.normalize(1, :ethereum)
       28
 
-      iex> Cartouche.RecoveryBit.normalize(45, :base)
+      iex> Cartouche.RecoveryBit.normalize(27, :base)
       0
   """
   @spec normalize(non_neg_integer(), rec_type()) :: non_neg_integer() | no_return()
@@ -49,13 +49,13 @@ defmodule Cartouche.RecoveryBit do
 
   ## Examples
 
-      iex> Cartouche.RecoveryBit.normalize_signature(<<1::256, 2::256, 28>>, :eip155)
-      <<1::256, 2::256, 46>>
+      iex> Cartouche.RecoveryBit.normalize_signature(<<1::256, 2::256, 28>>, :ethereum)
+      <<1::256, 2::256, 28>>
 
       iex> Cartouche.RecoveryBit.normalize_signature(<<1::256, 2::256, 1>>, :ethereum)
       <<1::256, 2::256, 28>>
 
-      iex> Cartouche.RecoveryBit.normalize_signature(<<1::256, 2::256, 45>>, :base)
+      iex> Cartouche.RecoveryBit.normalize_signature(<<1::256, 2::256, 27>>, :base)
       <<1::256, 2::256, 0>>
   """
   @spec normalize_signature(Cartouche.signature(), rec_type()) :: Cartouche.signature() | no_return()
@@ -81,15 +81,6 @@ defmodule Cartouche.RecoveryBit do
 
       iex> Cartouche.RecoveryBit.recover_base(28)
       1
-
-      iex> Cartouche.RecoveryBit.recover_base(45)
-      0
-
-      iex> Cartouche.RecoveryBit.recover_base(46)
-      1
-
-      iex> Cartouche.RecoveryBit.recover_base(47)
-      ** (RuntimeError) Invalid EIP-155 Signature: recovery_bit=47, chain_id=5
 
       iex> Cartouche.RecoveryBit.recover_base(2)
       ** (FunctionClauseError) no function clause matching in Cartouche.RecoveryBit.recover_base/1
