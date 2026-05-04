@@ -71,6 +71,13 @@ defmodule Cartouche.RPC.IntegrationTest do
   @type_2_receipt_gas_used 0xEC18
   @type_2_receipt_effective_gas_price 0x54A485839
 
+  # Type-3 (EIP-4844 blob) receipt anchor — blob tx after Dencun activation.
+  @type_3_receipt_hash <<0xBBC6C82F2D81479E2A7FFA61529FBA4BD4671A8AEFB69A261F6A9B07E46B7F79::256>>
+  @type_3_receipt_block 19_449_343
+  @type_3_receipt_gas_used 0x2A8E4
+  @type_3_receipt_blob_gas_used 0x20_000
+  @type_3_receipt_blob_gas_price 0x1
+
   # WETH9 anchor at block 18,000,000
   @weth9 <<0xC02AAA39B223FE8D0A0E5C4F27EAD9083C756CC2::160>>
   @weth9_anchor_block 18_000_000
@@ -213,13 +220,25 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert r.gas_used == @type_2_receipt_gas_used
       assert r.effective_gas_price == @type_2_receipt_effective_gas_price
       assert match?([_], r.logs)
+      assert r.blob_gas_used == nil
+      assert r.blob_gas_price == nil
+    end
 
-      # TODO(integration-gap, ROADMAP Task 67): Cartouche.Receipt missing
-      # blob_gas_used, blob_gas_price (EIP-4844). Add a blob-tx anchor and:
-      #   assert r.blob_gas_used >= 0
-      #   assert r.blob_gas_price >= 0
-      refute Map.has_key?(r, :blob_gas_used)
-      refute Map.has_key?(r, :blob_gas_price)
+    test "type-3 (EIP-4844 blob) receipt at block 19,449,343" do
+      assert {:ok, r} = Cartouche.RPC.get_trx_receipt(@type_3_receipt_hash, live_opts())
+      assert r.transaction_hash == @type_3_receipt_hash
+      assert r.block_number == @type_3_receipt_block
+      assert r.status == 1
+      assert r.type == 3
+      assert r.gas_used == @type_3_receipt_gas_used
+
+      assert is_integer(r.blob_gas_used)
+      assert r.blob_gas_used == @type_3_receipt_blob_gas_used
+      assert r.blob_gas_used > 0
+
+      assert is_integer(r.blob_gas_price)
+      assert r.blob_gas_price == @type_3_receipt_blob_gas_price
+      assert r.blob_gas_price > 0
     end
   end
 
