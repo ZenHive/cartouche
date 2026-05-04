@@ -2281,7 +2281,7 @@ That writes a fresh `.sobelow-skips` containing fingerprints for whatever sobelo
 
 ## Cursor Cloud specific instructions
 
-This is a pure Elixir library (no Phoenix, no database, no Docker). The VM has Elixir 1.20.0-rc.4 and Erlang/OTP 29 RC3 installed via `mise`, matching `.tool-versions`.
+This is a pure Elixir library (no Phoenix, no database, no Docker). The VM needs Elixir 1.18.4 and Erlang/OTP 27.3.4.11 installed via `mise`, matching `.tool-versions`. The update script handles `mise install` automatically.
 
 ### Quick reference
 
@@ -2300,7 +2300,7 @@ This is a pure Elixir library (no Phoenix, no database, no Docker). The VM has E
 ### Gotchas
 
 - `Cartouche.Wei.to_wei/1` only accepts integer amounts (e.g. `{3, :gwei}`), not floats.
-- The `.tool-versions` specifies RC/pre-release versions of Elixir and Erlang. The CI harness (`.github/workflows/harness.yml`) uses stable `1.18.4` / OTP `27.3`. Both work; `mix.exs` requires `~> 1.17`.
+- The `.tool-versions` specifies stable `elixir 1.18.4-otp-27` and `erlang 27.3.4.11`. The CI harness (`.github/workflows/harness.yml`) uses `1.18.4` / OTP `27.3`. Both work; `mix.exs` requires `~> 1.17`.
 - Tests use mock HTTP clients (`Cartouche.Test.Client`), so no live Ethereum/Solana node is needed.
 - `mix format --check-formatted` may report a pre-existing formatting difference in `lib/cartouche/transaction.ex` (the `styler` plugin reformats differently from the committed code). This is a known state of the repo.
 - No services need to be started; this is a library that compiles and tests standalone.
