@@ -1,6 +1,8 @@
 defmodule Cartouche.HexTest do
   use ExUnit.Case, async: true
 
+  alias Cartouche.Hex.InvalidHex
+
   doctest Cartouche.Hex
 
   describe "checksum_address/1" do
@@ -44,8 +46,28 @@ defmodule Cartouche.HexTest do
     end
 
     test "from_hex!/1 raises Cartouche.Hex.InvalidHex on bad input" do
-      assert_raise Cartouche.Hex.InvalidHex, ~s(invalid hex: "0xZZ"), fn ->
+      assert_raise InvalidHex, ~s(invalid hex: "0xZZ"), fn ->
         Cartouche.Hex.from_hex!("0xZZ")
+      end
+    end
+  end
+
+  describe "decode_maybe_hex_number!/1" do
+    test "returns nil for nil input" do
+      assert Cartouche.Hex.decode_maybe_hex_number!(nil) == nil
+    end
+
+    test "decodes a hex string to an integer" do
+      assert Cartouche.Hex.decode_maybe_hex_number!("0xaabb") == 0xAABB
+    end
+
+    test "decodes 0x0 to 0 (boundary: zero is not nil)" do
+      assert Cartouche.Hex.decode_maybe_hex_number!("0x0") == 0
+    end
+
+    test "raises InvalidHex on non-hex characters" do
+      assert_raise InvalidHex, ~s(invalid hex number: "0xgggg"), fn ->
+        Cartouche.Hex.decode_maybe_hex_number!("0xgggg")
       end
     end
   end

@@ -116,6 +116,10 @@ defmodule Cartouche.Receipt do
           cumulative_gas_used: integer(),
           # QUANTITY - The sum of the base fee and tip paid per unit of gas.
           effective_gas_price: integer(),
+          # QUANTITY - Blob gas used by this transaction. Cancun+ (EIP-4844); nil for non-blob receipts.
+          blob_gas_used: non_neg_integer() | nil,
+          # QUANTITY - Blob gas price paid by this transaction. Cancun+ (EIP-4844); nil for non-blob receipts.
+          blob_gas_price: non_neg_integer() | nil,
           # QUANTITY - The amount of gas used by this specific transaction alone.
           gas_used: integer(),
           # DATA, 20 Bytes - The contract address created, if the transaction was a contract creation, otherwise null.
@@ -125,7 +129,7 @@ defmodule Cartouche.Receipt do
           # DATA, 256 Bytes - Bloom filter for light clients to quickly retrieve related logs.
           logs_bloom: <<_::1024>>,
           # QUANTITY - integer of the transaction type:
-          # 0x0 legacy, 0x1 access list, 0x2 dynamic fees.
+          # 0x0 legacy, 0x1 access list, 0x2 dynamic fees, 0x3 blob.
           type: integer(),
           # QUANTITY either 1 (success) or 0 (failure)
           status: integer()
@@ -140,6 +144,8 @@ defmodule Cartouche.Receipt do
     :to,
     :cumulative_gas_used,
     :effective_gas_price,
+    :blob_gas_used,
+    :blob_gas_price,
     :gas_used,
     :contract_address,
     :logs,
@@ -194,6 +200,8 @@ defmodule Cartouche.Receipt do
         to: ~h[0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2],
         cumulative_gas_used: 0xa12515,
         effective_gas_price: 0x5a9c688d4,
+        blob_gas_used: nil,
+        blob_gas_price: nil,
         gas_used: 0xb4c8,
         contract_address: nil,
         logs: [
@@ -291,6 +299,8 @@ defmodule Cartouche.Receipt do
         to: ~h[0x9d8ec03e9ddb71f04da9db1e38837aaac1782a97],
         cumulative_gas_used: 222642,
         effective_gas_price: 1200000010,
+        blob_gas_used: nil,
+        blob_gas_price: nil,
         gas_used: 222642,
         contract_address: nil,
         logs: [
@@ -356,6 +366,8 @@ defmodule Cartouche.Receipt do
         ),
       cumulative_gas_used: Hex.decode_hex_number!(params["cumulativeGasUsed"]),
       effective_gas_price: Hex.decode_hex_number!(params["effectiveGasPrice"]),
+      blob_gas_used: Hex.decode_maybe_hex_number!(params["blobGasUsed"]),
+      blob_gas_price: Hex.decode_maybe_hex_number!(params["blobGasPrice"]),
       gas_used: Hex.decode_hex_number!(params["gasUsed"]),
       contract_address:
         if(is_nil(params["contractAddress"]),
