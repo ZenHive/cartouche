@@ -47,6 +47,30 @@ defmodule Cartouche.ReceiptTest do
     end
   end
 
+  describe "deserialize/1 — EIP-4844 blob fields" do
+    test "decodes blob gas quantities on type-3 receipts" do
+      receipt =
+        @base_receipt
+        |> Map.merge(%{
+          "blobGasPrice" => "0x3b9aca00",
+          "blobGasUsed" => "0x20000",
+          "type" => "0x3"
+        })
+        |> Receipt.deserialize()
+
+      assert receipt.type == 3
+      assert receipt.blob_gas_price == 1_000_000_000
+      assert receipt.blob_gas_used == 131_072
+    end
+
+    test "defaults blob gas quantities to nil when absent" do
+      receipt = Receipt.deserialize(@base_receipt)
+
+      assert receipt.blob_gas_price == nil
+      assert receipt.blob_gas_used == nil
+    end
+  end
+
   describe "Log.deserialize/1" do
     @log_skeleton %{
       "logIndex" => "0x0",
