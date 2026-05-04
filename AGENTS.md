@@ -2278,3 +2278,28 @@ mix sobelow --mark-skip-all
 That writes a fresh `.sobelow-skips` containing fingerprints for whatever sobelow flags right now. Resolved findings drop out automatically; new ones get added. Confirm with `mix sobelow` (clean output = all findings are accounted for).
 
 `.sobelow-skips` is **tracked** — it is the project's accepted-pending-fix security baseline. Each fingerprint should map to a ROADMAP task that, when shipped, will resolve the finding (currently: Task 48 for the `Cartouche.Sleuth` `String.to_atom` cluster; Tasks 41/42/50/59-gen for the generator's `String.to_atom` and `File.{read!,mkdir_p!,write!}` paths). Fingerprints are deterministic (file:line + rule), so the file doesn't churn unless code or sobelow rules change. The CI harness (`.github/workflows/harness.yml`) runs `mix sobelow` against `.sobelow-conf` (`exit: "Low"`, `skip: true`) on every PR — without `.sobelow-skips` tracked, every CI run would fail on the accepted-pending-fix findings, so the file must be in version control. Don't hand-edit; regenerate via `mix sobelow --mark-skip-all` when fingerprints change.
+
+## Cursor Cloud specific instructions
+
+### Runtime versions
+
+This project uses `.tool-versions` with **Erlang 29.0-rc3** and **Elixir 1.20.0-rc.4-otp-29** (RC versions). The update script installs mise and uses it to install these exact versions. After the update script runs, mise shims are on PATH.
+
+### Key commands
+
+| Task | Command |
+|------|---------|
+| Fetch deps | `mix deps.get` |
+| Compile | `mix compile` |
+| Tests (unit) | `mix test --exclude integration` |
+| Tests (AI-friendly) | `mix test.json --quiet --exclude integration` |
+| Format check | `mix format --check-formatted` |
+| Credo | `mix credo --strict --ignore TagTODO,TagFIXME` |
+| Full CI harness | See `.github/workflows/harness.yml` |
+
+### Gotchas
+
+- **This is a library, not a web app.** There is no Phoenix server to start. The OTP application (`Cartouche.Application`) starts a Finch HTTP pool and optional signer GenServers on boot — `mix run` is sufficient to exercise it.
+- **Integration tests excluded by default.** Tests tagged `:integration` require live Ethereum/Solana RPC endpoints and are excluded from CI. Run unit tests with `--exclude integration`.
+- **Test mock clients.** The test suite uses `Cartouche.Test.Client` and `Cartouche.Test.SolanaClient` — no external services needed.
+- **Pre-existing format drift.** `lib/cartouche/transaction.ex` has a minor formatting difference that `mix format --check-formatted` flags. This is a known pre-existing issue in the repo.
