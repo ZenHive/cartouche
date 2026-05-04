@@ -15,7 +15,14 @@ defmodule Cartouche.MixProject do
       source_url: "https://github.com/zenhive/cartouche",
       docs: [
         main: "readme",
-        extras: ["README.md", "CHANGELOG.md"]
+        extras: ["README.md", "CHANGELOG.md"],
+        # CHANGELOG entries reference hidden generated modules (e.g.
+        # `Cartouche.Contract.IConsole`, which has `@moduledoc false`) as
+        # historical narrative — not as API documentation. ex_doc otherwise
+        # warns and `mix docs --warnings-as-errors` (the pre-commit hook)
+        # blocks the commit. Skip on CHANGELOG.md only; README and source
+        # docstrings remain strict.
+        skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
       ],
       # plt_*_path pin keeps the PLT outside _build/ so CI can cache it
       # independently of the deps cache (which invalidates on mix.lock).
