@@ -213,13 +213,8 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert r.gas_used == @type_2_receipt_gas_used
       assert r.effective_gas_price == @type_2_receipt_effective_gas_price
       assert match?([_], r.logs)
-
-      # TODO(integration-gap, ROADMAP Task 67): Cartouche.Receipt missing
-      # blob_gas_used, blob_gas_price (EIP-4844). Add a blob-tx anchor and:
-      #   assert r.blob_gas_used >= 0
-      #   assert r.blob_gas_price >= 0
-      refute Map.has_key?(r, :blob_gas_used)
-      refute Map.has_key?(r, :blob_gas_price)
+      assert r.blob_gas_used == nil
+      assert r.blob_gas_price == nil
     end
   end
 
