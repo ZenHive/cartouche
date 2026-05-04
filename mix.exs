@@ -17,12 +17,9 @@ defmodule Cartouche.MixProject do
         main: "readme",
         extras: ["README.md", "CHANGELOG.md"]
       ],
-      # TODO(Task 42)/TODO(Task 41): drop ignore_warnings once generator-side
-      # fixes land and IConsole is regenerated — see `.dialyzer_ignore.exs`
-      # header. plt_*_path pin keeps the PLT outside _build/ so CI can cache
-      # it independently of the deps cache (which invalidates on mix.lock).
+      # plt_*_path pin keeps the PLT outside _build/ so CI can cache it
+      # independently of the deps cache (which invalidates on mix.lock).
       dialyzer: [
-        ignore_warnings: ".dialyzer_ignore.exs",
         plt_local_path: "priv/plts",
         plt_core_path: "priv/plts"
       ],

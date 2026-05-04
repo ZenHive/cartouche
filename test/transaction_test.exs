@@ -2,14 +2,35 @@ defmodule Cartouche.TransactionTest do
   use ExUnit.Case, async: true
   use Cartouche.Hex
 
+  alias Cartouche.Signer.Default
   alias Cartouche.Test.Signer
   alias Cartouche.Transaction
+  alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
 
+  doctest Call
   doctest Transaction
   doctest V1
   doctest V2
+
+  describe "Call.new/3" do
+    test "builds eth_call params without transaction-only fields" do
+      call = Call.new(<<1::160>>, <<0x12, 0x34>>, from: <<2::160>>, gas: 21_000, value: 7)
+
+      assert %Call{
+               destination: <<1::160>>,
+               data: <<0x12, 0x34>>,
+               from: <<2::160>>,
+               gas: 21_000,
+               value: 7
+             } = call
+
+      refute Map.has_key?(call, :nonce)
+      refute Map.has_key?(call, :chain_id)
+      refute Map.has_key?(call, :signature_r)
+    end
+  end
 
   describe "V2.new/9 (no signature)" do
     test "chain_id: nil falls back to Application.chain_id()" do
@@ -51,6 +72,23 @@ defmodule Cartouche.TransactionTest do
   end
 
   describe "build_trx_v2/9" do
+    test "default chain_id falls back to Application.chain_id()" do
+      trx =
+        Transaction.build_trx_v2(
+          <<1::160>>,
+          5,
+          <<0x12, 0x34>>,
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          0,
+          []
+        )
+
+      assert trx.chain_id == Cartouche.Application.chain_id()
+      assert trx.data == <<0x12, 0x34>>
+    end
+
     test "ABI-tuple call_data is encoded" do
       trx =
         Transaction.build_trx_v2(
@@ -90,7 +128,61 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  describe "build_trx/7" do
+    test "raw binary call_data is preserved with default chain_id" do
+      trx = Transaction.build_trx(<<1::160>>, 5, <<0x12, 0x34>>, {50, :gwei}, 100_000, 0)
+
+      assert trx.v == Cartouche.Application.chain_id()
+      assert trx.data == <<0x12, 0x34>>
+    end
+
+    test "ABI-tuple call_data is encoded" do
+      trx =
+        Transaction.build_trx(
+          <<1::160>>,
+          5,
+          {"baz(uint256,address)", [50, :binary.decode_unsigned(<<1::160>>)]},
+          {50, :gwei},
+          100_000,
+          0,
+          :goerli
+        )
+
+      assert trx.v == 5
+      assert byte_size(trx.data) == 68
+    end
+  end
+
+  describe "build_signed_trx/7" do
+    test "default signer path surfaces the current nil chain-id boundary" do
+      Signer.start_signer(Default)
+
+      assert catch_exit(Transaction.build_signed_trx(<<1::160>>, 5, <<>>, {50, :gwei}, 100_000, 0))
+    end
+
+    test "callback can transform the unsigned transaction before signing" do
+      signer_proc = Signer.start_signer()
+
+      {:ok, signed} =
+        Transaction.build_signed_trx(<<1::160>>, 5, <<0x12>>, {50, :gwei}, 100_000, 0,
+          signer: signer_proc,
+          chain_id: :goerli,
+          callback: fn trx -> {:ok, %{trx | data: <<0x34>>}} end
+        )
+
+      assert signed.data == <<0x34>>
+      {:ok, recovered} = V1.recover_signer(signed, :goerli)
+      assert Cartouche.Hex.to_address(recovered) == "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
+    end
+  end
+
   describe "build_signed_trx_v2/9" do
+    test "default signer path surfaces the current nil chain-id boundary" do
+      Signer.start_signer(Default)
+
+      assert catch_exit(Transaction.build_signed_trx_v2(<<1::160>>, 5, <<>>, {1, :gwei}, {100, :gwei}, 100_000, 0, []))
+    end
+
     test "happy path: signature recovers to signer's address" do
       signer_proc = Signer.start_signer()
 

@@ -6,7 +6,7 @@ defmodule Cartouche.Contract.Sleuth do
   """
   use Cartouche.Hex
 
-  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.Call
 
   def contract_name do
     "Sleuth"
@@ -31,7 +31,7 @@ defmodule Cartouche.Contract.Sleuth do
   end
 
   def build_trx_query(contract, q, c) do
-    %V2{destination: contract, data: encode_query(q, c)}
+    %Call{destination: contract, data: encode_query(q, c)}
   end
 
   def call_query(contract, q, c, opts \\ []) do
@@ -69,7 +69,7 @@ defmodule Cartouche.Contract.Sleuth do
   end
 
   def build_trx_query_ed815d83(contract, q) do
-    %V2{destination: contract, data: encode_query_ed815d83(q)}
+    %Call{destination: contract, data: encode_query_ed815d83(q)}
   end
 
   def call_query_ed815d83(contract, q, opts \\ []) do
