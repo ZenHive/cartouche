@@ -627,6 +627,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_preintern_return_atoms_fns() :: [Macro.t()]
   defp build_preintern_return_atoms_fns do
     [
       build_preintern_return_atoms_list_fn(),
@@ -642,6 +643,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     ]
   end
 
+  @spec build_preintern_return_atoms_list_fn() :: Macro.t()
   defp build_preintern_return_atoms_list_fn do
     quote do
       defp preintern_return_atoms!(types) when is_list(types) do
@@ -650,12 +652,14 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_preintern_return_atoms_fallback_fn() :: Macro.t()
   defp build_preintern_return_atoms_fallback_fn do
     quote do
       defp preintern_return_atoms!(_), do: :ok
     end
   end
 
+  @spec build_preintern_return_atom_named_fn() :: Macro.t()
   defp build_preintern_return_atom_named_fn do
     quote do
       # `decode_structs: true` in hieroglyph 1.4+ requires these atoms to exist
@@ -668,36 +672,42 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_preintern_return_atom_fallback_fn() :: Macro.t()
   defp build_preintern_return_atom_fallback_fn do
     quote do
       defp preintern_return_atom!(_), do: :ok
     end
   end
 
+  @spec build_preintern_tuple_atoms_fn() :: Macro.t()
   defp build_preintern_tuple_atoms_fn do
     quote do
       defp preintern_type_atoms!({:tuple, types}), do: preintern_return_atoms!(types)
     end
   end
 
+  @spec build_preintern_array_atoms_fn() :: Macro.t()
   defp build_preintern_array_atoms_fn do
     quote do
       defp preintern_type_atoms!({:array, type}), do: preintern_type_atoms!(type)
     end
   end
 
+  @spec build_preintern_fixed_array_atoms_fn() :: Macro.t()
   defp build_preintern_fixed_array_atoms_fn do
     quote do
       defp preintern_type_atoms!({:array, type, _size}), do: preintern_type_atoms!(type)
     end
   end
 
+  @spec build_preintern_type_atoms_fallback_fn() :: Macro.t()
   defp build_preintern_type_atoms_fallback_fn do
     quote do
       defp preintern_type_atoms!(_), do: :ok
     end
   end
 
+  @spec build_preintern_name_atom_fn() :: Macro.t()
   defp build_preintern_name_atom_fn do
     quote do
       defp preintern_name_atom!(name) when is_binary(name) and name != "" do
@@ -708,6 +718,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_preintern_name_atom_fallback_fn() :: Macro.t()
   defp build_preintern_name_atom_fallback_fn do
     quote do
       defp preintern_name_atom!(_), do: :ok
@@ -948,6 +959,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     {file_name, contents}
   end
 
+  @spec uses_preintern_return_atoms?(Macro.t() | [Macro.t()]) :: boolean()
   defp uses_preintern_return_atoms?(quoted) do
     {_quoted, used?} =
       Macro.prewalk(quoted, false, fn
@@ -997,7 +1009,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp annotate_stmt({:def, _, [head, _body]} = def_ast, seen) do
+  defp annotate_stmt({kind, _, [head, _body]} = def_ast, seen) when kind in [:def, :defp] do
     case extract_name_arity(head) do
       nil ->
         {[def_ast], seen}
@@ -1007,7 +1019,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
           {[def_ast], seen}
         else
           {name, arity} = key
-          {build_annotations(name, arity) ++ [def_ast], MapSet.put(seen, key)}
+          {build_annotations(kind, name, arity) ++ [def_ast], MapSet.put(seen, key)}
         end
     end
   end
@@ -1021,15 +1033,19 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp extract_name_arity({name, _, _ctx}) when is_atom(name), do: {name, 0}
   defp extract_name_arity(_), do: nil
 
-  defp build_annotations(name, arity) do
+  defp build_annotations(kind, name, arity) do
     spec_args = List.duplicate({:term, [], []}, arity)
     spec_call = {name, [], spec_args}
     spec_ret = {:term, [], []}
 
-    [
-      {:@, [], [{:doc, [], [false]}]},
-      {:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}
-    ]
+    doc_annotation =
+      if kind == :def do
+        [{:@, [], [{:doc, [], [false]}]}]
+      else
+        []
+      end
+
+    doc_annotation ++ [{:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}]
   end
 
   # Gets the output-json of all included Solidity files to auto-generate.

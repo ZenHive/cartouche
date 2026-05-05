@@ -103,6 +103,15 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert_bytecode_emission(generate(tmp, "RealBytecode", "0x6080604052348015"))
     end
 
+    test "generated preintern helpers include specs on private functions", %{tmp: tmp} do
+      contents = generate(tmp, "SpecPreintern", "0x6080604052348015")
+
+      assert contents =~ "@spec preintern_return_atoms!(term()) :: term()"
+      assert contents =~ "defp preintern_return_atoms!(types) when is_list(types)"
+      assert contents =~ "@spec preintern_name_atom!(term()) :: term()"
+      assert contents =~ "defp preintern_name_atom!(name) when is_binary(name) and name != \"\""
+    end
+
     test "whitespace-only bytecode is treated as blank", %{tmp: tmp} do
       refute_bytecode_emission(generate(tmp, "BlankWhitespace", "   "))
     end

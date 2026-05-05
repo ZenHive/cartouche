@@ -260,6 +260,7 @@ defmodule Cartouche.Contract.Rock do
     )
   end
 
+  @spec preintern_return_atoms!(term()) :: term()
   defp preintern_return_atoms!(types) when is_list(types) do
     Enum.each(types, &preintern_return_atom!/1)
   end
@@ -268,6 +269,7 @@ defmodule Cartouche.Contract.Rock do
     :ok
   end
 
+  @spec preintern_return_atom!(term()) :: term()
   defp preintern_return_atom!(%{name: name, type: type}) do
     preintern_name_atom!(name)
     preintern_type_atoms!(type)
@@ -277,6 +279,7 @@ defmodule Cartouche.Contract.Rock do
     :ok
   end
 
+  @spec preintern_type_atoms!(term()) :: term()
   defp preintern_type_atoms!({:tuple, types}) do
     preintern_return_atoms!(types)
   end
@@ -293,6 +296,7 @@ defmodule Cartouche.Contract.Rock do
     :ok
   end
 
+  @spec preintern_name_atom!(term()) :: term()
   defp preintern_name_atom!(name) when is_binary(name) and name != "" do
     name |> Macro.underscore() |> String.to_atom()
   end

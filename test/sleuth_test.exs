@@ -357,7 +357,7 @@ defmodule SleuthTest do
   end
 
   describe "decode failures and return postprocessing" do
-    test "query_v2/4 pre-interns cold generated return-field atoms before struct decode" do
+    test "query_v2/4 rejects cold runtime return-field atoms before struct decode" do
       suffix = System.unique_integer([:positive])
       module_name = Module.concat(Cartouche.Contract, "ColdLoadProbe#{suffix}")
       field_name = "coldLoadReturnField#{suffix}"
@@ -395,7 +395,7 @@ defmodule SleuthTest do
 
       refute existing_atom?(field_atom_name)
 
-      assert {:ok, [{key, 7}]} =
+      assert {:error, error} =
                Sleuth.query_v2(
                  module_name.bytecode(),
                  module_name.encode_query(),
@@ -404,8 +404,50 @@ defmodule SleuthTest do
                  named_returns: true
                )
 
-      assert Atom.to_string(key) == field_atom_name
-      assert existing_atom?(field_atom_name)
+      assert error =~ "pre-existing return-field atom"
+      assert error =~ field_atom_name
+      refute existing_atom?(field_atom_name)
+    end
+
+    test "query_v2/4 decodes runtime selectors when field atoms already exist" do
+      selector = %ABI.FunctionSelector{
+        returns: [%{name: "items", type: {:uint, 256}}]
+      }
+
+      set_sleuth_result(ABI.TypeEncoder.encode([7], %ABI.FunctionSelector{types: selector.returns}))
+
+      assert {:ok, [items: 7]} =
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 selector,
+                 client: StaticEthCallClient,
+                 named_returns: true
+               )
+    end
+
+    test "query_v2/4 validates cold nested tuple and array return-field atoms" do
+      suffix = System.unique_integer([:positive])
+      nested_field_name = "coldNestedReturnField#{suffix}"
+      nested_atom_name = Macro.underscore(nested_field_name)
+
+      selector = %ABI.FunctionSelector{
+        returns: [
+          %{
+            name: "items",
+            type: {:array, {:tuple, [%{name: nested_field_name, type: {:uint, 256}}]}}
+          }
+        ]
+      }
+
+      refute existing_atom?(nested_atom_name)
+
+      assert {:error, error} =
+               query_static(<<>>, selector.returns, named_returns: true)
+
+      assert error =~ "pre-existing return-field atom"
+      assert error =~ nested_atom_name
+      refute existing_atom?(nested_atom_name)
     end
 
     test "returns a decode-bytes error when the eth_call result is not ABI bytes" do

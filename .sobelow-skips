@@ -1,26 +1,10 @@
 
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:196,106E34D
-Config.HTTPS: HTTPS Not Enabled,config/prod.exs:0,2B5C077
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:27,30CD86E
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:26,44BAAB1
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:817,52345EE
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:57,13012D4
+Config.HTTPS: HTTPS Not Enabled,config/prod.exs:0,2B5C077
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:716,32BC038
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1056,45DCC18
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:914,4776669
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:278,4A9C581
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:56,536511
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:234,5A84B72
-Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:972,28AB432
-Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:934,35D266E
-Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:973,40E20BB
-Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:976,171757D
-Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:938,1C874F9
-Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:977,B32973
-Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:971,3527C95
-Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:970,5BE11FA
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:811,5ECD8A6
-Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:932,7F85F83
-Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1040,17A2F2C
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:254,1E4D9BF
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:142,2DCBEFC
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:706,2F98B23
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:903,7A61F64
-Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1079,7B68DE9
-Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1078,E20080
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1095,5BBFF3C
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1094,7932493
