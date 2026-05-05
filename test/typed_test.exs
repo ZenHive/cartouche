@@ -33,7 +33,7 @@ defmodule Cartouche.TypedTest do
   end
 
   describe "find_type/2 return-shape evidence" do
-    test "find_type/2 returns Typed.Type.t() to deserialize/1 after matching a type tuple" do
+    test "find_type/2 returns {name, %Type{}} tuple, deserialize/1 extracts the %Type{} into %Typed{}" do
       assert %Typed{value: %{"count" => 7}, types: %{"Message" => %Type{fields: [{"count", {:uint, 256}}]}}} =
                Typed.deserialize(message_params())
     end
@@ -44,7 +44,7 @@ defmodule Cartouche.TypedTest do
       assert <<0x19, 0x01, _::binary>> = Typed.encode(typed)
     end
 
-    test "find_type/2 returns Typed.Type.t() to deserialize/1 from atom-keyed params" do
+    test "find_type/2 returns {name, %Type{}} tuple, deserialize/1 normalizes atom-keyed params first" do
       assert %Typed{value: %{"count" => 7}, types: %{"Message" => %Type{fields: [{"count", {:uint, 256}}]}}} =
                Typed.deserialize(%{
                  domain: %{"name" => "Cartouche"},
