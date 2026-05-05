@@ -45,18 +45,13 @@ defmodule Cartouche.RPC do
   defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
+    case Enum.find(all_errors, &(ABI.method_id(&1) == error_hash)) do
       nil -> :not_found
-      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
+      error_abi -> classify_decoded_error(error_abi, ABI.decode_error(error_abi, error_data))
     end
   end
 
   defp decode_error(_, _errors), do: :not_found
-
-  defp error_matches?(error, error_hash) do
-    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-    prefix == error_hash
-  end
 
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
   defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}
