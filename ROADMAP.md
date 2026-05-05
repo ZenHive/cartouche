@@ -72,7 +72,7 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 **Mainnet integration suite (Task 61) shipped in `0.1.1`.** `test/rpc_integration_test.exs` opts in via `mix integration` and pins behaviour against historical mainnet anchors via the local archive-node SSH tunnel. Decoder gaps surfaced as Tasks 62 (traces), 63–65 (Block fork fields, ✅ shipped in `0.1.1`), 66 (Block.transactions full details), 67 (Receipt blob fields, ✅ shipped under `[Unreleased]`). Task 68 (originally "DebugTrace EIP-7702 opcodes") closed obsolete 2026-05-01 — premise wrong (AUTH/AUTHCALL were EIP-3074, withdrawn; EIP-7702 introduces no new opcodes); replaced by Task 70 (CLZ for Osaka, blocked on activation).
 
-Highest-Eff unblocked candidates after the Block bundle: Tasks 14+15+35 (RPC error-shape widening + `Jason.encode!` rescue, Eff:1.75), Task 27+28 (Finch 0.19→0.21, Eff:1.75), Task 44 (Generator coverage push, gates Tasks 41/42/50/59-gen, Eff:1.67).
+Highest-Eff unblocked candidates after the Block bundle: Task 27+28 (Finch 0.19→0.21, Eff:1.75), Task 44 (Generator coverage push, gates Tasks 41/42/50/59-gen, Eff:1.67).
 
 **VM dialyzer cleanup bundle entrypoint complete.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, so Tasks 21+22 (`none()` cascade investigation) and 23 (`VM.Context.@type t` alignment) are now unblocked. Next VM step: run the Phase 5 reach/dialyzer investigation before mutating VM specs or suppressions.
 
@@ -98,7 +98,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 
 ### Already bundled (compound IDs)
 
-`7+8+9` Phase 1.1–1.3 ✅ · `10+11+12+13` Phase 1.4 Hex ✅ · `14+15+35` RPC error shapes · `16+17+18` Trace specs ✅ · `19+20` Typed specs · `21+22` VM cascade · `24+25` KMS ✅ · `27+28` Finch · `29+30` V2 dedup · `71+72` junit_formatter + bandit lock refresh ✅ · `83/84/85/86/87/88` Phase 12 annotation `[P]` set.
+`7+8+9` Phase 1.1–1.3 ✅ · `10+11+12+13` Phase 1.4 Hex ✅ · `14+15+35` RPC error shapes ✅ · `16+17+18` Trace specs ✅ · `19+20` Typed specs · `21+22` VM cascade · `24+25` KMS ✅ · `27+28` Finch · `29+30` V2 dedup · `71+72` junit_formatter + bandit lock refresh ✅ · `83/84/85/86/87/88` Phase 12 annotation `[P]` set.
 
 ### Standalone (no natural bundle partner)
 
@@ -254,7 +254,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 14+15+35 | Phase 2 RPC error-shape widening `[CSR]` [D:4/B:7/U:7 → Eff:1.75] 🚀 | 🔄 in-flight (INE-25) | **Step 1 (Task 14):** re-audit `send_rpc/3` `@spec` vs runtime shapes on the ported code — confirm the table above; some shapes may have been tightened in intervening signet commits before the fork. **Step 2 (Task 15):** widen or tag-split the error type with doctest coverage per shape. Keep `%{code, message}` as the JSON-RPC-error branch; union in the others. **Step 3 (Task 35):** rescue `Jason.EncodeError` / `Protocol.UndefinedError` at `Jason.encode!(body)` in **both** `lib/cartouche/rpc.ex:162` (Ethereum) and `lib/cartouche/solana/rpc.ex:68` (Solana) → `{:error, {:invalid_params, _}}`, so non-JSON-encodable inputs honor the `{:ok,_}\|{:error,_}` contract on both transports instead of raising. Triggers (apply to both): `<<255>>` method binary (non-UTF-8 passes `is_binary/1` but Jason raises); params containing tuples / atom-keyed maps. Doctests per trigger in each RPC module. The new `{:invalid_params, _}` joins the union from Step 2. Discovered 2026-04-24 during onchain Task 59 (`Onchain.RPC.call/3` — generic JSON-RPC passthrough; Ethereum side); Solana side surfaced 2026-04-26 during Codex consultation. Once this lands, all `Onchain.RPC.*` wrappers automatically honor their `@spec` and the same guarantee extends to Solana RPC consumers |
+| 14+15+35 | Phase 2 RPC error-shape widening `[CSR]` [D:4/B:7/U:7 → Eff:1.75] 🚀 | ✅ | Done under `[Unreleased]`. `Cartouche.RPC.send_rpc/3` now exposes explicit `rpc_error`, `invalid_params_error`, and `send_rpc_error` types covering JSON-RPC envelopes, revert metadata, transport strings/responses, decode failures, and the bare `:invalid_hex` decode path. `Cartouche.Solana.RPC.send_rpc/3` now exposes matching transport/error types for its broad runtime contract. Both transports convert `Jason.EncodeError` and `Protocol.UndefinedError` from outbound request encoding into `{:error, {:invalid_params, reason}}` instead of raising, with doctests demonstrating the new contract and ExUnit coverage for representative non-encodable inputs. Closes INE-25 |
 
 **Blast radius** (from `mix reach.impact Cartouche.RPC.send_rpc/3`, pre-rename): 6 direct callers break on signature change (`get_balance/2`, `get_transaction_count/2`, `eth_block_number/1`, `eth_chain_id/1`, `set_filter/1`, `Cartouche.Filter.handle_info/2`), 1 transitive (`Cartouche.Signer.init/1`), no return-value dependents. Behavior-preserving spec-widening is low-risk; a union-type split needs all 6 direct callers to still type-check.
 
