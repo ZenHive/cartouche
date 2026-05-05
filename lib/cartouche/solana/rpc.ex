@@ -62,7 +62,7 @@ defmodule Cartouche.Solana.RPC do
       iex> match?({:error, {:invalid_params, %Protocol.UndefinedError{}}}, Cartouche.Solana.RPC.send_rpc("getSlot", [self()]))
       true
   """
-  @spec send_rpc(String.t(), list(), keyword()) :: {:ok, term()} | {:error, send_rpc_error()}
+  @spec send_rpc(binary(), list(), keyword()) :: {:ok, term()} | {:error, send_rpc_error()}
   def send_rpc(method, params, opts \\ []) do
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     url = Keyword.get(opts, :solana_node, solana_node())

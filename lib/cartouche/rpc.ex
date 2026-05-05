@@ -210,7 +210,7 @@ defmodule Cartouche.RPC do
     `Application.get_env(:cartouche, :client, Finch)` so the test env's mock client wins
     automatically. Set to `Finch` per-call to bypass the mock (see `Cartouche.Test.Live`).
   """
-  @spec send_rpc(String.t(), [term()], Keyword.t()) ::
+  @spec send_rpc(binary(), [term()], Keyword.t()) ::
           {:ok, term()} | {:error, send_rpc_error()} | :invalid_hex
   def send_rpc(method, params, opts \\ []) do
     headers = Keyword.get(opts, :headers, [])
