@@ -103,7 +103,7 @@ defmodule Cartouche.FilterTest do
       |> Log.deserialize()
       |> Map.put(:extra_data, extra_data)
 
-    {:ok, _filter_pid} =
+    {:ok, filter_pid} =
       Cartouche.Filter.start_link(
         name: ExpiredFilter,
         address: <<1::160>>,
@@ -117,5 +117,9 @@ defmodule Cartouche.FilterTest do
 
     assert_receive {:event, {"Transfer", _}, ^log}, 500
     assert_receive {:log, ^log}, 500
+
+    assert {:dictionary, dictionary} = Process.info(filter_pid, :dictionary)
+    assert Keyword.get(dictionary, :expired_seen) == true
+    assert Keyword.get(dictionary, :new_filter_count, 0) >= 2
   end
 end
