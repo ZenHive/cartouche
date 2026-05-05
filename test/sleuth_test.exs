@@ -357,6 +357,55 @@ defmodule SleuthTest do
   end
 
   describe "decode failures and return postprocessing" do
+    test "generated contract load pre-interns decode_structs atoms in a cold VM" do
+      script = """
+      Code.prepend_path("_build/test/lib/descripex/ebin")
+      Code.prepend_path("_build/test/lib/json_spec/ebin")
+      Code.prepend_path("_build/test/lib/cartouche/ebin")
+      Code.prepend_path("_build/test/lib/hieroglyph/ebin")
+
+      mod = Cartouche.Contract.ColdLoad
+      fields = ["cursor_cold_field", "inner_cold_field"]
+      existing_atom? = fn field ->
+        try do
+          String.to_existing_atom(field)
+          :interned
+        rescue
+          ArgumentError -> :missing
+        end
+      end
+
+      if :code.is_loaded(mod) != false do
+        raise "expected cold contract fixture to start unloaded"
+      end
+
+      before_load = Enum.map(fields, existing_atom?)
+
+      {:module, ^mod} = Code.ensure_loaded(mod)
+
+      after_load = Enum.map(fields, existing_atom?)
+
+      selector = struct(ABI.FunctionSelector, types: [%{type: {:tuple, mod.query_selector().returns}}])
+      query_result = ABI.TypeEncoder.encode([{%{"innerColdField" => 7}}], selector)
+
+      decoded =
+        ABI.decode(
+          struct(ABI.FunctionSelector, types: mod.query_selector().returns),
+          query_result,
+          decode_structs: true
+        )
+
+      IO.inspect({before_load, after_load, mod._cartouche_decode_struct_atoms(), decoded})
+      """
+
+      elixir = System.find_executable("elixir")
+      {output, 0} = System.cmd(elixir, ["-e", script], stderr_to_stdout: true)
+
+      assert output =~ "{[:missing, :missing], [:interned, :interned],"
+      assert output =~ "[:cursor_cold_field, :inner_cold_field],"
+      assert output =~ "%{cursor_cold_field: %{inner_cold_field: 7}}"
+    end
+
     test "returns a decode-bytes error when the eth_call result is not ABI bytes" do
       Process.put(:sleuth_eth_call_result, "0x1234")
 

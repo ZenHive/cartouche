@@ -4,6 +4,13 @@ defmodule Cartouche.Contract.Sleuth do
 
   alias Cartouche.Transaction.Call
 
+  @cartouche_decode_struct_atoms []
+  @doc false
+  @spec _cartouche_decode_struct_atoms() :: term()
+  def _cartouche_decode_struct_atoms do
+    @cartouche_decode_struct_atoms
+  end
+
   @doc false
   @spec contract_name() :: term()
   def contract_name do

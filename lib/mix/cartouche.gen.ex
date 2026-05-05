@@ -794,6 +794,48 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   defp blank_bytecode?(_), do: false
 
+  @spec get_decode_struct_atoms(map()) :: [atom()]
+  defp get_decode_struct_atoms(abi) do
+    abi
+    |> Map.get("abi", [])
+    |> Enum.flat_map(&abi_decode_struct_atoms/1)
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  @spec abi_decode_struct_atoms(map()) :: [atom()]
+  defp abi_decode_struct_atoms(%{"outputs" => outputs}) when is_list(outputs) do
+    type_list_decode_struct_atoms(outputs)
+  end
+
+  defp abi_decode_struct_atoms(_), do: []
+
+  @spec type_list_decode_struct_atoms([map()]) :: [atom()]
+  defp type_list_decode_struct_atoms(types) do
+    nested_atoms = Enum.flat_map(types, &type_decode_struct_atoms/1)
+
+    if Enum.all?(types, &named_abi_type?/1) do
+      Enum.map(types, &abi_type_name_atom/1) ++ nested_atoms
+    else
+      nested_atoms
+    end
+  end
+
+  @spec type_decode_struct_atoms(map()) :: [atom()]
+  defp type_decode_struct_atoms(%{"components" => components}) when is_list(components) do
+    type_list_decode_struct_atoms(components)
+  end
+
+  defp type_decode_struct_atoms(_), do: []
+
+  @spec named_abi_type?(map()) :: boolean()
+  defp named_abi_type?(%{"name" => name}) when is_binary(name), do: name != ""
+  defp named_abi_type?(_), do: false
+
+  @spec abi_type_name_atom(map()) :: atom()
+  # sobelow_skip ["DOS.StringToAtom"]
+  defp abi_type_name_atom(%{"name" => name}), do: name |> Macro.underscore() |> String.to_atom()
+
   # The crux of it. Builds the entire module with function declarations, etc
   # based on the output-json "abi" of a given Solidity contract.
   defp build_module(prefix, out, abi_map) do
@@ -822,6 +864,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     bytecode_decl = get_bytecode(abi_map)
     deployed_bytecode_decl = get_deployed_bytecode(abi_map)
     encode_call_decl = get_encode_calls(abi_map, not Enum.empty?(bytecode_decl))
+    decode_struct_atoms = get_decode_struct_atoms(abi_map)
 
     quote_result =
       quote do
@@ -830,6 +873,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
           use Cartouche.Hex
 
           alias Cartouche.Transaction.Call
+
+          @cartouche_decode_struct_atoms unquote(decode_struct_atoms)
+
+          def _cartouche_decode_struct_atoms, do: @cartouche_decode_struct_atoms
 
           def contract_name, do: unquote(contract_name)
 

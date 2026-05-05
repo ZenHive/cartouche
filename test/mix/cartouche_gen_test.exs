@@ -27,7 +27,59 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     ]
   end
 
-  defp write_artifact(tmp, name, bytecode_object) do
+  defp event_and_error_abi do
+    [
+      %{
+        "type" => "event",
+        "name" => "Pinged",
+        "inputs" => [%{"name" => "who", "type" => "address", "indexed" => true}],
+        "anonymous" => false
+      },
+      %{
+        "type" => "error",
+        "name" => "Panic",
+        "inputs" => [%{"name" => "code", "type" => "uint256", "internalType" => "uint256"}]
+      }
+    ]
+  end
+
+  defp constructor_fallback_receive_abi do
+    [
+      %{
+        "type" => "constructor",
+        "inputs" => [%{"name" => "seed", "type" => "uint256", "internalType" => "uint256"}]
+      },
+      %{"type" => "fallback", "stateMutability" => "payable"},
+      %{"type" => "receive", "stateMutability" => "payable"}
+    ]
+  end
+
+  defp struct_return_function_abi do
+    [
+      %{
+        "type" => "function",
+        "name" => "nested",
+        "inputs" => [],
+        "outputs" => [
+          %{
+            "name" => "outerField",
+            "type" => "tuple",
+            "components" => [
+              %{"name" => "innerValue", "type" => "uint256", "internalType" => "uint256"},
+              %{
+                "name" => "items",
+                "type" => "tuple[]",
+                "components" => [%{"name" => "leafNode", "type" => "bool", "internalType" => "bool"}]
+              }
+            ]
+          }
+        ],
+        "stateMutability" => "pure"
+      }
+    ]
+  end
+
+  defp write_artifact(tmp, name, bytecode_object, abi) do
     bytecode =
       case bytecode_object do
         :absent -> nil
@@ -35,7 +87,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       end
 
     artifact = %{
-      "abi" => pure_function_abi(),
+      "abi" => abi,
       "metadata" => %{
         "settings" => %{
           "compilationTarget" => %{"src/#{name}.sol" => name}
@@ -57,8 +109,8 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     path
   end
 
-  defp generate(tmp, name, bytecode_object) do
-    artifact_path = write_artifact(tmp, name, bytecode_object)
+  defp generate(tmp, name, bytecode_object, abi \\ pure_function_abi()) do
+    artifact_path = write_artifact(tmp, name, bytecode_object, abi)
     out_dir = Path.join(tmp, "out")
     File.mkdir_p!(out_dir)
 
@@ -113,6 +165,46 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert contents =~ "def encode_ping"
       assert contents =~ "def call_ping"
       assert contents =~ "def execute_ping"
+    end
+  end
+
+  describe "decode_structs atom pre-interning" do
+    test "emits snake_case return-field atoms from nested output tuples", %{tmp: tmp} do
+      contents = generate(tmp, "StructAtoms", "0x6080604052348015", struct_return_function_abi())
+
+      assert contents =~ "@cartouche_decode_struct_atoms [:inner_value, :items, :leaf_node, :outer_field]"
+      assert contents =~ "def _cartouche_decode_struct_atoms"
+      refute contents =~ ~s|name: :outer_field|
+      assert contents =~ ~s|name: "outerField"|
+    end
+  end
+
+  describe "selector type emission" do
+    test "emits event and error decoders with generic dispatch fallbacks", %{tmp: tmp} do
+      contents = generate(tmp, "Signals", "0x6080604052348015", event_and_error_abi())
+
+      assert contents =~ "def pinged_event_selector"
+      assert contents =~ "def encode_pinged_event"
+      assert contents =~ "def decode_pinged_event"
+      assert contents =~ "def decode_event("
+      assert contents =~ "| _"
+      assert contents =~ "def panic_selector"
+      assert contents =~ "def encode_panic"
+      assert contents =~ "def decode_panic_error"
+      assert contents =~ "def decode_error(<<"
+    end
+
+    test "emits constructor, fallback, and receive encode/execute paths", %{tmp: tmp} do
+      contents = generate(tmp, "Lifecycle", "0x6080604052348015", constructor_fallback_receive_abi())
+
+      assert contents =~ "def encode_constructor(seed)"
+      assert contents =~ "def prepare_constructor(seed, opts \\\\ [])"
+      assert contents =~ "def execute_constructor(seed, opts \\\\ [])"
+      assert contents =~ "def encode_fallback(data)"
+      assert contents =~ "def prepare_fallback(contract, data, opts \\\\ [])"
+      assert contents =~ "def execute_fallback(contract, data, opts \\\\ [])"
+      assert contents =~ "def encode_receive(data)"
+      assert contents =~ "def execute_receive(contract, data, opts \\\\ [])"
     end
   end
 end
