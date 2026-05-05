@@ -169,11 +169,13 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # Function to take the abi from the output-json and output function defs (e.g. encode and execute)
   defp get_encode_calls(full_abi, has_bytecode) do
+    abi_items = full_abi["abi"] || []
+    renamed_abis = rename_dups(abi_items)
+    has_errors = Enum.any?(renamed_abis, &(&1["type"] == "error"))
+
     {fns, decoders, events, errors} =
-      (full_abi["abi"] || [])
-      |> rename_dups()
-      |> Enum.reduce({[], [], [], []}, fn abi, acc ->
-        merge_encode_call_result(acc, get_encode_call(abi, has_bytecode))
+      Enum.reduce(renamed_abis, {[], [], [], []}, fn abi, acc ->
+        merge_encode_call_result(acc, get_encode_call(abi, has_bytecode, has_errors))
       end)
 
     decoders = [
@@ -219,7 +221,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # Parses the ABI spec and generates the functions (encode and execute) if we can parse
   # the ABI spec. We've recently updated our ABI parsing library that this doesn't fail
   # nearly as often as it used to (e.g. it can handle tuples)
-  defp get_encode_call(abi, has_bytecode) do
+  defp get_encode_call(abi, has_bytecode, has_errors) do
     fn_selector =
       try do
         ABI.FunctionSelector.parse_specification_item(abi)
@@ -231,10 +233,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     case fn_selector do
       %ABI.FunctionSelector{function: name} = fs when not is_nil(name) ->
-        encode_function_call(fs, abi["fn_name"] || name, has_bytecode)
+        encode_function_call(fs, abi["fn_name"] || name, has_bytecode, has_errors)
 
       %ABI.FunctionSelector{function_type: function_type} = fs ->
-        encode_function_call(fs, to_string(function_type), has_bytecode)
+        encode_function_call(fs, to_string(function_type), has_bytecode, has_errors)
 
       _ ->
         Logger.warning("Ignoring function due to missing name")
@@ -243,7 +245,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Generate the encode and execute functions. This is ... complex (read: hacky)
-  defp encode_function_call(selector, fn_name, has_bytecode) do
+  defp encode_function_call(selector, fn_name, has_bytecode, has_errors) do
     names = function_names(fn_name)
     argument_types = derive_argument_types(selector)
     {execute_arguments, encode_arguments, execute_values, encode_values} = build_argument_specs(argument_types)
@@ -260,7 +262,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
         execute_values: execute_values,
         encode_values: encode_values,
         sig: sig,
-        selector: selector
+        selector: selector,
+        has_errors: has_errors
       }
 
       select_emitted_fns(selector, has_bytecode, build_function_quotes(ctx))
@@ -602,6 +605,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
                exec_opts
              ) do
           {:ok, return_data} ->
+            preintern_return_atoms!(unquote(names.selector)().returns)
+
             case ABI.decode(
                    %ABI.FunctionSelector{types: unquote(names.selector)().returns},
                    return_data,
@@ -613,12 +618,110 @@ defmodule Mix.Tasks.Cartouche.Gen do
             end
 
           {:revert, revert_data} ->
-            case decode_error(revert_data) do
+            case apply(__MODULE__, :decode_error, [revert_data]) do
               {:ok, error, data} -> {:revert, error, data}
               :not_found -> {:revert, "Unknown", revert_data}
             end
         end
       end
+    end
+  end
+
+  @spec build_preintern_return_atoms_fns() :: [Macro.t()]
+  defp build_preintern_return_atoms_fns do
+    [
+      build_preintern_return_atoms_list_fn(),
+      build_preintern_return_atoms_fallback_fn(),
+      build_preintern_return_atom_named_fn(),
+      build_preintern_return_atom_fallback_fn(),
+      build_preintern_tuple_atoms_fn(),
+      build_preintern_array_atoms_fn(),
+      build_preintern_fixed_array_atoms_fn(),
+      build_preintern_type_atoms_fallback_fn(),
+      build_preintern_name_atom_fn(),
+      build_preintern_name_atom_fallback_fn()
+    ]
+  end
+
+  @spec build_preintern_return_atoms_list_fn() :: Macro.t()
+  defp build_preintern_return_atoms_list_fn do
+    quote do
+      defp preintern_return_atoms!(types) when is_list(types) do
+        Enum.each(types, &preintern_return_atom!/1)
+      end
+    end
+  end
+
+  @spec build_preintern_return_atoms_fallback_fn() :: Macro.t()
+  defp build_preintern_return_atoms_fallback_fn do
+    quote do
+      defp preintern_return_atoms!(_), do: :ok
+    end
+  end
+
+  @spec build_preintern_return_atom_named_fn() :: Macro.t()
+  defp build_preintern_return_atom_named_fn do
+    quote do
+      # `decode_structs: true` in hieroglyph 1.4+ requires these atoms to exist
+      # before decode. Generated modules own the bounded ABI field set, so this
+      # compile-time wrapper is the right place to intern those atoms explicitly.
+      defp preintern_return_atom!(%{name: name, type: type}) do
+        preintern_name_atom!(name)
+        preintern_type_atoms!(type)
+      end
+    end
+  end
+
+  @spec build_preintern_return_atom_fallback_fn() :: Macro.t()
+  defp build_preintern_return_atom_fallback_fn do
+    quote do
+      defp preintern_return_atom!(_), do: :ok
+    end
+  end
+
+  @spec build_preintern_tuple_atoms_fn() :: Macro.t()
+  defp build_preintern_tuple_atoms_fn do
+    quote do
+      defp preintern_type_atoms!({:tuple, types}), do: preintern_return_atoms!(types)
+    end
+  end
+
+  @spec build_preintern_array_atoms_fn() :: Macro.t()
+  defp build_preintern_array_atoms_fn do
+    quote do
+      defp preintern_type_atoms!({:array, type}), do: preintern_type_atoms!(type)
+    end
+  end
+
+  @spec build_preintern_fixed_array_atoms_fn() :: Macro.t()
+  defp build_preintern_fixed_array_atoms_fn do
+    quote do
+      defp preintern_type_atoms!({:array, type, _size}), do: preintern_type_atoms!(type)
+    end
+  end
+
+  @spec build_preintern_type_atoms_fallback_fn() :: Macro.t()
+  defp build_preintern_type_atoms_fallback_fn do
+    quote do
+      defp preintern_type_atoms!(_), do: :ok
+    end
+  end
+
+  @spec build_preintern_name_atom_fn() :: Macro.t()
+  defp build_preintern_name_atom_fn do
+    quote do
+      defp preintern_name_atom!(name) when is_binary(name) and name != "" do
+        name
+        |> Macro.underscore()
+        |> String.to_atom()
+      end
+    end
+  end
+
+  @spec build_preintern_name_atom_fallback_fn() :: Macro.t()
+  defp build_preintern_name_atom_fallback_fn do
+    quote do
+      defp preintern_name_atom!(_), do: :ok
     end
   end
 
@@ -823,6 +926,13 @@ defmodule Mix.Tasks.Cartouche.Gen do
     deployed_bytecode_decl = get_deployed_bytecode(abi_map)
     encode_call_decl = get_encode_calls(abi_map, not Enum.empty?(bytecode_decl))
 
+    preintern_return_atoms_decl =
+      if uses_preintern_return_atoms?(encode_call_decl) do
+        build_preintern_return_atoms_fns()
+      else
+        []
+      end
+
     quote_result =
       quote do
         defmodule unquote(module_name) do
@@ -836,6 +946,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
           unquote_splicing(encode_call_decl)
           unquote_splicing(bytecode_decl)
           unquote_splicing(deployed_bytecode_decl)
+          unquote_splicing(preintern_return_atoms_decl)
         end
       end
 
@@ -846,6 +957,17 @@ defmodule Mix.Tasks.Cartouche.Gen do
       |> strip_zero_arity_def_parens()
 
     {file_name, contents}
+  end
+
+  @spec uses_preintern_return_atoms?(Macro.t() | [Macro.t()]) :: boolean()
+  defp uses_preintern_return_atoms?(quoted) do
+    {_quoted, used?} =
+      Macro.prewalk(quoted, false, fn
+        {:preintern_return_atoms!, _, _} = node, _used? -> {node, true}
+        node, used? -> {node, used?}
+      end)
+
+    used?
   end
 
   # Macro-time `def unquote(name)()` requires the trailing parens for the AST to
@@ -866,11 +988,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # clauses are skipped via the seen-set; duplicate `@spec` for a given arity
   # is a compile error).
   #
-  # TODO(Task 50): replace `term()` placeholders with ABI-derived Elixir types
-  # once the type-mapping helper lands; also emit the
-  # `# credo:disable-for-this-file Credo.Check.Readability.MaxLineLength`
-  # pragma conditionally when the fixture contains bytestring topic-0 hashes
-  # that overflow 120 chars after `mix format`.
+  # Task 50 will replace `term()` placeholders with ABI-derived Elixir types and
+  # emit the max-line-length pragma conditionally when bytestring topic-0 hashes
+  # overflow 120 chars after `mix format`.
   defp annotate_internal_defs({:defmodule, dm_meta, [name, [do: do_block]]}) do
     {:defmodule, dm_meta, [name, [do: annotate_block(do_block)]]}
   end
@@ -889,7 +1009,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp annotate_stmt({:def, _, [head, _body]} = def_ast, seen) do
+  defp annotate_stmt({kind, _, [head, _body]} = def_ast, seen) when kind in [:def, :defp] do
     case extract_name_arity(head) do
       nil ->
         {[def_ast], seen}
@@ -899,7 +1019,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
           {[def_ast], seen}
         else
           {name, arity} = key
-          {build_annotations(name, arity) ++ [def_ast], MapSet.put(seen, key)}
+          {build_annotations(kind, name, arity) ++ [def_ast], MapSet.put(seen, key)}
         end
     end
   end
@@ -913,15 +1033,19 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp extract_name_arity({name, _, _ctx}) when is_atom(name), do: {name, 0}
   defp extract_name_arity(_), do: nil
 
-  defp build_annotations(name, arity) do
+  defp build_annotations(kind, name, arity) do
     spec_args = List.duplicate({:term, [], []}, arity)
     spec_call = {name, [], spec_args}
     spec_ret = {:term, [], []}
 
-    [
-      {:@, [], [{:doc, [], [false]}]},
-      {:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}
-    ]
+    doc_annotation =
+      if kind == :def do
+        [{:@, [], [{:doc, [], [false]}]}]
+      else
+        []
+      end
+
+    doc_annotation ++ [{:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}]
   end
 
   # Gets the output-json of all included Solidity files to auto-generate.
