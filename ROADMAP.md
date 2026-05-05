@@ -100,7 +100,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 
 ### Standalone (no natural bundle partner)
 
-`6` (publish, user-only) · ~~`39` (RecoveryBit doctest portability)~~ ✅ · ~~`47` (config-only — exclude IConsole from coverage measurement)~~ ✅ · ~~`54` (Transaction.Call extraction — large, structural, spans generator + RPC + Sleuth)~~ ✅ · ~~`58` (single test)~~ ✅ · `59-lib` (Reach 1.8 hygiene items in `lib/cartouche/**` — the `solana/transaction.ex`, `hex.ex`, `transaction.ex`, `rpc.ex` redundant-computation extractions; distinct from the gen.ex sub-items which roll into the Generator hardening pass) · `31`, `32` (EIP-4844 / EIP-7702 — large enough each to stand alone; `[P]`-safe relative to each other) · `33` (raw decode — sequenced *after* 31 + 32 so it inherits the encoded forms).
+`6` (publish, user-only) · ~~`39` (RecoveryBit doctest portability)~~ ✅ · ~~`47` (config-only — exclude IConsole from coverage measurement)~~ ✅ · ~~`54` (Transaction.Call extraction — large, structural, spans generator + RPC + Sleuth)~~ ✅ · ~~`58` (single test)~~ ✅ · `59-lib` (Reach 1.8 hygiene items in `lib/cartouche/**` — the `solana/transaction.ex`, `hex.ex`, `transaction.ex`, `rpc.ex` redundant-computation extractions; distinct from the gen.ex sub-items which roll into the Generator hardening pass) · `31` (EIP-4844) · ~~`32` (EIP-7702)~~ ✅ · `33` (raw decode — sequenced *after* 31 + 32 so it inherits the encoded forms).
 
 ---
 
@@ -368,7 +368,7 @@ Natural extraction: a private helper returning the prefix list from the struct. 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
 | 31 | EIP-4844 blob transactions (`Cartouche.Transaction.V3`) — encode, sign, RLP round-trip, `max_fee_per_blob_gas` + `blob_versioned_hashes` fields `[CSR]` [D:6/B:7/U:7 → Eff:1.17] 📋 | 🔄 in-flight (INE-23) | L2 rollups have posted blob txs since Dencun (Mar 2024). Include doctest + representative test vector from mainnet |
-| 32 | EIP-7702 authorization-list transactions (`Cartouche.Transaction.V4`) — `authorization_list` field, tx type 0x04 `[CSR]` [D:5/B:5/U:6 → Eff:1.1] 📋 | 🔄 in-flight (INE-24) | Smaller than Task 31. Active on mainnet since Pectra (May 2025) |
+| 32 | EIP-7702 authorization-list transactions (`Cartouche.Transaction.V4`) — `authorization_list` field, tx type 0x04 `[CSR]` [D:5/B:5/U:6 → Eff:1.1] 📋 | ✅ | Done 2026-05-05. `Cartouche.Transaction.V4` supports EIP-7702 encode/decode/sign/hash for set-code transactions, including authorization tuple signing/recovery via the `0x05 \|\| rlp([chain_id, address, nonce])` digest. Unit coverage pins round-trips, empty and multi-entry authorization lists, malformed input rejection, outer signature recovery, and authorization authority recovery. Mainnet vector coverage decodes a real post-Pectra type-4 transaction and verifies the raw tx hash plus outer and authorization signatures. |
 | 33 | Raw transaction decode — inverse of `Cartouche.Transaction.Vn.encode/1` across V1/V2/V3/V4 `[CSR]` [D:4/B:4/U:6 → Eff:1.25] 📋 | ⬜ | Useful for mempool tooling, explorers. The existing surface feels incomplete without it |
 
 ---

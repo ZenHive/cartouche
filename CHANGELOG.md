@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `Cartouche.Transaction.V4` adds EIP-7702 set-code transaction support for Pectra-era authorization-list transactions (`0x04`). V4 mirrors the existing typed-transaction shape with RLP encode/decode, outer transaction signing/recovery, transaction hashing, and authorization tuple signing/recovery over the EIP-7702 `0x05 || rlp([chain_id, address, nonce])` digest. A real mainnet type-4 vector pins raw signed transaction decoding, hash agreement, and both outer-signer and authorization-authority recovery.
+
 ### Fixed
 
 - INE-17 / Phase 11 `decode_structs: true` audit re-verified the generator emission shape after PR #24's false-positive closeout: `lib/mix/cartouche.gen.ex` emits return-field names only as strings in selector metadata (`build_selector_fn/1` returns `Macro.escape(selector)`), not as compile-time atom literals. Both audited `decode_structs: true` paths therefore needed explicit handling before Hieroglyph 1.4's `String.to_existing_atom/1` decode branch: generated `exec_vm_*` functions now call a generated private helper before `ABI.decode/3`, while `Cartouche.Sleuth.query_v2/4` validates that runtime selector atoms already exist instead of minting caller-supplied atoms. The runtime validation now walks nested tuple and array return types, and generated test bindings were regenerated so fixture `exec_vm_*` paths carry the same helper. The new Sleuth regressions prove raw Hieroglyph decoding raises with a unique cold return-field atom absent, Cartouche's runtime-selector boundary fails safely without creating it, and nested cold tuple/array names are detected before decode.
