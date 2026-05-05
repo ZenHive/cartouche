@@ -27,27 +27,23 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     ]
   end
 
-  defp write_artifact(tmp, name, bytecode_object, abi, opts) do
-    bytecode =
-      case bytecode_object do
-        :absent -> nil
-        v -> %{"object" => v}
-      end
+  defp synthetic_abi do
+    __DIR__
+    |> Path.join("../support/synthetic_abi.json")
+    |> File.read!()
+    |> Jason.decode!()
+  end
 
+  defp write_artifact(tmp, name, bytecode_object, abi, opts) do
     artifact = %{
       "abi" => abi,
       "metadata" => metadata_for(name, opts)
     }
 
-    artifact =
-      if bytecode do
-        artifact
-        |> Map.put("bytecode", bytecode)
-        |> Map.put("deployedBytecode", bytecode)
-      else
-        artifact
-      end
+    write_artifact_map(tmp, name, put_bytecode(artifact, bytecode_object))
+  end
 
+  defp write_artifact_map(tmp, name, artifact) do
     path = Path.join(tmp, "#{name}.json")
     File.write!(path, Jason.encode!(artifact))
     path
@@ -59,8 +55,40 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     end
   end
 
+  defp put_bytecode(artifact, bytecode_object) do
+    case bytecode_object do
+      :absent ->
+        artifact
+
+      v ->
+        bytecode = %{"object" => v}
+
+        artifact
+        |> Map.put("bytecode", bytecode)
+        |> Map.put("deployedBytecode", bytecode)
+    end
+  end
+
+  defp put_bytecodes(artifact, init_bytecode, deployed_bytecode) do
+    artifact
+    |> maybe_put_bytecode("bytecode", init_bytecode)
+    |> maybe_put_bytecode("deployedBytecode", deployed_bytecode)
+  end
+
+  defp maybe_put_bytecode(artifact, _key, :absent), do: artifact
+  defp maybe_put_bytecode(artifact, key, bytecode), do: Map.put(artifact, key, %{"object" => bytecode})
+
   defp generate(tmp, name, bytecode_object, abi \\ pure_function_abi(), opts \\ []) do
     artifact_path = write_artifact(tmp, name, bytecode_object, abi, opts)
+    generate_file(tmp, name, artifact_path)
+  end
+
+  defp generate_artifact(tmp, name, artifact) do
+    artifact_path = write_artifact_map(tmp, name, artifact)
+    generate_file(tmp, name, artifact_path)
+  end
+
+  defp generate_file(tmp, name, artifact_path) do
     out_dir = Path.join(tmp, "out")
     File.mkdir_p!(out_dir)
 
@@ -76,6 +104,49 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     |> Path.join("gen_test")
     |> Path.join("#{Macro.underscore(name)}.ex")
     |> File.read!()
+  end
+
+  defp solidity_artifact(name, abi, opts \\ []) do
+    metadata =
+      %{
+        "settings" => %{
+          "compilationTarget" => %{"src/#{name}.sol" => name}
+        }
+      }
+
+    metadata =
+      if Keyword.get(opts, :metadata_json?, false) do
+        Jason.encode!(metadata)
+      else
+        metadata
+      end
+
+    %{"abi" => abi, "metadata" => metadata}
+  end
+
+  defp ast_artifact(name, abi) do
+    %{
+      "abi" => abi,
+      "ast" => %{
+        "sourceUnit" => 1,
+        "absolutePath" => "/synthetic/contracts/#{name}.sol"
+      }
+    }
+  end
+
+  defp abi_only_file(tmp, name, abi) do
+    path = Path.join(tmp, "#{name}.json")
+    File.write!(path, Jason.encode!(abi))
+    path
+  end
+
+  defp generate_abi_file(tmp, name, abi) do
+    generate_file(tmp, name, abi_only_file(tmp, name, abi))
+  end
+
+  defp generated_module(contents) do
+    [{module, _bytecode}] = Code.compile_string(contents)
+    module
   end
 
   defp refute_bytecode_emission(contents) do
@@ -221,6 +292,96 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       Gen.run(["--prefix", "gen_test", "--out", out_dir, artifact_path])
 
       assert File.exists?(Path.join([out_dir, "gen_test", "ast_named.ex"]))
+    end
+  end
+
+  describe "synthetic ABI generation" do
+    test "emits selectors, fallback helpers, and catch-all decoders", %{tmp: tmp} do
+      artifact =
+        "Synthetic"
+        |> solidity_artifact(synthetic_abi(), metadata_json?: true)
+        |> put_bytecodes("0x60806040", "0x60806041")
+
+      module =
+        tmp
+        |> generate_artifact("Synthetic", artifact)
+        |> generated_module()
+
+      assert module.contract_name() == "Synthetic"
+      assert module.encode_fallback(<<1, 2, 3>>) == <<1, 2, 3>>
+      assert module.encode_receive(<<4, 5>>) == <<4, 5>>
+      assert is_binary(module.bytecode())
+      assert is_binary(module.deployed_bytecode())
+
+      assert %ABI.FunctionSelector{function: "noArgs"} = module.no_args_selector()
+      assert %ABI.FunctionSelector{function: "blankName"} = module.blank_name_selector()
+      assert %ABI.FunctionSelector{function: "setPair"} = module.set_pair_selector()
+      assert %ABI.FunctionSelector{function: "CustomError"} = module.custom_error_selector()
+      assert %ABI.FunctionSelector{function: "Pinged"} = module.pinged_event_selector()
+
+      assert module.decode_call(<<0, 0, 0, 0>>) == :not_found
+      assert module.decode_error(<<0, 0, 0, 0>>) == :not_found
+      assert module.decode_event([<<0::256>>], <<>>) == :not_found
+    end
+
+    test "uses AST contract-name fallback when metadata has no compilation target", %{tmp: tmp} do
+      contents = generate_artifact(tmp, "AstNamed", ast_artifact("AstNamed", pure_function_abi()))
+
+      assert contents =~ "defmodule GenTest.AstNamed do"
+      assert contents =~ ~s("AstNamed")
+    end
+
+    test "converts ABI-only JSON into a solidity artifact wrapper", %{tmp: tmp} do
+      contents = generate_abi_file(tmp, "AbiOnly", pure_function_abi())
+
+      assert contents =~ "defmodule GenTest.AbiOnly do"
+      assert contents =~ ~s("AbiOnly")
+      assert contents =~ "def encode_ping"
+    end
+  end
+
+  describe "bytecode shape coverage" do
+    test "init bytecode without deployed bytecode emits the current asymmetric shape", %{tmp: tmp} do
+      artifact =
+        "InitOnly"
+        |> solidity_artifact(pure_function_abi())
+        |> put_bytecodes("0x60806040", :absent)
+
+      contents = generate_artifact(tmp, "InitOnly", artifact)
+
+      assert contents =~ "def bytecode"
+      assert contents =~ "def exec_vm_ping"
+      refute contents =~ "def deployed_bytecode"
+    end
+
+    test "deployed bytecode without init bytecode emits deployed bytecode only", %{tmp: tmp} do
+      artifact =
+        "DeployedOnly"
+        |> solidity_artifact(pure_function_abi())
+        |> put_bytecodes(:absent, "0x60806041")
+
+      contents = generate_artifact(tmp, "DeployedOnly", artifact)
+
+      refute contents =~ "def bytecode"
+      refute contents =~ "def exec_vm_ping"
+      assert contents =~ "def deployed_bytecode"
+    end
+  end
+
+  describe "error paths" do
+    test "invalid JSON shape raises a generator-specific file error", %{tmp: tmp} do
+      path = Path.join(tmp, "Invalid.json")
+      File.write!(path, Jason.encode!(%{"not_abi" => true}))
+
+      assert_raise Gen.InvalidFileError, ~r/Invalid Solidity output or ABI/, fn ->
+        generate_file(tmp, "Invalid", path)
+      end
+    end
+
+    test "missing CLI arguments raise usage", %{tmp: _tmp} do
+      assert_raise RuntimeError, ~r/usage: mix cartouche\.gen/, fn ->
+        Gen.run([])
+      end
     end
   end
 end
