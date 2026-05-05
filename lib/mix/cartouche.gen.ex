@@ -414,7 +414,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
           abi_enc_signature_list: [byte()],
           abi_enc_signature_hex: Macro.t(),
           signature_list: [byte()],
-          error_name: String.t()
+          error_name: String.t() | nil
         }
   defp signature_data(selector) do
     abi = ABI.FunctionSelector.encode(selector)

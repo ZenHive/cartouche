@@ -42,7 +42,7 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  @spec decode_error(binary(), [String.t()]) :: :not_found | {:ok, String.t(), [term()] | nil}
+  @spec decode_error(binary(), [String.t()] | nil) :: :not_found | {:ok, String.t(), [term()] | nil}
   defp decode_error(data, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
