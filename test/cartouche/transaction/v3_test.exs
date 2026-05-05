@@ -14,6 +14,18 @@ defmodule Cartouche.Transaction.V3Test do
                        )
 
   describe "encode/1 and decode/1" do
+    test "constructs unsigned transactions with default chain and nil fee pass-through" do
+      tx = V3.new(1, nil, nil, 100_000, <<1::160>>, 0, <<>>, [], nil, [<<1, 0::248>>])
+
+      assert tx.chain_id == Cartouche.Application.chain_id()
+      assert tx.max_priority_fee_per_gas == nil
+      assert tx.max_fee_per_gas == nil
+      assert tx.max_fee_per_blob_gas == nil
+      assert tx.signature_y_parity == nil
+      assert tx.signature_r == nil
+      assert tx.signature_s == nil
+    end
+
     test "round-trips a representative signed blob transaction" do
       tx = representative_tx()
 
@@ -27,6 +39,13 @@ defmodule Cartouche.Transaction.V3Test do
                |> Map.merge(%{signature_y_parity: nil, signature_r: nil, signature_s: nil})
                |> V3.encode()
                |> Cartouche.Hex.encode_big_hex()
+    end
+
+    test "decodes non-empty access lists" do
+      tx = Map.put(representative_tx(), :access_list, [{<<2::160>>, [<<22::256>>]}])
+
+      assert {:ok, decoded} = tx |> V3.encode() |> V3.decode()
+      assert decoded.access_list == [{<<2::160>>, [<<22::256>>]}]
     end
   end
 
@@ -45,6 +64,19 @@ defmodule Cartouche.Transaction.V3Test do
 
       {:ok, recovered} = V3.recover_signer(signed)
       assert Cartouche.Hex.to_address(recovered) == "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
+    end
+
+    test "reports missing signature on unsigned transactions" do
+      assert {:error, "transaction missing signature"} =
+               representative_tx()
+               |> Map.merge(%{signature_y_parity: nil, signature_r: nil, signature_s: nil})
+               |> V3.get_signature()
+    end
+
+    test "normalizes packed EIP-155-style recovery bits" do
+      tx = Map.merge(representative_tx(), %{signature_y_parity: nil, signature_r: nil, signature_s: nil})
+
+      assert %V3{signature_y_parity: true} = V3.add_signature(tx, <<1::256, 2::256, 38::8>>)
     end
   end
 
@@ -96,6 +128,75 @@ defmodule Cartouche.Transaction.V3Test do
         |> V3.encode()
 
       assert {:error, "invalid v3 transaction"} = V3.decode(malformed)
+    end
+
+    test "rejects non-list access_list" do
+      bytes =
+        <<0x03>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            <<"not a list">>,
+            1,
+            [<<1, 0::248>>],
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(bytes)
+    end
+
+    test "rejects non-list blob_versioned_hashes" do
+      bytes =
+        <<0x03>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [],
+            1,
+            <<"not a list">>,
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(bytes)
+    end
+
+    test "rejects malformed access-list entries" do
+      bytes =
+        <<0x03>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [[<<1::160>>, <<"not a list">>]],
+            1,
+            [<<1, 0::248>>],
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(bytes)
     end
 
     test "rejects non-word blob versioned hashes" do

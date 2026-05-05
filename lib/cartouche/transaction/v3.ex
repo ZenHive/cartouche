@@ -327,25 +327,29 @@ defmodule Cartouche.Transaction.V3 do
   @spec signature_word?(binary()) :: boolean()
   defp signature_word?(word), do: byte_size(word) <= 32
 
-  @spec decode_access_list(list()) :: {:ok, access_list()} | {:error, String.t()}
-  defp decode_access_list(access_list) do
+  @spec decode_access_list(term()) :: {:ok, access_list()} | {:error, String.t()}
+  defp decode_access_list(access_list) when is_list(access_list) do
     {:ok,
      Enum.map(access_list, fn
-       [address, storage] when byte_size(address) <= 20 ->
+       [address, storage] when byte_size(address) <= 20 and is_list(storage) ->
          {Cartouche.Hex.pad(address, 20), Enum.map(storage, &Cartouche.Hex.pad(&1, 32))}
      end)}
   rescue
     FunctionClauseError -> {:error, "invalid v3 transaction"}
   end
 
-  @spec decode_blob_versioned_hashes(list()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
-  defp decode_blob_versioned_hashes(blob_versioned_hashes) do
+  defp decode_access_list(_), do: {:error, "invalid v3 transaction"}
+
+  @spec decode_blob_versioned_hashes(term()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
+  defp decode_blob_versioned_hashes(blob_versioned_hashes) when is_list(blob_versioned_hashes) do
     if Enum.all?(blob_versioned_hashes, &(byte_size(&1) == 32)) do
       {:ok, blob_versioned_hashes}
     else
       {:error, "invalid v3 transaction"}
     end
   end
+
+  defp decode_blob_versioned_hashes(_), do: {:error, "invalid v3 transaction"}
 
   @spec y_parity(binary()) :: boolean()
   defp y_parity(v_bin) do
