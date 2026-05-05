@@ -74,6 +74,8 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 Highest-Eff unblocked candidates after the Block bundle: Tasks 14+15+35 (RPC error-shape widening + `Jason.encode!` rescue, Eff:1.75), Task 27+28 (Finch 0.19→0.21, Eff:1.75), Task 44 (Generator coverage push, gates Tasks 41/42/50/59-gen, Eff:1.67).
 
+**VM dialyzer cleanup bundle entrypoint complete.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, so Tasks 21+22 (`none()` cascade investigation) and 23 (`VM.Context.@type t` alignment) are now unblocked. Next VM step: run the Phase 5 reach/dialyzer investigation before mutating VM specs or suppressions.
+
 **Phase 12 (descripex adoption) opens 2026-05-04.** New phase below — exposes cartouche's API surface to AI agents via `descripex` annotations + a static manifest. Bootstrap (Task 82) is the gate; once it lands, Tasks 83-88 are six `[P]`-eligible annotation passes that can run in parallel sessions, and Task 89 wires the manifest export. Highest-Eff individual annotation candidate: Task 83 (Signer + Keys, Eff:2.0); largest single-task surface: Task 84 (RPC + 6 response decoders, 7 modules total).
 
 ---
@@ -296,7 +298,7 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 21+22 | Phase 5 `none()` cascade investigation + targeted fix or local suppression `[CSR]` [D:5/B:4/U:5 → Eff:0.9] ⚠️ | ⬜ | **Blocked on Task 46.** Trace each Phase 5 warning back through `mix reach.deps` + `mix reach.slice` to find the first callee with `none()` success typing (Task 21, half-day to day). If root cause is a genuinely fixable spec narrowing, fix it; if it's structural (`raise`-heavy helpers), add `@dialyzer {:no_contracts, …}` locally in cartouche (Task 22). Local suppression is a valid terminal state |
+| 21+22 | Phase 5 `none()` cascade investigation + targeted fix or local suppression `[CSR]` [D:5/B:4/U:5 → Eff:0.9] ⚠️ | ⬜ | **Unblocked by Task 46.** Trace each Phase 5 warning back through `mix reach.deps` + `mix reach.slice` to find the first callee with `none()` success typing (Task 21). If root cause is a genuinely fixable spec narrowing, fix it; if it's structural (`raise`-heavy helpers), add `@dialyzer {:no_contracts, …}` locally in cartouche (Task 22). Local suppression is a valid terminal state |
 
 ---
 
@@ -306,8 +308,8 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 23 | Align `Cartouche.VM.Context.@type t` with dialyzer's inferred struct shape, or relax `init_from/2` to return `struct()` `[CX]` [D:2/B:1/U:3 → Eff:1.0] 📋 | ⬜ | **Blocked on Task 46.** Internal type. Bundle with Phase 5 if that opens a VM file anyway |
-| 46 | VM + Erc20.Call coverage push — gate Phases 5 and 6 `[CSR]` [D:4/B:5/U:5 → Eff:1.25] 📋 | 🔄 in-flight (INE-22) | 📦 **VM dialyzer cleanup bundle entrypoint** — chain into 21+22 (`none()` cascade) + 23 (`VM.Context.@type t`) in the same session, single VM mental model. Three modules below the bar (`mix test.json --cover` 2026-04-26): `Cartouche.VM.Context` 35.71% (Phase 6 target — 9 uncovered), `Cartouche.Erc20.Call` 0% (Phase 5 target — 6 uncovered), `Cartouche.VM.InvalidVm` 0% (1 uncovered, exception module — at minimum a `raise/rescue` round-trip; renamed from `VmError` in the credo cleanup pass). Cover `VM.Context.init_from/2` happy + edge inputs (the function whose spec Phase 6 narrows); cover `Erc20.Call` entry points used by the `none()`-cascade investigation in Phase 5. Acceptance: all three modules ≥ 80% on `mix test.json --cover` |
+| 23 | Align `Cartouche.VM.Context.@type t` with dialyzer's inferred struct shape, or relax `init_from/2` to return `struct()` `[CX]` [D:2/B:1/U:3 → Eff:1.0] 📋 | ⬜ | **Unblocked by Task 46.** Internal type. Bundle with Phase 5 if that opens a VM file anyway |
+| 46 | ~~VM + Erc20.Call coverage push — gate Phases 5 and 6~~ `[CSR]` [D:4/B:5/U:5 → Eff:1.25] 📋 | ✅ | Done 2026-05-05. Focused ExUnit coverage now exercises `Cartouche.VM.Context.init_from/2` happy and empty-code paths, FFI lookup success/error, context stack/show rendering, `Cartouche.Erc20.Call` `balance_of/3` and `transfer/4` default and explicit option paths, and `Cartouche.VM.InvalidVm` raise/rescue message preservation. Tasks 21+22 and 23 are unblocked. See [CHANGELOG.md](CHANGELOG.md#unreleased). |
 
 ---
 
