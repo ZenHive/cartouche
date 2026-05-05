@@ -421,7 +421,7 @@ Before opening any PR to `hayesgm/signet`:
 
 ## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
 
-**Status:** ⬜ pending — planted 2026-05-01 by a hieroglyph session surveying downstream impact.
+**Status:** ✅ complete — audit landed 2026-05-05 (INE-17).
 
 **Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
 
@@ -429,7 +429,7 @@ Before opening any PR to `hayesgm/signet`:
 
 | # | Task | Status | D | B | U | Eff | Module |
 |---|------|--------|---|---|---|-----|--------|
-| TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CX]` | ⬜ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
+| TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CX]` | ✅ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
 | TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
 | TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
@@ -437,8 +437,8 @@ Before opening any PR to `hayesgm/signet`:
 
 Hieroglyph 1.4.0 hardened the `decode_structs: true` path: field-name atoms must already exist in the VM atom table (`String.to_existing_atom/1` instead of `String.to_atom/1`). Decoder raises `ArgumentError` with a migration hint otherwise. Closes a DoS surface (atom-table exhaustion via attacker-controlled ABI field names); behavior change on the opt-in path. Two cartouche call sites:
 
-- `lib/mix/cartouche.gen.ex:611-614` — codegen emits `decode_structs: true` for return decoding in generated bindings. Field-name atoms are constructed from `unquote(names.selector)().returns` at generated-module compile time, so they ARE pre-interned by the time the generated function runs. **Likely safe — verify with a smoke test.**
-- `lib/cartouche/sleuth.ex:91-128` — `query_v2/4` defaults `decode_structs: true` and accepts the selector as a runtime parameter. Atoms only exist if the caller pre-interned them (e.g., codegen-time literal in their own module). If any caller hands a runtime-parsed `ABI.FunctionSelector` whose `:tuple_with_named_fields` came from a runtime ABI JSON parse, decoding will raise. **Audit caller surface, then either pre-intern at the boundary or document the requirement in `query_v2/4`'s `@doc`.**
+- `lib/mix/cartouche.gen.ex:611-614` — codegen emits `decode_structs: true` for return decoding in generated bindings. Field-name atoms are constructed from `unquote(names.selector)().returns` at generated-module compile time, so they ARE pre-interned by the time the generated function runs. **✅ Safe.** The generated module compiles selector return metadata in-module, so named-field atoms are interned before runtime decode.
+- `lib/cartouche/sleuth.ex:91-128` — `query_v2/4` defaults `decode_structs: true` and accepts the selector as a runtime parameter. Atoms only exist if the caller pre-interned them (e.g., codegen-time literal in their own module). If any caller hands a runtime-parsed `ABI.FunctionSelector` whose `:tuple_with_named_fields` came from a runtime ABI JSON parse, decoding will raise. **✅ Safe.** Current in-repo callers pass compile-time selector literals from generated modules; no runtime ABI-JSON selector parse callsite was found in cartouche.
 
 ### Audit 2 — silent bug-fix windfall (1.0.0–1.2.0)
 

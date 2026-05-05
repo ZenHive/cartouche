@@ -107,6 +107,22 @@ defmodule SleuthTest do
                )
     end
 
+
+    test "query_v2/4 succeeds after cold-loading a generated selector module" do
+      :code.purge(BlockNumber)
+      :code.delete(BlockNumber)
+
+      refute Code.ensure_loaded?(BlockNumber)
+      assert Code.ensure_loaded?(BlockNumber)
+
+      assert {:ok, [2]} ==
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 BlockNumber.query_selector(),
+                 []
+               )
+    end
     test "query_by() via mod" do
       assert {:ok, %{"blockNumber" => 2}} ==
                Sleuth.query_by(BlockNumber)
