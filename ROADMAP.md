@@ -427,7 +427,7 @@ Before opening any PR to `hayesgm/signet`:
 
 ## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
 
-**Status:** 🔄 partially complete — decode-struct atom audit fixed under INE-17; optional API adoption fixed under INE-19; bug-fix audit remains pending.
+**Status:** ✅ complete — Phase 11 audits closed against hieroglyph 1.4.x.
 
 **Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
 
@@ -436,7 +436,7 @@ Before opening any PR to `hayesgm/signet`:
 | # | Task | Status | D | B | U | Eff | Module |
 |---|------|--------|---|---|---|-----|--------|
 | TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CSR]` | ✅ | 5 | 7 | 5 | 1.20 📋 | `Cartouche.gen` + `Cartouche.Sleuth` |
-| TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
+| TBD | ~~Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]`~~ | ✅ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
 | TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ✅ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
 ### Audit 1 — `decode_structs: true` and atom existence
