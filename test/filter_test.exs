@@ -118,11 +118,8 @@ defmodule Cartouche.FilterTest do
     assert_receive {:event, {"Transfer", _}, ^log}, 500
     assert_receive {:log, ^log}, 500
 
-    {:dictionary, dictionary} = Process.info(filter_pid, :dictionary)
-    Process.put(:expired_seen, Keyword.get(dictionary, :expired_seen))
-    Process.put(:new_filter_count, Keyword.get(dictionary, :new_filter_count))
-
-    assert Process.get(:expired_seen) == true
-    assert Process.get(:new_filter_count) >= 2
+    assert {:dictionary, dictionary} = Process.info(filter_pid, :dictionary)
+    assert Keyword.get(dictionary, :expired_seen) == true
+    assert Keyword.get(dictionary, :new_filter_count, 0) >= 2
   end
 end
