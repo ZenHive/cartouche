@@ -2,7 +2,7 @@ defmodule Cartouche.Contract.Rock do
   @moduledoc false
   use Cartouche.Hex
 
-  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.Call
 
   @doc false
   @spec contract_name() :: term()
@@ -69,7 +69,7 @@ defmodule Cartouche.Contract.Rock do
   @doc false
   @spec build_trx_jam(term(), term()) :: term()
   def build_trx_jam(contract, beats) do
-    %V2{destination: contract, data: encode_jam(beats)}
+    %Call{destination: contract, data: encode_jam(beats)}
   end
 
   @doc false
@@ -102,6 +102,8 @@ defmodule Cartouche.Contract.Rock do
   def exec_vm_jam(beats, exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_jam(beats), exec_opts) do
       {:ok, return_data} ->
+        preintern_return_atoms!(jam_selector().returns)
+
         case ABI.decode(%ABI.FunctionSelector{types: jam_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
@@ -109,7 +111,7 @@ defmodule Cartouche.Contract.Rock do
         end
 
       {:revert, revert_data} ->
-        case decode_error(revert_data) do
+        case apply(__MODULE__, :decode_error, [revert_data]) do
           {:ok, error, data} -> {:revert, error, data}
           :not_found -> {:revert, "Unknown", revert_data}
         end
@@ -150,7 +152,7 @@ defmodule Cartouche.Contract.Rock do
   @doc false
   @spec build_trx_stumble_144e59d6(term()) :: term()
   def build_trx_stumble_144e59d6(contract) do
-    %V2{destination: contract, data: encode_stumble_144e59d6()}
+    %Call{destination: contract, data: encode_stumble_144e59d6()}
   end
 
   @doc false
@@ -183,6 +185,8 @@ defmodule Cartouche.Contract.Rock do
   def exec_vm_stumble_144e59d6(exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_stumble_144e59d6(), exec_opts) do
       {:ok, return_data} ->
+        preintern_return_atoms!(stumble_144e59d6_selector().returns)
+
         case ABI.decode(
                %ABI.FunctionSelector{types: stumble_144e59d6_selector().returns},
                return_data,
@@ -194,7 +198,7 @@ defmodule Cartouche.Contract.Rock do
         end
 
       {:revert, revert_data} ->
-        case decode_error(revert_data) do
+        case apply(__MODULE__, :decode_error, [revert_data]) do
           {:ok, error, data} -> {:revert, error, data}
           :not_found -> {:revert, "Unknown", revert_data}
         end
@@ -237,11 +241,7 @@ defmodule Cartouche.Contract.Rock do
   end
 
   def decode_error(_) do
-    if true do
-      :not_found
-    else
-      {:ok, "Impossible", <<>>}
-    end
+    :not_found
   end
 
   @doc false
@@ -258,5 +258,50 @@ defmodule Cartouche.Contract.Rock do
     hex!(
       "608060405234801561000f575f80fd5b5060043610610034575f3560e01c8063144e59d614610038578063bf68171014610056575b5f80fd5b610040610086565b60405161004d919061014f565b60405180910390f35b610070600480360381019061006b9190610196565b6100c5565b60405161007d9190610294565b60405180910390f35b5f60376040517fd331ba980000000000000000000000000000000000000000000000000000000081526004016100bc91906102f6565b60405180910390fd5b6100cd61011e565b60405180604001604052808381526020016040518060400160405280600f81526020017f42616e64206f6e207468652052756e00000000000000000000000000000000008152508152509050919050565b60405180604001604052805f8152602001606081525090565b5f819050919050565b61014981610137565b82525050565b5f6020820190506101625f830184610140565b92915050565b5f80fd5b61017581610137565b811461017f575f80fd5b50565b5f813590506101908161016c565b92915050565b5f602082840312156101ab576101aa610168565b5b5f6101b884828501610182565b91505092915050565b6101ca81610137565b82525050565b5f81519050919050565b5f82825260208201905092915050565b5f5b838110156102075780820151818401526020810190506101ec565b5f8484015250505050565b5f601f19601f8301169050919050565b5f61022c826101d0565b61023681856101da565b93506102468185602086016101ea565b61024f81610212565b840191505092915050565b5f604083015f83015161026f5f8601826101c1565b50602083015184820360208601526102878282610222565b9150508091505092915050565b5f6020820190508181035f8301526102ac818461025a565b905092915050565b5f819050919050565b5f819050919050565b5f6102e06102db6102d6846102b4565b6102bd565b610137565b9050919050565b6102f0816102c6565b82525050565b5f6020820190506103095f8301846102e7565b9291505056fea26469706673582212202c77c48aba2ef6154e6648ed7c485abc0d9fe67fb484d56a7e986a6ee7c7734764736f6c63430008170033"
     )
+  end
+
+  @spec preintern_return_atoms!(term()) :: term()
+  defp preintern_return_atoms!(types) when is_list(types) do
+    Enum.each(types, &preintern_return_atom!/1)
+  end
+
+  defp preintern_return_atoms!(_) do
+    :ok
+  end
+
+  @spec preintern_return_atom!(term()) :: term()
+  defp preintern_return_atom!(%{name: name, type: type}) do
+    preintern_name_atom!(name)
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_return_atom!(_) do
+    :ok
+  end
+
+  @spec preintern_type_atoms!(term()) :: term()
+  defp preintern_type_atoms!({:tuple, types}) do
+    preintern_return_atoms!(types)
+  end
+
+  defp preintern_type_atoms!({:array, type}) do
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_type_atoms!({:array, type, _size}) do
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_type_atoms!(_) do
+    :ok
+  end
+
+  @spec preintern_name_atom!(term()) :: term()
+  defp preintern_name_atom!(name) when is_binary(name) and name != "" do
+    name |> Macro.underscore() |> String.to_atom()
+  end
+
+  defp preintern_name_atom!(_) do
+    :ok
   end
 end
