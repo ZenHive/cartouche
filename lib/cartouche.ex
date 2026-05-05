@@ -1,7 +1,22 @@
 defmodule Cartouche do
   @moduledoc """
-  Cartouche is a library for interacting with private keys, signatures, and Etheruem.
+  Cartouche is a library for interacting with private keys, signatures, and Ethereum.
+
+  ## API discovery
+
+  Cartouche exposes a machine-readable API surface for AI agents and
+  introspection tooling via [`descripex`](https://hexdocs.pm/descripex):
+
+      Cartouche.describe()                  # registered modules + namespaces
+      Cartouche.describe(:rpc)               # function list for one module
+      Cartouche.describe(:rpc, :get_block_by_number)   # full param/return detail
+
+  The registered module list is built up as Phase 12 lands; see
+  `ROADMAP.md` Phase 12 for the annotation pass.
   """
+
+  @descripex_modules []
+  use Descripex.Discoverable, modules: @descripex_modules
 
   @type address :: <<_::160>>
   @type signature :: <<_::520>>

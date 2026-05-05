@@ -97,6 +97,9 @@ defmodule Cartouche.MixProject do
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.3", optional: true},
       {:ex_rlp, "~> 0.6.0"},
+      # Promoted from transitive (via :hieroglyph) to direct so consumer
+      # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
+      {:descripex, "~> 0.6"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks

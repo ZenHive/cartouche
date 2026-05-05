@@ -3,7 +3,6 @@
 @~/.claude/includes/across-instances.md
 @~/.claude/includes/critical-rules.md
 
-@~/.claude/includes/delegation-rules.md
 @~/.claude/includes/task-prioritization.md
 @~/.claude/includes/task-writing.md
 @~/.claude/includes/workflow-philosophy.md
@@ -17,9 +16,6 @@
 @~/.claude/includes/reach.md
 @~/.claude/includes/agent-economy.md
 @~/.claude/includes/upstream-pr-workflow.md
-@~/.claude/includes/linear-workflow.md
-@~/.claude/includes/cloud-agent-environments.md
-@~/.claude/includes/onchain-stack-workspace.md
 
 
 forked from https://github.com/hayesgm/signet

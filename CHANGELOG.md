@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Bootstrap descripex adoption (Phase 12 / ROADMAP Task 82). `:descripex` is now a direct dep instead of transitive-via-`:hieroglyph`, so consumer `mix.exs` files don't need to add it to use the discovery API. The top-level `Cartouche` module exposes `describe/0,1,2` and `__descripex_modules__/0` via `use Descripex.Discoverable` with an initially empty registered-module list. A new validation test in `test/descripex_validation_test.exs` walks the registered list and flunks-with-the-offending-function-name when any non-`@doc false` public function is missing `meta[:hints]` — trivially passes today, grows teeth as the Phase 12 annotation passes (Tasks 83-88) register modules. Tasks 83-89 are unblocked.
+
 ## [0.2.0] — 2026-05-05
 
 ### Added
