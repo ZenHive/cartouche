@@ -8,12 +8,14 @@ defmodule Cartouche.TransactionTest do
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
 
   doctest Call
   doctest Transaction
   doctest V1
   doctest V2
+  doctest V3
   doctest V4
 
   describe "Call.new/3" do
@@ -70,6 +72,25 @@ defmodule Cartouche.TransactionTest do
       assert trx.max_priority_fee_per_gas == nil
       assert trx.max_fee_per_gas == nil
       assert trx.signature_y_parity == true
+    end
+
+    test "signed constructor without chain_id falls back to Application.chain_id()" do
+      trx =
+        V2.new(
+          1,
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<>>,
+          [],
+          true,
+          <<1::256>>,
+          <<2::256>>
+        )
+
+      assert trx.chain_id == Cartouche.Application.chain_id()
     end
   end
 
@@ -234,6 +255,48 @@ defmodule Cartouche.TransactionTest do
     test "malformed RLP body returns {:error, \"invalid v2 transaction\"}" do
       bad_body = <<0x02>> <> ExRLP.encode([<<1>>, <<2>>, <<3>>])
       assert {:error, "invalid v2 transaction"} = V2.decode(bad_body)
+    end
+
+    test "rejects non-list access_list" do
+      bytes =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            <<"not a list">>,
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v2 transaction"} = V2.decode(bytes)
+    end
+
+    test "rejects malformed access_list entries" do
+      bytes =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [<<"not a pair">>],
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v2 transaction"} = V2.decode(bytes)
     end
   end
 

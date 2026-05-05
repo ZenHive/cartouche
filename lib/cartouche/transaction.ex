@@ -589,29 +589,40 @@ defmodule Cartouche.Transaction do
           signature_r,
           signature_s
         ] ->
-          {:ok,
-           %__MODULE__{
-             chain_id: :binary.decode_unsigned(chain_id),
-             nonce: :binary.decode_unsigned(nonce),
-             max_priority_fee_per_gas: :binary.decode_unsigned(max_priority_fee_per_gas),
-             max_fee_per_gas: :binary.decode_unsigned(max_fee_per_gas),
-             gas_limit: :binary.decode_unsigned(gas_limit),
-             destination: Cartouche.Hex.pad(destination, 20),
-             amount: :binary.decode_unsigned(amount),
-             data: data,
-             access_list:
-               Enum.map(access_list, fn [address, storage] ->
-                 {Cartouche.Hex.pad(address, 20), Enum.map(storage, &Cartouche.Hex.pad(&1, 32))}
-               end),
-             signature_y_parity: :binary.decode_unsigned(signature_y_parity) == 1,
-             signature_r: Cartouche.Hex.pad(signature_r, 32),
-             signature_s: Cartouche.Hex.pad(signature_s, 32)
-           }}
+          with {:ok, access_list} <- decode_access_list(access_list) do
+            {:ok,
+             %__MODULE__{
+               chain_id: :binary.decode_unsigned(chain_id),
+               nonce: :binary.decode_unsigned(nonce),
+               max_priority_fee_per_gas: :binary.decode_unsigned(max_priority_fee_per_gas),
+               max_fee_per_gas: :binary.decode_unsigned(max_fee_per_gas),
+               gas_limit: :binary.decode_unsigned(gas_limit),
+               destination: Cartouche.Hex.pad(destination, 20),
+               amount: :binary.decode_unsigned(amount),
+               data: data,
+               access_list: access_list,
+               signature_y_parity: :binary.decode_unsigned(signature_y_parity) == 1,
+               signature_r: Cartouche.Hex.pad(signature_r, 32),
+               signature_s: Cartouche.Hex.pad(signature_s, 32)
+             }}
+          end
 
         _ ->
           {:error, "invalid v2 transaction"}
       end
     end
+
+    @spec decode_access_list(term()) :: {:ok, [{<<_::160>>, [<<_::256>>]}]} | {:error, String.t()}
+    defp decode_access_list(access_list) when is_list(access_list) do
+      {:ok,
+       Enum.map(access_list, fn [address, storage] ->
+         {Cartouche.Hex.pad(address, 20), Enum.map(storage, &Cartouche.Hex.pad(&1, 32))}
+       end)}
+    rescue
+      FunctionClauseError -> {:error, "invalid v2 transaction"}
+    end
+
+    defp decode_access_list(_), do: {:error, "invalid v2 transaction"}
 
     @doc ~S"""
     Adds a signature to a transaction. This overwrites the `signature_y_parity`, `signature_r` and `signature_s` fields.
