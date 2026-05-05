@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `Cartouche.Transaction.V4` adds EIP-7702 set-code transaction support for Pectra-era authorization-list transactions (`0x04`). V4 mirrors the existing typed-transaction shape with RLP encode/decode, outer transaction signing/recovery, transaction hashing, and authorization tuple signing/recovery over the EIP-7702 `0x05 || rlp([chain_id, address, nonce])` digest. A real mainnet type-4 vector pins raw signed transaction decoding, hash agreement, and both outer-signer and authorization-authority recovery.
+
 ### Fixed
 
 - New `Cartouche.Transaction.Call` struct (`destination: <<_::160>>, data: binary()`) replaces the `%V2{}` masquerade for `eth_call` shapes. Generator-emitted `Cartouche.Contract.Sleuth.build_trx_query/3` now returns `%Call{}` instead of a partial `%V2{}`; `Cartouche.RPC` dispatch extended to accept `V1.t() | V2.t() | Call.t()`. Eth_call params are not transactions — never signed, never broadcast — and the prior abstraction lie drove the `invalid_contract` cascade through `Cartouche.Sleuth`. Structural fix collapses the cascade without widening V2 to nullable. Closes ROADMAP Task 54 / INE-10; Task 49 (`V2.encode/1` spec duplication) closes as superseded since the cascade is gone.
