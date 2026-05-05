@@ -42,6 +42,7 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
+  @spec decode_error(binary(), [String.t()]) :: :not_found | {:ok, String.t(), [term()] | nil}
   defp decode_error(data, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
@@ -54,10 +55,22 @@ defmodule Cartouche.RPC do
   defp decode_error(_, _errors), do: :not_found
 
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
+  @spec classify_decoded_error(String.t(), [term()], [String.t()], binary()) ::
+          :not_found | {:ok, String.t(), [term()] | nil}
+  defp classify_decoded_error("Panic", [0x00], _errors, _data), do: {:ok, "compiler inserted panic", nil}
+
   defp classify_decoded_error("Panic", [0x01], _errors, _data), do: {:ok, "assertion failure", nil}
+
   defp classify_decoded_error("Panic", [0x11], _errors, _data), do: {:ok, "arithmetic error: overflow or underflow", nil}
-  defp classify_decoded_error("Panic", [0x12], _errors, _data), do: {:ok, "failed to convert value to enum", nil}
-  defp classify_decoded_error("Panic", [0x21], _errors, _data), do: {:ok, "popped from empty array", nil}
+
+  defp classify_decoded_error("Panic", [0x12], _errors, _data), do: {:ok, "division or modulo by zero", nil}
+
+  defp classify_decoded_error("Panic", [0x21], _errors, _data), do: {:ok, "failed to convert value to enum", nil}
+
+  defp classify_decoded_error("Panic", [0x22], _errors, _data), do: {:ok, "incorrectly encoded storage byte array", nil}
+
+  defp classify_decoded_error("Panic", [0x31], _errors, _data), do: {:ok, "popped from empty array", nil}
+
   defp classify_decoded_error("Panic", [0x32], _errors, _data), do: {:ok, "out-of-bounds array access", nil}
   defp classify_decoded_error("Panic", [0x41], _errors, _data), do: {:ok, "out of memory", nil}
 
@@ -71,6 +84,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec find_error_abi(String.t(), [String.t()], binary()) :: {:ok, String.t()} | :error
   defp find_error_abi(error_name, errors, data) do
     Enum.find_value(errors, :error, fn error ->
       case ABI.decode_error(data, [error]) do

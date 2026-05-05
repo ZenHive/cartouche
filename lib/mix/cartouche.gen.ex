@@ -142,6 +142,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec dedup_named_abi(map(), String.t(), ABI.FunctionSelector.t(), [map()], [{String.t(), String.t()}]) ::
+          {[map()], [{String.t(), String.t()}]}
   defp dedup_named_abi(abi, name, fn_sel, acc, seen) do
     lower_name = String.downcase(name)
 
@@ -407,6 +409,13 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec signature_data(ABI.FunctionSelector.t()) :: %{
+          abi: binary(),
+          abi_enc_signature_list: [byte()],
+          abi_enc_signature_hex: Macro.t(),
+          signature_list: [byte()],
+          error_name: String.t()
+        }
   defp signature_data(selector) do
     abi = ABI.FunctionSelector.encode(selector)
     abi_enc_signature = ABI.method_id(selector)

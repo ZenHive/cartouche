@@ -204,7 +204,7 @@ defmodule Cartouche.RPCTest do
     end
 
     test "Panic(uint256) reverts keep the raw revert bytes for recognized panic codes" do
-      for code <- [0x01, 0x11, 0x12, 0x21, 0x32, 0x41, 0x51] do
+      for code <- [0x00, 0x01, 0x11, 0x12, 0x21, 0x22, 0x31, 0x32, 0x41, 0x51] do
         Process.put(:panic_code, code)
 
         assert {:error, %{revert: <<0x4E487B71::32, 0::248, ^code>>} = error} =
@@ -215,6 +215,16 @@ defmodule Cartouche.RPCTest do
 
         refute Map.has_key?(error, :error_abi)
       end
+    end
+
+    test "Panic(uint256) private descriptions match Solidity panic codes" do
+      source = File.read!("lib/cartouche/rpc.ex")
+
+      assert source =~
+               ~s|defp classify_decoded_error("Panic", [0x12], _errors, _data), do: {:ok, "division or modulo by zero", nil}|
+
+      assert source =~
+               ~s|defp classify_decoded_error("Panic", [0x21], _errors, _data), do: {:ok, "failed to convert value to enum", nil}|
     end
 
     test "non-hex revert data keeps only the base RPC error fields" do
