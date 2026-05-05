@@ -76,7 +76,7 @@ jobs:
         run: mix doctor --raise
 
       - name: Sobelow (honors .sobelow-conf, exit=Low)
-        run: mix sobelow
+        run: mix sobelow --config
 
       # CLAUDE.md tiers: >=80% standard, >=95% critical (signing/crypto/wire-format).
       # Aggregate floor is 85%: meaningful bump from 80%, leaves headroom under

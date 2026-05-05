@@ -114,6 +114,8 @@ defmodule Cartouche.Sleuth do
   end
 
   defp try_decode(query_res, selector, decode_structs) do
+    if decode_structs, do: preintern_decode_struct_atoms(selector.returns)
+
     {:ok,
      ABI.decode(
        %ABI.FunctionSelector{types: selector.returns},
@@ -123,6 +125,48 @@ defmodule Cartouche.Sleuth do
   rescue
     e ->
       {:error, "error decoding: #{inspect(e)}"}
+  end
+
+  @spec preintern_decode_struct_atoms(term()) :: :ok
+  defp preintern_decode_struct_atoms(types) when is_list(types), do: Enum.each(types, &preintern_type_atoms/1)
+  defp preintern_decode_struct_atoms(_), do: :ok
+
+  @spec preintern_type_atoms(term()) :: :ok
+  defp preintern_type_atoms(%{name: name, type: type}) do
+    preintern_name_atom(name)
+    preintern_type_atoms(type)
+  end
+
+  defp preintern_type_atoms({:tuple, types}) when is_list(types), do: Enum.each(types, &preintern_type_atoms/1)
+  defp preintern_type_atoms({:array, type}), do: preintern_type_atoms(type)
+  defp preintern_type_atoms({:array, type, _size}), do: preintern_type_atoms(type)
+  defp preintern_type_atoms(_), do: :ok
+
+  # hieroglyph 1.4.0 requires decode_structs field atoms to exist already.
+  # Runtime selectors may be caller-supplied, so only generated/trusted code may
+  # create atoms; this boundary validates that the required atoms already exist.
+  @spec preintern_name_atom(term()) :: :ok
+  defp preintern_name_atom(name) when is_binary(name) and name != "" do
+    atom_name = Macro.underscore(name)
+
+    case existing_atom(atom_name) do
+      {:ok, _atom} ->
+        :ok
+
+      :error ->
+        raise ArgumentError,
+              "decode_structs requires pre-existing return-field atom #{inspect(atom_name)}; " <>
+                "load a generated contract module or pass decode_structs: false for dynamic selectors"
+    end
+  end
+
+  defp preintern_name_atom(_), do: :ok
+
+  @spec existing_atom(String.t()) :: {:ok, atom()} | :error
+  defp existing_atom(atom_name) do
+    {:ok, String.to_existing_atom(atom_name)}
+  rescue
+    ArgumentError -> :error
   end
 
   # NOTE: decode_structs weirdly also does dynamic return types with named

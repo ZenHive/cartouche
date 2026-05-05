@@ -23,6 +23,22 @@ defmodule Cartouche.RPC do
   @default_base_fee_buffer 1.20
   @default_gas_buffer 1.50
 
+  @typedoc "Structured JSON-RPC error envelope returned by an Ethereum node or by local response validation."
+  @type rpc_error :: %{
+          required(:code) => integer(),
+          required(:message) => String.t(),
+          optional(:revert) => binary(),
+          optional(:error_abi) => String.t(),
+          optional(:error_params) => [term()],
+          optional(:trace) => term()
+        }
+
+  @typedoc "Error returned when JSON encoding rejects the outbound request body."
+  @type invalid_params_error :: {:invalid_params, Jason.EncodeError.t() | Protocol.UndefinedError.t()}
+
+  @typedoc "All values that can appear inside an `{:error, reason}` tuple returned by `send_rpc/3`."
+  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | String.t()
+
   defp headers(extra_headers) do
     [
       {"Accept", "application/json"},
@@ -42,34 +58,57 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
+  @spec decode_error(binary(), [String.t()] | nil) :: :not_found | {:ok, String.t(), [term()] | nil}
+  defp decode_error(data, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
-      nil -> :not_found
-      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
+    case ABI.decode_error(data, all_errors) do
+      {:ok, %{error: error_name, args: params}} -> classify_decoded_error(error_name, params, all_errors, data)
+      {:error, _reason} -> :not_found
     end
   end
 
   defp decode_error(_, _errors), do: :not_found
 
-  defp error_matches?(error, error_hash) do
-    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-    prefix == error_hash
-  end
-
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
-  defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x11]), do: {:ok, "arithmetic error: overflow or underflow", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x12]), do: {:ok, "failed to convert value to enum", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x21]), do: {:ok, "popped from empty array", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x32]), do: {:ok, "out-of-bounds array access", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x41]), do: {:ok, "out of memory", nil}
+  @spec classify_decoded_error(String.t(), [term()], [String.t()], binary()) ::
+          :not_found | {:ok, String.t(), [term()] | nil}
+  defp classify_decoded_error("Panic", [0x00], _errors, _data), do: {:ok, "compiler inserted panic", nil}
 
-  defp classify_decoded_error("Panic(uint256)", [0x51]),
+  defp classify_decoded_error("Panic", [0x01], _errors, _data), do: {:ok, "assertion failure", nil}
+
+  defp classify_decoded_error("Panic", [0x11], _errors, _data), do: {:ok, "arithmetic error: overflow or underflow", nil}
+
+  defp classify_decoded_error("Panic", [0x12], _errors, _data), do: {:ok, "division or modulo by zero", nil}
+
+  defp classify_decoded_error("Panic", [0x21], _errors, _data), do: {:ok, "failed to convert value to enum", nil}
+
+  defp classify_decoded_error("Panic", [0x22], _errors, _data), do: {:ok, "incorrectly encoded storage byte array", nil}
+
+  defp classify_decoded_error("Panic", [0x31], _errors, _data), do: {:ok, "popped from empty array", nil}
+
+  defp classify_decoded_error("Panic", [0x32], _errors, _data), do: {:ok, "out-of-bounds array access", nil}
+  defp classify_decoded_error("Panic", [0x41], _errors, _data), do: {:ok, "out of memory", nil}
+
+  defp classify_decoded_error("Panic", [0x51], _errors, _data),
     do: {:ok, "called a zero-initialized variable of internal function type", nil}
 
-  defp classify_decoded_error(error_abi, params), do: {:ok, error_abi, params}
+  defp classify_decoded_error(error_name, params, errors, data) do
+    case find_error_abi(error_name, errors, data) do
+      {:ok, error_abi} -> {:ok, error_abi, params}
+      :error -> :not_found
+    end
+  end
+
+  @spec find_error_abi(String.t(), [String.t()], binary()) :: {:ok, String.t()} | :error
+  defp find_error_abi(error_name, errors, data) do
+    Enum.find_value(errors, :error, fn error ->
+      case ABI.decode_error(data, [error]) do
+        {:ok, %{error: ^error_name}} -> {:ok, error}
+        _ -> nil
+      end
+    end)
+  end
 
   defp build_revert_data(data_hex, errors) do
     case Hex.decode_hex(data_hex) do
@@ -144,6 +183,21 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.send_rpc("get_balance", ["0x407d73d8a49eeb85d32cf465507dd71d507100c1", "latest"], ethereum_node: "http://example.com")
       {:ok, "0x0234c8a3397aab58"}
 
+      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.RPCTest.TransportErrorClient)
+      {:error, "[Cartouche] Unknown error: :closed"}
+
+      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.RPCTest.InvalidJsonRpcClient)
+      {:error, %{code: -999, message: "invalid JSON-RPC response"}}
+
+      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.Test.InvalidHexResultClient, decode: :hex)
+      :invalid_hex
+
+      iex> match?({:error, {:invalid_params, %Jason.EncodeError{}}}, Cartouche.RPC.send_rpc(<<255>>, []))
+      true
+
+      iex> match?({:error, {:invalid_params, %Protocol.UndefinedError{}}}, Cartouche.RPC.send_rpc("net_version", [self()]))
+      true
+
   ## Options
 
   Common options (other RPC wrappers forward `opts` here):
@@ -156,8 +210,8 @@ defmodule Cartouche.RPC do
     `Application.get_env(:cartouche, :client, Finch)` so the test env's mock client wins
     automatically. Set to `Finch` per-call to bypass the mock (see `Cartouche.Test.Live`).
   """
-  @spec send_rpc(String.t(), [term()], Keyword.t()) ::
-          {:ok, term()} | {:error, %{code: integer(), message: String.t()}}
+  @spec send_rpc(binary(), [term()], Keyword.t()) ::
+          {:ok, term()} | {:error, send_rpc_error()} | :invalid_hex
   def send_rpc(method, params, opts \\ []) do
     headers = Keyword.get(opts, :headers, [])
     decode = Keyword.get(opts, :decode, nil)
@@ -169,18 +223,28 @@ defmodule Cartouche.RPC do
     id = Keyword.get_lazy(opts, :id, fn -> System.unique_integer([:positive]) end)
     body = get_body(method, params, id)
 
-    request = Finch.build(:post, url, headers(headers), Jason.encode!(body))
+    with {:ok, encoded_body} <- encode_body(body) do
+      request = Finch.build(:post, url, headers(headers), encoded_body)
 
-    finch_result =
-      normalize_finch_result(
-        # NOTE: `receive_timeout` is a best-effort maybe-sort-of timeout.
-        client.request(request, finch_name(), receive_timeout: timeout)
-      )
+      finch_result =
+        normalize_finch_result(
+          # NOTE: `receive_timeout` is a best-effort maybe-sort-of timeout.
+          client.request(request, finch_name(), receive_timeout: timeout)
+        )
 
-    with {:ok, %Finch.Response{body: resp_body}} <- finch_result,
-         {:ok, result} <- decode_response(resp_body, body["id"], errors, method, body) do
-      decode_result(decode, result, method, verbose)
+      with {:ok, %Finch.Response{body: resp_body}} <- finch_result,
+           {:ok, result} <- decode_response(resp_body, body["id"], errors, method, body) do
+        decode_result(decode, result, method, verbose)
+      end
     end
+  end
+
+  @spec encode_body(map()) :: {:ok, binary()} | {:error, invalid_params_error()}
+  defp encode_body(body) do
+    {:ok, Jason.encode!(body)}
+  rescue
+    e in [Jason.EncodeError, Protocol.UndefinedError] ->
+      {:error, {:invalid_params, e}}
   end
 
   defp decode_result(nil, result, _method, _verbose), do: {:ok, result}

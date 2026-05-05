@@ -35,6 +35,47 @@ defmodule Cartouche.FilterTest do
     end
   end
 
+  defmodule ReferenceTypeEventClient do
+    @moduledoc false
+
+    @indexed_topic :binary.copy(<<0xAB>>, 32)
+
+    def request(%Finch.Request{body: body}, _finch_name, _opts) do
+      %{"method" => method, "id" => id} = Jason.decode!(body)
+
+      response =
+        case method do
+          "eth_newFilter" ->
+            %{jsonrpc: "2.0", result: "0xref", id: id}
+
+          "eth_getFilterChanges" ->
+            %{jsonrpc: "2.0", result: [reference_type_log()], id: id}
+        end
+
+      {:ok, %Finch.Response{status: 200, body: Jason.encode!(response)}}
+    end
+
+    defp reference_type_log do
+      event = ABI.FunctionSelector.decode("Message(string indexed tag, uint256 value)")
+      data = ABI.encode("(uint256)", [{7}])
+
+      %{
+        "address" => Cartouche.Hex.encode_hex(<<3::160>>),
+        "blockHash" => Cartouche.Hex.encode_hex(<<4::256>>),
+        "blockNumber" => "0x1",
+        "data" => Cartouche.Hex.encode_hex(data),
+        "logIndex" => "0x0",
+        "removed" => false,
+        "topics" => [
+          Cartouche.Hex.encode_hex(ABI.Event.event_signature(event)),
+          Cartouche.Hex.encode_hex(@indexed_topic)
+        ],
+        "transactionHash" => Cartouche.Hex.encode_hex(<<5::256>>),
+        "transactionIndex" => "0x0"
+      }
+    end
+  end
+
   test "add a filter and get events" do
     extra_data = %{some_key: "some value"}
 
@@ -79,6 +120,30 @@ defmodule Cartouche.FilterTest do
                       }}, ^log}
 
     assert_received {:log, ^log}
+  end
+
+  test "indexed reference-type event params surface the topic hash" do
+    {:ok, _filter_pid} =
+      Cartouche.Filter.start_link(
+        name: ReferenceTypeFilter,
+        events: ["Message(string indexed tag, uint256 value)"],
+        check_delay: 20,
+        rpc_opts: [client: ReferenceTypeEventClient]
+      )
+
+    Cartouche.Filter.listen(ReferenceTypeFilter)
+
+    assert_receive {:event,
+                    {"Message",
+                     %{
+                       "tag" => {:indexed_hash, indexed_topic},
+                       "value" => 7
+                     }}, log},
+                   500
+
+    assert indexed_topic == :binary.copy(<<0xAB>>, 32)
+    assert %Log{topics: [_event_signature, ^indexed_topic]} = log
+    assert_receive {:log, ^log}, 500
   end
 
   test "recreates filter when ethereum node reports expired filter" do
