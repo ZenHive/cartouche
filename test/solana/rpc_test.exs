@@ -34,6 +34,23 @@ defmodule Cartouche.Solana.RPCTest do
   # Known blockhash from mock
   @mock_blockhash Cartouche.Base58.decode!("4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZAMdL4VZHirAn")
 
+  defmodule CustomParam do
+    @moduledoc false
+    defstruct [:value]
+  end
+
+  defmodule InvalidJsonRpcClient do
+    @moduledoc false
+
+    @doc false
+    @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
+    def request(%Finch.Request{body: body}, _finch_name, _opts) do
+      id = Jason.decode!(body)["id"]
+      response = Jason.encode!(%{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
+      {:ok, %Finch.Response{status: 200, body: response}}
+    end
+  end
+
   # ---------------------------------------------------------------------------
   # Core transport
   # ---------------------------------------------------------------------------
@@ -46,6 +63,31 @@ defmodule Cartouche.Solana.RPCTest do
     test "returns error for unknown method" do
       assert {:error, %{code: -32_601, message: "Method not found: bogusMethod"}} =
                RPC.send_rpc("bogusMethod", [])
+    end
+
+    test "invalid JSON-RPC responses return the sentinel error" do
+      Application.put_env(:cartouche, :client, InvalidJsonRpcClient)
+
+      assert {:error, %{code: -999, message: "invalid JSON-RPC response"}} =
+               RPC.send_rpc("getSlot", [])
+    end
+
+    test "returns invalid_params for a non-UTF-8 binary method" do
+      assert {:error, {:invalid_params, %Jason.EncodeError{}}} = RPC.send_rpc(<<255>>, [])
+    end
+
+    test "returns invalid_params for tuple params" do
+      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} = RPC.send_rpc("getSlot", [{:bad, :tuple}])
+    end
+
+    test "returns invalid_params for atom-keyed maps with non-encodable values" do
+      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
+               RPC.send_rpc("getSlot", [%{non_stdlib_key: self()}])
+    end
+
+    test "returns invalid_params for custom structs without a Jason encoder" do
+      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
+               RPC.send_rpc("getSlot", [%CustomParam{value: 1}])
     end
   end
 
