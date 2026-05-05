@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `Cartouche.Transaction.V4` adds EIP-7702 set-code transaction support for Pectra-era authorization-list transactions (`0x04`). V4 mirrors the existing typed-transaction shape with RLP encode/decode, outer transaction signing/recovery, transaction hashing, and authorization tuple signing/recovery over the EIP-7702 `0x05 || rlp([chain_id, address, nonce])` digest. A real mainnet type-4 vector pins raw signed transaction decoding, hash agreement, and both outer-signer and authorization-authority recovery.
+- `Cartouche.Transaction.V3` now supports EIP-4844 blob transaction envelopes introduced with Dencun. The new typed transaction module encodes, decodes, signs, hashes, and recovers signers for canonical type-`0x03` execution-layer payloads, including `max_fee_per_blob_gas` and `blob_versioned_hashes`, while keeping blob sidecars out of scope. A mainnet blob transaction fixture pins byte-for-byte RLP decoding, hashing, and sender recovery against live post-Dencun data. Closes ROADMAP Task 31 / INE-23.
 
 ### Changed
 

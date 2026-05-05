@@ -8,12 +8,14 @@ defmodule Cartouche.TransactionTest do
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
 
   doctest Call
   doctest Transaction
   doctest V1
   doctest V2
+  doctest V3
   doctest V4
 
   describe "Call.new/3" do
