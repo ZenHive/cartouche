@@ -431,7 +431,7 @@ Before opening any PR to `hayesgm/signet`:
 |---|------|--------|---|---|---|-----|--------|
 | TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CX]` | ⬜ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
 | TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
-| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
+| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ✅ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
 ### Audit 1 — `decode_structs: true` and atom existence
 
@@ -451,9 +451,9 @@ Cartouche flows may have been miscompiling/decoding without symptoms. Re-test:
 
 ### Optional adoption — new hieroglyph public APIs
 
-- `ABI.method_id/1` (1.1.0) — could replace the bespoke `Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))` selector derivation in `lib/mix/cartouche.gen.ex:149,416`. Equivalent semantics; smaller diff.
-- `ABI.decode_error/2` (1.2.0) — Solidity 0.8.4+ custom-error revert decoding. Could replace the manual `error_abi -> ABI.decode(error_abi, error_data)` path in `lib/cartouche/rpc.ex:49`.
-- `ABI.encode_packed/2` (1.2.0) — non-standard packed encoding for Merkle leaves and `keccak256(abi.encodePacked(...))`. Available if any future cartouche caller needs it (no current call site).
+- 🔧 `ABI.method_id/1` (1.1.0) — adopted at `lib/mix/cartouche.gen.ex:150` and `lib/mix/cartouche.gen.ex:420`, replacing bespoke selector-prefix derivation while retaining the full 32-byte event-topic hash where needed.
+- 🔧 `ABI.decode_error/2` (1.2.0) — adopted at `lib/cartouche/rpc.ex:49`, preserving cartouche's existing RPC error-map shape for full ABI signatures and recognized panic codes.
+- ⚠️ `ABI.encode_packed/2` (1.2.0) — no adoption opportunity found in current `lib/**` callsites.
 - `function` type encode/decode (1.3.0) — 24-byte external function pointer. Niche; only relevant if cartouche-generated bindings ever surface a `function` typed param.
 
 **Acceptance:** the two `decode_structs` paths audited (with rationale recorded if no change made), bug-fix audit run for any production data that may have been silently miscompiled or truncated, optional new-API adoption taken or formally declined. Score is for the audit itself; if work is needed beyond verification, split into follow-up tasks here.

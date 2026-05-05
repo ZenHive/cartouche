@@ -142,12 +142,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec dedup_named_abi(map(), String.t(), ABI.FunctionSelector.t(), [map()], [{String.t(), String.t()}]) ::
+          {[map()], [{String.t(), String.t()}]}
   defp dedup_named_abi(abi, name, fn_sel, acc, seen) do
     lower_name = String.downcase(name)
 
-    <<abi_enc_signature::binary-size(4), _::binary>> =
-      Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))
-
+    abi_enc_signature = ABI.method_id(fn_sel)
     "0x" <> abi_sig = Cartouche.Hex.encode_hex(abi_enc_signature)
     seen_tuple = {lower_name, abi_sig}
 
@@ -406,12 +406,18 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec signature_data(ABI.FunctionSelector.t()) :: %{
+          abi: binary(),
+          abi_enc_signature_list: [byte()],
+          abi_enc_signature_hex: Macro.t(),
+          signature_list: [byte()],
+          error_name: String.t() | nil
+        }
   defp signature_data(selector) do
     abi = ABI.FunctionSelector.encode(selector)
 
-    signature =
-      <<abi_enc_signature::binary-size(4), _::binary>> =
-      Cartouche.Hash.keccak(abi)
+    signature = Cartouche.Hash.keccak(abi)
+    abi_enc_signature = ABI.method_id(selector)
 
     abi_enc_signature_list = :erlang.binary_to_list(abi_enc_signature)
     abi_enc_signature_hex_base = Cartouche.Hex.encode_hex(abi_enc_signature)
@@ -866,11 +872,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # clauses are skipped via the seen-set; duplicate `@spec` for a given arity
   # is a compile error).
   #
-  # TODO(Task 50): replace `term()` placeholders with ABI-derived Elixir types
-  # once the type-mapping helper lands; also emit the
-  # `# credo:disable-for-this-file Credo.Check.Readability.MaxLineLength`
-  # pragma conditionally when the fixture contains bytestring topic-0 hashes
-  # that overflow 120 chars after `mix format`.
+  # Task 50 tracks replacing `term()` placeholders with ABI-derived Elixir
+  # types and conditionally emitting the MaxLineLength pragma for long
+  # bytestring topic-0 hashes.
   defp annotate_internal_defs({:defmodule, dm_meta, [name, [do: do_block]]}) do
     {:defmodule, dm_meta, [name, [do: annotate_block(do_block)]]}
   end

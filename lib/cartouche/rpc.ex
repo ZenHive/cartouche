@@ -42,21 +42,34 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
+  @spec decode_error(binary(), [binary() | ABI.FunctionSelector.t()]) :: :not_found | {:ok, binary() | nil, term()}
+  defp decode_error(data, errors) when is_binary(data) and is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
-      nil -> :not_found
-      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
+    with {:ok, %{error: error_name, args: error_params}} <- ABI.decode_error(data, all_errors),
+         {:ok, error_abi} <- find_error_abi(error_name, all_errors) do
+      classify_decoded_error(error_abi, error_params)
+    else
+      _ -> :not_found
     end
   end
 
   defp decode_error(_, _errors), do: :not_found
 
-  defp error_matches?(error, error_hash) do
-    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-    prefix == error_hash
+  @spec find_error_abi(binary() | nil, [binary() | ABI.FunctionSelector.t()]) :: {:ok, binary()} | :error
+  defp find_error_abi(error_name, errors) do
+    Enum.find_value(errors, :error, fn error ->
+      selector = normalize_error_selector(error)
+
+      if selector.function == error_name do
+        {:ok, ABI.FunctionSelector.encode(selector)}
+      end
+    end)
   end
+
+  @spec normalize_error_selector(binary() | ABI.FunctionSelector.t()) :: ABI.FunctionSelector.t()
+  defp normalize_error_selector(error) when is_binary(error), do: ABI.Parser.parse!(error)
+  defp normalize_error_selector(%ABI.FunctionSelector{} = error), do: error
 
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
   defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}

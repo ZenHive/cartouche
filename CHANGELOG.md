@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- INE-19 optional hieroglyph API adoption: `ABI.method_id/1` now replaces local 4-byte selector hashing in `lib/mix/cartouche.gen.ex:150` and `lib/mix/cartouche.gen.ex:420`, while preserving the full 32-byte event-topic hash separately; `ABI.decode_error/2` now drives RPC revert decoding at `lib/cartouche/rpc.ex:49`, with Cartouche's existing full-signature error map contract preserved by mapping the decoded error name back to the matching ABI definition. `ABI.encode_packed/2` had no current adoption opportunity after searching `lib/**` for packed-encoding and keccak patterns.
+
 ### Fixed
 
 - New `Cartouche.Transaction.Call` struct (`destination: <<_::160>>, data: binary()`) replaces the `%V2{}` masquerade for `eth_call` shapes. Generator-emitted `Cartouche.Contract.Sleuth.build_trx_query/3` now returns `%Call{}` instead of a partial `%V2{}`; `Cartouche.RPC` dispatch extended to accept `V1.t() | V2.t() | Call.t()`. Eth_call params are not transactions — never signed, never broadcast — and the prior abstraction lie drove the `invalid_contract` cascade through `Cartouche.Sleuth`. Structural fix collapses the cascade without widening V2 to nullable. Closes ROADMAP Task 54 / INE-10; Task 49 (`V2.encode/1` spec duplication) closes as superseded since the cascade is gone.
