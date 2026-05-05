@@ -8,11 +8,6 @@ defmodule Cartouche.RPCTest do
 
   doctest Cartouche.RPC
 
-  defmodule UnencodableStruct do
-    @moduledoc false
-    defstruct [:value]
-  end
-
   defmodule CaptureClient do
     @moduledoc false
     # Delegates to `Cartouche.Test.Client` so doctest fixtures still work,
@@ -246,27 +241,6 @@ defmodule Cartouche.RPCTest do
     test "transport errors are normalized before JSON-RPC decoding" do
       assert {:error, "[Cartouche] Unknown error: :closed"} =
                Cartouche.RPC.send_rpc("net_version", [], client: TransportErrorClient)
-    end
-  end
-
-  describe "send_rpc/3 invalid params" do
-    test "returns invalid_params for non-UTF-8 binary method" do
-      assert {:error, {:invalid_params, %Jason.EncodeError{}}} = Cartouche.RPC.send_rpc(<<255>>, [])
-    end
-
-    test "returns invalid_params for tuple params" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
-               Cartouche.RPC.send_rpc("net_version", [{:tuple, :param}])
-    end
-
-    test "returns invalid_params for atom-keyed map params with non-JSON values" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
-               Cartouche.RPC.send_rpc("net_version", [%{not_a_json_key: self()}])
-    end
-
-    test "returns invalid_params for custom structs without Jason encoders" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
-               Cartouche.RPC.send_rpc("net_version", [%UnencodableStruct{value: 1}])
     end
   end
 

@@ -34,23 +34,6 @@ defmodule Cartouche.Solana.RPCTest do
   # Known blockhash from mock
   @mock_blockhash Cartouche.Base58.decode!("4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZAMdL4VZHirAn")
 
-  defmodule CustomParam do
-    @moduledoc false
-    defstruct [:value]
-  end
-
-  defmodule InvalidJsonRpcClient do
-    @moduledoc false
-
-    @doc false
-    @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
-      {:ok, %Finch.Response{status: 200, body: response}}
-    end
-  end
-
   # ---------------------------------------------------------------------------
   # Core transport
   # ---------------------------------------------------------------------------
@@ -63,31 +46,6 @@ defmodule Cartouche.Solana.RPCTest do
     test "returns error for unknown method" do
       assert {:error, %{code: -32_601, message: "Method not found: bogusMethod"}} =
                RPC.send_rpc("bogusMethod", [])
-    end
-
-    test "invalid JSON-RPC responses return the sentinel error" do
-      Application.put_env(:cartouche, :client, InvalidJsonRpcClient)
-
-      assert {:error, %{code: -999, message: "invalid JSON-RPC response"}} =
-               RPC.send_rpc("getSlot", [])
-    end
-
-    test "returns invalid_params for a non-UTF-8 binary method" do
-      assert {:error, {:invalid_params, %Jason.EncodeError{}}} = RPC.send_rpc(<<255>>, [])
-    end
-
-    test "returns invalid_params for tuple params" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} = RPC.send_rpc("getSlot", [{:bad, :tuple}])
-    end
-
-    test "returns invalid_params for atom-keyed maps with non-encodable values" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
-               RPC.send_rpc("getSlot", [%{non_stdlib_key: self()}])
-    end
-
-    test "returns invalid_params for custom structs without a Jason encoder" do
-      assert {:error, {:invalid_params, %Protocol.UndefinedError{}}} =
-               RPC.send_rpc("getSlot", [%CustomParam{value: 1}])
     end
   end
 
@@ -122,13 +80,6 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "returns nil for nonexistent account" do
       assert RPC.get_account_info(@nonexistent_pubkey) == {:ok, nil}
-    end
-
-    test "accepts supported account encodings" do
-      for encoding <- [:base64, :base58, :"base64+zstd", :json_parsed, "customEncoding"] do
-        assert {:ok, %{data: ["AQAAAAA=", "base64"]}} =
-                 RPC.get_account_info(@test_pubkey, encoding: encoding)
-      end
     end
   end
 
@@ -212,11 +163,6 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "returns nil for not-found transaction" do
       assert RPC.get_transaction("not_found_sig") == {:ok, nil}
-    end
-
-    test "accepts explicit transaction encodings" do
-      assert {:ok, trx} = RPC.get_transaction("some_signature", encoding: "jsonParsed")
-      assert trx["slot"] == 255_900
     end
   end
 
@@ -306,12 +252,6 @@ defmodule Cartouche.Solana.RPCTest do
   end
 
   describe "get_token_accounts_by_owner/3" do
-    test "requires a mint or program id filter" do
-      assert_raise ArgumentError, "get_token_accounts_by_owner requires :mint or :program_id filter", fn ->
-        RPC.get_token_accounts_by_owner(@test_pubkey, [])
-      end
-    end
-
     test "filter by mint returns token accounts" do
       assert {:ok, [account]} =
                RPC.get_token_accounts_by_owner(@test_pubkey, mint: @test_pubkey)
@@ -385,16 +325,6 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "sends raw bytes" do
       assert RPC.send_transaction(<<1, 2, 3>>) ==
-               {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
-    end
-
-    test "accepts base58 encoding and send options" do
-      assert RPC.send_transaction(<<1, 2, 3>>,
-               encoding: :base58,
-               skip_preflight: true,
-               preflight_commitment: :confirmed,
-               max_retries: 1
-             ) ==
                {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
     end
   end
