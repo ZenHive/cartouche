@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-05
+
 ### Added
 
 - `Cartouche.Transaction.V4` adds EIP-7702 set-code transaction support for Pectra-era authorization-list transactions (`0x04`). V4 mirrors the existing typed-transaction shape with RLP encode/decode, outer transaction signing/recovery, transaction hashing, and authorization tuple signing/recovery over the EIP-7702 `0x05 || rlp([chain_id, address, nonce])` digest. A real mainnet type-4 vector pins raw signed transaction decoding, hash agreement, and both outer-signer and authorization-authority recovery.

@@ -13,14 +13,14 @@ It bundles four capabilities into one library:
 
 ## Status
 
-**`0.1.3` — current release** (2026-05-02). Refreshes `google_api_cloud_kms` to 0.43 (internalises the 0.40 arity change in the Ethereum + Solana KMS signers — public API of `Cartouche.{Signer,Solana.Signer}.CloudKMS` preserved). Earlier `0.1.x` releases ported the signet codebase under the `Cartouche` module tree, added the Solana surface, and shipped a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for what has shipped.
+**`0.2.0` — current release** (2026-05-05). Adds Pectra-era typed transactions (`Cartouche.Transaction.V3` for EIP-4844 blob, `V4` for EIP-7702 set-code), extracts `Cartouche.Transaction.Call` for `eth_call` shapes (collapses the `invalid_contract` cascade), preserves EIP-4844 blob fee fields on `Cartouche.Receipt`, hardens the RPC error envelope (`{:error, {:invalid_params, _}}` on encoder failure), adds `:eth` denomination support to `Cartouche.Wei.to_wei/1`, and pins regression coverage for the silent Hieroglyph 1.0–1.2 bug-fixes cartouche depends on. Earlier `0.1.x` releases ported the signet codebase under the `Cartouche` module tree, added the Solana surface, and shipped a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:cartouche, "~> 0.1"}
+    {:cartouche, "~> 0.2"}
   ]
 end
 ```

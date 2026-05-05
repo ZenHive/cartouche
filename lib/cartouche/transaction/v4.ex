@@ -163,12 +163,8 @@ defmodule Cartouche.Transaction.V4 do
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
   def decode(<<@tx_type, trx_enc::binary>>) do
-    with {:ok, fields} <- safe_rlp_decode(trx_enc),
-         {:ok, transaction} <- decode_fields(fields) do
-      {:ok, transaction}
-    else
-      {:error, reason} -> {:error, reason}
-      _ -> {:error, @invalid}
+    with {:ok, fields} <- safe_rlp_decode(trx_enc) do
+      decode_fields(fields)
     end
   end
 
@@ -463,9 +459,6 @@ defmodule Cartouche.Transaction.V4 do
          signature_r: signature_r,
          signature_s: signature_s
        }}
-    else
-      {:error, reason} -> {:error, reason}
-      _ -> {:error, @invalid}
     end
   end
 

@@ -30,7 +30,7 @@ defmodule Cartouche.Solana.RPC do
   @type rpc_error :: %{code: integer(), message: String.t()}
 
   @typedoc "Error returned when JSON encoding rejects the outbound request body."
-  @type invalid_params_error :: {:invalid_params, Jason.EncodeError.t() | Protocol.UndefinedError.t()}
+  @type invalid_params_error :: {:invalid_params, Exception.t()}
 
   @typedoc "All error shapes returned by `send_rpc/3`."
   @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | Jason.DecodeError.t() | String.t()
