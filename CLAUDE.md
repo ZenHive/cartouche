@@ -2,6 +2,8 @@
 
 @~/.claude/includes/across-instances.md
 @~/.claude/includes/critical-rules.md
+
+@~/.claude/includes/delegation-rules.md
 @~/.claude/includes/task-prioritization.md
 @~/.claude/includes/task-writing.md
 @~/.claude/includes/workflow-philosophy.md
