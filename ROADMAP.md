@@ -58,6 +58,8 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 ## 🎯 Current Focus
 
+**INE-17 / Phase 11 decode-struct atom audit corrected 2026-05-05.** Verified the generator emits return-field names as strings inside selector metadata, not compile-time atoms; both live `decode_structs: true` paths now explicitly pre-intern bounded ABI field atoms before calling Hieroglyph 1.4.0's `String.to_existing_atom` decoder. See [CHANGELOG `[Unreleased]`](CHANGELOG.md#unreleased).
+
 **`cartouche 0.1.3` cut 2026-05-02.** Phase 7.1 dep refresh — `google_api_cloud_kms` 0.38.1 → 0.43.0, internalising the 0.40 breaking arity change in both KMS signers behind a private `key_version_name/5` helper while preserving public API of `Cartouche.{Signer,Solana.Signer}.CloudKMS` (Tasks 24+25, 26 superseded). Phase 7.4 lockfile refresh closed Tasks 71 (`junit_formatter` 3.4.0 pin loosen) and 72 (`bandit` 1.11.0 lock-only). See [CHANGELOG `[0.1.3]`](CHANGELOG.md#013--2026-05-02).
 
 **`cartouche 0.1.2` cut 2026-05-01.** Dep refresh + `mix.exs` pin tightening — picks up `hieroglyph 1.4.0` (atom-table DOS guard on `decode_structs: true`, plus the silent bug-fix windfall in 1.0.0–1.2.0), `ex_dna 1.4.3`, `ex_ast 0.8.1`. Pin `hieroglyph: "~> 1.4"` raises the consumer floor to match what cartouche is now tested against. See [CHANGELOG `[0.1.2]`](CHANGELOG.md#012--2026-05-01).
@@ -421,7 +423,7 @@ Before opening any PR to `hayesgm/signet`:
 
 ## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
 
-**Status:** ⬜ pending — planted 2026-05-01 by a hieroglyph session surveying downstream impact.
+**Status:** 🔄 partially complete — decode-struct atom audit fixed under INE-17; bug-fix audit and optional API-adoption triage remain pending.
 
 **Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
 
@@ -429,7 +431,7 @@ Before opening any PR to `hayesgm/signet`:
 
 | # | Task | Status | D | B | U | Eff | Module |
 |---|------|--------|---|---|---|-----|--------|
-| TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CX]` | ⬜ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
+| TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CSR]` | ✅ | 5 | 7 | 5 | 1.20 📋 | `Cartouche.gen` + `Cartouche.Sleuth` |
 | TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
 | TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
@@ -437,8 +439,8 @@ Before opening any PR to `hayesgm/signet`:
 
 Hieroglyph 1.4.0 hardened the `decode_structs: true` path: field-name atoms must already exist in the VM atom table (`String.to_existing_atom/1` instead of `String.to_atom/1`). Decoder raises `ArgumentError` with a migration hint otherwise. Closes a DoS surface (atom-table exhaustion via attacker-controlled ABI field names); behavior change on the opt-in path. Two cartouche call sites:
 
-- `lib/mix/cartouche.gen.ex:611-614` — codegen emits `decode_structs: true` for return decoding in generated bindings. Field-name atoms are constructed from `unquote(names.selector)().returns` at generated-module compile time, so they ARE pre-interned by the time the generated function runs. **Likely safe — verify with a smoke test.**
-- `lib/cartouche/sleuth.ex:91-128` — `query_v2/4` defaults `decode_structs: true` and accepts the selector as a runtime parameter. Atoms only exist if the caller pre-interned them (e.g., codegen-time literal in their own module). If any caller hands a runtime-parsed `ABI.FunctionSelector` whose `:tuple_with_named_fields` came from a runtime ABI JSON parse, decoding will raise. **Audit caller surface, then either pre-intern at the boundary or document the requirement in `query_v2/4`'s `@doc`.**
+- `lib/mix/cartouche.gen.ex:607-610` — 🔧 fixed. The generator's `*_selector/0` template returns `Macro.escape(selector)` metadata whose return-field names remain strings (`%{name: "blockNumber"}` / `%{name: "cool"}`), not compile-time atom literals. Generated `exec_vm_*` wrappers now call a private `preintern_return_atoms!/1` helper before `ABI.decode(..., decode_structs: true)`, recursively covering tuple and array return types. Regenerated test-support bindings prove the emitted shape.
+- `lib/cartouche/sleuth.ex:91-128` — 🔧 fixed. `query_v2/4` accepts runtime selectors and defaults `decode_structs: true`, so callers can supply selectors whose field atoms are not yet interned. `try_decode/3` now pre-interns the bounded selector return-field atoms before decode. Regression coverage uses `Code.loaded?/1` and a dynamically unique field name to prove raw Hieroglyph decode raises while the Cartouche boundary succeeds.
 
 ### Audit 2 — silent bug-fix windfall (1.0.0–1.2.0)
 

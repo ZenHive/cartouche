@@ -357,6 +357,57 @@ defmodule SleuthTest do
   end
 
   describe "decode failures and return postprocessing" do
+    test "query_v2/4 pre-interns cold generated return-field atoms before struct decode" do
+      suffix = System.unique_integer([:positive])
+      module_name = Module.concat(Cartouche.Contract, "ColdLoadProbe#{suffix}")
+      field_name = "coldLoadReturnField#{suffix}"
+      field_atom_name = Macro.underscore(field_name)
+
+      refute Code.loaded?(module_name)
+      refute existing_atom?(field_atom_name)
+
+      Code.compile_string("""
+      defmodule #{inspect(module_name)} do
+        def bytecode, do: <<>>
+        def encode_query, do: <<>>
+
+        def query_selector do
+          %ABI.FunctionSelector{
+            returns: [%{name: #{inspect(field_name)}, type: {:uint, 256}}]
+          }
+        end
+      end
+      """)
+
+      assert Code.loaded?(module_name)
+      refute existing_atom?(field_atom_name)
+
+      selector = module_name.query_selector()
+      set_sleuth_result(ABI.TypeEncoder.encode([7], %ABI.FunctionSelector{types: selector.returns}))
+
+      assert_raise ArgumentError, ~r/requires the snake_case field atom/, fn ->
+        ABI.decode(
+          %ABI.FunctionSelector{types: selector.returns},
+          ABI.TypeEncoder.encode([7], %ABI.FunctionSelector{types: selector.returns}),
+          decode_structs: true
+        )
+      end
+
+      refute existing_atom?(field_atom_name)
+
+      assert {:ok, [{key, 7}]} =
+               Sleuth.query_v2(
+                 module_name.bytecode(),
+                 module_name.encode_query(),
+                 selector,
+                 client: StaticEthCallClient,
+                 named_returns: true
+               )
+
+      assert Atom.to_string(key) == field_atom_name
+      assert existing_atom?(field_atom_name)
+    end
+
     test "returns a decode-bytes error when the eth_call result is not ABI bytes" do
       Process.put(:sleuth_eth_call_result, "0x1234")
 
@@ -468,5 +519,12 @@ defmodule SleuthTest do
 
   defp set_sleuth_result(query_result) do
     Process.put(:sleuth_eth_call_result, Base.encode16(ABI.encode("(bytes)", [{query_result}])))
+  end
+
+  defp existing_atom?(name) do
+    _atom = String.to_existing_atom(name)
+    true
+  rescue
+    ArgumentError -> false
   end
 end

@@ -2,7 +2,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @moduledoc false
   use Cartouche.Hex
 
-  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.Call
 
   @doc false
   @spec contract_name() :: term()
@@ -38,7 +38,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec build_trx_query(term()) :: term()
   def build_trx_query(contract) do
-    %V2{destination: contract, data: encode_query()}
+    %Call{destination: contract, data: encode_query()}
   end
 
   @doc false
@@ -105,7 +105,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec build_trx_query_cool(term()) :: term()
   def build_trx_query_cool(contract) do
-    %V2{destination: contract, data: encode_query_cool()}
+    %Call{destination: contract, data: encode_query_cool()}
   end
 
   @doc false
@@ -138,6 +138,8 @@ defmodule Cartouche.Contract.BlockNumber do
   def exec_vm_query_cool(exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_query_cool(), exec_opts) do
       {:ok, return_data} ->
+        preintern_return_atoms!(query_cool_selector().returns)
+
         case ABI.decode(%ABI.FunctionSelector{types: query_cool_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
@@ -145,7 +147,7 @@ defmodule Cartouche.Contract.BlockNumber do
         end
 
       {:revert, revert_data} ->
-        case decode_error(revert_data) do
+        case apply(__MODULE__, :decode_error, [revert_data]) do
           {:ok, error, data} -> {:revert, error, data}
           :not_found -> {:revert, "Unknown", revert_data}
         end
@@ -186,7 +188,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec build_trx_query_four(term()) :: term()
   def build_trx_query_four(contract) do
-    %V2{destination: contract, data: encode_query_four()}
+    %Call{destination: contract, data: encode_query_four()}
   end
 
   @doc false
@@ -219,6 +221,8 @@ defmodule Cartouche.Contract.BlockNumber do
   def exec_vm_query_four(exec_opts \\ []) do
     case Cartouche.VM.exec_call(deployed_bytecode(), encode_query_four(), exec_opts) do
       {:ok, return_data} ->
+        preintern_return_atoms!(query_four_selector().returns)
+
         case ABI.decode(%ABI.FunctionSelector{types: query_four_selector().returns}, return_data, decode_structs: true) do
           m when is_map(m) -> {:ok, m}
           [decoded] -> {:ok, decoded}
@@ -226,7 +230,7 @@ defmodule Cartouche.Contract.BlockNumber do
         end
 
       {:revert, revert_data} ->
-        case decode_error(revert_data) do
+        case apply(__MODULE__, :decode_error, [revert_data]) do
           {:ok, error, data} -> {:revert, error, data}
           :not_found -> {:revert, "Unknown", revert_data}
         end
@@ -267,7 +271,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec build_trx_query_three(term()) :: term()
   def build_trx_query_three(contract) do
-    %V2{destination: contract, data: encode_query_three()}
+    %Call{destination: contract, data: encode_query_three()}
   end
 
   @doc false
@@ -323,7 +327,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec build_trx_query_two(term()) :: term()
   def build_trx_query_two(contract) do
-    %V2{destination: contract, data: encode_query_two()}
+    %Call{destination: contract, data: encode_query_two()}
   end
 
   @doc false
@@ -391,11 +395,7 @@ defmodule Cartouche.Contract.BlockNumber do
   @doc false
   @spec decode_error(term()) :: term()
   def decode_error(_) do
-    if true do
-      :not_found
-    else
-      {:ok, "Impossible", <<>>}
-    end
+    :not_found
   end
 
   @doc false
@@ -412,5 +412,46 @@ defmodule Cartouche.Contract.BlockNumber do
     hex!(
       "0x608060405234801561001057600080fd5b50600436106100575760003560e01c80632c46b2051461005c57806335007a7a1461006f5780636bbc9c1414610082578063a0b43ed614610097578063db7f255d1461005c575b600080fd5b6040514381526020015b60405180910390f35b6040805143808252602082015201610066565b61008a6100bf565b604051610066919061021c565b604080518082018252600381526201020360e81b6020820152905161006691906001906102ab565b6100c76101a2565b60408051600380825260808201909252600091602082016060803683370190505090506001816000815181106100ff576100ff6102d5565b602002602001018181525050600281600281518110610120576101206102d5565b602002602001018181525050600381600381518110610141576101416102d5565b6020908102919091018101919091526040805160a0810182526002606080830191825261686960f01b608084015290825281840194909452815193840182526004928401928352636d656f7760e01b84830152918352810191909152919050565b604051806060016040528060608152602001606081526020016101d16040518060200160405280606081525090565b905290565b6000815180845260005b818110156101fc576020818501810151868301820152016101e0565b506000602082860101526020601f19601f83011685010191505092915050565b60006020808352835160608285015261023860808501826101d6565b82860151601f1986830381016040880152815180845291850193506000929091908501905b8084101561027d578451825293850193600193909301929085019061025d565b5060408801518782038301606089015251858252935061029f858201856101d6565b98975050505050505050565b6040815260006102be60408301856101d6565b905060018060a01b03831660208301529392505050565b634e487b7160e01b600052603260045260246000fdfea2646970667358221220e8c5d69430acd7260e4e988c876237e9e690c8fb5cf361153ea4369423beea3764736f6c63430008180033"
     )
+  end
+
+  defp preintern_return_atoms!(types) when is_list(types) do
+    Enum.each(types, &preintern_return_atom!/1)
+  end
+
+  defp preintern_return_atoms!(_) do
+    :ok
+  end
+
+  defp preintern_return_atom!(%{name: name, type: type}) do
+    preintern_name_atom!(name)
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_return_atom!(_) do
+    :ok
+  end
+
+  defp preintern_type_atoms!({:tuple, types}) do
+    preintern_return_atoms!(types)
+  end
+
+  defp preintern_type_atoms!({:array, type}) do
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_type_atoms!({:array, type, _size}) do
+    preintern_type_atoms!(type)
+  end
+
+  defp preintern_type_atoms!(_) do
+    :ok
+  end
+
+  defp preintern_name_atom!(name) when is_binary(name) and name != "" do
+    name |> Macro.underscore() |> String.to_atom()
+  end
+
+  defp preintern_name_atom!(_) do
+    :ok
   end
 end

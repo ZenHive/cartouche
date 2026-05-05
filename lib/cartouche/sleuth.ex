@@ -114,6 +114,8 @@ defmodule Cartouche.Sleuth do
   end
 
   defp try_decode(query_res, selector, decode_structs) do
+    if decode_structs, do: preintern_decode_struct_atoms(selector.returns)
+
     {:ok,
      ABI.decode(
        %ABI.FunctionSelector{types: selector.returns},
@@ -124,6 +126,24 @@ defmodule Cartouche.Sleuth do
     e ->
       {:error, "error decoding: #{inspect(e)}"}
   end
+
+  defp preintern_decode_struct_atoms(types), do: Enum.each(types, &preintern_type_atoms/1)
+
+  defp preintern_type_atoms(%{name: name, type: type}) do
+    preintern_name_atom(name)
+    preintern_type_atoms(type)
+  end
+
+  defp preintern_type_atoms(_), do: :ok
+
+  # hieroglyph 1.4.0 requires decode_structs field atoms to exist already.
+  # Selectors may be built dynamically, so Cartouche owns this bounded pre-intern.
+  defp preintern_name_atom(name) when is_binary(name) and name != "" do
+    _ = String.to_atom(Macro.underscore(name))
+    :ok
+  end
+
+  defp preintern_name_atom(_), do: :ok
 
   # NOTE: decode_structs weirdly also does dynamic return types with named
   # returns, which interacts poorly with our named_returns opt.
