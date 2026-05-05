@@ -8,6 +8,25 @@ defmodule Cartouche.RPCTest do
 
   doctest Cartouche.RPC
 
+  defmodule CustomRevertClient do
+    @moduledoc false
+
+    @revert_data "0x" <> Base.encode16(ABI.encode("Cool(uint256,string)", [1, "cat"]))
+
+    def request(%Finch.Request{body: body}, _finch_name, _opts) do
+      id = Jason.decode!(body)["id"]
+
+      response =
+        Jason.encode!(%{
+          "jsonrpc" => "2.0",
+          "error" => %{"code" => 3, "message" => "execution reverted", "data" => @revert_data},
+          "id" => id
+        })
+
+      {:ok, %Finch.Response{status: 200, body: response}}
+    end
+  end
+
   defmodule CaptureClient do
     @moduledoc false
     # Delegates to `Cartouche.Test.Client` so doctest fixtures still work,
@@ -173,6 +192,19 @@ defmodule Cartouche.RPCTest do
                1
                |> V1.new({100, :gwei}, 100_000, <<11::160>>, {2, :wei}, <<1, 2, 3>>)
                |> Cartouche.RPC.call_trx(errors: ["Cool(uint256,string)"])
+    end
+
+    test "custom revert errors are decoded through selector-prefixed revert data" do
+      revert_data = ABI.encode("Cool(uint256,string)", [1, "cat"])
+
+      assert {:ok, %{error: "Cool", args: [1, "cat"]}} =
+               ABI.decode_error(revert_data, ["Cool(uint256,string)"])
+
+      assert {:error, %{error_abi: "Cool(uint256,string)", error_params: [1, "cat"]}} =
+               Cartouche.RPC.call_trx(
+                 V1.new(1, {100, :gwei}, 100_000, <<11::160>>, {2, :wei}, <<1, 2, 3>>),
+                 errors: ["Cool(uint256,string)"]
+               )
     end
 
     test "Panic(uint256) reverts keep the raw revert bytes for recognized panic codes" do

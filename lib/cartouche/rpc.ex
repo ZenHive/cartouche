@@ -41,24 +41,25 @@ defmodule Cartouche.RPC do
     }
   end
 
+  @typep decoded_revert :: {:ok, String.t() | nil, [term()] | map() | nil} | :not_found
+
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
+  @spec decode_error(binary(), [binary()]) :: decoded_revert()
+  defp decode_error(revert_data, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
-      nil -> :not_found
-      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
+    case ABI.decode_error(revert_data, all_errors) do
+      {:ok, %{error: "Panic", args: args}} -> classify_decoded_error("Panic(uint256)", args)
+      {:ok, %{args: args}} -> {:ok, matching_error_abi(revert_data, all_errors), args}
+      {:error, _} -> :not_found
     end
   end
 
+  @spec decode_error(term(), term()) :: :not_found
   defp decode_error(_, _errors), do: :not_found
 
-  defp error_matches?(error, error_hash) do
-    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-    prefix == error_hash
-  end
-
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
+  @spec classify_decoded_error(String.t(), [term()] | map()) :: {:ok, String.t(), [term()] | map() | nil}
   defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}
   defp classify_decoded_error("Panic(uint256)", [0x11]), do: {:ok, "arithmetic error: overflow or underflow", nil}
   defp classify_decoded_error("Panic(uint256)", [0x12]), do: {:ok, "failed to convert value to enum", nil}
@@ -71,6 +72,12 @@ defmodule Cartouche.RPC do
 
   defp classify_decoded_error(error_abi, params), do: {:ok, error_abi, params}
 
+  @spec matching_error_abi(binary(), [binary()]) :: String.t() | nil
+  defp matching_error_abi(<<error_hash::binary-size(4), _::binary>>, errors) do
+    Enum.find(errors, &(ABI.method_id(&1) == error_hash))
+  end
+
+  @spec build_revert_data(String.t(), [binary()]) :: %{optional(atom()) => term()}
   defp build_revert_data(data_hex, errors) do
     case Hex.decode_hex(data_hex) do
       {:ok, data} ->
@@ -81,6 +88,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec decode_revert_error(binary(), [binary()]) :: %{optional(:error_abi | :error_params) => term()}
   defp decode_revert_error(data, errors) do
     case decode_error(data, errors) do
       {:ok, error_abi, error_params} when not is_nil(error_params) ->

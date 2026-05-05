@@ -421,7 +421,7 @@ Before opening any PR to `hayesgm/signet`:
 
 ## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
 
-**Status:** ⬜ pending — planted 2026-05-01 by a hieroglyph session surveying downstream impact.
+**Status:** ✅ complete — optional adoption landed 2026-05-05 (INE-19).
 
 **Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
 
@@ -431,7 +431,7 @@ Before opening any PR to `hayesgm/signet`:
 |---|------|--------|---|---|---|-----|--------|
 | TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CX]` | ⬜ | 3 | 7 | 5 | 2.00 🚀 | `Cartouche.gen` + `Cartouche.Sleuth` |
 | TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
-| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
+| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ✅ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
 ### Audit 1 — `decode_structs: true` and atom existence
 
