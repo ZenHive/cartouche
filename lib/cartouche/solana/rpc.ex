@@ -26,6 +26,15 @@ defmodule Cartouche.Solana.RPC do
 
   @default_timeout Application.compile_env(:cartouche, :solana_timeout, 30_000)
 
+  @typedoc "JSON-RPC error envelope returned by a Solana node or by response validation."
+  @type rpc_error :: %{code: integer(), message: String.t()}
+
+  @typedoc "Error returned when JSON encoding rejects the outbound request body."
+  @type invalid_params_error :: {:invalid_params, Jason.EncodeError.t() | Protocol.UndefinedError.t()}
+
+  @typedoc "All error shapes returned by `send_rpc/3`."
+  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | Jason.DecodeError.t() | String.t()
+
   defp solana_node, do: Application.get_env(:cartouche, :solana_node)
   defp http_client, do: Application.get_env(:cartouche, :client, Finch)
   defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
@@ -44,10 +53,16 @@ defmodule Cartouche.Solana.RPC do
 
   ## Examples
 
-      Cartouche.Solana.RPC.send_rpc("getSlot", [])
+      iex> Cartouche.Solana.RPC.send_rpc("getSlot", [])
       {:ok, 123456789}
+
+      iex> match?({:error, {:invalid_params, %Jason.EncodeError{}}}, Cartouche.Solana.RPC.send_rpc(<<255>>, []))
+      true
+
+      iex> match?({:error, {:invalid_params, %Protocol.UndefinedError{}}}, Cartouche.Solana.RPC.send_rpc("getSlot", [self()]))
+      true
   """
-  @spec send_rpc(String.t(), list(), keyword()) :: {:ok, term()} | {:error, term()}
+  @spec send_rpc(String.t(), list(), keyword()) :: {:ok, term()} | {:error, send_rpc_error()}
   def send_rpc(method, params, opts \\ []) do
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     url = Keyword.get(opts, :solana_node, solana_node())
@@ -65,14 +80,24 @@ defmodule Cartouche.Solana.RPC do
       {"Content-Type", "application/json"}
     ]
 
-    request = Finch.build(:post, url, headers, Jason.encode!(body))
+    with {:ok, encoded_body} <- encode_body(body) do
+      request = Finch.build(:post, url, headers, encoded_body)
 
-    finch_result =
-      normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
+      finch_result =
+        normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
 
-    with {:ok, %Finch.Response{body: resp_body}} <- finch_result do
-      decode_response(resp_body, id, method)
+      with {:ok, %Finch.Response{body: resp_body}} <- finch_result do
+        decode_response(resp_body, id, method)
+      end
     end
+  end
+
+  @spec encode_body(map()) :: {:ok, binary()} | {:error, invalid_params_error()}
+  defp encode_body(body) do
+    {:ok, Jason.encode!(body)}
+  rescue
+    e in [Jason.EncodeError, Protocol.UndefinedError] ->
+      {:error, {:invalid_params, e}}
   end
 
   defp decode_response(response, id, method) do

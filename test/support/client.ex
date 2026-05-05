@@ -955,3 +955,15 @@ defmodule Cartouche.Test.Client do
   @spec eth_blockNumber() :: String.t()
   def eth_blockNumber, do: "0x44"
 end
+
+defmodule Cartouche.Test.InvalidHexResultClient do
+  @moduledoc false
+
+  @doc false
+  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
+  def request(%Finch.Request{body: body}, _finch_name, _opts) do
+    id = Jason.decode!(body)["id"]
+    response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => "not hex", "id" => id})
+    {:ok, %Finch.Response{status: 200, body: response}}
+  end
+end
