@@ -142,12 +142,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec dedup_named_abi(map(), String.t(), ABI.FunctionSelector.t(), [map()], [{String.t(), String.t()}]) ::
+          {[map()], [{String.t(), String.t()}]}
   defp dedup_named_abi(abi, name, fn_sel, acc, seen) do
     lower_name = String.downcase(name)
 
-    <<abi_enc_signature::binary-size(4), _::binary>> =
-      Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))
-
+    abi_enc_signature = ABI.method_id(fn_sel)
     "0x" <> abi_sig = Cartouche.Hex.encode_hex(abi_enc_signature)
     seen_tuple = {lower_name, abi_sig}
 
@@ -409,12 +409,18 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec signature_data(ABI.FunctionSelector.t()) :: %{
+          abi: binary(),
+          abi_enc_signature_list: [byte()],
+          abi_enc_signature_hex: Macro.t(),
+          signature_list: [byte()],
+          error_name: String.t() | nil
+        }
   defp signature_data(selector) do
     abi = ABI.FunctionSelector.encode(selector)
+    abi_enc_signature = ABI.method_id(selector)
 
-    signature =
-      <<abi_enc_signature::binary-size(4), _::binary>> =
-      Cartouche.Hash.keccak(abi)
+    signature = Cartouche.Hash.keccak(abi)
 
     abi_enc_signature_list = :erlang.binary_to_list(abi_enc_signature)
     abi_enc_signature_hex_base = Cartouche.Hex.encode_hex(abi_enc_signature)

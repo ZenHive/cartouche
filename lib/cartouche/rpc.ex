@@ -42,34 +42,57 @@ defmodule Cartouche.RPC do
   end
 
   # See https://blog.soliditylang.org/2021/04/21/custom-errors/
-  defp decode_error(<<error_hash::binary-size(4), error_data::binary>>, errors) when is_list(errors) do
+  @spec decode_error(binary(), [String.t()] | nil) :: :not_found | {:ok, String.t(), [term()] | nil}
+  defp decode_error(data, errors) when is_list(errors) do
     all_errors = ["Panic(uint256)" | errors]
 
-    case Enum.find(all_errors, &error_matches?(&1, error_hash)) do
-      nil -> :not_found
-      error_abi -> classify_decoded_error(error_abi, ABI.decode(error_abi, error_data))
+    case ABI.decode_error(data, all_errors) do
+      {:ok, %{error: error_name, args: params}} -> classify_decoded_error(error_name, params, all_errors, data)
+      {:error, _reason} -> :not_found
     end
   end
 
   defp decode_error(_, _errors), do: :not_found
 
-  defp error_matches?(error, error_hash) do
-    <<prefix::binary-size(4), _::binary>> = Cartouche.Hash.keccak(error)
-    prefix == error_hash
-  end
-
   # From https://blog.soliditylang.org/2020/10/28/solidity-0.8.x-preview/
-  defp classify_decoded_error("Panic(uint256)", [0x01]), do: {:ok, "assertion failure", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x11]), do: {:ok, "arithmetic error: overflow or underflow", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x12]), do: {:ok, "failed to convert value to enum", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x21]), do: {:ok, "popped from empty array", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x32]), do: {:ok, "out-of-bounds array access", nil}
-  defp classify_decoded_error("Panic(uint256)", [0x41]), do: {:ok, "out of memory", nil}
+  @spec classify_decoded_error(String.t(), [term()], [String.t()], binary()) ::
+          :not_found | {:ok, String.t(), [term()] | nil}
+  defp classify_decoded_error("Panic", [0x00], _errors, _data), do: {:ok, "compiler inserted panic", nil}
 
-  defp classify_decoded_error("Panic(uint256)", [0x51]),
+  defp classify_decoded_error("Panic", [0x01], _errors, _data), do: {:ok, "assertion failure", nil}
+
+  defp classify_decoded_error("Panic", [0x11], _errors, _data), do: {:ok, "arithmetic error: overflow or underflow", nil}
+
+  defp classify_decoded_error("Panic", [0x12], _errors, _data), do: {:ok, "division or modulo by zero", nil}
+
+  defp classify_decoded_error("Panic", [0x21], _errors, _data), do: {:ok, "failed to convert value to enum", nil}
+
+  defp classify_decoded_error("Panic", [0x22], _errors, _data), do: {:ok, "incorrectly encoded storage byte array", nil}
+
+  defp classify_decoded_error("Panic", [0x31], _errors, _data), do: {:ok, "popped from empty array", nil}
+
+  defp classify_decoded_error("Panic", [0x32], _errors, _data), do: {:ok, "out-of-bounds array access", nil}
+  defp classify_decoded_error("Panic", [0x41], _errors, _data), do: {:ok, "out of memory", nil}
+
+  defp classify_decoded_error("Panic", [0x51], _errors, _data),
     do: {:ok, "called a zero-initialized variable of internal function type", nil}
 
-  defp classify_decoded_error(error_abi, params), do: {:ok, error_abi, params}
+  defp classify_decoded_error(error_name, params, errors, data) do
+    case find_error_abi(error_name, errors, data) do
+      {:ok, error_abi} -> {:ok, error_abi, params}
+      :error -> :not_found
+    end
+  end
+
+  @spec find_error_abi(String.t(), [String.t()], binary()) :: {:ok, String.t()} | :error
+  defp find_error_abi(error_name, errors, data) do
+    Enum.find_value(errors, :error, fn error ->
+      case ABI.decode_error(data, [error]) do
+        {:ok, %{error: ^error_name}} -> {:ok, error}
+        _ -> nil
+      end
+    end)
+  end
 
   defp build_revert_data(data_hex, errors) do
     case Hex.decode_hex(data_hex) do
