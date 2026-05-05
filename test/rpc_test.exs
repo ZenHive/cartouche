@@ -115,26 +115,6 @@ defmodule Cartouche.RPCTest do
     def request(_request, _finch_name, _opts), do: {:error, :closed}
   end
 
-  defmodule InvalidHexClient do
-    @moduledoc false
-
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => "not hex", "id" => id})
-      {:ok, %Finch.Response{status: 200, body: response}}
-    end
-  end
-
-  defmodule BadHexClient do
-    @moduledoc false
-
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => "not hex", "id" => id})
-      {:ok, %Finch.Response{status: 200, body: response}}
-    end
-  end
-
   describe "block-param wire encoding" do
     setup do
       Process.register(self(), :cartouche_rpc_capture)
