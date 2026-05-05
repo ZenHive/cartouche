@@ -43,18 +43,19 @@ defmodule Cartouche.Transaction.V4 do
           non_neg_integer(),
           <<_::160>>,
           non_neg_integer(),
-          boolean() | nil,
-          <<_::256>> | nil,
-          <<_::256>> | nil
+          boolean(),
+          <<_::256>>,
+          <<_::256>>
         }
 
   @type unsigned_authorization :: {non_neg_integer(), <<_::160>>, non_neg_integer()}
+  @type authorization_input :: authorization() | {non_neg_integer(), <<_::160>>, non_neg_integer(), nil, nil, nil}
 
   @type t :: %__MODULE__{
           chain_id: non_neg_integer(),
           nonce: non_neg_integer(),
-          max_priority_fee_per_gas: non_neg_integer(),
-          max_fee_per_gas: non_neg_integer(),
+          max_priority_fee_per_gas: non_neg_integer() | nil,
+          max_fee_per_gas: non_neg_integer() | nil,
           gas_limit: non_neg_integer(),
           destination: <<_::160>>,
           amount: non_neg_integer(),
@@ -199,8 +200,9 @@ defmodule Cartouche.Transaction.V4 do
   @doc """
   Adds an outer transaction signature from a packed binary (`r <> s <> v`).
   """
-  @spec add_signature(t(), <<_::512, _::_*8>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>) do
+  @spec add_signature(t(), <<_::520, _::_*8>>) :: t()
+  def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>)
+      when byte_size(v_bin) > 0 do
     %{transaction | signature_y_parity: signature_y_parity(v_bin), signature_r: r, signature_s: s}
   end
 
@@ -256,11 +258,12 @@ defmodule Cartouche.Transaction.V4 do
   @doc """
   Adds an authorization signature from a packed binary (`r <> s <> v`).
   """
-  @spec add_authorization_signature(authorization(), <<_::512, _::_*8>>) :: authorization()
+  @spec add_authorization_signature(authorization_input(), <<_::520, _::_*8>>) :: authorization()
   def add_authorization_signature(
         {chain_id, address, nonce, _v, _r, _s},
         <<r::binary-size(32), s::binary-size(32), v_bin::binary>>
-      ) do
+      )
+      when byte_size(v_bin) > 0 do
     {chain_id, address, nonce, signature_y_parity(v_bin), r, s}
   end
 
@@ -311,7 +314,7 @@ defmodule Cartouche.Transaction.V4 do
       amount,
       data,
       encode_access_list(access_list),
-      Enum.map(authorization_list, &encode_authorization/1)
+      encode_authorization_list(authorization_list)
     ] ++ encode_signature_fields(signature_y_parity, signature_r, signature_s)
   end
 
@@ -322,15 +325,20 @@ defmodule Cartouche.Transaction.V4 do
     Enum.map(access_list, fn {address, storage} -> [address, storage] end)
   end
 
+  @spec encode_authorization_list([authorization()] | nil) :: list()
+  defp encode_authorization_list(nil), do: []
+  defp encode_authorization_list(authorization_list), do: Enum.map(authorization_list, &encode_authorization/1)
+
   @spec encode_authorization(authorization()) :: list()
-  defp encode_authorization({chain_id, address, nonce, y_parity, r, s}) do
+  defp encode_authorization({chain_id, address, nonce, y_parity, r, s})
+       when is_boolean(y_parity) and is_binary(r) and is_binary(s) do
     [
       chain_id,
       address,
       nonce,
       y_parity_integer(y_parity),
-      String.trim_leading(r, <<0>>),
-      String.trim_leading(s, <<0>>)
+      trim_leading_zeroes(r),
+      trim_leading_zeroes(s)
     ]
   end
 
@@ -338,10 +346,39 @@ defmodule Cartouche.Transaction.V4 do
   defp encode_signature_fields(y_parity, r, s) when is_nil(y_parity) or is_nil(r) or is_nil(s), do: []
 
   defp encode_signature_fields(y_parity, r, s) do
-    [y_parity_integer(y_parity), String.trim_leading(r, <<0>>), String.trim_leading(s, <<0>>)]
+    [y_parity_integer(y_parity), trim_leading_zeroes(r), trim_leading_zeroes(s)]
   end
 
   @spec decode_fields(list()) :: {:ok, t()} | {:error, String.t()}
+  defp decode_fields([
+         chain_id,
+         nonce,
+         max_priority_fee_per_gas,
+         max_fee_per_gas,
+         gas_limit,
+         destination,
+         amount,
+         data,
+         access_list,
+         authorization_list
+       ]) do
+    decode_transaction_fields(
+      [
+        chain_id,
+        nonce,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        destination,
+        amount,
+        data,
+        access_list,
+        authorization_list
+      ],
+      {nil, nil, nil}
+    )
+  end
+
   defp decode_fields([
          chain_id,
          nonce,
@@ -357,6 +394,48 @@ defmodule Cartouche.Transaction.V4 do
          signature_r,
          signature_s
        ]) do
+    fields = [
+      chain_id,
+      nonce,
+      max_priority_fee_per_gas,
+      max_fee_per_gas,
+      gas_limit,
+      destination,
+      amount,
+      data,
+      access_list,
+      authorization_list
+    ]
+
+    with {:ok, signature_y_parity} <- decode_y_parity(signature_y_parity),
+         {:ok, signature_r} <- decode_word(signature_r),
+         {:ok, signature_s} <- decode_word(signature_s) do
+      decode_transaction_fields(fields, {signature_y_parity, signature_r, signature_s})
+    else
+      _ -> {:error, @invalid}
+    end
+  end
+
+  defp decode_fields(_), do: {:error, @invalid}
+
+  @spec decode_transaction_fields(list(), {boolean() | nil, <<_::256>> | nil, <<_::256>> | nil}) ::
+          {:ok, t()} | {:error, String.t()}
+  defp decode_transaction_fields(
+         [
+           chain_id,
+           nonce,
+           max_priority_fee_per_gas,
+           max_fee_per_gas,
+           gas_limit,
+           destination,
+           amount,
+           data,
+           access_list,
+           authorization_list
+         ],
+         {signature_y_parity, signature_r, signature_s}
+       )
+       when is_binary(data) do
     with {:ok, chain_id} <- decode_uint(chain_id, 32),
          {:ok, nonce} <- decode_uint(nonce, 8),
          {:ok, max_priority_fee_per_gas} <- decode_uint(max_priority_fee_per_gas, 32),
@@ -365,10 +444,7 @@ defmodule Cartouche.Transaction.V4 do
          {:ok, amount} <- decode_uint(amount, 32),
          {:ok, access_list} <- decode_access_list(access_list),
          {:ok, authorization_list} <- decode_authorization_list(authorization_list),
-         {:ok, destination} <- decode_address(destination),
-         {:ok, signature_y_parity} <- decode_y_parity(signature_y_parity),
-         {:ok, signature_r} <- decode_word(signature_r),
-         {:ok, signature_s} <- decode_word(signature_s) do
+         {:ok, destination} <- decode_address(destination) do
       {:ok,
        %__MODULE__{
          chain_id: chain_id,
@@ -390,7 +466,11 @@ defmodule Cartouche.Transaction.V4 do
     end
   end
 
-  defp decode_fields(_), do: {:error, @invalid}
+  defp decode_transaction_fields(_, _), do: {:error, @invalid}
+
+  @spec trim_leading_zeroes(binary()) :: binary()
+  defp trim_leading_zeroes(<<0, rest::binary>>), do: trim_leading_zeroes(rest)
+  defp trim_leading_zeroes(value), do: value
 
   @spec decode_access_list(list()) :: {:ok, [{<<_::160>>, [<<_::256>>]}]} | {:error, String.t()}
   defp decode_access_list(access_list) when is_list(access_list) do
@@ -465,7 +545,9 @@ defmodule Cartouche.Transaction.V4 do
   defp decode_exact_binary(value, size) when byte_size(value) == size, do: {:ok, value}
   defp decode_exact_binary(_, _size), do: {:error, @invalid}
 
-  @spec decode_y_parity(binary()) :: {:ok, boolean()} | {:error, String.t()}
+  @spec decode_y_parity(binary() | nil) :: {:ok, boolean() | nil} | {:error, String.t()}
+  defp decode_y_parity(nil), do: {:ok, nil}
+
   defp decode_y_parity(y_parity) do
     case decode_uint(y_parity, 1) do
       {:ok, 0} -> {:ok, false}

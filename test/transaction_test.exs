@@ -263,6 +263,12 @@ defmodule Cartouche.TransactionTest do
       assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
     end
 
+    test "round-trips unsigned transactions without signature fields" do
+      transaction = V4.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], [], :mainnet)
+
+      assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
+    end
+
     test "round-trips access-list storage keys" do
       transaction =
         [signed_authorization(1, <<2::160>>, 7)]
@@ -276,6 +282,15 @@ defmodule Cartouche.TransactionTest do
       transaction = v4_transaction([])
 
       assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
+    end
+
+    test "normalizes nil authorization lists at the encoding boundary" do
+      transaction =
+        1
+        |> V4.new({1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], nil, :mainnet)
+        |> V4.add_signature(<<1::256, 2::256, 1>>)
+
+      assert {:ok, %{authorization_list: []}} = transaction |> V4.encode() |> V4.decode()
     end
 
     test "supports multiple authorization entries including chain_id 0" do
@@ -488,6 +503,28 @@ defmodule Cartouche.TransactionTest do
       assert {:error, "invalid v4 transaction"} = V4.decode(malformed_access_entry)
       assert {:error, "invalid v4 transaction"} = V4.decode(malformed_authorization_entry)
     end
+
+    test "decode rejects non-binary data payloads" do
+      encoded =
+        <<0x04>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            [<<1, 2, 3>>],
+            [],
+            [encode_authorization_for_test(signed_authorization(1, <<2::160>>, 7))],
+            1,
+            1,
+            2
+          ])
+
+      assert {:error, "invalid v4 transaction"} = V4.decode(encoded)
+    end
   end
 
   describe "V4 signatures and hashes" do
@@ -526,6 +563,18 @@ defmodule Cartouche.TransactionTest do
       assert V4.hash(V4.encode(transaction)) == V4.hash(transaction)
     end
 
+    test "encodes signatures with binary-safe leading-zero trimming" do
+      transaction =
+        []
+        |> v4_transaction()
+        |> Map.merge(%{signature_r: <<0, 0xFF, 1::240>>, signature_s: <<0, 0xFE, 2::240>>})
+
+      <<0x04, payload::binary>> = V4.encode(transaction)
+      decoded_fields = ExRLP.decode(payload)
+
+      assert [<<0xFF, 1::240>>, <<0xFE, 2::240>>] = Enum.slice(decoded_fields, 11, 2)
+    end
+
     test "authorization_hash/1 accepts signed and unsigned authorization tuples" do
       unsigned = {1, <<2::160>>, 7}
       signed = signed_authorization(1, <<2::160>>, 7)
@@ -559,6 +608,17 @@ defmodule Cartouche.TransactionTest do
 
       assert {:error, "authorization missing signature"} = V4.get_authorization_signature(authorization)
       assert {:error, "authorization missing signature"} = V4.recover_authority(authorization)
+    end
+
+    test "rejects packed signatures without recovery bytes" do
+      transaction = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+      authorization = {1, <<2::160>>, 7, nil, nil, nil}
+
+      assert_raise FunctionClauseError, fn -> V4.add_signature(transaction, <<1::256, 2::256>>) end
+
+      assert_raise FunctionClauseError, fn ->
+        V4.add_authorization_signature(authorization, <<1::256, 2::256>>)
+      end
     end
   end
 
