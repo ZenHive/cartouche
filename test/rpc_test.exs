@@ -75,6 +75,25 @@ defmodule Cartouche.RPCTest do
     end
   end
 
+  defmodule OverloadedErrorClient do
+    @moduledoc false
+
+    @revert_data "0x" <> Base.encode16(ABI.encode("Overloaded(address)", [<<1::160>>]))
+
+    def request(%Finch.Request{body: body}, _finch_name, _opts) do
+      id = Jason.decode!(body)["id"]
+
+      response =
+        Jason.encode!(%{
+          "jsonrpc" => "2.0",
+          "error" => %{"code" => 3, "message" => "execution reverted", "data" => @revert_data},
+          "id" => id
+        })
+
+      {:ok, %Finch.Response{status: 200, body: response}}
+    end
+  end
+
   defmodule InvalidJsonRpcClient do
     @moduledoc false
 
@@ -173,6 +192,15 @@ defmodule Cartouche.RPCTest do
                1
                |> V1.new({100, :gwei}, 100_000, <<11::160>>, {2, :wei}, <<1, 2, 3>>)
                |> Cartouche.RPC.call_trx(errors: ["Cool(uint256,string)"])
+    end
+
+    test "overloaded custom errors map decoded names back by selector" do
+      assert {:error, %{error_abi: "Overloaded(address)", error_params: [<<1::160>>]}} =
+               Cartouche.RPC.call_trx(
+                 V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>),
+                 client: OverloadedErrorClient,
+                 errors: ["Overloaded(uint256)", "Overloaded(address)"]
+               )
     end
 
     test "Panic(uint256) reverts keep the raw revert bytes for recognized panic codes" do

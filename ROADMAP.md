@@ -423,7 +423,7 @@ Before opening any PR to `hayesgm/signet`:
 
 ## Phase 11: hieroglyph 1.0.0 → 1.4.0 adoption advisory
 
-**Status:** 🔄 partially complete — decode-struct atom audit fixed under INE-17; bug-fix audit and optional API-adoption triage remain pending.
+**Status:** 🔄 partially complete — decode-struct atom audit fixed under INE-17; optional API adoption fixed under INE-19; bug-fix audit remains pending.
 
 **Context.** `hieroglyph` shipped four minor releases between 2026-04-24 and 2026-05-01: 1.0.0, 1.1.0, 1.2.0, 1.3.0, 1.4.0. The `{:hieroglyph, "~> 1.0"}` pin in `mix.exs` already accepts 1.4.0 — next `mix deps.update hieroglyph` pulls it. Full release notes in `../hieroglyph/CHANGELOG.md`; sibling roadmap at `../hieroglyph/ROADMAP.md` (now in maintenance posture). One change is BREAKING-on-opt-in-path; several silent bug fixes affect cartouche's existing decoded data; three new APIs are worth optional adoption.
 
@@ -433,7 +433,7 @@ Before opening any PR to `hayesgm/signet`:
 |---|------|--------|---|---|---|-----|--------|
 | TBD | Audit two `decode_structs: true` paths against 1.4.0 atom-existence requirement `[CSR]` | ✅ | 5 | 7 | 5 | 1.20 📋 | `Cartouche.gen` + `Cartouche.Sleuth` |
 | TBD | Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors `[CSR]` | ⬜ | 2 | 5 | 3 | 2.00 🚀 | `Cartouche.Filter` + ABI flows |
-| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ⬜ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
+| TBD | Optional: adopt new hieroglyph public APIs where they simplify cartouche `[CX]` | ✅ | 2 | 3 | 2 | 1.25 📋 | `Cartouche.gen` + `Cartouche.RPC` |
 
 ### Audit 1 — `decode_structs: true` and atom existence
 
@@ -453,9 +453,9 @@ Cartouche flows may have been miscompiling/decoding without symptoms. Re-test:
 
 ### Optional adoption — new hieroglyph public APIs
 
-- `ABI.method_id/1` (1.1.0) — could replace the bespoke `Cartouche.Hash.keccak(ABI.FunctionSelector.encode(fn_sel))` selector derivation in `lib/mix/cartouche.gen.ex:149,416`. Equivalent semantics; smaller diff.
-- `ABI.decode_error/2` (1.2.0) — Solidity 0.8.4+ custom-error revert decoding. Could replace the manual `error_abi -> ABI.decode(error_abi, error_data)` path in `lib/cartouche/rpc.ex:49`.
-- `ABI.encode_packed/2` (1.2.0) — non-standard packed encoding for Merkle leaves and `keccak256(abi.encodePacked(...))`. Available if any future cartouche caller needs it (no current call site).
+- `ABI.method_id/1` (1.1.0) — 🔧 adopted in `lib/mix/cartouche.gen.ex` for duplicate-function selector suffixes and generated selector pattern bytes. The generator still computes the full 32-byte keccak separately where event topic matching needs the complete signature hash.
+- `ABI.decode_error/2` (1.2.0) — 🔧 adopted in `lib/cartouche/rpc.ex` for selector-prefixed revert payload decoding. Cartouche maps the decoded short error name back to the matching full ABI signature so existing RPC error maps stay unchanged.
+- `ABI.encode_packed/2` (1.2.0) — ⚠️ no adoption opportunity found after searching `lib/**` for packed encoding and keccak patterns.
 - `function` type encode/decode (1.3.0) — 24-byte external function pointer. Niche; only relevant if cartouche-generated bindings ever surface a `function` typed param.
 
 **Acceptance:** the two `decode_structs` paths audited (with rationale recorded if no change made), bug-fix audit run for any production data that may have been silently miscompiled or truncated, optional new-API adoption taken or formally declined. Score is for the audit itself; if work is needed beyond verification, split into follow-up tasks here.

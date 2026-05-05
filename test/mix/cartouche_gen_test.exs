@@ -201,8 +201,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       contents = generate(tmp, "DuplicateNames", :absent, abi)
 
       assert contents =~ "def dupe_selector"
-      assert contents =~ "def dupe_"
-      assert contents =~ "_selector"
+      assert contents =~ "def dupe_22222abd_selector"
     end
 
     test "contract name falls back to AST absolute path", %{tmp: tmp} do
