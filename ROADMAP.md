@@ -74,7 +74,7 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 **Mainnet integration suite (Task 61) shipped in `0.1.1`.** `test/rpc_integration_test.exs` opts in via `mix integration` and pins behaviour against historical mainnet anchors via the local archive-node SSH tunnel. Decoder gaps surfaced as Tasks 62 (traces), 63–65 (Block fork fields, ✅ shipped in `0.1.1`), 66 (Block.transactions full details), 67 (Receipt blob fields, ✅ shipped under `[Unreleased]`). Task 68 (originally "DebugTrace EIP-7702 opcodes") closed obsolete 2026-05-01 — premise wrong (AUTH/AUTHCALL were EIP-3074, withdrawn; EIP-7702 introduces no new opcodes); replaced by Task 70 (CLZ for Osaka, blocked on activation).
 
-Highest-Eff unblocked candidates after the Block bundle: Task 27+28 (Finch 0.19→0.21, Eff:1.75), Task 33 (raw transaction decode, Eff:1.25).
+Highest-Eff unblocked candidates after the Block bundle: Task 33 (raw transaction decode, Eff:1.25).
 
 **Generator hardening bundle entrypoint landed.** Task 44 raised `Mix.Tasks.Cartouche.Gen` above the standard coverage tier with a synthetic ABI fixture. Downstream generator tasks 41 (bytecode-flag separation), 42 (`decode_error` cleanup follow-through), 50 (`@doc`/`@spec` emission), and the Task 59 `cartouche.gen.ex` hygiene items are now unblocked for the next generator-hardening PR.
 
@@ -102,7 +102,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 
 ### Already bundled (compound IDs)
 
-`7+8+9` Phase 1.1–1.3 ✅ · `10+11+12+13` Phase 1.4 Hex ✅ · `14+15+35` RPC error shapes ✅ · `16+17+18` Trace specs ✅ · `19+20` Typed specs · `21+22` VM cascade · `24+25` KMS ✅ · `27+28` Finch · `29+30` V2 dedup · `71+72` junit_formatter + bandit lock refresh ✅ · `83/84/85/86/87/88` Phase 12 annotation `[P]` set.
+`7+8+9` Phase 1.1–1.3 ✅ · `10+11+12+13` Phase 1.4 Hex ✅ · `14+15+35` RPC error shapes ✅ · `16+17+18` Trace specs ✅ · `19+20` Typed specs · `21+22` VM cascade · `24+25` KMS ✅ · `27+28` Finch ✅ · `29+30` V2 dedup · `71+72` junit_formatter + bandit lock refresh ✅ · `83/84/85/86/87/88` Phase 12 annotation `[P]` set.
 
 ### Standalone (no natural bundle partner)
 
@@ -336,11 +336,11 @@ Single-repo ownership simplifies this — we edit `mix.exs` and `mix.lock` direc
 
 ### 7.3 `finch` 0.19 → 0.21
 
-`mix.exs` pins `~> 0.19`. Cartouche uses Finch in `lib/cartouche/rpc.ex:167` and the error-normalizer in `util.ex:481`. Two minors of HTTP/2 and pool improvements — may simplify how we hand-build error strings from `%Finch.Error{}`.
+`mix.exs` pinned `~> 0.19`; lockfile already on 0.21.0. Cartouche uses Finch across 4 callsites: `lib/cartouche/application.ex` (default pool start), `lib/cartouche/rpc.ex`, `lib/cartouche/solana/rpc.ex`, `lib/cartouche/open_chain.ex` (build/3 + request/3), and the error-normalizer at `lib/cartouche/http.ex` (formerly `util.ex` before the `Cartouche.HTTP` extraction). Two minors of HTTP/2 and pool improvements — audited; no API additions worth adopting.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 27+28 | Phase 7.3 `finch` 0.19 → 0.21 — audit + conditional adoption [D:2/B:3/U:4 → Eff:1.75] 🚀 | ⬜ | Read CHANGELOG 0.19 → 0.21; identify options relevant to `Finch.request/3` or error classification (Task 27). If concrete wins surface (cleaner error variants, better pool config, HTTP/2 telemetry), adopt with tests (Task 28) |
+| 27+28 | Phase 7.3 `finch` 0.19 → 0.21 — audit + conditional adoption [D:2/B:3/U:4 → Eff:1.75] 🚀 | ✅ 2026-05-06 | Audit verdict: no code-level adoption opportunities. Every 0.20 + 0.21 enhancement targets streaming, pool config, telemetry, or TLS — domains cartouche doesn't exercise. `%Finch.Response{}` and `%Finch.Error{reason:}` shapes unchanged across 0.19 → 0.21. Cartouche silently benefits from the HTTP/1 idle-pool fix (#292) and HTTP/2 server-push crash guard (#333), both already in the 0.21.0 lock. `mix.exs` pin tightened `~> 0.19` → `~> 0.21` so downstream consumers' resolvers can't pick a pre-fix 0.19.x/0.20.x; lockfile no-op. Existing `test/http_test.exs` covers the unchanged response/error shapes. See CHANGELOG `[Unreleased]` |
 
 ### 7.4 Lockfile refresh
 

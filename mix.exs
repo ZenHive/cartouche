@@ -91,7 +91,7 @@ defmodule Cartouche.MixProject do
       {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:jason, "~> 1.4.1"},
       {:decimal, "~> 2.0"},
-      {:finch, "~> 0.19"},
+      {:finch, "~> 0.21"},
       {:google_api_cloud_kms, "~> 0.43.0", optional: true},
       {:ex_sha3, "~> 0.1.4"},
       {:curvy, "~> 0.3.1"},

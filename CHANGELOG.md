@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Bootstrap descripex adoption (Phase 12 / ROADMAP Task 82). `:descripex` is now a direct dep instead of transitive-via-`:hieroglyph`, so consumer `mix.exs` files don't need to add it to use the discovery API. The top-level `Cartouche` module exposes `describe/0,1,2` and `__descripex_modules__/0` via `use Descripex.Discoverable` with an initially empty registered-module list. A new validation test in `test/descripex_validation_test.exs` walks the registered list and flunks-with-the-offending-function-name when any non-`@doc false` public function is missing `meta[:hints]` — trivially passes today, grows teeth as the Phase 12 annotation passes (Tasks 83-88) register modules. Tasks 83-89 are unblocked.
 
+### Bumped
+
+- `finch` `mix.exs` pin tightened `~> 0.19` → `~> 0.21` (lockfile already on 0.21.0; no resolution churn). Audit verdict: no code-level adoption opportunities across 0.20 + 0.21 — every enhancement targets streaming (`Finch.stream/5`, `stream_while/5` halt + accumulator-on-failure), pool config (`get_pool_status/2`, manual termination, `start_pool_metrics?`), telemetry, or TLS (`:supported_groups`), none of which cartouche exercises. Cartouche's Finch surface is the simple subset (`Finch.build/3` + `client.request/3` + `Cartouche.HTTP.normalize_finch_result/1` pattern-matching `%Finch.Response{}` and `%Finch.Error{reason:}`) across 4 callsites in `application.ex`, `rpc.ex`, `solana/rpc.ex`, `open_chain.ex`, `http.ex`. The two changes cartouche silently benefits from in 0.21.0 are the HTTP/1 idle-pool termination fix (#292) and the HTTP/2 server-push crash guard (#333) — both bug fixes, not API additions. The pin tightening exists so downstream consumers' resolvers can't pick a pre-fix 0.19.x/0.20.x even though cartouche's CI runs on 0.21.0. Existing 4 tests in `test/http_test.exs` continue to cover the `Finch.Error` / `Finch.Response` shapes (unchanged across the upgrade range). Closes ROADMAP Tasks 27 + 28.
+
 ## [0.2.0] — 2026-05-05
 
 ### Added
