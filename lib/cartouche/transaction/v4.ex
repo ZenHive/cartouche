@@ -104,6 +104,7 @@ defmodule Cartouche.Transaction.V4 do
   @tx_type 0x04
   @authorization_magic 0x05
   @invalid "invalid v4 transaction"
+  @empty_authorization_list "authorization_list must not be empty"
 
   @doc """
   Constructs an unsigned EIP-7702 transaction.
@@ -166,6 +167,7 @@ defmodule Cartouche.Transaction.V4 do
          {:ok, transaction} <- decode_fields(fields) do
       {:ok, transaction}
     else
+      {:error, reason} -> {:error, reason}
       _ -> {:error, @invalid}
     end
   end
@@ -462,6 +464,7 @@ defmodule Cartouche.Transaction.V4 do
          signature_s: signature_s
        }}
     else
+      {:error, reason} -> {:error, reason}
       _ -> {:error, @invalid}
     end
   end
@@ -509,6 +512,8 @@ defmodule Cartouche.Transaction.V4 do
   end
 
   @spec decode_authorization_list(list()) :: {:ok, [authorization()]} | {:error, String.t()}
+  defp decode_authorization_list([]), do: {:error, @empty_authorization_list}
+
   defp decode_authorization_list(authorization_list) when is_list(authorization_list) do
     authorization_list
     |> Enum.reduce_while({:ok, []}, &decode_authorization_entry/2)

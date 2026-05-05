@@ -264,7 +264,19 @@ defmodule Cartouche.TransactionTest do
     end
 
     test "round-trips unsigned transactions without signature fields" do
-      transaction = V4.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], [], :mainnet)
+      transaction =
+        V4.new(
+          1,
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<1, 2, 3>>,
+          [],
+          [signed_authorization(1, <<2::160>>, 7)],
+          :mainnet
+        )
 
       assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
     end
@@ -278,19 +290,19 @@ defmodule Cartouche.TransactionTest do
       assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
     end
 
-    test "supports empty authorization lists at the RLP boundary" do
+    test "rejects empty authorization lists at the RLP boundary" do
       transaction = v4_transaction([])
 
-      assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
+      assert {:error, "authorization_list must not be empty"} = transaction |> V4.encode() |> V4.decode()
     end
 
-    test "normalizes nil authorization lists at the encoding boundary" do
+    test "normalizes nil authorization lists at the encoding boundary before decode rejects" do
       transaction =
         1
         |> V4.new({1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], nil, :mainnet)
         |> V4.add_signature(<<1::256, 2::256, 1>>)
 
-      assert {:ok, %{authorization_list: []}} = transaction |> V4.encode() |> V4.decode()
+      assert {:error, "authorization_list must not be empty"} = transaction |> V4.encode() |> V4.decode()
     end
 
     test "supports multiple authorization entries including chain_id 0" do
@@ -565,7 +577,7 @@ defmodule Cartouche.TransactionTest do
 
     test "encodes signatures with binary-safe leading-zero trimming" do
       transaction =
-        []
+        [signed_authorization(1, <<2::160>>, 7)]
         |> v4_transaction()
         |> Map.merge(%{signature_r: <<0, 0xFF, 1::240>>, signature_s: <<0, 0xFE, 2::240>>})
 
