@@ -36,8 +36,8 @@ defmodule Cartouche.RPC do
   @typedoc "Error returned when JSON encoding rejects the outbound request body."
   @type invalid_params_error :: {:invalid_params, Jason.EncodeError.t() | Protocol.UndefinedError.t()}
 
-  @typedoc "All error shapes returned by `send_rpc/3`."
-  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | String.t() | :invalid_hex
+  @typedoc "All values that can appear inside an `{:error, reason}` tuple returned by `send_rpc/3`."
+  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | String.t()
 
   defp headers(extra_headers) do
     [
