@@ -872,9 +872,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # clauses are skipped via the seen-set; duplicate `@spec` for a given arity
   # is a compile error).
   #
-  # Task 50 tracks replacing `term()` placeholders with ABI-derived Elixir
-  # types and conditionally emitting the MaxLineLength pragma for long
-  # bytestring topic-0 hashes.
+  # TODO(Task 50): replace `term()` placeholders with ABI-derived Elixir types
+  # once the type-mapping helper lands; also emit the
+  # `# credo:disable-for-this-file Credo.Check.Readability.MaxLineLength`
+  # pragma conditionally when the fixture contains bytestring topic-0 hashes
+  # that overflow 120 chars after `mix format`.
   defp annotate_internal_defs({:defmodule, dm_meta, [name, [do: do_block]]}) do
     {:defmodule, dm_meta, [name, [do: annotate_block(do_block)]]}
   end
