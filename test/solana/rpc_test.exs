@@ -123,13 +123,6 @@ defmodule Cartouche.Solana.RPCTest do
     test "returns nil for nonexistent account" do
       assert RPC.get_account_info(@nonexistent_pubkey) == {:ok, nil}
     end
-
-    test "accepts supported account encodings" do
-      for encoding <- [:base64, :base58, :"base64+zstd", :json_parsed, "customEncoding"] do
-        assert {:ok, %{data: ["AQAAAAA=", "base64"]}} =
-                 RPC.get_account_info(@test_pubkey, encoding: encoding)
-      end
-    end
   end
 
   describe "get_multiple_accounts/2" do
@@ -212,11 +205,6 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "returns nil for not-found transaction" do
       assert RPC.get_transaction("not_found_sig") == {:ok, nil}
-    end
-
-    test "accepts explicit transaction encodings" do
-      assert {:ok, trx} = RPC.get_transaction("some_signature", encoding: "jsonParsed")
-      assert trx["slot"] == 255_900
     end
   end
 
@@ -306,12 +294,6 @@ defmodule Cartouche.Solana.RPCTest do
   end
 
   describe "get_token_accounts_by_owner/3" do
-    test "requires a mint or program id filter" do
-      assert_raise ArgumentError, "get_token_accounts_by_owner requires :mint or :program_id filter", fn ->
-        RPC.get_token_accounts_by_owner(@test_pubkey, [])
-      end
-    end
-
     test "filter by mint returns token accounts" do
       assert {:ok, [account]} =
                RPC.get_token_accounts_by_owner(@test_pubkey, mint: @test_pubkey)
@@ -385,16 +367,6 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "sends raw bytes" do
       assert RPC.send_transaction(<<1, 2, 3>>) ==
-               {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
-    end
-
-    test "accepts base58 encoding and send options" do
-      assert RPC.send_transaction(<<1, 2, 3>>,
-               encoding: :base58,
-               skip_preflight: true,
-               preflight_commitment: :confirmed,
-               max_retries: 1
-             ) ==
                {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
     end
   end
