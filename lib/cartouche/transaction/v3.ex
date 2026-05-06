@@ -29,6 +29,7 @@ defmodule Cartouche.Transaction.V3 do
   """
 
   alias Cartouche.Signer.Default
+  alias Cartouche.Transaction.JsonField
 
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
 
@@ -38,7 +39,10 @@ defmodule Cartouche.Transaction.V3 do
           max_priority_fee_per_gas: integer(),
           max_fee_per_gas: integer(),
           gas_limit: integer(),
-          destination: <<_::160>>,
+          # Wire `to` is `null` for contract creation; the RLP `decode/1`
+          # path enforces a 20-byte address, but `from_json/1` (which
+          # mirrors the JSON-RPC envelope verbatim) preserves `nil`.
+          destination: <<_::160>> | nil,
           amount: integer(),
           data: binary(),
           access_list: access_list(),
@@ -274,6 +278,69 @@ defmodule Cartouche.Transaction.V3 do
     with {:ok, signature} <- get_signature(transaction) do
       {:ok, Cartouche.Recover.recover_eth(encode(unsigned), signature)}
     end
+  end
+
+  @doc ~S"""
+  Decodes an EIP-4844 (type 3) blob transaction object as returned in the
+  `transactions` array of `eth_getBlockByNumber` / `eth_getBlockByHash`
+  when `include_transaction_details: true` is requested.
+
+  Mirrors `Cartouche.Transaction.V2.from_json/1` plus `maxFeePerBlobGas`
+  and `blobVersionedHashes` (the blob sidecar — blobs/commitments/proofs —
+  is propagated separately and is not part of the block JSON).
+
+  ## Examples
+
+      iex> use Cartouche.Hex
+      iex> %{
+      ...>   "type" => "0x3",
+      ...>   "chainId" => "0x1",
+      ...>   "nonce" => "0x1",
+      ...>   "maxPriorityFeePerGas" => "0x3b9aca00",
+      ...>   "maxFeePerGas" => "0x174876e800",
+      ...>   "gas" => "0x186a0",
+      ...>   "to" => "0x0000000000000000000000000000000000000001",
+      ...>   "value" => "0x2",
+      ...>   "input" => "0x010203",
+      ...>   "accessList" => [],
+      ...>   "maxFeePerBlobGas" => "0x1",
+      ...>   "blobVersionedHashes" => [
+      ...>     "0x0100000000000000000000000000000000000000000000000000000000000000"
+      ...>   ],
+      ...>   "yParity" => "0x1",
+      ...>   "r" => "0x1",
+      ...>   "s" => "0x2"
+      ...> }
+      ...> |> Cartouche.Transaction.V3.from_json()
+      ...> |> Map.take([:chain_id, :destination, :max_fee_per_blob_gas, :blob_versioned_hashes, :signature_y_parity])
+      %{
+        chain_id: 1,
+        destination: ~h[0x0000000000000000000000000000000000000001],
+        max_fee_per_blob_gas: 1,
+        blob_versioned_hashes: [
+          ~h[0x0100000000000000000000000000000000000000000000000000000000000000]
+        ],
+        signature_y_parity: true
+      }
+  """
+  @spec from_json(map()) :: t() | no_return()
+  def from_json(%{} = params) do
+    %__MODULE__{
+      chain_id: Cartouche.Hex.decode_hex_number!(params["chainId"]),
+      nonce: Cartouche.Hex.decode_hex_number!(params["nonce"]),
+      max_priority_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxPriorityFeePerGas"]),
+      max_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxFeePerGas"]),
+      gas_limit: Cartouche.Hex.decode_hex_number!(params["gas"]),
+      destination: JsonField.decode_destination(params["to"]),
+      amount: Cartouche.Hex.decode_hex_number!(params["value"]),
+      data: Cartouche.Hex.decode_hex!(params["input"]),
+      access_list: JsonField.decode_access_list(params["accessList"]),
+      max_fee_per_blob_gas: Cartouche.Hex.decode_hex_number!(params["maxFeePerBlobGas"]),
+      blob_versioned_hashes: JsonField.decode_blob_versioned_hashes(params["blobVersionedHashes"]),
+      signature_y_parity: JsonField.decode_y_parity(params),
+      signature_r: JsonField.decode_signature_word(params["r"]),
+      signature_s: JsonField.decode_signature_word(params["s"])
+    }
   end
 
   @spec chain_id_value(atom() | integer() | nil) :: integer()

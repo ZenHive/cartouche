@@ -14,6 +14,7 @@ defmodule Cartouche.RPC.IntegrationTest do
   import Cartouche.Test.Live, only: [live_opts: 0]
 
   alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
 
   @moduletag :integration
 
@@ -218,6 +219,57 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert {:ok, b} = Cartouche.RPC.get_block_by_hash(@post_cancun_hash, live_opts())
       assert b.number == @post_cancun_block
       assert b.hash == @post_cancun_hash
+    end
+
+    # Task 66: pin only deterministic fields — wrapper struct module per
+    # element, hash round-trip via `Cartouche.Transaction.V1.t/0`'s `r` /
+    # `Cartouche.Transaction.V2.t/0`'s `signature_r` round-trip is too
+    # node-variant; instead we pin shape-level invariants (struct module,
+    # at least one V1, at least one V2 — block 18M is post-London so the
+    # mempool shape mixes both; full-detail decode succeeds end-to-end).
+    test "post-Shanghai (block 18,000,000) with `:include_transaction_details, true` — full-detail decode" do
+      opts = Keyword.put(live_opts(), :include_transaction_details, true)
+      assert {:ok, b} = Cartouche.RPC.get_block_by_number(@post_shanghai_block, opts)
+
+      assert b.number == @post_shanghai_block
+      assert b.hash == @post_shanghai_hash
+      assert is_list(b.transactions)
+      assert b.transactions != []
+
+      # Every element must be one of the supported Vn structs (no leftover
+      # raw maps or hash strings); struct-module dispatch verified per-element.
+      assert Enum.all?(b.transactions, fn tx ->
+               case tx do
+                 %V1{} -> true
+                 %V2{} -> true
+                 %Cartouche.Transaction.V3{} -> true
+                 %Cartouche.Transaction.V4{} -> true
+                 _other -> false
+               end
+             end)
+
+      # Block 18,000,000 is post-London — by historical mempool composition
+      # it carries both legacy (V1) and EIP-1559 (V2) transactions. We
+      # don't pin counts (mempool variance across nodes / re-orgs), only
+      # presence — both shapes must round-trip through `from_json/1`.
+      assert Enum.any?(b.transactions, &match?(%V1{}, &1))
+      assert Enum.any?(b.transactions, &match?(%V2{}, &1))
+    end
+
+    # Hash-only mode — ensures `:include_transaction_details, false` (and
+    # the default-omitted case) still preserves the wire String.t() hash
+    # shape per the @type t/0 union after the Task 66 widening.
+    test "post-Shanghai (block 18,000,000) with `:include_transaction_details, false` — hashes preserved" do
+      opts = Keyword.put(live_opts(), :include_transaction_details, false)
+      assert {:ok, b} = Cartouche.RPC.get_block_by_number(@post_shanghai_block, opts)
+
+      assert is_list(b.transactions)
+      assert b.transactions != []
+      assert Enum.all?(b.transactions, &is_binary/1)
+      # Each element is an 0x-prefixed 32-byte hash hex string (66 chars).
+      assert Enum.all?(b.transactions, fn h ->
+               String.starts_with?(h, "0x") and String.length(h) == 66
+             end)
     end
   end
 
