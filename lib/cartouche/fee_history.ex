@@ -9,6 +9,7 @@ defmodule Cartouche.FeeHistory do
     * Alchemy docs: https://docs.alchemy.com/reference/eth-feehistory
     * Infura docs: https://docs.infura.io/api/networks/ethereum/json-rpc-methods/eth_feehistory
   """
+  use Descripex, namespace: "/ethereum/fee_history"
 
   @type t() :: %__MODULE__{
           oldest_block: integer(),
@@ -23,6 +24,22 @@ defmodule Cartouche.FeeHistory do
     :gas_used_ratio,
     :reward
   ]
+
+  api(:deserialize, "Decode an `eth_feeHistory` JSON-RPC result into a `Cartouche.FeeHistory` struct.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.fee_history/1",
+        description:
+          "Map returned by `eth_feeHistory`, including `oldestBlock`, `baseFeePerGas`, `gasUsedRatio`, and optional `reward` fields."
+      ]
+    ],
+    returns: %{
+      type: :fee_history,
+      description:
+        "`%Cartouche.FeeHistory{}` with decoded integer fee arrays, gas-used ratios, and optional priority fee rewards."
+    }
+  )
 
   @doc ~S"""
   Deserializes fee history data from `eth_feeHistory` RPC response.

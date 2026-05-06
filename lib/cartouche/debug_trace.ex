@@ -11,6 +11,7 @@ defmodule Cartouche.DebugTrace do
     * QuickNode docs: https://www.quicknode.com/docs/ethereum/debug_traceCall
   """
 
+  use Descripex, namespace: "/ethereum/debug_trace"
   use Cartouche.Hex
 
   defmodule StructLog do
@@ -19,6 +20,8 @@ defmodule Cartouche.DebugTrace do
     program counter, call depth, remaining gas, gas cost of this step, and
     the stack snapshot at that point.
     """
+    use Descripex, namespace: "/ethereum/debug_trace/struct_log"
+
     @type t() :: %__MODULE__{
             depth: integer(),
             gas: integer(),
@@ -73,6 +76,21 @@ defmodule Cartouche.DebugTrace do
 
     @opcode_to_atom Map.new(@single_opcodes ++ @ranged_opcodes, &{&1, String.to_atom(&1)})
 
+    api(:deserialize, "Decode a JSON-RPC debug trace struct-log object.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source: "Cartouche.RPC.debug_trace_call/2",
+          description: "Map with `depth`, `gas`, `gasCost`, `op`, `pc`, and `stack` fields from a `structLogs` entry."
+        ]
+      ],
+      returns: %{
+        type: :debug_trace_struct_log,
+        description:
+          "%Cartouche.DebugTrace.StructLog{} with integer depth/gas metadata, a whitelisted opcode atom, and decoded stack words."
+      }
+    )
+
     @doc ~S"""
     Deserializes a trace's struct-log into a struct.
 
@@ -124,6 +142,19 @@ defmodule Cartouche.DebugTrace do
       raise ArgumentError, "expected binary opcode string, got: #{inspect(op)}"
     end
 
+    api(:serialize, "Encode a debug trace struct-log struct back to a JSON map.",
+      params: [
+        struct_log: [
+          kind: :value,
+          description: "%Cartouche.DebugTrace.StructLog{} to serialize."
+        ]
+      ],
+      returns: %{
+        type: :map,
+        description: "JSON-ready map with `depth`, `gas`, `gasCost`, `op`, `pc`, and hex-encoded `stack` fields."
+      }
+    )
+
     @doc ~S"""
     Serializes a trace's struct-log into a json map.
 
@@ -174,6 +205,21 @@ defmodule Cartouche.DebugTrace do
     :return_value,
     :struct_logs
   ]
+
+  api(:deserialize, "Decode a `debug_traceCall` result into a debug trace struct.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.debug_trace_call/2",
+        description: "Map with `failed`, `gas`, `returnValue`, and `structLogs` from `debug_traceCall`."
+      ]
+    ],
+    returns: %{
+      type: :debug_trace,
+      description:
+        "%Cartouche.DebugTrace{} with decoded return value bytes and nested %Cartouche.DebugTrace.StructLog{} entries."
+    }
+  )
 
   @doc ~S"""
   Deserializes a trace result from `debug_traceCall`.
@@ -253,6 +299,20 @@ defmodule Cartouche.DebugTrace do
       struct_logs: Enum.map(params["structLogs"], &StructLog.deserialize/1)
     }
   end
+
+  api(:serialize, "Encode a debug trace struct back to a JSON map.",
+    params: [
+      debug_trace: [
+        kind: :value,
+        description: "%Cartouche.DebugTrace{} to serialize."
+      ]
+    ],
+    returns: %{
+      type: :map,
+      description:
+        "JSON-ready map with `failed`, `gas`, hex returnValue without a 0x prefix, and serialized `structLogs`."
+    }
+  )
 
   @doc ~S"""
   Serializes a trace result back to a json map.

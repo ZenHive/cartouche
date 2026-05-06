@@ -15,7 +15,21 @@ defmodule Cartouche do
   `ROADMAP.md` Phase 12 for the annotation pass.
   """
 
-  @descripex_modules [Cartouche.Signer, Cartouche.Keys]
+  @descripex_modules [
+    Cartouche.Signer,
+    Cartouche.Keys,
+    Cartouche.RPC,
+    Cartouche.Block,
+    Cartouche.Block.Withdrawal,
+    Cartouche.Receipt,
+    Cartouche.Receipt.Log,
+    Cartouche.FeeHistory,
+    Cartouche.DebugTrace,
+    Cartouche.DebugTrace.StructLog,
+    Cartouche.Trace,
+    Cartouche.Trace.Action,
+    Cartouche.TraceCall
+  ]
   use Descripex.Discoverable, modules: @descripex_modules
 
   @type address :: <<_::160>>

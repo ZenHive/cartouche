@@ -8,6 +8,7 @@ defmodule Cartouche.Receipt do
   an Ethereum JSON-RPC host.
   """
 
+  use Descripex, namespace: "/ethereum/receipt"
   use Cartouche.Hex
 
   defmodule Log do
@@ -16,6 +17,8 @@ defmodule Cartouche.Receipt do
     `Cartouche.Receipt` — address, data, indexed topics, and the block/tx
     position needed to locate the log on chain.
     """
+    use Descripex, namespace: "/ethereum/receipt/log"
+
     @type t() :: %__MODULE__{
             # QUANTITY - integer of the log index position in the block. null when its pending log.
             log_index: integer(),
@@ -49,6 +52,22 @@ defmodule Cartouche.Receipt do
       :data,
       :topics
     ]
+
+    api(:deserialize, "Deserialize an Ethereum transaction receipt log from a JSON-RPC object.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source: "Cartouche.RPC.get_trx_receipt/2",
+          description:
+            "Receipt log object with hex quantity fields, block and transaction hashes, emitting address, data, and topics."
+        ]
+      ],
+      returns: %{
+        type: :receipt_log,
+        description:
+          "%Cartouche.Receipt.Log{} with decoded log index, block/transaction location, emitting address, data bytes, and topic words."
+      }
+    )
 
     @doc ~S"""
     Deserializes a transaction receipt as serialized by an Ethereum JSON-RPC response.
@@ -153,6 +172,21 @@ defmodule Cartouche.Receipt do
     :type,
     :status
   ]
+
+  api(:deserialize, "Deserialize an Ethereum transaction receipt from a JSON-RPC object.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.get_trx_receipt/2",
+        description: "Receipt object from eth_getTransactionReceipt with hex quantity fields and embedded log objects."
+      ]
+    ],
+    returns: %{
+      type: :receipt,
+      description:
+        "%Cartouche.Receipt{} with decoded transaction and block hashes, sender/recipient addresses, gas totals, optional blob gas fields, and embedded %Cartouche.Receipt.Log{} entries."
+    }
+  )
 
   @doc ~S"""
   Deserializes a transaction receipt as serialized by an Ethereum JSON-RPC response.
