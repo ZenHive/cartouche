@@ -82,7 +82,8 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
         "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
-    @spec client(binary() | atom() | pid()) :: Tesla.Env.client()
+    # TODO: Tesla.Env.client() — Tesla is in plt_ignore_apps (OOM workaround), so dialyzer can't resolve the type
+    @spec client(binary() | atom() | pid()) :: term()
     defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do
