@@ -1706,7 +1706,11 @@ defmodule Cartouche.RPC do
         source: "Cartouche.RPC.max_priority_fee_per_gas/1",
         description: "Optional EIP-1559 priority fee; fetched when omitted for V2 transactions."
       ],
-      signer: [kind: :value, default: Default, description: "Signer process used to address and sign the transaction."],
+      signer: [
+        kind: :value,
+        default: Default,
+        description: "Signer process used to address and sign the transaction."
+      ],
       verify: [
         kind: :value,
         default: true,

@@ -40,7 +40,7 @@ defmodule Cartouche.TraceCall do
   )
 
   @doc ~S"""
-  Serializes a single trace result for `trace_callMany`.
+  Deserializes a single trace result from `trace_callMany`.
 
   ## Examples
 
@@ -160,7 +160,7 @@ defmodule Cartouche.TraceCall do
   )
 
   @doc ~S"""
-  Deserializes a single of trace result from `trace_callMany`.
+  Serializes a single trace result for `trace_callMany`.
 
   ## Examples
 
