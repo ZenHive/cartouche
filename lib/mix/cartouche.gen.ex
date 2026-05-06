@@ -168,14 +168,14 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Function to take the abi from the output-json and output function defs (e.g. encode and execute)
-  defp get_encode_calls(full_abi, has_bytecode) do
+  defp get_encode_calls(full_abi, has_bytecode, has_deployed_bytecode) do
     abi_items = full_abi["abi"] || []
     renamed_abis = rename_dups(abi_items)
     has_errors = Enum.any?(renamed_abis, &(&1["type"] == "error"))
 
     {fns, decoders, events, errors} =
       Enum.reduce(renamed_abis, {[], [], [], []}, fn abi, acc ->
-        merge_encode_call_result(acc, get_encode_call(abi, has_bytecode, has_errors))
+        merge_encode_call_result(acc, get_encode_call(abi, has_bytecode, has_deployed_bytecode, has_errors))
       end)
 
     decoders = [
@@ -221,7 +221,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # Parses the ABI spec and generates the functions (encode and execute) if we can parse
   # the ABI spec. We've recently updated our ABI parsing library that this doesn't fail
   # nearly as often as it used to (e.g. it can handle tuples)
-  defp get_encode_call(abi, has_bytecode, has_errors) do
+  defp get_encode_call(abi, has_bytecode, has_deployed_bytecode, has_errors) do
     fn_selector =
       try do
         ABI.FunctionSelector.parse_specification_item(abi)
@@ -233,10 +233,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     case fn_selector do
       %ABI.FunctionSelector{function: name} = fs when not is_nil(name) ->
-        encode_function_call(fs, abi["fn_name"] || name, has_bytecode, has_errors)
+        encode_function_call(fs, abi["fn_name"] || name, has_bytecode, has_deployed_bytecode, has_errors)
 
       %ABI.FunctionSelector{function_type: function_type} = fs ->
-        encode_function_call(fs, to_string(function_type), has_bytecode, has_errors)
+        encode_function_call(fs, to_string(function_type), has_bytecode, has_deployed_bytecode, has_errors)
 
       _ ->
         Logger.warning("Ignoring function due to missing name")
@@ -245,7 +245,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Generate the encode and execute functions. This is ... complex (read: hacky)
-  defp encode_function_call(selector, fn_name, has_bytecode, has_errors) do
+  defp encode_function_call(selector, fn_name, has_bytecode, has_deployed_bytecode, has_errors) do
     names = function_names(fn_name)
     argument_types = derive_argument_types(selector)
     {execute_arguments, encode_arguments, execute_values, encode_values} = build_argument_specs(argument_types)
@@ -266,7 +266,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
         has_errors: has_errors
       }
 
-      select_emitted_fns(selector, has_bytecode, build_function_quotes(ctx))
+      select_emitted_fns(selector, has_deployed_bytecode, build_function_quotes(ctx))
     end
   end
 
@@ -814,15 +814,16 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp select_emitted_fns(%{function_type: :error}, _has_bytecode, fns) do
+  defp select_emitted_fns(%{function_type: :error}, _has_deployed_bytecode, fns) do
     {[fns.selector_fn, fns.encode_fn, fns.decode_error_fn], nil, nil, fns.generic_error_fn}
   end
 
-  defp select_emitted_fns(%{function_type: :event}, _has_bytecode, fns) do
+  defp select_emitted_fns(%{function_type: :event}, _has_deployed_bytecode, fns) do
     {[fns.event_selector_fn, fns.encode_fn, fns.decode_event_fn], nil, fns.generic_event_fn, nil}
   end
 
-  defp select_emitted_fns(%{function_type: t}, _has_bytecode, fns) when t in [:constructor, :fallback, :receive] do
+  defp select_emitted_fns(%{function_type: t}, _has_deployed_bytecode, fns)
+       when t in [:constructor, :fallback, :receive] do
     {[fns.encode_fn, fns.prepare_fn, fns.execute_fn], nil, nil, nil}
   end
 
@@ -841,7 +842,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
      ], fns.generic_decode_call_fn, nil, nil}
   end
 
-  defp select_emitted_fns(_selector, _has_bytecode, fns) do
+  defp select_emitted_fns(_selector, _has_deployed_bytecode, fns) do
     {[
        fns.selector_fn,
        fns.encode_fn,
@@ -930,7 +931,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     bytecode_decl = get_bytecode(abi_map)
     deployed_bytecode_decl = get_deployed_bytecode(abi_map)
-    encode_call_decl = get_encode_calls(abi_map, not Enum.empty?(bytecode_decl))
+    has_bytecode = not Enum.empty?(bytecode_decl)
+    has_deployed_bytecode = not Enum.empty?(deployed_bytecode_decl)
+    encode_call_decl = get_encode_calls(abi_map, has_bytecode, has_deployed_bytecode)
 
     preintern_return_atoms_decl =
       if uses_preintern_return_atoms?(encode_call_decl) do
