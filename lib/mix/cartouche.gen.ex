@@ -58,6 +58,23 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   require Logger
 
+  @doc_purposes %{
+    encode: "Encodes ABI calldata",
+    encode_event: "Encodes ABI event data",
+    prepare: "Prepares a transaction",
+    build_trx: "Builds an eth_call transaction",
+    call: "Calls a contract function",
+    estimate_gas: "Estimates gas for a contract function",
+    execute: "Executes a contract transaction",
+    exec_vm: "Executes deployed bytecode in the local VM",
+    exec_vm_raw: "Executes deployed bytecode in the local VM and returns raw returndata",
+    selector: "Returns the ABI function selector",
+    event_selector: "Returns the ABI event selector",
+    decode_event: "Decodes ABI event topics and data",
+    decode_call: "Decodes ABI calldata",
+    decode_error: "Decodes ABI revert data"
+  }
+
   defmodule InvalidFileError do
     @moduledoc false
     defexception message: "invalid file error"
@@ -178,28 +195,25 @@ defmodule Mix.Tasks.Cartouche.Gen do
         merge_encode_call_result(acc, get_encode_call(abi, has_bytecode, has_deployed_bytecode, has_errors))
       end)
 
-    decoders = [
-      quote do
-        def decode_call(_), do: :not_found
-      end
-      | decoders
-    ]
+    decoders =
+      [build_generic_decode_call_annotations()] ++
+        Enum.reverse(decoders, [build_generic_decode_call_fallback_fn()])
 
-    errors = [
-      quote do
-        def decode_error(_), do: :not_found
-      end
-      | errors
-    ]
+    errors =
+      [build_generic_decode_error_annotations()] ++ Enum.reverse(errors, [build_generic_decode_error_fallback_fn()])
 
-    events = [
-      quote do
-        def decode_event(_, _), do: :not_found
-      end
-      | events
-    ]
+    events =
+      [build_generic_decode_event_annotations()] ++ Enum.reverse(events, [build_generic_decode_event_fallback_fn()])
 
-    fns ++ Enum.reverse(decoders, Enum.reverse(events, Enum.reverse(errors)))
+    flatten_quote_blocks(fns ++ decoders ++ events ++ errors)
+  end
+
+  @spec flatten_quote_blocks([Macro.t()]) :: [Macro.t()]
+  defp flatten_quote_blocks(quoted) do
+    Enum.flat_map(quoted, fn
+      {:__block__, _, statements} -> statements
+      statement -> [statement]
+    end)
   end
 
   defp merge_encode_call_result({acc_fns, acc_decoders, acc_events, acc_errors}, result) do
@@ -250,6 +264,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     argument_types = derive_argument_types(selector)
     {execute_arguments, encode_arguments, execute_values, encode_values} = build_argument_specs(argument_types)
     sig = signature_data(selector)
+    return_types = normalize_return_types(selector.returns)
 
     if abort?(execute_arguments, selector, has_bytecode) do
       Logger.warning("Ignoring function #{selector.function} due to unknown argument")
@@ -261,6 +276,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
         encode_arguments: encode_arguments,
         execute_values: execute_values,
         encode_values: encode_values,
+        input_types: argument_types,
+        return_types: return_types,
         sig: sig,
         selector: selector,
         has_errors: has_errors
@@ -466,9 +483,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_encode_fn(%{selector: %{function_type: :constructor}} = ctx) do
-    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values, sig: sig} = ctx
+    %{
+      names: names,
+      encode_arguments: encode_arguments,
+      encode_values: encode_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types)
+    doc = doc_for(:encode, names.encode, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.encode, spec_args)) :: binary()
       def unquote(names.encode)(unquote_splicing(encode_arguments)) do
         bytecode() <> ABI.encode(unquote(sig.abi), [{unquote_splicing(encode_values)}])
       end
@@ -476,9 +504,13 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_encode_fn(%{selector: %{function_type: t}} = ctx) when t in [:fallback, :receive] do
-    %{names: names, encode_arguments: encode_arguments} = ctx
+    %{names: names, encode_arguments: encode_arguments, input_types: input_types} = ctx
+    spec_args = spec_args(input_types)
+    doc = doc_for(:encode, names.encode, "#{t}(bytes)")
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.encode, spec_args)) :: binary()
       def unquote(names.encode)(unquote_splicing(encode_arguments)) do
         (unquote_splicing(encode_arguments))
       end
@@ -486,9 +518,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_encode_fn(%{selector: %{function_type: :event}} = ctx) do
-    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values} = ctx
+    %{
+      names: names,
+      encode_arguments: encode_arguments,
+      encode_values: encode_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types)
+    doc = doc_for(:encode_event, names.encode_event, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.encode_event, spec_args)) :: binary()
       def unquote(names.encode_event)(unquote_splicing(encode_arguments)) do
         ABI.encode(unquote(names.event_selector)(), unquote(encode_values))
       end
@@ -496,9 +539,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_encode_fn(ctx) do
-    %{names: names, encode_arguments: encode_arguments, encode_values: encode_values} = ctx
+    %{
+      names: names,
+      encode_arguments: encode_arguments,
+      encode_values: encode_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types)
+    doc = doc_for(:encode, names.encode, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.encode, spec_args)) :: binary()
       def unquote(names.encode)(unquote_splicing(encode_arguments)) do
         ABI.encode(unquote(names.selector)(), unquote(encode_values))
       end
@@ -506,9 +560,21 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_prepare_fn(%{selector: %{function_type: :constructor}} = ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types) ++ [opts_spec()]
+    doc = doc_for(:prepare, names.prepare, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.prepare, spec_args)) ::
+              {:ok, Cartouche.Transaction.V1.t() | Cartouche.Transaction.V2.t()} | {:error, term()}
       def unquote(names.prepare)(unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.prepare_trx(
           <<0::256>>,
@@ -520,9 +586,21 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_prepare_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = [address_spec() | spec_args(input_types)] ++ [opts_spec()]
+    doc = doc_for(:prepare, names.prepare, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.prepare, spec_args)) ::
+              {:ok, Cartouche.Transaction.V1.t() | Cartouche.Transaction.V2.t()} | {:error, term()}
       def unquote(names.prepare)(contract, unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.prepare_trx(
           contract,
@@ -534,9 +612,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_build_trx_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = [address_spec() | spec_args(input_types)]
+    doc = doc_for(:build_trx, names.build_trx, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.build_trx, spec_args)) :: Cartouche.Transaction.Call.t()
       def unquote(names.build_trx)(contract, unquote_splicing(execute_arguments)) do
         %Call{
           destination: contract,
@@ -547,9 +636,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_call_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = [address_spec() | spec_args(input_types)] ++ [opts_spec()]
+    doc = doc_for(:call, names.call, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.call, spec_args)) :: {:ok, binary()} | {:error, term()}
       def unquote(names.call)(contract, unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.call_trx(
           unquote(names.build_trx)(contract, unquote_splicing(execute_values)),
@@ -560,9 +660,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_estimate_gas_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = [address_spec() | spec_args(input_types)] ++ [opts_spec()]
+    doc = doc_for(:estimate_gas, names.estimate_gas, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.estimate_gas, spec_args)) :: {:ok, non_neg_integer()} | {:error, term()}
       def unquote(names.estimate_gas)(contract, unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.estimate_gas(
           unquote(names.build_trx)(contract, unquote_splicing(execute_values)),
@@ -573,9 +684,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_execute_fn(%{selector: %{function_type: :constructor}} = ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types) ++ [opts_spec()]
+    doc = doc_for(:execute, names.execute, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.execute, spec_args)) :: {:ok, binary()} | {:error, term()}
       def unquote(names.execute)(unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.execute_trx(
           <<0::256>>,
@@ -587,9 +709,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_execute_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = [address_spec() | spec_args(input_types)] ++ [opts_spec()]
+    doc = doc_for(:execute, names.execute, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.execute, spec_args)) :: {:ok, binary()} | {:error, term()}
       def unquote(names.execute)(contract, unquote_splicing(execute_arguments), opts \\ []) do
         Cartouche.RPC.execute_trx(
           contract,
@@ -601,9 +734,22 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_exec_vm_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      return_types: return_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types) ++ [opts_spec()]
+    doc = doc_for(:exec_vm, names.exec_vm, sig.abi)
+    return_spec = exec_vm_return_spec(return_types)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.exec_vm, spec_args)) :: unquote(return_spec)
       def unquote(names.exec_vm)(unquote_splicing(execute_arguments), exec_opts \\ []) do
         case Cartouche.VM.exec_call(
                deployed_bytecode(),
@@ -732,9 +878,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_exec_vm_raw_fn(ctx) do
-    %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
+    %{
+      names: names,
+      execute_arguments: execute_arguments,
+      execute_values: execute_values,
+      input_types: input_types,
+      sig: sig
+    } = ctx
+
+    spec_args = spec_args(input_types) ++ [opts_spec()]
+    doc = doc_for(:exec_vm_raw, names.exec_vm_raw, sig.abi)
 
     quote do
+      @doc unquote(doc)
+      @spec unquote(spec_call(names.exec_vm_raw, spec_args)) :: {:ok, binary()} | {:revert, binary()}
       def unquote(names.exec_vm_raw)(unquote_splicing(execute_arguments), exec_opts \\ []) do
         Cartouche.VM.exec_call(
           deployed_bytecode(),
@@ -745,24 +902,40 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp build_selector_fn(%{names: names, selector: selector}) do
+  @spec build_selector_fn(%{names: map(), selector: ABI.FunctionSelector.t(), sig: map()}) :: Macro.t()
+  defp build_selector_fn(%{names: names, selector: selector, sig: sig}) do
+    doc = doc_for(:selector, names.selector, sig.abi)
+
     quote do
+      @doc unquote(doc)
+      @spec unquote(names.selector)() :: ABI.FunctionSelector.t()
       def unquote(names.selector)() do
         unquote(Macro.escape(selector))
       end
     end
   end
 
-  defp build_event_selector_fn(%{names: names, selector: selector}) do
+  @spec build_event_selector_fn(%{names: map(), selector: ABI.FunctionSelector.t(), sig: map()}) :: Macro.t()
+  defp build_event_selector_fn(%{names: names, selector: selector, sig: sig}) do
+    doc = doc_for(:event_selector, names.event_selector, sig.abi)
+
     quote do
+      @doc unquote(doc)
+      @spec unquote(names.event_selector)() :: ABI.FunctionSelector.t()
       def unquote(names.event_selector)() do
         unquote(Macro.escape(selector))
       end
     end
   end
 
+  @spec build_decode_event_fn(%{names: map(), sig: map()}) :: Macro.t()
   defp build_decode_event_fn(%{names: names, sig: sig}) do
+    doc = doc_for(:decode_event, names.decode_event, sig.abi)
+
     quote do
+      @doc unquote(doc)
+      @spec unquote(names.decode_event)([binary()], binary()) ::
+              {:ok, String.t() | nil, map()} | {:error, term()}
       def unquote(names.decode_event)(topics, data) when is_list(topics) do
         unquote(sig.abi_enc_signature_hex)
         ABI.Event.decode_event(data, topics, unquote(names.event_selector)())
@@ -770,8 +943,18 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp build_decode_call_fn(%{names: names, sig: sig}) do
+  @spec build_decode_call_fn(%{
+          names: map(),
+          input_types: [ABI.FunctionSelector.argument_type()],
+          sig: map()
+        }) :: Macro.t()
+  defp build_decode_call_fn(%{names: names, input_types: input_types, sig: sig}) do
+    doc = doc_for(:decode_call, names.decode_call, sig.abi)
+    input_spec = abi_decode_return_spec(input_types)
+
     quote do
+      @doc unquote(doc)
+      @spec unquote(names.decode_call)(binary()) :: unquote(input_spec)
       def unquote(names.decode_call)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> calldata) do
         unquote(sig.abi_enc_signature_hex)
         ABI.decode(unquote(names.selector)(), calldata)
@@ -779,8 +962,18 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp build_decode_error_fn(%{names: names, sig: sig}) do
+  @spec build_decode_error_fn(%{
+          names: map(),
+          return_types: [ABI.FunctionSelector.argument_type()],
+          sig: map()
+        }) :: Macro.t()
+  defp build_decode_error_fn(%{names: names, return_types: return_types, sig: sig}) do
+    doc = doc_for(:decode_error, names.decode_error, sig.abi)
+    return_spec = abi_decode_return_spec(return_types)
+
     quote do
+      @doc unquote(doc)
+      @spec unquote(names.decode_error)(binary()) :: unquote(return_spec)
       def unquote(names.decode_error)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> error) do
         unquote(sig.abi_enc_signature_hex)
         ABI.decode(unquote(names.selector)(), error)
@@ -788,6 +981,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_generic_decode_call_fn(%{names: map(), sig: map()}) :: Macro.t()
   defp build_generic_decode_call_fn(%{names: names, sig: sig}) do
     quote do
       def decode_call(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = calldata) do
@@ -797,6 +991,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_generic_error_fn(%{names: map(), sig: map()}) :: Macro.t()
   defp build_generic_error_fn(%{names: names, sig: sig}) do
     quote do
       def decode_error(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = error) do
@@ -806,12 +1001,174 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec build_generic_event_fn(%{names: map(), sig: map()}) :: Macro.t()
   defp build_generic_event_fn(%{names: names, sig: sig}) do
     quote do
       def decode_event([<<unquote_splicing(sig.signature_list)>> | _] = topics, data) do
         unquote(names.decode_event)(topics, data)
       end
     end
+  end
+
+  @spec build_generic_decode_call_annotations() :: Macro.t()
+  defp build_generic_decode_call_annotations do
+    quote do
+      @doc "Decodes ABI calldata and dispatches to the matching generated call decoder."
+      @spec decode_call(binary()) :: {:ok, String.t() | nil, term()} | :not_found
+    end
+  end
+
+  @spec build_generic_decode_call_fallback_fn() :: Macro.t()
+  defp build_generic_decode_call_fallback_fn do
+    quote do
+      def decode_call(_), do: :not_found
+    end
+  end
+
+  @spec build_generic_decode_error_annotations() :: Macro.t()
+  defp build_generic_decode_error_annotations do
+    quote do
+      @doc "Decodes ABI revert data and dispatches to the matching generated error decoder."
+      @spec decode_error(binary()) :: {:ok, String.t() | nil, term()} | :not_found
+    end
+  end
+
+  @spec build_generic_decode_error_fallback_fn() :: Macro.t()
+  defp build_generic_decode_error_fallback_fn do
+    quote do
+      def decode_error(_), do: :not_found
+    end
+  end
+
+  @spec build_generic_decode_event_annotations() :: Macro.t()
+  defp build_generic_decode_event_annotations do
+    quote do
+      @doc "Decodes ABI event topics and data with the matching generated event decoder."
+      @spec decode_event([binary()], binary()) :: {:ok, String.t() | nil, map()} | {:error, term()} | :not_found
+    end
+  end
+
+  @spec build_generic_decode_event_fallback_fn() :: Macro.t()
+  defp build_generic_decode_event_fallback_fn do
+    quote do
+      def decode_event(_, _), do: :not_found
+    end
+  end
+
+  @spec spec_args([ABI.FunctionSelector.argument_type()]) :: [Macro.t()]
+  defp spec_args(types), do: Enum.map(types, &abi_argument_spec/1)
+
+  @spec abi_argument_spec(ABI.FunctionSelector.argument_type()) :: Macro.t()
+  defp abi_argument_spec(%{type: type}), do: abi_type_spec(type)
+
+  @spec normalize_return_types(ABI.FunctionSelector.type() | [ABI.FunctionSelector.argument_type()] | nil) ::
+          [ABI.FunctionSelector.argument_type()]
+  defp normalize_return_types(nil), do: []
+  defp normalize_return_types(types) when is_list(types), do: types
+  defp normalize_return_types(type), do: [%{type: type}]
+
+  @spec abi_decode_return_spec([ABI.FunctionSelector.argument_type()]) :: Macro.t()
+  defp abi_decode_return_spec([]), do: []
+
+  defp abi_decode_return_spec([type]) do
+    type
+    |> abi_argument_spec()
+    |> List.wrap()
+  end
+
+  defp abi_decode_return_spec(types) do
+    types
+    |> Enum.map(&abi_argument_spec/1)
+    |> union_list_spec()
+  end
+
+  @spec exec_vm_return_spec([ABI.FunctionSelector.argument_type()]) :: Macro.t()
+  defp exec_vm_return_spec([]) do
+    quote do
+      {:ok, []} | {:revert, String.t(), term()}
+    end
+  end
+
+  defp exec_vm_return_spec([type]) do
+    value_spec = abi_argument_spec(type)
+
+    quote do
+      {:ok, unquote(value_spec)} | {:revert, String.t(), term()}
+    end
+  end
+
+  defp exec_vm_return_spec(types) do
+    value_spec = abi_decode_return_spec(types)
+
+    quote do
+      {:ok, unquote(value_spec)} | {:revert, String.t(), term()}
+    end
+  end
+
+  @spec union_list_spec([Macro.t()]) :: Macro.t()
+  defp union_list_spec(specs), do: [union_spec(specs)]
+
+  @spec union_spec([Macro.t()]) :: Macro.t()
+  defp union_spec([spec]), do: spec
+  defp union_spec([spec | rest]), do: {:|, [], [spec, union_spec(rest)]}
+
+  @spec abi_type_spec(ABI.FunctionSelector.type()) :: Macro.t()
+  defp abi_type_spec({:uint, _}), do: quote(do: non_neg_integer())
+  defp abi_type_spec({:int, _}), do: quote(do: integer())
+  defp abi_type_spec(:bool), do: quote(do: boolean())
+  defp abi_type_spec(:address), do: address_spec()
+  defp abi_type_spec(:bytes), do: quote(do: binary())
+  defp abi_type_spec({:bytes, size}), do: {:<<>>, [], [{:"::", [], [{:_, [], Elixir}, size * 8]}]}
+  defp abi_type_spec(:string), do: quote(do: String.t())
+  defp abi_type_spec(:function), do: quote(do: <<_::192>>)
+  defp abi_type_spec({:array, type}), do: quote(do: [unquote(abi_type_spec(type))])
+  defp abi_type_spec({:array, type, _size}), do: quote(do: [unquote(abi_type_spec(type))])
+
+  defp abi_type_spec({:tuple, types}) do
+    types
+    |> Enum.map(&abi_argument_spec/1)
+    |> tuple_or_map_spec(types)
+  end
+
+  # sobelow_skip ["DOS.StringToAtom"]
+  @spec tuple_or_map_spec([Macro.t()], [ABI.FunctionSelector.argument_type()]) :: Macro.t()
+  defp tuple_or_map_spec(specs, types) do
+    tuple_spec = {:{}, [], specs}
+
+    if named_tuple?(types) do
+      keyword_specs =
+        Enum.map(types, fn %{name: name, type: type} ->
+          {String.to_atom(Macro.underscore(name)), abi_type_spec(type)}
+        end)
+
+      quote do
+        %{unquote_splicing(keyword_specs)} | unquote(tuple_spec)
+      end
+    else
+      tuple_spec
+    end
+  end
+
+  @spec named_tuple?([ABI.FunctionSelector.argument_type()]) :: boolean()
+  defp named_tuple?(types) do
+    Enum.all?(types, fn type ->
+      name = Map.get(type, :name)
+      is_binary(name) and name != ""
+    end)
+  end
+
+  @spec address_spec() :: Macro.t()
+  defp address_spec, do: quote(do: <<_::160>>)
+
+  @spec opts_spec() :: Macro.t()
+  defp opts_spec, do: quote(do: Keyword.t())
+
+  @spec spec_call(atom(), [Macro.t()]) :: Macro.t()
+  defp spec_call(name, args), do: {name, [], args}
+
+  @spec doc_for(atom(), atom(), binary()) :: String.t()
+  defp doc_for(kind, generated_name, signature) do
+    "#{Map.fetch!(@doc_purposes, kind)} for `#{generated_name}/#{signature}`."
   end
 
   defp select_emitted_fns(%{function_type: :error}, _has_deployed_bytecode, fns) do
@@ -865,6 +1222,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
     else
       [
         quote do
+          @doc "Returns the contract init bytecode."
+          @spec bytecode() :: binary()
           def bytecode, do: hex!(unquote(bytecode))
         end
       ]
@@ -881,10 +1240,25 @@ defmodule Mix.Tasks.Cartouche.Gen do
     else
       [
         quote do
+          @doc "Returns the contract deployed bytecode."
+          @spec deployed_bytecode() :: binary()
           def deployed_bytecode, do: hex!(unquote(deployed_bytecode))
         end
       ]
     end
+  end
+
+  @spec get_abi(map()) :: [Macro.t()]
+  defp get_abi(abi) do
+    abi_items = abi["abi"] || []
+
+    [
+      quote do
+        @doc "Returns the contract ABI entries."
+        @spec abi() :: [map()]
+        def abi, do: unquote(Macro.escape(abi_items))
+      end
+    ]
   end
 
   # Treat nil, empty/whitespace strings, and "0x"/"0x"+whitespace as missing
@@ -929,8 +1303,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
         ])
       )
 
-    bytecode_decl = get_bytecode(abi_map)
-    deployed_bytecode_decl = get_deployed_bytecode(abi_map)
+    abi_decl = abi_map |> get_abi() |> flatten_quote_blocks()
+    bytecode_decl = abi_map |> get_bytecode() |> flatten_quote_blocks()
+    deployed_bytecode_decl = abi_map |> get_deployed_bytecode() |> flatten_quote_blocks()
     has_bytecode = not Enum.empty?(bytecode_decl)
     has_deployed_bytecode = not Enum.empty?(deployed_bytecode_decl)
     encode_call_decl = get_encode_calls(abi_map, has_bytecode, has_deployed_bytecode)
@@ -950,8 +1325,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
           alias Cartouche.Transaction.Call
 
+          @doc "Returns the contract name."
+          @spec contract_name() :: String.t()
           def contract_name, do: unquote(contract_name)
 
+          unquote_splicing(abi_decl)
           unquote_splicing(encode_call_decl)
           unquote_splicing(bytecode_decl)
           unquote_splicing(deployed_bytecode_decl)
@@ -987,19 +1365,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
     Regex.replace(~r/^(\s*defp?\s+[a-z_][a-zA-Z0-9_!?]*)\(\)/m, source, "\\1")
   end
 
-  # Generated fixture modules are internal test infrastructure (`@moduledoc false`).
-  # Per the project convention `docs on public surface, @doc false on internal`,
-  # every emitted public function gets `@doc false` + a permissive `@spec`. The
-  # spec uses `term()` for all argument and return positions because the generator
-  # has no insight into the contract's domain types — Doctor's spec-coverage gate
-  # is satisfied by *presence* of a spec, not type fidelity. Multi-clause
-  # functions get one annotation pair before the first clause only (subsequent
-  # clauses are skipped via the seen-set; duplicate `@spec` for a given arity
-  # is a compile error).
-  #
-  # Task 50 will replace `term()` placeholders with ABI-derived Elixir types and
-  # emit the max-line-length pragma conditionally when bytestring topic-0 hashes
-  # overflow 120 chars after `mix format`.
+  # Template builders annotate generated public functions directly with ABI-aware
+  # docs/specs. This post-pass only fills specs for generated private helpers.
   defp annotate_internal_defs({:defmodule, dm_meta, [name, [do: do_block]]}) do
     {:defmodule, dm_meta, [name, [do: annotate_block(do_block)]]}
   end
@@ -1018,7 +1385,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp annotate_stmt({kind, _, [head, _body]} = def_ast, seen) when kind in [:def, :defp] do
+  defp annotate_stmt({:defp, _, [head, _body]} = def_ast, seen) do
     case extract_name_arity(head) do
       nil ->
         {[def_ast], seen}
@@ -1028,7 +1395,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
           {[def_ast], seen}
         else
           {name, arity} = key
-          {build_annotations(kind, name, arity) ++ [def_ast], MapSet.put(seen, key)}
+          {build_annotations(name, arity) ++ [def_ast], MapSet.put(seen, key)}
         end
     end
   end
@@ -1042,19 +1409,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp extract_name_arity({name, _, _ctx}) when is_atom(name), do: {name, 0}
   defp extract_name_arity(_), do: nil
 
-  defp build_annotations(kind, name, arity) do
+  defp build_annotations(name, arity) do
     spec_args = List.duplicate({:term, [], []}, arity)
     spec_call = {name, [], spec_args}
     spec_ret = {:term, [], []}
 
-    doc_annotation =
-      if kind == :def do
-        [{:@, [], [{:doc, [], [false]}]}]
-      else
-        []
-      end
-
-    doc_annotation ++ [{:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}]
+    [{:@, [], [{:spec, [], [{:"::", [], [spec_call, spec_ret]}]}]}]
   end
 
   # Gets the output-json of all included Solidity files to auto-generate.

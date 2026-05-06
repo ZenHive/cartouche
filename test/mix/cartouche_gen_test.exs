@@ -161,6 +161,19 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     assert contents =~ "def deployed_bytecode"
   end
 
+  defp public_defs(contents) do
+    ~r/^\s{2}def\s+([a-z_][a-zA-Z0-9_!?]*)(?:\(|\b)/m
+    |> Regex.scan(contents, capture: :all_but_first)
+    |> List.flatten()
+    |> Enum.uniq()
+  end
+
+  defp annotation_stanza(contents, name) do
+    pattern = ~r/@doc (?:\"[^\"]+\"|false)\n\s+@spec #{name}\([\s\S]*?\n\s+def #{name}(?:\(|\b)/
+
+    Regex.run(pattern, contents)
+  end
+
   describe "blank_bytecode?/1 predicate" do
     test "literal \"0x\" bytecode emits no exec_vm_* and no bytecode/0", %{tmp: tmp} do
       refute_bytecode_emission(generate(tmp, "BlankZeroX", "0x"))
@@ -195,6 +208,71 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert contents =~ "def encode_ping"
       assert contents =~ "def call_ping"
       assert contents =~ "def execute_ping"
+    end
+
+    test "generated public functions include ABI-derived docs and specs", %{tmp: tmp} do
+      contents = generate(tmp, "DocumentedRpc", "0x6080604052348015")
+
+      for name <- public_defs(contents) do
+        assert annotation_stanza(contents, name)
+      end
+
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_ping/ping(uint256)`."|
+      assert contents =~ "@spec encode_ping(non_neg_integer()) :: binary()"
+      assert contents =~ "@spec ping_selector() :: ABI.FunctionSelector.t()"
+      assert contents =~ "@spec decode_ping_call(binary()) :: [non_neg_integer()]"
+      assert contents =~ "@spec call_ping(<<_::160>>, non_neg_integer(), Keyword.t()) ::"
+      assert contents =~ "@spec exec_vm_ping(non_neg_integer(), Keyword.t()) ::"
+      assert contents =~ "@spec bytecode() :: binary()"
+      assert contents =~ "@spec deployed_bytecode() :: binary()"
+      assert contents =~ "@spec abi() :: [map()]"
+    end
+
+    test "generated specs track calldata inputs and exec_vm return unwrapping", %{tmp: tmp} do
+      abi = [
+        %{
+          "type" => "function",
+          "name" => "differentShapes",
+          "inputs" => [
+            %{"name" => "who", "type" => "address"},
+            %{"name" => "label", "type" => "string"}
+          ],
+          "outputs" => [%{"name" => "", "type" => "bool"}],
+          "stateMutability" => "pure"
+        },
+        %{
+          "type" => "function",
+          "name" => "triple",
+          "inputs" => [],
+          "outputs" => [
+            %{
+              "name" => "",
+              "type" => "tuple",
+              "components" => [
+                %{"name" => "", "type" => "uint256"},
+                %{"name" => "", "type" => "bool"},
+                %{"name" => "", "type" => "address"}
+              ]
+            }
+          ],
+          "stateMutability" => "pure"
+        }
+      ]
+
+      contents = generate(tmp, "SpecShapes", "0x6080604052348015", abi)
+
+      assert contents =~ "@spec decode_different_shapes_call(binary()) :: [<<_::160>> | String.t()]"
+      assert contents =~ "@spec exec_vm_different_shapes(<<_::160>>, String.t(), Keyword.t()) ::"
+      assert contents =~ "{:ok, boolean()} | {:revert, String.t(), term()}"
+      assert contents =~ "@spec exec_vm_triple(Keyword.t()) ::"
+      assert contents =~ "{:ok, {non_neg_integer(), boolean(), <<_::160>>}} | {:revert, String.t(), term()}"
+    end
+
+    test "fallback and receive docs describe synthesized calldata argument", %{tmp: tmp} do
+      contents = generate(tmp, "FallbackDocs", "0x6080604052348015", synthetic_abi())
+
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_fallback/fallback(bytes)`."|
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_receive/receive(bytes)`."|
     end
   end
 
