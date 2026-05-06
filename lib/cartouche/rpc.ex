@@ -1656,7 +1656,7 @@ defmodule Cartouche.RPC do
   @spec fee_history(Keyword.t()) :: {:ok, Cartouche.FeeHistory.t()} | {:error, term()}
   def fee_history(opts \\ []) do
     block_count = Keyword.get(opts, :block_count, 1)
-    newest_block = Keyword.get(opts, :newest_block, "latest")
+    newest_block = opts |> Keyword.get(:newest_block, "latest") |> normalize_block_param()
     reward_percentiles = Keyword.get(opts, :reward_percentiles, [])
 
     send_rpc(

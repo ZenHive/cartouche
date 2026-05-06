@@ -153,6 +153,12 @@ defmodule Cartouche.RPCTest do
 
       assert_received {:rpc_request, %{"method" => "eth_getTransactionCount", "params" => [_addr_hex, "0x0"]}}
     end
+
+    test "fee_history/1 normalizes integer :newest_block opt" do
+      {:ok, %Cartouche.FeeHistory{}} = Cartouche.RPC.fee_history(newest_block: 55)
+
+      assert_received {:rpc_request, %{"method" => "eth_feeHistory", "params" => [1, "0x37", []]}}
+    end
   end
 
   describe "send_rpc/3 response handling" do

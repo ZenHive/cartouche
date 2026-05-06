@@ -397,7 +397,6 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_instructions(_, _, _), do: {:error, :insufficient_instruction_data}
 
-  # credo:disable-for-next-line Credo.Check.Design.TagTODO
   # TODO: error tag and @spec couple to read_instructions/3 — generalize (parameterize tag
   # or rename to `:insufficient_data`) if this helper gets a second callsite.
   @spec read_size_prefixed(binary(), non_neg_integer()) ::
