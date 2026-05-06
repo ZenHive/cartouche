@@ -331,15 +331,16 @@ defmodule Cartouche.Hex do
   def decode_maybe_hex!(h) when is_nil(h), do: nil
   def decode_maybe_hex!(h) when is_binary(h), do: decode_hex!(h)
 
-  api(:decode_hex_number, "Decode a hex quantity string into a big-endian integer without raising on invalid input.",
+  api(:decode_hex_number!, "Decode a hex quantity string into a big-endian integer, raising on invalid input.",
     params: [
       b: [kind: :value, description: "Hex string with optional `0x` prefix representing an unsigned big-endian integer."]
     ],
     returns: %{
-      type: :ok_or_invalid_hex,
-      description: "`{:ok, integer}` inverse of `encode_quantity/1`, or `:invalid_hex` when decoding fails."
+      type: :integer,
+      description: "Unsigned integer inverse of `encode_quantity/1`."
     },
-    composes_with: [:decode_hex, :encode_quantity]
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when decoding fails."],
+    composes_with: [:decode_hex_number, :encode_quantity]
   )
 
   @doc """

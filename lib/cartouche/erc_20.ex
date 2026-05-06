@@ -38,7 +38,8 @@ defmodule Cartouche.Erc20 do
       ],
       exec_opts: [
         kind: :value,
-        description: "Execution options forwarded to `Cartouche.RPC.execute_trx/3`; ERC-20 errors are merged in."
+        description:
+          "Execution options forwarded to `Cartouche.RPC.execute_trx/3`; `:errors` defaults to ERC-20 signatures when absent."
       ]
     ],
     returns: %{
@@ -74,7 +75,8 @@ defmodule Cartouche.Erc20 do
       ],
       call_opts: [
         kind: :value,
-        description: "Call options forwarded to `Cartouche.RPC.call_trx/2`; ERC-20 errors are merged in."
+        description:
+          "Call options forwarded to `Cartouche.RPC.call_trx/2`; `:errors` defaults to ERC-20 signatures when absent."
       ]
     ],
     returns: %{

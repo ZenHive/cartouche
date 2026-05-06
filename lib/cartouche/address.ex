@@ -5,11 +5,11 @@ defmodule Cartouche.Address do
 
   use Descripex, namespace: "/ethereum/address"
 
-  api(:from_public_key, "Derive an Ethereum address from an uncompressed DER-encoded secp256k1 public key.",
+  api(:from_public_key, "Derive an Ethereum address from an uncompressed secp256k1 public key in SEC1 form.",
     params: [
       public_key: [
         kind: :value,
-        description: "Uncompressed DER-encoded secp256k1 public key beginning with the `0x04` prefix byte."
+        description: "Uncompressed secp256k1 public key bytes in SEC1 form, beginning with the `0x04` prefix byte."
       ]
     ],
     returns: %{
