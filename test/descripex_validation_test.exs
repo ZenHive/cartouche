@@ -8,6 +8,10 @@ defmodule Cartouche.DescripexValidationTest do
       assert Cartouche.Transaction.V2 in Cartouche.__descripex_modules__()
     end
 
+    test "registers Solana RPC for Phase 12 discovery" do
+      assert Cartouche.Solana.RPC in Cartouche.__descripex_modules__()
+    end
+
     test "every public function in a registered module carries descripex :hints metadata" do
       for module <- Cartouche.__descripex_modules__() do
         case Code.fetch_docs(module) do
@@ -87,6 +91,22 @@ defmodule Cartouche.DescripexValidationTest do
 
       assert %{description: build_description} = fetch_hints(Cartouche.Transaction, :build_trx, 7)
       assert build_description =~ "Build a legacy transaction"
+    end
+  end
+
+  describe "Cartouche.describe/1 Solana RPC alias" do
+    test "exposes Solana RPC through a stable short alias" do
+      assert Enum.any?(Cartouche.describe(:solana_rpc), &match?(%{name: :get_balance}, &1))
+    end
+
+    test "exposes Solana RPC function detail through a stable short alias" do
+      assert %{
+               description: description,
+               params: %{pubkey: %{kind: :value}},
+               returns: %{type: :ok_error_tuple}
+             } = Cartouche.describe(:solana_rpc, :get_balance)
+
+      assert description == "Get the SOL balance for an account."
     end
   end
 
