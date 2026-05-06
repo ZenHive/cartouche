@@ -133,7 +133,28 @@ defmodule Cartouche.Transaction.V3 do
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
   def decode(<<0x03, trx_enc::binary>>) do
-    case ExRLP.decode(trx_enc) do
+    with {:ok, fields} <- safe_rlp_decode(trx_enc) do
+      decode_fields(fields)
+    end
+  end
+
+  def decode(_), do: {:error, "invalid v3 transaction"}
+
+  @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
+  defp decode_fields([
+         chain_id,
+         nonce,
+         max_priority_fee_per_gas,
+         max_fee_per_gas,
+         gas_limit,
+         destination,
+         amount,
+         data,
+         access_list,
+         max_fee_per_blob_gas,
+         blob_versioned_hashes
+       ]) do
+    decode_payload(
       [
         chain_id,
         nonce,
@@ -145,34 +166,52 @@ defmodule Cartouche.Transaction.V3 do
         data,
         access_list,
         max_fee_per_blob_gas,
-        blob_versioned_hashes,
-        signature_y_parity,
-        signature_r,
-        signature_s
-      ] ->
-        decode_payload([
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          access_list,
-          max_fee_per_blob_gas,
-          blob_versioned_hashes,
-          signature_y_parity,
-          signature_r,
-          signature_s
-        ])
+        blob_versioned_hashes
+      ],
+      {nil, nil, nil}
+    )
+  end
 
-      _ ->
-        {:error, "invalid v3 transaction"}
+  defp decode_fields([
+         chain_id,
+         nonce,
+         max_priority_fee_per_gas,
+         max_fee_per_gas,
+         gas_limit,
+         destination,
+         amount,
+         data,
+         access_list,
+         max_fee_per_blob_gas,
+         blob_versioned_hashes,
+         signature_y_parity,
+         signature_r,
+         signature_s
+       ]) do
+    fields = [
+      chain_id,
+      nonce,
+      max_priority_fee_per_gas,
+      max_fee_per_gas,
+      gas_limit,
+      destination,
+      amount,
+      data,
+      access_list,
+      max_fee_per_blob_gas,
+      blob_versioned_hashes
+    ]
+
+    with {:ok, signature_y_parity} <- decode_y_parity(signature_y_parity),
+         {:ok, signature_r} <- decode_word(signature_r),
+         {:ok, signature_s} <- decode_word(signature_s) do
+      decode_payload(fields, {signature_y_parity, signature_r, signature_s})
+    else
+      _ -> {:error, "invalid v3 transaction"}
     end
   end
 
-  def decode(_), do: {:error, "invalid v3 transaction"}
+  defp decode_fields(_), do: {:error, "invalid v3 transaction"}
 
   @doc """
   Signs a V3 transaction with the given signer process.
@@ -280,26 +319,28 @@ defmodule Cartouche.Transaction.V3 do
   @spec trim_signature_word(<<_::256>>) :: binary()
   defp trim_signature_word(signature_word), do: String.trim_leading(signature_word, <<0>>)
 
-  @spec decode_payload([term()]) :: {:ok, t()} | {:error, String.t()}
-  defp decode_payload([
-         chain_id,
-         nonce,
-         max_priority_fee_per_gas,
-         max_fee_per_gas,
-         gas_limit,
-         destination,
-         amount,
-         data,
-         access_list,
-         max_fee_per_blob_gas,
-         blob_versioned_hashes,
-         signature_y_parity,
-         signature_r,
-         signature_s
-       ]) do
+  @spec decode_payload(
+          [term()],
+          {boolean() | nil, <<_::256>> | nil, <<_::256>> | nil}
+        ) :: {:ok, t()} | {:error, String.t()}
+  defp decode_payload(
+         [
+           chain_id,
+           nonce,
+           max_priority_fee_per_gas,
+           max_fee_per_gas,
+           gas_limit,
+           destination,
+           amount,
+           data,
+           access_list,
+           max_fee_per_blob_gas,
+           blob_versioned_hashes
+         ],
+         {signature_y_parity, signature_r, signature_s}
+       )
+       when is_binary(data) do
     with true <- byte_size(destination) == 20,
-         true <- signature_word?(signature_r),
-         true <- signature_word?(signature_s),
          {:ok, access_list} <- decode_access_list(access_list),
          {:ok, blob_versioned_hashes} <- decode_blob_versioned_hashes(blob_versioned_hashes) do
       {:ok,
@@ -315,30 +356,48 @@ defmodule Cartouche.Transaction.V3 do
          access_list: access_list,
          max_fee_per_blob_gas: :binary.decode_unsigned(max_fee_per_blob_gas),
          blob_versioned_hashes: blob_versioned_hashes,
-         signature_y_parity: :binary.decode_unsigned(signature_y_parity) == 1,
-         signature_r: Cartouche.Hex.pad(signature_r, 32),
-         signature_s: Cartouche.Hex.pad(signature_s, 32)
+         signature_y_parity: signature_y_parity,
+         signature_r: signature_r,
+         signature_s: signature_s
        }}
     else
       _ -> {:error, "invalid v3 transaction"}
     end
+  rescue
+    _ -> {:error, "invalid v3 transaction"}
   end
 
-  @spec signature_word?(binary()) :: boolean()
-  defp signature_word?(word), do: byte_size(word) <= 32
+  defp decode_payload(_, _), do: {:error, "invalid v3 transaction"}
 
   @spec decode_access_list(term()) :: {:ok, access_list()} | {:error, String.t()}
-  defp decode_access_list(access_list) when is_list(access_list) do
-    {:ok,
-     Enum.map(access_list, fn
-       [address, storage] when byte_size(address) <= 20 and is_list(storage) ->
-         {Cartouche.Hex.pad(address, 20), Enum.map(storage, &Cartouche.Hex.pad(&1, 32))}
-     end)}
-  rescue
-    FunctionClauseError -> {:error, "invalid v3 transaction"}
-  end
+  defp decode_access_list(access_list) when is_list(access_list),
+    do: access_list |> Enum.reduce_while({:ok, []}, &decode_access_entry/2) |> reverse_ok()
 
   defp decode_access_list(_), do: {:error, "invalid v3 transaction"}
+
+  @spec decode_access_entry(term(), {:ok, access_list()}) ::
+          {:cont, {:ok, access_list()}} | {:halt, {:error, String.t()}}
+  defp decode_access_entry([address, storage], {:ok, entries}) when byte_size(address) == 20 and is_list(storage) do
+    case decode_storage_keys(storage) do
+      {:ok, storage} -> {:cont, {:ok, [{address, storage} | entries]}}
+      _ -> {:halt, {:error, "invalid v3 transaction"}}
+    end
+  end
+
+  defp decode_access_entry(_, _), do: {:halt, {:error, "invalid v3 transaction"}}
+
+  @spec decode_storage_keys(list()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
+  defp decode_storage_keys(storage) do
+    storage
+    |> Enum.reduce_while({:ok, []}, fn
+      storage_key, {:ok, keys} when byte_size(storage_key) == 32 ->
+        {:cont, {:ok, [storage_key | keys]}}
+
+      _storage_key, _acc ->
+        {:halt, {:error, "invalid v3 transaction"}}
+    end)
+    |> reverse_ok()
+  end
 
   @spec decode_blob_versioned_hashes(term()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
   defp decode_blob_versioned_hashes(blob_versioned_hashes) when is_list(blob_versioned_hashes) do
@@ -350,6 +409,32 @@ defmodule Cartouche.Transaction.V3 do
   end
 
   defp decode_blob_versioned_hashes(_), do: {:error, "invalid v3 transaction"}
+
+  @spec decode_word(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
+  defp decode_word(word) when byte_size(word) <= 32, do: {:ok, Cartouche.Hex.pad(word, 32)}
+  defp decode_word(_), do: {:error, "invalid v3 transaction"}
+
+  @spec decode_y_parity(binary()) :: {:ok, boolean()} | {:error, String.t()}
+  defp decode_y_parity(y_parity) do
+    case :binary.decode_unsigned(y_parity) do
+      0 -> {:ok, false}
+      1 -> {:ok, true}
+      _ -> {:error, "invalid v3 transaction"}
+    end
+  rescue
+    _ -> {:error, "invalid v3 transaction"}
+  end
+
+  @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
+  defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
+  defp reverse_ok({:error, _} = error), do: error
+
+  @spec safe_rlp_decode(binary()) :: {:ok, term()} | {:error, String.t()}
+  defp safe_rlp_decode(trx_enc) do
+    {:ok, ExRLP.decode(trx_enc)}
+  rescue
+    _ -> {:error, "invalid v3 transaction"}
+  end
 
   @spec y_parity(binary()) :: boolean()
   defp y_parity(v_bin) do

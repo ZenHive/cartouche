@@ -252,9 +252,28 @@ defmodule Cartouche.TransactionTest do
   end
 
   describe "V2.decode/1" do
+    test "round-trips signed transactions" do
+      transaction =
+        1
+        |> V2.new({1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [
+          {<<2::160>>, [<<22::256>>]}
+        ])
+        |> V2.add_signature(<<1::256, 2::256, 1>>)
+
+      assert {:ok, ^transaction} = transaction |> V2.encode() |> V2.decode()
+    end
+
+    test "round-trips unsigned transactions" do
+      transaction = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [])
+
+      assert {:ok, ^transaction} = transaction |> V2.encode() |> V2.decode()
+    end
+
     test "malformed RLP body returns {:error, \"invalid v2 transaction\"}" do
       bad_body = <<0x02>> <> ExRLP.encode([<<1>>, <<2>>, <<3>>])
       assert {:error, "invalid v2 transaction"} = V2.decode(bad_body)
+      assert {:error, "invalid v2 transaction"} = V2.decode(<<0x02, 0xFF>>)
+      assert {:error, "invalid v2 transaction"} = V2.decode(<<0x04, 0xC0>>)
     end
 
     test "rejects non-list access_list" do
@@ -297,6 +316,208 @@ defmodule Cartouche.TransactionTest do
           ])
 
       assert {:error, "invalid v2 transaction"} = V2.decode(bytes)
+    end
+
+    test "rejects malformed typed payloads" do
+      bad_destination =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<0, 1::160>>,
+            2,
+            <<>>,
+            [],
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      bad_y_parity =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [],
+            2,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_destination)
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_y_parity)
+    end
+
+    test "rejects malformed scalar, data, and signature fields without raising" do
+      bad_scalar =
+        <<0x02>> <>
+          ExRLP.encode([
+            [],
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [],
+            1,
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      bad_data =
+        <<0x02>> <>
+          ExRLP.encode([1, 1, 1_000_000_000, 100_000_000_000, 100_000, <<1::160>>, 2, [<<>>], []])
+
+      bad_signature =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [],
+            1,
+            <<1, 0::256>>,
+            <<2::256>>
+          ])
+
+      bad_y_parity_shape =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [],
+            [],
+            <<1::256>>,
+            <<2::256>>
+          ])
+
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_scalar)
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_data)
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_signature)
+      assert {:error, "invalid v2 transaction"} = V2.decode(bad_y_parity_shape)
+    end
+  end
+
+  describe "V3.decode/1" do
+    test "round-trips signed transactions" do
+      transaction = V3.add_signature(v3_transaction(), true, <<1::256>>, <<2::256>>)
+
+      assert {:ok, ^transaction} = transaction |> V3.encode() |> V3.decode()
+    end
+
+    test "round-trips unsigned transactions" do
+      transaction = v3_transaction()
+
+      assert {:ok, ^transaction} = transaction |> V3.encode() |> V3.decode()
+    end
+
+    test "malformed RLP and wrong type bytes return errors" do
+      assert {:error, "invalid v3 transaction"} = V3.decode(<<0x03, 0xFF>>)
+      assert {:error, "invalid v3 transaction"} = V3.decode(<<0x02, 0xC0>>)
+      assert {:error, "invalid v3 transaction"} = V3.decode(<<0x03>> <> ExRLP.encode([1, 2, 3]))
+    end
+
+    test "rejects malformed access lists and blob versioned hashes" do
+      malformed_access_list =
+        <<0x03>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<1, 2, 3>>,
+            [[<<2::160>>, [<<1, 2>>]]],
+            1,
+            [<<1, 0::248>>]
+          ])
+
+      malformed_blob_hash =
+        <<0x03>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<1, 2, 3>>,
+            [],
+            1,
+            [<<1, 2>>]
+          ])
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(malformed_access_list)
+      assert {:error, "invalid v3 transaction"} = V3.decode(malformed_blob_hash)
+    end
+
+    test "rejects malformed containers, entries, scalars, and signatures without raising" do
+      base_fields = [
+        1,
+        1,
+        1_000_000_000,
+        100_000_000_000,
+        100_000,
+        <<1::160>>,
+        2,
+        <<1, 2, 3>>,
+        [],
+        1,
+        [<<1, 0::248>>]
+      ]
+
+      invalid_cases = [
+        List.replace_at(base_fields, 0, []),
+        List.replace_at(base_fields, 7, [<<1, 2, 3>>]),
+        List.replace_at(base_fields, 8, <<>>),
+        List.replace_at(base_fields, 8, [[<<2::160>>]]),
+        List.replace_at(base_fields, 10, <<>>),
+        base_fields ++ [2, <<1::256>>, <<2::256>>],
+        base_fields ++ [[], <<1::256>>, <<2::256>>]
+      ]
+
+      for fields <- invalid_cases do
+        assert {:error, "invalid v3 transaction"} = V3.decode(<<0x03>> <> ExRLP.encode(fields))
+      end
+    end
+
+    test "signs and decodes packed signatures with both y-parity values" do
+      signer_proc = Signer.start_signer()
+
+      assert {:ok, %V3{} = signed} = V3.sign(v3_transaction(), signer_proc)
+      assert byte_size(signed.signature_r) == 32
+      assert byte_size(signed.signature_s) == 32
+
+      false_parity = V3.add_signature(v3_transaction(), <<1::256, 2::256, 0>>)
+      true_parity = V3.add_signature(v3_transaction(), <<1::256, 2::256, 1>>)
+
+      assert false_parity.signature_y_parity == false
+      assert true_parity.signature_y_parity == true
     end
   end
 
@@ -736,10 +957,56 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  describe "Cartouche.Transaction.decode/1" do
+    test "dispatches legacy transactions through V1" do
+      transaction = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+
+      assert {:ok, ^transaction} = transaction |> V1.encode() |> Transaction.decode()
+    end
+
+    test "dispatches typed transactions through V2, V3, and V4" do
+      v2 = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [])
+      v3 = v3_transaction()
+      v4 = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+
+      assert {:ok, ^v2} = v2 |> V2.encode() |> Transaction.decode()
+      assert {:ok, ^v3} = v3 |> V3.encode() |> Transaction.decode()
+      assert {:ok, ^v4} = v4 |> V4.encode() |> Transaction.decode()
+    end
+
+    test "returns tagged errors for empty bytes and unknown typed envelopes" do
+      assert {:error, :empty_transaction} = Transaction.decode(<<>>)
+      assert {:error, :unknown_envelope_type} = Transaction.decode(<<0x01, 0xC0>>)
+      assert {:error, :unknown_envelope_type} = Transaction.decode(<<0x05, 0xC0>>)
+      assert {:error, :unknown_envelope_type} = Transaction.decode(:not_binary)
+      assert {:error, _} = Transaction.decode(<<0x02, 0xFF>>)
+    end
+  end
+
   describe "V1 (Task 53 — r/s/v unification + decode→recover_signer round-trip)" do
+    test "round-trips signed transactions" do
+      signer_proc = Signer.start_signer()
+
+      {:ok, transaction} =
+        Transaction.build_signed_trx(<<1::160>>, 5, <<>>, {50, :gwei}, 100_000, 0,
+          signer: signer_proc,
+          chain_id: :goerli
+        )
+
+      assert {:ok, ^transaction} = transaction |> V1.encode() |> V1.decode()
+    end
+
+    test "round-trips unsigned transactions" do
+      transaction = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+
+      assert {:ok, ^transaction} = transaction |> V1.encode() |> V1.decode()
+    end
+
     test "decode/1 returns {:error, \"invalid legacy transaction\"} on malformed RLP" do
       bad_body = ExRLP.encode([<<1>>, <<2>>, <<3>>])
       assert {:error, "invalid legacy transaction"} = V1.decode(bad_body)
+      assert {:error, "invalid legacy transaction"} = V1.decode(<<0xFF>>)
+      assert {:error, "invalid legacy transaction"} = V1.decode(:not_binary)
     end
 
     test "decode → recover_signer round-trip recovers the original signer" do
@@ -780,6 +1047,23 @@ defmodule Cartouche.TransactionTest do
 
       assert {:error, "invalid legacy transaction"} = V1.decode(adversarial)
     end
+
+    test "decode/1 rejects malformed scalar fields without raising" do
+      adversarial =
+        ExRLP.encode([
+          [],
+          <<100_000_000_000::40>>,
+          <<100_000::24>>,
+          <<1::160>>,
+          <<2>>,
+          <<1, 2, 3>>,
+          <<42>>,
+          <<1::256>>,
+          <<2::256>>
+        ])
+
+      assert {:error, "invalid legacy transaction"} = V1.decode(adversarial)
+    end
   end
 
   defp v4_transaction(authorization_list) do
@@ -796,6 +1080,22 @@ defmodule Cartouche.TransactionTest do
       :mainnet
     )
     |> V4.add_signature(<<1::256, 2::256, 1>>)
+  end
+
+  defp v3_transaction do
+    V3.new(
+      1,
+      {1, :gwei},
+      {100, :gwei},
+      100_000,
+      <<1::160>>,
+      {2, :wei},
+      <<1, 2, 3>>,
+      [{<<2::160>>, [<<22::256>>]}],
+      {1, :wei},
+      [<<1, 0::248>>],
+      :goerli
+    )
   end
 
   defp signed_authorization(chain_id, address, nonce) do
