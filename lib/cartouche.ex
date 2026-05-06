@@ -108,7 +108,7 @@ defmodule Cartouche do
   defp normalize_descripex_summary(summary), do: summary
 
   @spec transaction_dispatch_detail(module() | atom(), atom()) :: map() | nil
-  defp transaction_dispatch_detail(:transaction, :encode) do
+  defp transaction_dispatch_detail(mod, :encode) when mod in [:transaction, Cartouche.Transaction] do
     %{
       name: :encode,
       arity: 1,

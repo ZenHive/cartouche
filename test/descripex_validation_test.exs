@@ -68,5 +68,17 @@ defmodule Cartouche.DescripexValidationTest do
 
       assert description =~ "matching versioned transaction module"
     end
+
+    test "exposes transaction encode guidance for module input" do
+      detail = Cartouche.describe(Cartouche.Transaction, :encode)
+
+      assert %{
+               params: %{transaction: %{kind: :value}},
+               returns: %{type: :transaction_binary},
+               description: description
+             } = detail
+
+      assert description =~ "matching versioned transaction module"
+    end
   end
 end
