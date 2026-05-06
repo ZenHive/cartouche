@@ -305,6 +305,23 @@ Cartouche.Wei.to_wei({2, :gwei})               # 2_000_000_000
 | `Cartouche.Solana.Signer` | GenServer Ed25519 signer (local seed, Cloud KMS) |
 | `Mix.Tasks.Cartouche.Gen` | Codegen from Solidity artifacts — `mix cartouche.gen` |
 
+## API discovery
+
+Every public Cartouche module is annotated with [`descripex`](https://hexdocs.pm/descripex) `api(...)` blocks, so the surface is machine-readable for AI agents and introspection tooling. The top-level `Cartouche` module exposes a three-level progressive-disclosure API:
+
+```elixir
+Cartouche.describe()                            # Level 1: all modules + namespaces
+Cartouche.describe(:rpc)                        # Level 2: function list for one module
+Cartouche.describe(:rpc, :get_block_by_number)  # Level 3: full param/return detail
+```
+
+For build-time and HTTP / MCP consumers there are two equivalent shapes of the same manifest:
+
+- `mix manifest` — regenerates `api_manifest.json` at the project root (pretty-printed JSON, gitignored). Run at release time the same way you'd run `mix docs`.
+- `Cartouche.Manifest.build/0` — returns the manifest map at runtime, so a live Erlang VM can serve `/manifest.json` or feed an MCP tool list without an out-of-band artifact.
+
+`api_manifest.json` is intentionally **not** shipped in the hex package — consumers regenerate it from source against the installed dep, or call `Cartouche.Manifest.build/0` directly.
+
 ## Documentation
 
 Full API reference: [hexdocs.pm/cartouche](https://hexdocs.pm/cartouche). Release history: [CHANGELOG.md](CHANGELOG.md).
