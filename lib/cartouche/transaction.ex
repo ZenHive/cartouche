@@ -1181,6 +1181,58 @@ defmodule Cartouche.Transaction do
   end
 
   api(
+    :encode,
+    "Encode a concrete transaction struct (V1/V2/V3/V4) into raw RLP/typed-RLP transaction bytes by dispatching on struct.",
+    params: [
+      transaction: [
+        kind: :value,
+        description:
+          "%Cartouche.Transaction.V1{}, %Cartouche.Transaction.V2{}, %Cartouche.Transaction.V3{}, or %Cartouche.Transaction.V4{} to encode."
+      ]
+    ],
+    returns: %{
+      type: :transaction_binary,
+      description:
+        "Raw transaction bytes: untyped RLP for V1; EIP-2718 typed envelope (`0x02`/`0x03`/`0x04`) followed by RLP-encoded payload for V2/V3/V4."
+    },
+    composes_with: [:decode]
+  )
+
+  @doc """
+  Encodes a concrete transaction struct into raw transaction bytes, mirroring `decode/1`.
+
+  Dispatches by struct so callers don't need to know which versioned encoder to
+  invoke. The output is the same shape `decode/1` accepts:
+
+    * `%Cartouche.Transaction.V1{}` - untyped RLP-encoded legacy/EIP-155 bytes
+      (leading byte `>= 0x80`).
+    * `%Cartouche.Transaction.V2{}` - `0x02`-prefixed EIP-2718 typed RLP.
+    * `%Cartouche.Transaction.V3{}` - `0x03`-prefixed EIP-2718 typed RLP
+      (EIP-4844 blob transaction envelope).
+    * `%Cartouche.Transaction.V4{}` - `0x04`-prefixed EIP-2718 typed RLP
+      (EIP-7702 authorization-list transaction envelope).
+
+  Each leaf encoder already emits the EIP-2718 envelope byte where applicable;
+  this function is a pure pattern-match-and-delegate.
+
+  ## Examples
+
+      iex> tx = Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      iex> {:ok, ^tx} = tx |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
+      iex> Cartouche.Transaction.encode(tx) == Cartouche.Transaction.V1.encode(tx)
+      true
+
+      iex> tx = Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], :goerli)
+      iex> <<0x02, _::binary>> = Cartouche.Transaction.encode(tx)
+      iex> {:ok, ^tx} = tx |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
+  """
+  @spec encode(V1.t() | V2.t() | V3.t() | V4.t()) :: binary()
+  def encode(%V1{} = transaction), do: V1.encode(transaction)
+  def encode(%V2{} = transaction), do: V2.encode(transaction)
+  def encode(%V3{} = transaction), do: V3.encode(transaction)
+  def encode(%V4{} = transaction), do: V4.encode(transaction)
+
+  api(
     :decode,
     "Decode raw Ethereum transaction bytes into the matching transaction struct (V1/V2/V3/V4 by envelope byte).",
     params: [
