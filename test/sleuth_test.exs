@@ -33,6 +33,129 @@ defmodule SleuthTest do
     end
   end
 
+  # Phase A coverage push for INE-43 / ROADMAP Task 48:
+  # Lock in pre-Phase-B (hot-atom) behavior of `query_by/3` and `name_keyword/1`
+  # before the `String.to_atom/1` -> `String.to_existing_atom/1` swap. Phase B
+  # must keep these green; only the cold-atom paths change in Phase B.
+  describe "Phase A — query_by/3 hot-atom invariants" do
+    test "query_by/3 with explicit known :fun resolves derived encoder/selector atoms" do
+      assert {:ok, %{"x" => 2, "y" => 3}} ==
+               Sleuth.query_by(BlockNumber, :query_two, [])
+    end
+
+    test "query_by/3 keyword form preserves :query default and forwards opts" do
+      # `query_by/3` always routes through `query_internal` (be_obvious: false),
+      # so `named_returns:` is forwarded as RPC-opt and ignored by postprocess.
+      assert {:ok, %{"blockNumber" => 2}} ==
+               Sleuth.query_by(BlockNumber, named_returns: true)
+    end
+
+    test "query_by/3 derived encoder/selector atoms are already in the atom table" do
+      # Sanity check: every `fun` we exercise via `query_by/3` must already
+      # have its derived `encode_<fun>` / `<fun>_selector` atoms in the table
+      # (compile-time function defs interned them). Phase B's
+      # `String.to_existing_atom/1` swap relies on this contract.
+      assert :encode_query == String.to_existing_atom("encode_query")
+      assert :query_selector == String.to_existing_atom("query_selector")
+      assert :encode_query_two == String.to_existing_atom("encode_query_two")
+      assert :query_two_selector == String.to_existing_atom("query_two_selector")
+    end
+  end
+
+  describe "Phase A — name_keyword/1 hot-atom invariants" do
+    test "named_returns: true atomizes existing snake_cased field names" do
+      # Hot path: "blockNumber" -> :block_number (compiled at module-eval).
+      assert :block_number == String.to_existing_atom("block_number")
+
+      assert {:ok, [block_number: 2]} ==
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 BlockNumber.query_selector(),
+                 named_returns: true
+               )
+    end
+
+    test "name_keyword collapses nil/empty names to :__unnamed__ via to_named_pair" do
+      # Exercises the `name_keyword(nil)` and `name_keyword("")` clauses
+      # without minting any atom.
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}, %{type: {:uint, 256}}],
+        returns: [%{name: nil, type: {:uint, 256}}, %{name: "", type: {:uint, 256}}]
+      }
+
+      set_sleuth_result(ABI.TypeEncoder.encode([7, 8], selector))
+
+      assert {:ok, [__unnamed__: 7, __unnamed__: 8]} =
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 %ABI.FunctionSelector{returns: selector.returns},
+                 client: StaticEthCallClient,
+                 named_returns: true
+               )
+    end
+  end
+
+  describe "Phase A — postprocess fallback branches (coverage)" do
+    test "query/4 returns [] when selector returns are empty" do
+      selector = %ABI.FunctionSelector{returns: []}
+      set_sleuth_result(<<>>)
+
+      assert {:ok, []} ==
+               Sleuth.query(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 selector,
+                 client: StaticEthCallClient
+               )
+    end
+
+    test "query/4 collapses a single nil-named return to the scalar value" do
+      # Exercises the `[{nil, result}] -> result` branch in be_obvious: false.
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}],
+        returns: [%{name: nil, type: {:uint, 256}}]
+      }
+
+      set_sleuth_result(ABI.TypeEncoder.encode([7], selector))
+
+      assert {:ok, 7} ==
+               Sleuth.query(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 %ABI.FunctionSelector{returns: selector.returns},
+                 client: StaticEthCallClient
+               )
+    end
+
+    test "query_v2/3 (no opts) is a valid arity exposed by the default" do
+      # Pins the `def query_v2(_, _, _, opts \\ [])` 3-arg variant.
+      assert {:ok, [2]} ==
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 BlockNumber.query_selector()
+               )
+    end
+
+    test "preintern_decode_struct_atoms tolerates non-list selector.returns" do
+      # selector.returns = nil -> preintern_decode_struct_atoms fall-through.
+      # Decode then fails (not a list), surfaces structured error.
+      selector = %ABI.FunctionSelector{returns: nil}
+      set_sleuth_result(<<>>)
+
+      assert {:error, "error decoding: " <> _} =
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 selector,
+                 client: StaticEthCallClient,
+                 decode_structs: true
+               )
+    end
+  end
+
   describe "generated Sleuth call shape" do
     test "build_trx_query/3 returns an eth_call struct instead of a partial V2 transaction" do
       call = Cartouche.Contract.Sleuth.build_trx_query(<<1::160>>, <<2, 3>>, <<4, 5>>)
