@@ -326,7 +326,7 @@ defmodule Cartouche.Block do
       gas_limit: map(get_in(params, ["gasLimit"]), &Hex.decode_hex_number!/1),
       gas_used: map(get_in(params, ["gasUsed"]), &Hex.decode_hex_number!/1),
       timestamp: map(get_in(params, ["timestamp"]), &Hex.decode_hex_number!/1),
-      # TODO(Task 66): decode params["transactions"] when :include_transaction_details is true
+      # Task 66 tracks decoding params["transactions"] when :include_transaction_details is true.
       transactions: [],
       uncles: map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end),
       mix_hash: map(get_in(params, ["mixHash"]), &Hex.decode_word!/1),
