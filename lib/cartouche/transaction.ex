@@ -453,66 +453,56 @@ defmodule Cartouche.Transaction do
                 signature_s: nil
               }
           ) :: binary()
-    def encode(%__MODULE__{
-          chain_id: chain_id,
-          nonce: nonce,
-          max_priority_fee_per_gas: max_priority_fee_per_gas,
-          max_fee_per_gas: max_fee_per_gas,
-          gas_limit: gas_limit,
-          destination: destination,
-          amount: amount,
-          data: data,
-          access_list: access_list,
-          signature_y_parity: signature_y_parity,
-          signature_r: signature_r,
-          signature_s: signature_s
-        })
+    def encode(
+          %__MODULE__{signature_y_parity: signature_y_parity, signature_r: signature_r, signature_s: signature_s} =
+            transaction
+        )
         when is_nil(signature_y_parity) or is_nil(signature_r) or is_nil(signature_s) do
-      <<0x02>> <>
-        ExRLP.encode([
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          access_list
-        ])
+      <<0x02>> <> ExRLP.encode(unsigned_rlp_list(transaction))
     end
 
-    def encode(%__MODULE__{
-          chain_id: chain_id,
-          nonce: nonce,
-          max_priority_fee_per_gas: max_priority_fee_per_gas,
-          max_fee_per_gas: max_fee_per_gas,
-          gas_limit: gas_limit,
-          destination: destination,
-          amount: amount,
-          data: data,
-          access_list: access_list,
-          signature_y_parity: signature_y_parity,
-          signature_r: signature_r,
-          signature_s: signature_s
-        }) do
+    def encode(
+          %__MODULE__{signature_y_parity: signature_y_parity, signature_r: signature_r, signature_s: signature_s} =
+            transaction
+        ) do
       <<0x02>> <>
-        ExRLP.encode([
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          Enum.map(access_list, fn {address, storage} ->
-            [address, storage]
-          end),
-          if(signature_y_parity, do: 1, else: 0),
-          String.trim_leading(signature_r, <<0>>),
-          String.trim_leading(signature_s, <<0>>)
-        ])
+        ExRLP.encode(
+          unsigned_rlp_list(transaction) ++
+            [
+              if(signature_y_parity, do: 1, else: 0),
+              String.trim_leading(signature_r, <<0>>),
+              String.trim_leading(signature_s, <<0>>)
+            ]
+        )
+    end
+
+    @doc false
+    @spec unsigned_rlp_list(t()) :: [term()]
+    defp unsigned_rlp_list(%__MODULE__{
+           chain_id: chain_id,
+           nonce: nonce,
+           max_priority_fee_per_gas: max_priority_fee_per_gas,
+           max_fee_per_gas: max_fee_per_gas,
+           gas_limit: gas_limit,
+           destination: destination,
+           amount: amount,
+           data: data,
+           access_list: access_list
+         }) do
+      [
+        chain_id,
+        nonce,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        destination,
+        amount,
+        data,
+        Enum.map(access_list, fn
+          {address, storage} -> [address, storage]
+          entry -> entry
+        end)
+      ]
     end
 
     @doc ~S"""
