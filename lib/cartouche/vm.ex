@@ -169,6 +169,7 @@ defmodule Cartouche.VM do
       |> elem(1)
     end
 
+    @spec show_hex(integer(), nil | non_neg_integer()) :: String.t()
     defp show_hex(i, padding \\ nil) do
       hex = Integer.to_string(i, 16)
 
@@ -572,6 +573,7 @@ defmodule Cartouche.VM do
       end
     end
 
+    @spec do_sign_extend(non_neg_integer(), <<_::256>>) :: {:ok, <<_::256>>}
     defp do_sign_extend(b_int, x) when b_int >= 31, do: {:ok, x}
 
     defp do_sign_extend(b_int, x) do
@@ -580,6 +582,7 @@ defmodule Cartouche.VM do
       extend_with_sign(low_word, val_len, x)
     end
 
+    @spec extend_with_sign(binary(), pos_integer(), <<_::256>>) :: {:ok, <<_::256>>}
     defp extend_with_sign(low_word, val_len, x) do
       if Bitwise.band(Bitwise.bsr(:binary.decode_unsigned(low_word), 8 * val_len - 1), 1) == 1 do
         {:ok, :binary.copy(<<0xFF>>, 32 - val_len) <> low_word}
@@ -604,6 +607,7 @@ defmodule Cartouche.VM do
   end
 
   # Calls
+  @spec static_call(Context.t()) :: context_result()
   defp static_call(context) do
     with {:ok, context, _gas, address, args_offset, args_size, ret_offset, ret_size} <-
            pop_call_args(context),
@@ -615,6 +619,8 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec handle_static_call_result({:return | :revert, binary()}, Context.t(), non_neg_integer(), non_neg_integer()) ::
+          context_result()
   defp handle_static_call_result({:return, return_data}, context, ret_offset, ret_size) do
     return_data_to_copy = pad_or_truncate_return(return_data, ret_size)
 
@@ -632,6 +638,7 @@ defmodule Cartouche.VM do
     |> push_word(@word_zero)
   end
 
+  @spec pad_or_truncate_return(binary(), non_neg_integer()) :: binary()
   defp pad_or_truncate_return(return_data, ret_size) when byte_size(return_data) >= ret_size do
     <<v::binary-size(^ret_size), _::binary>> = return_data
     v
@@ -641,6 +648,10 @@ defmodule Cartouche.VM do
     return_data <> :binary.copy(<<0x0>>, ret_size - byte_size(return_data))
   end
 
+  @spec pop_call_args(Context.t()) ::
+          {:ok, Context.t(), non_neg_integer(), address(), non_neg_integer(), non_neg_integer(), non_neg_integer(),
+           non_neg_integer()}
+          | {:error, vm_error()}
   defp pop_call_args(context) do
     with {:ok, context, gas} <- pop_unsigned(context),
          {:ok, context, address_word} <- pop(context),
@@ -652,6 +663,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec word_to_address(word()) :: address()
   defp word_to_address(word) do
     <<_preface::binary-size(12), address::binary-size(20)>> = word
 
@@ -881,6 +893,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_jump(Context.t(), non_neg_integer()) :: context_result()
   defp do_jump(context, jump_dest) do
     case Map.get(context.op_map, jump_dest) do
       :jumpdest -> {:ok, %{context | pc: jump_dest}}
@@ -888,9 +901,11 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_jumpi(Context.t(), non_neg_integer(), non_neg_integer()) :: context_result()
   defp do_jumpi(context, _jump_dest, 0), do: {:ok, context}
   defp do_jumpi(context, jump_dest, _b), do: do_jump(context, jump_dest)
 
+  @spec do_returndatacopy(Context.t()) :: context_result()
   defp do_returndatacopy(context) do
     with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
          {:ok, _, calldata} <- Memory.read_memory(context.return_data, offset, size) do
@@ -898,12 +913,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_returndatasize(Context.t()) :: context_result()
   defp do_returndatasize(context) do
     with {:ok, return_data_size} <- uint_to_word(byte_size(context.return_data)) do
       push_word(context, return_data_size)
     end
   end
 
+  @spec do_return(Context.t()) :: context_result()
   defp do_return(context) do
     with {:ok, context, offset, size} <- pop2_unsigned(context),
          {:ok, memory_expanded, return_data} <-
@@ -912,6 +929,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_revert(Context.t()) :: context_result()
   defp do_revert(context) do
     with {:ok, context, offset, size} <- pop2_unsigned(context),
          {:ok, memory_expanded, return_data} <-
@@ -927,6 +945,7 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_swap(Context.t(), non_neg_integer()) :: context_result()
   defp do_swap(context, n) do
     with {:ok, high} <- peek(context, n),
          {:ok, low} <- peek(context, 0) do
@@ -939,12 +958,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_dup(Context.t(), pos_integer()) :: context_result()
   defp do_dup(context, n) do
     with {:ok, val} <- peek(context, n - 1) do
       push_word(context, val)
     end
   end
 
+  @spec do_sha3(Context.t()) :: context_result()
   defp do_sha3(context) do
     with {:ok, context, offset, size} <- pop2_unsigned(context),
          {:ok, memory_expanded, data} <- Memory.read_memory(context.memory, offset, size) do
@@ -952,12 +973,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_callvalue(Context.t(), Input.t()) :: context_result()
   defp do_callvalue(context, input) do
     with {:ok, value} <- uint_to_word(input.value) do
       push_word(context, value)
     end
   end
 
+  @spec do_calldataload(Context.t(), Input.t()) :: context_result()
   defp do_calldataload(context, input) do
     with {:ok, context, i} <- pop_unsigned(context),
          {:ok, _, res} <- Memory.read_memory(input.calldata, i, 32) do
@@ -965,12 +988,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_calldatasize(Context.t(), Input.t()) :: context_result()
   defp do_calldatasize(context, input) do
     with {:ok, calldata_size} <- uint_to_word(byte_size(input.calldata)) do
       push_word(context, calldata_size)
     end
   end
 
+  @spec do_calldatacopy(Context.t(), Input.t()) :: context_result()
   defp do_calldatacopy(context, input) do
     with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
          {:ok, _, calldata} <- Memory.read_memory(input.calldata, offset, size) do
@@ -978,12 +1003,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_codesize(Context.t()) :: context_result()
   defp do_codesize(context) do
     with {:ok, codesize} <- uint_to_word(byte_size(context.code_encoded)) do
       push_word(context, codesize)
     end
   end
 
+  @spec do_codecopy(Context.t()) :: context_result()
   defp do_codecopy(context) do
     with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
          {:ok, _, code} <- Memory.read_memory(context.code_encoded, offset, size) do
@@ -991,12 +1018,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_pop_op(Context.t()) :: context_result()
   defp do_pop_op(context) do
     with {:ok, context, _} <- pop(context) do
       {:ok, context}
     end
   end
 
+  @spec do_mload(Context.t()) :: context_result()
   defp do_mload(context) do
     with {:ok, context, i} <- pop_unsigned(context),
          {:ok, memory_expanded, res} <- Memory.read_memory(context.memory, i, 32) do
@@ -1004,12 +1033,14 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_mstore(Context.t()) :: context_result()
   defp do_mstore(context) do
     with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
       Memory.write_memory(context, offset, value)
     end
   end
 
+  @spec do_mstore8(Context.t()) :: context_result()
   defp do_mstore8(context) do
     with {:ok, context, offset, value} <- pop2_unsigned_word(context) do
       <<_::binary-size(31), byte::binary>> = value
@@ -1017,48 +1048,56 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec do_jump_op(Context.t()) :: context_result()
   defp do_jump_op(context) do
     with {:ok, context, jump_dest} <- pop_unsigned(context) do
       do_jump(context, jump_dest)
     end
   end
 
+  @spec do_jumpi_op(Context.t()) :: context_result()
   defp do_jumpi_op(context) do
     with {:ok, context, jump_dest, b} <- pop2_unsigned(context) do
       do_jumpi(context, jump_dest, b)
     end
   end
 
+  @spec do_pc(Context.t()) :: context_result()
   defp do_pc(context) do
     with {:ok, pc} <- uint_to_word(context.pc) do
       push_word(context, pc)
     end
   end
 
+  @spec do_msize(Context.t()) :: context_result()
   defp do_msize(context) do
     with {:ok, memory_sz} <- uint_to_word(byte_size(context.memory)) do
       push_word(context, memory_sz)
     end
   end
 
+  @spec do_gas(Context.t()) :: context_result()
   defp do_gas(context) do
     with {:ok, gas_amount} <- uint_to_word(@gas_amount) do
       push_word(context, gas_amount)
     end
   end
 
+  @spec do_tload(Context.t()) :: context_result()
   defp do_tload(context) do
     with {:ok, context, res} <- pop_unsigned(context) do
       push_word(context, Map.get(context.tstorage, res, <<0::256>>))
     end
   end
 
+  @spec do_tstore(Context.t()) :: context_result()
   defp do_tstore(context) do
     with {:ok, context, key, value} <- pop2_unsigned_word(context) do
       {:ok, %{context | tstorage: Map.put(context.tstorage, key, value)}}
     end
   end
 
+  @spec do_mcopy(Context.t()) :: context_result()
   defp do_mcopy(context) do
     with {:ok, context, dest_offset, offset, size} <- pop3_unsigned(context),
          {:ok, memory_expanded, value} <- Memory.read_memory(context.memory, offset, size) do
@@ -1066,27 +1105,35 @@ defmodule Cartouche.VM do
     end
   end
 
+  @spec safe_floor_div(integer(), integer()) :: integer()
   defp safe_floor_div(_a, 0), do: 0
   defp safe_floor_div(a, b), do: Integer.floor_div(a, b)
 
+  @spec safe_rem(integer(), integer()) :: integer()
   defp safe_rem(_a, 0), do: 0
   defp safe_rem(a, b), do: rem(a, b)
 
+  @spec safe_addmod(integer(), integer(), integer()) :: integer()
   defp safe_addmod(_a, _b, 0), do: 0
   defp safe_addmod(a, b, n), do: rem(a + b, n)
 
+  @spec safe_mulmod(integer(), integer(), integer()) :: integer()
   defp safe_mulmod(_a, _b, 0), do: 0
   defp safe_mulmod(a, b, n), do: rem(a * b, n)
 
+  @spec int_lt(integer(), integer()) :: 0 | 1
   defp int_lt(a, b) when a < b, do: 1
   defp int_lt(_a, _b), do: 0
 
+  @spec int_gt(integer(), integer()) :: 0 | 1
   defp int_gt(a, b) when a > b, do: 1
   defp int_gt(_a, _b), do: 0
 
+  @spec int_eq(integer(), integer()) :: 0 | 1
   defp int_eq(a, b) when a == b, do: 1
   defp int_eq(_a, _b), do: 0
 
+  @spec int_is_zero(integer()) :: 0 | 1
   defp int_is_zero(0), do: 1
   defp int_is_zero(_), do: 0
 
