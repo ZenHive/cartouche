@@ -386,7 +386,7 @@ defmodule Cartouche.Solana.Test.Client do
   # Helpers
   # ---------------------------------------------------------------------------
 
-  @spec token_account_fixture(String.t(), String.t(), non_neg_integer(), non_neg_integer()) :: map()
+  @spec token_account_fixture(String.t(), String.t(), String.t(), non_neg_integer()) :: map()
   defp token_account_fixture(pubkey, mint, amount, decimals) do
     %{
       "pubkey" => pubkey,

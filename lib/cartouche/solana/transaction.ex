@@ -59,9 +59,10 @@ defmodule Cartouche.Solana.Transaction do
 
   defmodule CompiledInstruction do
     @moduledoc "An instruction compiled to account indices."
+    @type account_index() :: 0..255
     @type t :: %__MODULE__{
-            program_id_index: non_neg_integer(),
-            accounts: [non_neg_integer()],
+            program_id_index: account_index(),
+            accounts: [account_index()],
             data: binary()
           }
     defstruct [:program_id_index, :accounts, :data]
