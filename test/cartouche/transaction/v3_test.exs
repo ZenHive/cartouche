@@ -208,6 +208,15 @@ defmodule Cartouche.Transaction.V3Test do
       assert {:error, "invalid v3 transaction"} = V3.decode(malformed)
     end
 
+    test "rejects 32-byte blob versioned hashes whose leading byte is not 0x01" do
+      malformed =
+        representative_tx()
+        |> Map.put(:blob_versioned_hashes, [<<0, 0::248>>])
+        |> V3.encode()
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(malformed)
+    end
+
     test "rejects signatures wider than 32 bytes" do
       malformed =
         <<0x03>> <>

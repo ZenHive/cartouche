@@ -405,7 +405,9 @@ defmodule Cartouche.Transaction.V3 do
 
   @spec decode_blob_versioned_hashes(term()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
   defp decode_blob_versioned_hashes(blob_versioned_hashes) when is_list(blob_versioned_hashes) do
-    if Enum.all?(blob_versioned_hashes, &(byte_size(&1) == 32)) do
+    if Enum.all?(blob_versioned_hashes, fn hash ->
+         is_binary(hash) and byte_size(hash) == 32 and binary_part(hash, 0, 1) == <<0x01>>
+       end) do
       {:ok, blob_versioned_hashes}
     else
       {:error, "invalid v3 transaction"}
