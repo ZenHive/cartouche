@@ -247,9 +247,11 @@ defmodule Cartouche.Solana.Transaction do
       end)
 
     # 6. Build header
+    readonly_signers_count = length(readonly_signers)
+
     header = %Header{
-      num_required_signatures: length(writable_signers) + length(readonly_signers),
-      num_readonly_signed_accounts: length(readonly_signers),
+      num_required_signatures: length(writable_signers) + readonly_signers_count,
+      num_readonly_signed_accounts: readonly_signers_count,
       num_readonly_unsigned_accounts: length(readonly_nonsigners)
     }
 
@@ -329,17 +331,16 @@ defmodule Cartouche.Solana.Transaction do
       <<msg.header.num_required_signatures, msg.header.num_readonly_signed_accounts,
         msg.header.num_readonly_unsigned_accounts>>
 
-    account_keys_bytes =
-      encode_compact_u16(length(msg.account_keys)) <>
-        Enum.reduce(msg.account_keys, <<>>, fn <<key::binary-32>>, acc -> acc <> key end)
+    instructions_iodata = Enum.map(msg.instructions, &serialize_compiled_instruction/1)
 
-    instructions_bytes =
-      encode_compact_u16(length(msg.instructions)) <>
-        Enum.reduce(msg.instructions, <<>>, fn ix, acc ->
-          acc <> serialize_compiled_instruction(ix)
-        end)
-
-    header_bytes <> account_keys_bytes <> msg.recent_blockhash <> instructions_bytes
+    IO.iodata_to_binary([
+      header_bytes,
+      encode_compact_u16(length(msg.account_keys)),
+      msg.account_keys,
+      msg.recent_blockhash,
+      encode_compact_u16(length(msg.instructions)),
+      instructions_iodata
+    ])
   end
 
   @spec serialize_compiled_instruction(CompiledInstruction.t()) :: binary()
@@ -366,9 +367,11 @@ defmodule Cartouche.Solana.Transaction do
   """
   @spec serialize(t()) :: binary()
   def serialize(%__MODULE__{signatures: sigs, message: msg}) do
-    encode_compact_u16(length(sigs)) <>
-      Enum.reduce(sigs, <<>>, fn <<sig::binary-64>>, acc -> acc <> sig end) <>
+    IO.iodata_to_binary([
+      encode_compact_u16(length(sigs)),
+      sigs,
       serialize_message(msg)
+    ])
   end
 
   # ---------------------------------------------------------------------------

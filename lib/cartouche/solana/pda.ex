@@ -141,10 +141,7 @@ defmodule Cartouche.Solana.PDA do
   """
   @spec create_program_address([binary()], <<_::256>>) :: {:ok, <<_::256>>} | {:error, :on_curve}
   def create_program_address(seeds, <<program_id::binary-32>>) do
-    hash_input = Enum.reduce(seeds, <<>>, fn seed, acc -> acc <> seed end)
-    hash_input = hash_input <> program_id <> @pda_marker
-
-    <<candidate::binary-32>> = :crypto.hash(:sha256, hash_input)
+    <<candidate::binary-32>> = :crypto.hash(:sha256, [seeds, program_id, @pda_marker])
 
     if on_curve?(candidate) do
       {:error, :on_curve}

@@ -186,7 +186,7 @@ defmodule Cartouche.VM do
     """
     @spec show_stack([binary()]) :: String.t()
     def show_stack(stack) do
-      hex_length = String.length(show_hex(Enum.count(stack) * 32))
+      hex_length = String.length(show_hex(length(stack) * 32))
 
       stack
       |> Enum.reverse()
@@ -366,7 +366,7 @@ defmodule Cartouche.VM do
   @doc false
   @spec push_word(Context.t(), word()) :: {:ok, Context.t()} | {:error, vm_error()}
   def push_word(context, v) when is_binary(v) and bit_size(v) == 256 do
-    if Enum.count(context.stack) == 1024 do
+    if length(context.stack) == 1024 do
       {:error, :stack_overflow}
     else
       {:ok, %{context | stack: [v | context.stack]}}

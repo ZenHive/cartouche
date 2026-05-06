@@ -415,7 +415,7 @@ defmodule Cartouche.Sleuth do
     apply(mod, fun, args)
   rescue
     _ ->
-      reraise "Sleuth module #{mod} does not define required \"#{fun}/#{Enum.count(args)}\" function",
+      reraise "Sleuth module #{mod} does not define required \"#{fun}/#{length(args)}\" function",
               __STACKTRACE__
   end
 
@@ -423,7 +423,8 @@ defmodule Cartouche.Sleuth do
   defp with_indexed_name({{name, it}, i}), do: {fallback_name(name, i), it}
 
   @spec fallback_name(String.t() | nil, non_neg_integer()) :: String.t()
-  defp fallback_name(name, i) when is_nil(name) or name == "", do: "var#{i}"
+  defp fallback_name(nil, i), do: "var#{i}"
+  defp fallback_name("", i), do: "var#{i}"
   defp fallback_name(name, _i), do: name
 
   @spec to_named_pair({String.t() | nil, term()}) :: {atom(), term()}
@@ -436,7 +437,8 @@ defmodule Cartouche.Sleuth do
   # the rescue is a defense-in-depth against future call paths that
   # might bypass the preintern step.
   @spec name_keyword(String.t() | nil) :: atom()
-  defp name_keyword(name) when is_nil(name) or name == "", do: :__unnamed__
+  defp name_keyword(nil), do: :__unnamed__
+  defp name_keyword(""), do: :__unnamed__
 
   defp name_keyword(name) do
     String.to_existing_atom(Macro.underscore(name))
