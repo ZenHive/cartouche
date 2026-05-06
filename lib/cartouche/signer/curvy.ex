@@ -65,5 +65,6 @@ defmodule Cartouche.Signer.Curvy do
     |> ok!()
   end
 
+  @spec ok!(term()) :: {:ok, term()}
   defp ok!(v), do: {:ok, v}
 end

@@ -341,6 +341,7 @@ defmodule Cartouche.Solana.Transaction do
     header_bytes <> account_keys_bytes <> msg.recent_blockhash <> instructions_bytes
   end
 
+  @spec serialize_compiled_instruction(CompiledInstruction.t()) :: binary()
   defp serialize_compiled_instruction(%CompiledInstruction{} = ix) do
     <<ix.program_id_index>> <>
       encode_compact_u16(length(ix.accounts)) <>
