@@ -364,7 +364,7 @@ Natural extraction: a private helper returning the prefix list from the struct. 
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 29+30 | Phase 8 V2 encode dedup — verify doctest coverage + extract helper `[CX]` [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ⬜ | Verify both encode clauses have doctest coverage; add one to the unsigned clause if missing (Task 29) — refactors without test coverage are risky. Then extract `defp unsigned_rlp_list/1`; rewrite both clauses to call it; verify byte-exact output equivalence via doctests (Task 30) |
+| 29+30 | Phase 8 V2 encode dedup — verify doctest coverage + extract helper `[CX]` [D:3/B:2/U:3 → Eff:0.83] ⚠️ | ✅ 2026-05-06 | Shipped via PR #49 (cursor/v2-encode-dedup-fcdb). Extracted `defp unsigned_rlp_list/1`; both encode clauses now share the prefix list. Widened `t()` signature fields (`signature_y_parity`/`signature_r`/`signature_s`) to allow `nil` for the unsigned path. Added unsigned + bare-address doctests for byte-exact equivalence. CodeRabbit follow-up landed in the same merge: `normalize_access_list/1` widened to accept bare-address entries (the new bare-address doctest exposed a latent crash in the signed path). Focused ExUnit assertions added for the three access-list shapes (unsigned bare, signed bare, mixed) |
 
 **Do not run `mix ex_dna --literal-mode abstract` for refactor targets.** It finds near-misses that are often intentional (EIP version pairs, opcode groupings). Type I / exact duplication only.
 
