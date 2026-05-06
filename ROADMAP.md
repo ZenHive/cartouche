@@ -80,7 +80,7 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 **Generator hardening bundle progressing.** Task 44 (coverage push) shipped 2026-05-05 (INE-20); Task 42 (`decode_error` dead branch) shipped 2026-05-04 (PR #8 / INE-10); Task 41 (bytecode-flag separation) shipped 2026-05-06 (INE-36 / PR #46); Task 50 (`@doc`/`@spec` emission on generated bindings) shipped 2026-05-06 (INE-37 / PR #51) — `.doctor.exs` `ignore_paths` for `lib/cartouche/contract/` retired, `mix doctor` clean across regenerated `IConsole` + `Sleuth`. Remaining items in the bundle: the Task 59 `cartouche.gen.ex` hygiene sub-items.
 
-**VM dialyzer cleanup bundle continuing.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, unblocking Tasks 21+22 + 23. Phase 6 closed 2026-05-06 — Task 23 shipped via INE-29 / PR #40 (`init_from/2` spec narrowed to a concrete struct literal; `Context.t/0` kept broad for post-mutation runtime contexts). Tasks 21+22 (`none()` cascade investigation) remain — next VM step is the Phase 5 reach/dialyzer investigation before mutating VM specs or suppressions.
+**VM dialyzer cleanup bundle closed 2026-05-06.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, unblocking Tasks 21+22 + 23. Task 23 shipped via INE-29 / PR #40 (`init_from/2` spec narrowed to a concrete struct literal; `Context.t/0` kept broad for post-mutation runtime contexts). Tasks 21+22 (`none()` cascade) closed 2026-05-06 — INE-21 / Task 46 was the actual resolver; INE-42 / PR #54 (Cursor cloud-agent) attempted suppressions that local dialyzer verification proved unnecessary, and the dead annotations were removed in the post-merge bookkeeping commit on `development`.
 
 **Phase 12 (descripex adoption) annotation sweep complete — Tasks 83 + 84 + 85 + 86 + 87 + 88 all landed 2026-05-06.** Task 83 (INE-28 / PR #39) annotated `Cartouche.Signer` + `Cartouche.Keys`; Task 84 (INE-31 / PR #44) annotated `Cartouche.RPC` + the 6 response/trace decoders it returns (`Block`, `Receipt`, `FeeHistory`, `DebugTrace`, `Trace`, `TraceCall`) plus their 4 nested struct modules; Task 85 (INE-32 / PR #42) annotated `Cartouche.Transaction` + nested V1 + V2; Task 86 (INE-33 / PR #43) annotated `Cartouche.Solana.RPC`; Task 87 (INE-34 / PR #45) annotated the Solana stack — `Solana.Signer` + `Solana.Transaction` plus 7 instruction/PDA/ATA/program-id helpers (`Keys`, `PDA`, `ATA`, `Programs`, `SystemProgram`, `TokenProgram`, `Token`); Task 88 (INE-35 / PR #47) annotated the Ethereum utility + primitive bundle — `Hex`, `Erc20` (+ nested `Erc20.CallData` + `Erc20.Call` registered after Codex P2 surfaced the discovery gap), `Sleuth`, `Hash`, `Address`, `Wei`, `Chain`, `Base58`, `RecoveryBit`. All 36 module entries now register in `Cartouche.__descripex_modules__/0`. Bootstrap (Task 82) landed 2026-05-05: `:descripex` promoted to direct dep, `use Descripex.Discoverable` wired into `lib/cartouche.ex`, and a validation test flunks-with-the-function-name when annotation drift hits any registered module. **Task 89 (manifest wiring + README) is now unblocked** — every public module is in the manifest, no partial coverage. Five PR-flagged follow-ups filed as Tasks 93-97 (`Cartouche.Transaction.encode/1` real dispatcher, top-level `decode/1` return-shape metadata fix, discovery-helper self-annotation, V1 `value` annotation realignment, validation-test strengthening) plus two pre-existing `Solana.Transaction` correctness gaps surfaced by the bot ensemble on PR #45 — file as Tasks 91-92 (signer-count validation in `sign/2`; bounds-check on `add_signature/3`'s `List.replace_at/3`).
 
@@ -293,21 +293,15 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 ---
 
-## Phase 5: VM / Erc20.Call `none()` cascade investigation
+## Phase 5: VM / Erc20.Call `none()` cascade investigation ✅
 
-**Why:** Four dialyzer `invalid_contract` warnings where success typing is `(_, _, _) -> none()`. `none()` means dialyzer believes the function cannot return normally — typically a cascade from an unreachable pattern, a `raise` on every traced path, or a macro-generated function dialyzer can't trace.
+**Closed 2026-05-06 — effectively resolved by INE-21 / Task 46 prior coverage work.** The four dialyzer `invalid_contract` warnings (`Cartouche.VM.exec/3`, `exec_call/3`, `Cartouche.Erc20.exec_trx/3`, `transfer/4`) no longer reproduce as of `5918e5a` (INE-21 / Task 46 landed 2026-05-05). PR #54 (INE-42) was a Cursor cloud-agent delegation that attempted `@dialyzer {:no_contracts, …}` suppressions on all four heads plus a spec narrowing on `Erc20.exec_trx/3`; local verification with `mix dialyzer.json --quiet` showed the suppressions were dead code (cascade no longer fires). PR #54 was merged for the spec narrowing (independently valuable — mirrors `Cartouche.RPC.execute_trx/3`'s contract); the four dead `@dialyzer` annotations + their cascade-root comment blocks were removed in the post-merge bookkeeping commit on `development`.
 
-**Reach findings (pre-rename):**
-- `mix reach.impact Cartouche.VM.exec/3` → **0 internal callers.** Only external consumers (onchain, downstream).
-- `mix reach.impact Cartouche.Erc20.transfer/4` → **0 internal callers.** Same pattern.
-- `mix reach.impact Cartouche.VM.exec_call/3` → ~37+ internal callers (autogenerated `Cartouche.Contract.IConsole.exec_vm_log_*`). Not the `none()` source.
-- **Implication:** the `none()` cascade on these entry points is transitive — it propagates up from deeper callees where dialyzer's success-typing narrows (likely `Curvy`, `ABI`, `ExRLP`, or internal VM primitives that raise-on-error). Without internal call sites to constrain the top-level signature, dialyzer's whole-program typing collapses.
-
-**What changes under fork ownership:** we can add `@dialyzer {:no_contracts, [exec: 3, transfer: 4]}` at the cartouche level instead of pushing onchain to carry the suppressions. Same cost; better locality.
+**Why the cascade collapsed:** Task 46's coverage push on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm` exercised the previously-untyped paths well enough that dialyzer no longer narrows the public heads' success typing to `none()`. No targeted fix or suppression was needed.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 21+22 | Phase 5 `none()` cascade investigation + targeted fix or local suppression `[CSR]` [D:5/B:4/U:5 → Eff:0.9] ⚠️ | ⬜ | **Unblocked by Task 46.** Trace each Phase 5 warning back through `mix reach.deps` + `mix reach.slice` to find the first callee with `none()` success typing (Task 21). If root cause is a genuinely fixable spec narrowing, fix it; if it's structural (`raise`-heavy helpers), add `@dialyzer {:no_contracts, …}` locally in cartouche (Task 22). Local suppression is a valid terminal state |
+| 21+22 | Phase 5 `none()` cascade investigation + targeted fix or local suppression | ✅ | Done 2026-05-06 (INE-21 / Task 46 was the actual resolver; INE-42 / PR #54 surfaced this finding by attempting suppressions that proved unnecessary) |
 
 ---
 
@@ -410,7 +404,7 @@ Narrow, single-concern, lowercase conventional-commit subject (`fix:`, `chore:`,
 ### Not candidates
 
 - Phase 0 (release mechanics — cartouche-specific)
-- Phase 5 (cascade work — terminal state is local `@dialyzer` suppression)
+- Phase 5 (cascade work — closed; resolved by INE-21 coverage push, no suppression needed)
 - Phase 6 (VM-internal — low signet value)
 - Phase 9 (new tx types — ship in cartouche first; reconsider upstream once production-tested, if signet is still active)
 

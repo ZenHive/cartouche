@@ -54,14 +54,6 @@ defmodule Cartouche.Erc20 do
   the transaction; `exec_opts` is forwarded to `Cartouche.RPC.execute_trx/3`
   with this module's known error signatures merged in.
   """
-  # Phase 5 none() cascade — see PR body. exec_trx/3 sits directly above
-  # `Cartouche.RPC.execute_trx/3`, whose success typing collapses to none()
-  # because of raise-heavy signing helpers (Curvy.sign/3) and
-  # ABI.encode/2 (hieroglyph) reached transitively through prepare_trx_/3.
-  # The narrowed @spec matches `Cartouche.RPC.execute_trx/3` exactly so the
-  # contract is honest; the suppression covers the residual cascade dialyzer
-  # cannot trace through external raise-heavy callees.
-  @dialyzer {:no_contracts, exec_trx: 3}
   @spec exec_trx(Cartouche.contract(), binary(), exec_opts()) ::
           {:ok, binary()} | {:error, term()}
   def exec_trx(token, call_data, exec_opts) do
@@ -302,10 +294,6 @@ defmodule Cartouche.Erc20 do
 
       iex> {:ok, _trx_id} = Cartouche.Erc20.transfer(<<0xCC::160>>, <<0xDD::160>>, 100_000)
   """
-  # Phase 5 none() cascade — see PR body. Inherits the exec_trx/3 cascade
-  # (Curvy.sign/3 + hieroglyph ABI.encode/2 raise-heavy success typings
-  # reached via Cartouche.RPC.execute_trx/3 → prepare_trx_/3).
-  @dialyzer {:no_contracts, transfer: 4}
   @spec transfer(Cartouche.contract(), Cartouche.address(), non_neg_integer(), exec_opts()) ::
           {:ok, binary()} | {:error, term()}
   def transfer(token, destination, amount_wei, exec_opts \\ []) do

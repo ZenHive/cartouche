@@ -1166,14 +1166,6 @@ defmodule Cartouche.VM do
 
   Returns the result of the execution.
   """
-  # Phase 5 none() cascade — see PR body. The cascade root is the
-  # `run_single_op/3` opcode-dispatch case (54 branches, every branch can
-  # error) → `run_code/3` recursion → `exec/3`. Dialyzer's success typing
-  # cannot collapse the union of `:impure`/`:not_implemented`/`:invalid_*`
-  # error tuples plus the recursive callgraph cleanly enough to keep the
-  # public contract intact, so it narrows to none(). Spec is correct as
-  # written; suppress dialyzer's contract check on the public head only.
-  @dialyzer {:no_contracts, exec: 3}
   @spec exec(code() | binary(), binary(), exec_opts()) ::
           {:ok, ExecutionResult.t()} | {:error, vm_error()}
   def exec(code, calldata, opts \\ [])
@@ -1218,11 +1210,6 @@ defmodule Cartouche.VM do
     - `:callvalue`: value passed as callvalue for the execution.
     - `:ffis`: A mapping of address to functions to run as natively implemented ffis
   """
-  # Phase 5 none() cascade — see PR body. exec_call/3 inherits exec/3's
-  # collapsed success typing (the case scrutinee becomes none(), so every
-  # arm is unreachable from dialyzer's view); local suppression follows
-  # the cascade root annotated above on `exec/3`.
-  @dialyzer {:no_contracts, exec_call: 3}
   @spec exec_call(code() | binary(), binary(), exec_opts()) ::
           {:ok, binary()} | {:revert, binary()}
   def exec_call(code, calldata, opts \\ []) do
