@@ -54,7 +54,8 @@ defmodule Cartouche.Erc20 do
   the transaction; `exec_opts` is forwarded to `Cartouche.RPC.execute_trx/3`
   with this module's known error signatures merged in.
   """
-  @spec exec_trx(Cartouche.contract(), binary(), exec_opts()) :: term()
+  @spec exec_trx(Cartouche.contract(), binary(), exec_opts()) ::
+          {:ok, binary()} | {:error, term()}
   def exec_trx(token, call_data, exec_opts) do
     Cartouche.RPC.execute_trx(
       Cartouche.get_contract_address(token),

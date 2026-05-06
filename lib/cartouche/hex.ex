@@ -684,6 +684,7 @@ defmodule Cartouche.Hex do
   @spec nibbles(binary()) :: [0..15]
   def nibbles(v), do: Enum.reverse(do_nibbles(v, []))
 
+  @spec do_nibbles(binary(), [0..15]) :: [0..15]
   defp do_nibbles(<<>>, acc), do: acc
   defp do_nibbles(<<high::4, low::4, rest::binary>>, acc), do: do_nibbles(rest, [low, high | acc])
 

@@ -6,12 +6,15 @@ defmodule Cartouche.Application do
   use Application
 
   @doc false
+  @spec chain_id() :: integer()
   def chain_id, do: Cartouche.Chain.parse_id(Application.get_env(:cartouche, :chain_id, 1))
 
   @doc false
+  @spec ethereum_node() :: String.t()
   def ethereum_node, do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
 
   @doc false
+  @spec http_client() :: module()
   def http_client, do: Application.get_env(:cartouche, :client, Finch)
 
   @impl true
@@ -40,6 +43,7 @@ defmodule Cartouche.Application do
   # --- Ethereum signers ---
 
   @doc false
+  @spec get_signer_spec({atom(), tuple()}) :: Supervisor.child_spec()
   def get_signer_spec({name, signer_type}) do
     name =
       case name do
@@ -53,6 +57,7 @@ defmodule Cartouche.Application do
     )
   end
 
+  @spec signer_mfa(tuple()) :: {module(), atom(), [term()]}
   defp signer_mfa({:priv_key, priv_key}) do
     {Cartouche.Signer.Curvy, :sign, [Cartouche.Hex.decode_hex_input!(priv_key)]}
   end
@@ -68,6 +73,7 @@ defmodule Cartouche.Application do
 
   # --- Solana signers ---
 
+  @spec get_solana_signer_spec({atom(), tuple()}) :: Supervisor.child_spec()
   defp get_solana_signer_spec({name, signer_type}) do
     name =
       case name do
@@ -81,6 +87,7 @@ defmodule Cartouche.Application do
     )
   end
 
+  @spec solana_signer_mfa(tuple()) :: {module(), atom(), [term()]}
   defp solana_signer_mfa({:ed25519, seed}) do
     {Cartouche.Solana.Signer.Ed25519, :sign, [decode_solana_key!(seed)]}
   end
@@ -93,6 +100,7 @@ defmodule Cartouche.Application do
   end
 
   # Solana keys can be raw 32-byte binaries, hex-encoded, or Base58-encoded
+  @spec decode_solana_key!(binary()) :: <<_::256>>
   defp decode_solana_key!(key) when byte_size(key) == 32, do: key
 
   defp decode_solana_key!(key) when is_binary(key) do

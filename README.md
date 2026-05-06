@@ -230,6 +230,8 @@ The generator accepts both raw ABI JSON arrays and full Foundry / Hardhat artifa
 - `decode_call/1`, `decode_event/2`, `decode_error/1` dispatchers
 - For pure functions with bytecode: `exec_vm_<fn>` (local EVM execution via `Cartouche.VM`)
 
+Each generated public function carries an ABI-derived `@doc` (function name + signature) and a `@spec` (typed via the ABI-type → Elixir-type mapping; `decode_*_call/1` is `binary() :: <decoded inputs>`, tuple ABI returns render as Elixir tuples, `exec_vm_*` returns reflect the multi-clause unwrap), so HexDocs renders cleanly and IDE/editor introspection works against the generated bindings.
+
 Once generated, callsites read like any other Elixir module:
 
 ```elixir
