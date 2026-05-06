@@ -1,5 +1,5 @@
 defmodule Cartouche.TransactionTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use Cartouche.Hex
 
   alias Cartouche.Signer.Default
@@ -179,6 +179,7 @@ defmodule Cartouche.TransactionTest do
   describe "build_signed_trx/7" do
     test "default signer path surfaces the current nil chain-id boundary" do
       Signer.start_signer(Default)
+      on_exit(fn -> Signer.start_signer(Default) end)
 
       assert catch_exit(Transaction.build_signed_trx(<<1::160>>, 5, <<>>, {50, :gwei}, 100_000, 0))
     end
@@ -202,6 +203,7 @@ defmodule Cartouche.TransactionTest do
   describe "build_signed_trx_v2/9" do
     test "default signer path surfaces the current nil chain-id boundary" do
       Signer.start_signer(Default)
+      on_exit(fn -> Signer.start_signer(Default) end)
 
       assert catch_exit(Transaction.build_signed_trx_v2(<<1::160>>, 5, <<>>, {1, :gwei}, {100, :gwei}, 100_000, 0, []))
     end
