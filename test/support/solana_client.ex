@@ -30,6 +30,9 @@ defmodule Cartouche.Solana.Test.Client do
   # getBalance
   # ---------------------------------------------------------------------------
 
+  # TODO: dispatch is a multi-clause stub that mimics the full Solana JSON-RPC surface;
+  # return shapes vary per method (numbers, maps, lists, base64 binaries, error tuples).
+  @spec dispatch(String.t(), [term()]) :: term()
   defp dispatch("getBalance", [@error_account | _]) do
     {:rpc_error, %{"code" => -32_600, "message" => "Invalid request"}}
   end
@@ -383,6 +386,7 @@ defmodule Cartouche.Solana.Test.Client do
   # Helpers
   # ---------------------------------------------------------------------------
 
+  @spec token_account_fixture(String.t(), String.t(), non_neg_integer(), non_neg_integer()) :: map()
   defp token_account_fixture(pubkey, mint, amount, decimals) do
     %{
       "pubkey" => pubkey,
