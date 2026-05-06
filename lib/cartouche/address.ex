@@ -19,7 +19,7 @@ defmodule Cartouche.Address do
   )
 
   @doc ~S"""
-  Returns an Ethereum address from a given DER-encoded public key.
+  Returns an Ethereum address from a given uncompressed secp256k1 public key in SEC1 form (`0x04 || X || Y`).
 
   ## Examples
 

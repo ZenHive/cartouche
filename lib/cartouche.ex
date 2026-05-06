@@ -20,6 +20,8 @@ defmodule Cartouche do
 
   use Descripex, namespace: "/cartouche"
 
+  alias Cartouche.Erc20.Call
+  alias Cartouche.Erc20.CallData
   alias Cartouche.Solana.ATA
   alias Cartouche.Solana.Keys
   alias Cartouche.Solana.PDA
@@ -38,6 +40,8 @@ defmodule Cartouche do
     Cartouche.Keys,
     Cartouche.Hex,
     Cartouche.Erc20,
+    CallData,
+    Call,
     Cartouche.Sleuth,
     Cartouche.Hash,
     Cartouche.Address,
@@ -77,6 +81,8 @@ defmodule Cartouche do
     transaction: Cartouche.Transaction,
     transaction_v1: V1,
     transaction_v2: V2,
+    erc20_call_data: CallData,
+    erc20_call: Call,
     solana_signer: Signer,
     solana_transaction: Transaction,
     solana_keys: Keys,
