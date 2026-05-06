@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- `Cartouche.Solana.RPC` now has permanent regression coverage for the previously-untested option/filter/encoding paths surfaced during INE-25 / PR #37 review. New `test/solana/rpc_test.exs` assertions ground the `:encoding` opt on `get_account_info/2`, `get_multiple_accounts/2`, and `get_transaction/2` against recorded JSON-RPC params (covering `:base58`, `:base64`, `:"base64+zstd"`, `:json_parsed`, plus binary-string passthrough); the `get_token_accounts_by_owner/3` `ArgumentError` raise when neither `:mint` nor `:program_id` filter is provided; and the `send_transaction/2` `:encoding` / `:skip_preflight` / `:preflight_commitment` / `:max_retries` opts. A `RecordingClient` test double captures outgoing JSON-RPC method + params via `send/2` to the test process so each path fails if the wire shape regresses. `Cartouche.Solana.RPC` coverage clears the standard ≥80% gate. Test-only — no `lib/cartouche/solana/rpc.ex` mutation. Closes ROADMAP Task 77 / INE-27.
+
 ### Added
 
 - Bootstrap descripex adoption (Phase 12 / ROADMAP Task 82). `:descripex` is now a direct dep instead of transitive-via-`:hieroglyph`, so consumer `mix.exs` files don't need to add it to use the discovery API. The top-level `Cartouche` module exposes `describe/0,1,2` and `__descripex_modules__/0` via `use Descripex.Discoverable` with an initially empty registered-module list. A new validation test in `test/descripex_validation_test.exs` walks the registered list and flunks-with-the-offending-function-name when any non-`@doc false` public function is missing `meta[:hints]` — trivially passes today, grows teeth as the Phase 12 annotation passes (Tasks 83-88) register modules. Tasks 83-89 are unblocked.
