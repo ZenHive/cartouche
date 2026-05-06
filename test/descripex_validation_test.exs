@@ -36,5 +36,32 @@ defmodule Cartouche.DescripexValidationTest do
     test "returns a list (initially empty until Phase 12 annotation tasks register modules)" do
       assert is_list(Cartouche.__descripex_modules__())
     end
+
+    test "Solana modules resolve through explicit discovery aliases" do
+      aliases = [
+        :solana_signer,
+        :solana_transaction,
+        :solana_keys,
+        :solana_pda,
+        :solana_ata,
+        :solana_programs,
+        :solana_system_program,
+        :solana_token_program,
+        :solana_token
+      ]
+
+      for alias <- aliases do
+        assert [%{name: _, description: description} | _] = Cartouche.describe(alias)
+        assert is_binary(description)
+        assert description != ""
+      end
+    end
+
+    test "Solana sign_partial metadata documents unsigned placeholder signatures" do
+      detail = Cartouche.describe(:solana_transaction, :sign_partial)
+
+      assert detail.returns.description =~ "placeholder signatures"
+      assert detail.returns.description =~ "empty signer map"
+    end
   end
 end

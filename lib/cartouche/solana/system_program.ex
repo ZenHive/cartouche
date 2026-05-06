@@ -6,9 +6,18 @@ defmodule Cartouche.Solana.SystemProgram do
   handles basic operations like SOL transfers and account creation.
   """
 
+  use Descripex, namespace: "/solana/system_program"
+
   alias Cartouche.Solana.Programs
   alias Cartouche.Solana.Transaction.AccountMeta
   alias Cartouche.Solana.Transaction.Instruction
+
+  api(:program_id, "Return the Solana System Program public key.",
+    returns: %{
+      type: :solana_pubkey,
+      description: "32-byte System Program public key; base58 string `11111111111111111111111111111111`."
+    }
+  )
 
   @doc """
   Returns the System Program pubkey (32 zero bytes).
@@ -17,6 +26,24 @@ defmodule Cartouche.Solana.SystemProgram do
   """
   @spec program_id() :: <<_::256>>
   def program_id, do: Programs.system_program()
+
+  api(:transfer, "Build a Solana System Program SOL transfer instruction.",
+    params: [
+      from: [
+        kind: :value,
+        description: "32-byte sender public key; base58 address strings should be decoded before calling."
+      ],
+      to: [
+        kind: :value,
+        description: "32-byte recipient public key; base58 address strings should be decoded before calling."
+      ],
+      lamports: [kind: :value, description: "Amount to transfer, in lamports."]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "%Cartouche.Solana.Transaction.Instruction{} for a System Program transfer."
+    }
+  )
 
   @doc """
   Build a transfer instruction (SOL transfer).
@@ -42,6 +69,29 @@ defmodule Cartouche.Solana.SystemProgram do
       data: <<2::little-unsigned-32, lamports::little-unsigned-64>>
     }
   end
+
+  api(:create_account, "Build a Solana System Program create-account instruction.",
+    params: [
+      from: [
+        kind: :value,
+        description: "32-byte funding account public key; base58 address strings should be decoded before calling."
+      ],
+      new_account: [
+        kind: :value,
+        description: "32-byte new account public key; base58 address strings should be decoded before calling."
+      ],
+      lamports: [kind: :value, description: "Rent-exempt funding amount, in lamports."],
+      space: [kind: :value, description: "Account data allocation size, in bytes."],
+      owner: [
+        kind: :value,
+        description: "32-byte owner program public key; base58 address strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "%Cartouche.Solana.Transaction.Instruction{} for a System Program create-account operation."
+    }
+  )
 
   @doc """
   Build a create_account instruction.

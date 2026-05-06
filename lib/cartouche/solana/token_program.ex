@@ -12,9 +12,39 @@ defmodule Cartouche.Solana.TokenProgram do
       <<3, 64, 66, 15, 0, 0, 0, 0, 0>>
   """
 
+  use Descripex, namespace: "/solana/token_program"
+
   alias Cartouche.Solana.Programs
   alias Cartouche.Solana.Transaction.AccountMeta
   alias Cartouche.Solana.Transaction.Instruction
+
+  api(:transfer, "Build an SPL token transfer instruction.",
+    params: [
+      source: [
+        kind: :value,
+        description: "32-byte source token account public key; base58 address strings must be decoded before calling."
+      ],
+      destination: [
+        kind: :value,
+        description:
+          "32-byte destination token account public key; base58 address strings must be decoded before calling."
+      ],
+      authority: [
+        kind: :value,
+        description: "32-byte transfer authority public key; base58 address strings must be decoded before calling."
+      ],
+      amount: [kind: :value, description: "Raw token amount in the mint's base units."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Options; `:token_program` may override the SPL Token Program public key."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "`%Cartouche.Solana.Transaction.Instruction{}` for SPL Token instruction index 3."
+    }
+  )
 
   @doc """
   Transfer tokens from source to destination.
@@ -38,6 +68,36 @@ defmodule Cartouche.Solana.TokenProgram do
       data: <<3, amount::little-unsigned-64>>
     }
   end
+
+  api(:transfer_checked, "Build an SPL token transfer instruction with mint and decimal verification.",
+    params: [
+      source: [
+        kind: :value,
+        description: "32-byte source token account public key; base58 address strings must be decoded before calling."
+      ],
+      mint: [kind: :value, description: "32-byte mint public key; base58 address strings must be decoded before calling."],
+      destination: [
+        kind: :value,
+        description:
+          "32-byte destination token account public key; base58 address strings must be decoded before calling."
+      ],
+      authority: [
+        kind: :value,
+        description: "32-byte transfer authority public key; base58 address strings must be decoded before calling."
+      ],
+      amount: [kind: :value, description: "Raw token amount in the mint's base units."],
+      decimals: [kind: :value, description: "Mint decimal count used by the token program to verify the transfer amount."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Options; `:token_program` may override the SPL Token Program public key."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "`%Cartouche.Solana.Transaction.Instruction{}` for SPL Token instruction index 12."
+    }
+  )
 
   @doc """
   Transfer tokens with decimal verification (preferred over `transfer/5`).
@@ -78,6 +138,33 @@ defmodule Cartouche.Solana.TokenProgram do
     }
   end
 
+  api(:approve, "Build an SPL token approve instruction for a delegate allowance.",
+    params: [
+      source: [
+        kind: :value,
+        description: "32-byte source token account public key; base58 address strings must be decoded before calling."
+      ],
+      delegate: [
+        kind: :value,
+        description: "32-byte delegate public key; base58 address strings must be decoded before calling."
+      ],
+      authority: [
+        kind: :value,
+        description: "32-byte source authority public key; base58 address strings must be decoded before calling."
+      ],
+      amount: [kind: :value, description: "Raw token allowance in the mint's base units."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Options; `:token_program` may override the SPL Token Program public key."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "`%Cartouche.Solana.Transaction.Instruction{}` for SPL Token instruction index 4."
+    }
+  )
+
   @doc """
   Approve a delegate to transfer up to `amount` tokens from source.
 
@@ -99,6 +186,33 @@ defmodule Cartouche.Solana.TokenProgram do
     }
   end
 
+  api(:close_account, "Build an SPL token close-account instruction.",
+    params: [
+      account: [
+        kind: :value,
+        description: "32-byte token account public key to close; base58 address strings must be decoded before calling."
+      ],
+      destination: [
+        kind: :value,
+        description:
+          "32-byte destination public key receiving remaining SOL rent; base58 address strings must be decoded before calling."
+      ],
+      authority: [
+        kind: :value,
+        description: "32-byte close authority public key; base58 address strings must be decoded before calling."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Options; `:token_program` may override the SPL Token Program public key."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "`%Cartouche.Solana.Transaction.Instruction{}` for SPL Token instruction index 9."
+    }
+  )
+
   @doc """
   Close a token account, transferring remaining SOL rent to destination.
 
@@ -117,6 +231,25 @@ defmodule Cartouche.Solana.TokenProgram do
       data: <<9>>
     }
   end
+
+  api(:sync_native, "Build an SPL token sync-native instruction for wrapped SOL accounts.",
+    params: [
+      account: [
+        kind: :value,
+        description:
+          "32-byte wrapped SOL token account public key; base58 address strings must be decoded before calling."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Options; `:token_program` may override the SPL Token Program public key."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "`%Cartouche.Solana.Transaction.Instruction{}` for SPL Token instruction index 17."
+    }
+  )
 
   @doc """
   Sync the native SOL balance of a wrapped SOL token account.

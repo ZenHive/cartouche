@@ -20,10 +20,36 @@ defmodule Cartouche.Solana.Token do
       )
   """
 
+  use Descripex, namespace: "/solana/token"
+
   alias Cartouche.Solana.ATA
   alias Cartouche.Solana.Programs
   alias Cartouche.Solana.RPC
   alias Cartouche.Solana.TokenProgram
+
+  api(:get_balance, "Get the balance of a specific token mint for a Solana wallet.",
+    params: [
+      wallet: [
+        kind: :value,
+        description: "32-byte owner wallet public key; base58 address strings should be decoded before calling."
+      ],
+      mint: [
+        kind: :value,
+        description: "32-byte token mint public key; base58 mint address strings should be decoded before calling."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "RPC options forwarded to `Cartouche.Solana.RPC.get_token_accounts_by_owner/3`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %{amount: raw_amount, decimals: decimals, mint: base58_mint}}` or `{:error, reason}` from the RPC call."
+    },
+    composes_with: [:get_all_balances]
+  )
 
   @doc """
   Get the balance of a specific token for a wallet.
@@ -63,6 +89,34 @@ defmodule Cartouche.Solana.Token do
     amount = String.to_integer(token_amount["amount"])
     {sum + amount, token_amount["decimals"]}
   end
+
+  api(:get_all_balances, "Get all SPL Token and optionally Token-2022 balances for a Solana wallet.",
+    params: [
+      wallet: [
+        kind: :value,
+        description: "32-byte owner wallet public key; base58 address strings should be decoded before calling."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "RPC options forwarded to `Cartouche.Solana.RPC.get_token_accounts_by_owner/3`; set `:include_token_2022` to `false` to skip Token-2022."
+      ]
+    ],
+    opts: [
+      include_token_2022: [
+        kind: :value,
+        default: true,
+        description: "Whether to query Token-2022 accounts in addition to the SPL Token Program."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, balances}` where each balance includes base58 mint and token-account strings, raw integer amount, and decimals; or `{:error, reason}` from RPC."
+    },
+    composes_with: [:get_balance]
+  )
 
   @doc """
   Get all token balances for a wallet.
@@ -109,6 +163,48 @@ defmodule Cartouche.Solana.Token do
       {:ok, balances ++ parse_token_accounts(t22_accounts)}
     end
   end
+
+  api(:transfer_instructions, "Build token transfer instructions between Solana wallets.",
+    params: [
+      from_wallet: [
+        kind: :value,
+        description:
+          "32-byte sender wallet public key and transfer authority; base58 address strings should be decoded before calling."
+      ],
+      to_wallet: [
+        kind: :value,
+        description: "32-byte recipient wallet public key; base58 address strings should be decoded before calling."
+      ],
+      mint: [
+        kind: :value,
+        description: "32-byte token mint public key; base58 mint address strings should be decoded before calling."
+      ],
+      amount: [
+        kind: :value,
+        description: "Raw token amount in the mint's smallest unit."
+      ],
+      decimals: [
+        kind: :value,
+        description: "Mint decimal count used by the checked transfer instruction."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Instruction options, including optional `:token_program` override."
+      ]
+    ],
+    opts: [
+      token_program: [
+        kind: :value,
+        description: "Optional 32-byte SPL Token or Token-2022 program id override."
+      ]
+    ],
+    returns: %{
+      type: :solana_instructions,
+      description:
+        "List of `%Cartouche.Solana.Transaction.Instruction{}` values: idempotent destination ATA creation plus checked token transfer."
+    }
+  )
 
   @doc """
   Build instructions for a token transfer between wallets.
