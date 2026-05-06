@@ -3,6 +3,15 @@ defmodule Cartouche.Keys do
   Cartouche library to generate Ethereum key pairs.
   """
 
+  use Descripex, namespace: "/ethereum/keys"
+
+  api(:generate_keypair, "Generate a fresh Ethereum keypair.",
+    returns: %{
+      type: :ethereum_keypair,
+      description: "`{address, private_key}` where address is a 20-byte Ethereum address and private_key is 32 bytes."
+    }
+  )
+
   @doc """
   Generates a new keypair as an `{eth_address, private_key}`.
 

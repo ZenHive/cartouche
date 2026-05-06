@@ -17,12 +17,39 @@ defmodule Cartouche.Signer do
 
   Additionally, chain_id is used to return EIP-155 compliant signatures.
   """
+  use Descripex, namespace: "/ethereum/signer"
   use GenServer
   use Cartouche.Hex
 
   alias Cartouche.Signer.Default
 
   require Logger
+
+  api(:child_spec, "Build the supervisor child specification for a signer process.",
+    params: [
+      init_arg: [
+        kind: :value,
+        description: "Initialization argument passed by a supervisor when starting Cartouche.Signer."
+      ]
+    ],
+    returns: %{
+      type: :supervisor_child_spec,
+      description: "Supervisor child spec map that starts Cartouche.Signer."
+    }
+  )
+
+  api(:start_link, "Start a signer process backed by the provided signing MFA.",
+    params: [
+      signer_options: [
+        kind: :value,
+        description: "Keyword list containing `:mfa` as `{module, function, args}` and `:name` as the GenServer name."
+      ]
+    ],
+    returns: %{
+      type: :genserver_on_start,
+      description: "`{:ok, pid}` when the signer starts, or the standard GenServer start error tuple."
+    }
+  )
 
   @doc """
   Starts a new Cartouche.Signer process.
@@ -44,6 +71,27 @@ defmodule Cartouche.Signer do
   def init(state) do
     {:ok, state}
   end
+
+  api(:sign, "Sign a message with a running signer process.",
+    params: [
+      message: [kind: :value, description: "Message bytes or string to sign."],
+      name: [kind: :value, default: Default, description: "Signer GenServer name or pid."],
+      opts: [kind: :value, default: [], description: "Keyword options for signing."]
+    ],
+    opts: [
+      chain_id: [
+        kind: :value,
+        description:
+          "Chain id used to produce an EIP-155-compliant signature; defaults to the signer's configured chain id."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, signature}` with the 65-byte Ethereum signature, or `{:error, reason}` when signing or recovery fails."
+    },
+    composes_with: [:sign_direct]
+  )
 
   @doc """
   Signs a message using this signing key.
@@ -68,6 +116,13 @@ defmodule Cartouche.Signer do
     GenServer.call(name, {:sign, {message, chain_id}})
   end
 
+  api(:address, "Get the Ethereum address controlled by a signer process.",
+    params: [
+      name: [kind: :value, default: Default, description: "Signer GenServer name or pid."]
+    ],
+    returns: %{type: :ethereum_address, description: "20-byte Ethereum address for the signer."}
+  )
+
   @doc """
   Gets the address for this signer.
 
@@ -81,6 +136,13 @@ defmodule Cartouche.Signer do
   def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
+
+  api(:chain_id, "Get the chain id configured for a signer process.",
+    params: [
+      name: [kind: :value, default: Default, description: "Signer GenServer name or pid."]
+    ],
+    returns: %{type: :integer, description: "Configured Ethereum chain id."}
+  )
 
   @doc """
   Gets the chain id for this signer.
@@ -124,6 +186,27 @@ defmodule Cartouche.Signer do
   def handle_call(:get_chain_id, _from, %{chain_id: chain_id} = state) do
     {:reply, chain_id, state}
   end
+
+  api(:sign_direct, "Sign a message directly with a signing MFA and known signer address.",
+    params: [
+      message: [kind: :value, description: "Message bytes or string to sign."],
+      address: [kind: :value, description: "20-byte Ethereum address expected to recover from the signature."],
+      signer_mfa: [
+        kind: :value,
+        description: "`{module, function, args}` tuple that performs the raw secp256k1 signature."
+      ],
+      chain_id_or_name: [
+        kind: :value,
+        description:
+          "Ethereum chain id integer or configured chain atom, such as `:sepolia`, used for EIP-155 `v` calculation."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, signature}` with the 65-byte Ethereum signature, or `{:error, reason}` when signing or recovery fails."
+    }
+  )
 
   @doc """
   Directly sign a message, not using a signer process.

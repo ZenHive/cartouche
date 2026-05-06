@@ -8,14 +8,14 @@ defmodule Cartouche do
   introspection tooling via [`descripex`](https://hexdocs.pm/descripex):
 
       Cartouche.describe()                  # registered modules + namespaces
-      Cartouche.describe(:rpc)               # function list for one module
-      Cartouche.describe(:rpc, :get_block_by_number)   # full param/return detail
+      Cartouche.describe(:signer)            # function list for one module
+      Cartouche.describe(:signer, :sign_direct)   # full param/return detail
 
   The registered module list is built up as Phase 12 lands; see
   `ROADMAP.md` Phase 12 for the annotation pass.
   """
 
-  @descripex_modules []
+  @descripex_modules [Cartouche.Signer, Cartouche.Keys]
   use Descripex.Discoverable, modules: @descripex_modules
 
   @type address :: <<_::160>>
