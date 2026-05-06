@@ -341,7 +341,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
   end
 
   describe "bytecode shape coverage" do
-    test "init bytecode without deployed bytecode emits the current asymmetric shape", %{tmp: tmp} do
+    test "init bytecode without deployed bytecode emits no exec_vm helpers", %{tmp: tmp} do
       artifact =
         "InitOnly"
         |> solidity_artifact(pure_function_abi())
@@ -350,11 +350,17 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       contents = generate_artifact(tmp, "InitOnly", artifact)
 
       assert contents =~ "def bytecode"
-      assert contents =~ "def exec_vm_ping"
+      refute contents =~ "def exec_vm_ping"
+      refute contents =~ "deployed_bytecode()"
       refute contents =~ "def deployed_bytecode"
+
+      module = generated_module(contents)
+
+      assert function_exported?(module, :encode_ping, 1)
+      refute function_exported?(module, :exec_vm_ping, 1)
     end
 
-    test "deployed bytecode without init bytecode emits deployed bytecode only", %{tmp: tmp} do
+    test "deployed bytecode without init bytecode emits exec_vm helpers", %{tmp: tmp} do
       artifact =
         "DeployedOnly"
         |> solidity_artifact(pure_function_abi())
@@ -363,8 +369,14 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       contents = generate_artifact(tmp, "DeployedOnly", artifact)
 
       refute contents =~ "def bytecode"
-      refute contents =~ "def exec_vm_ping"
+      assert contents =~ "def exec_vm_ping"
       assert contents =~ "def deployed_bytecode"
+
+      module = generated_module(contents)
+
+      assert function_exported?(module, :exec_vm_ping, 1)
+      assert function_exported?(module, :deployed_bytecode, 0)
+      refute function_exported?(module, :bytecode, 0)
     end
   end
 
