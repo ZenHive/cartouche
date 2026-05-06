@@ -575,7 +575,7 @@ defmodule Cartouche.Typed do
   end
 
   # Takes the `value` parameter (a map), and encodes the values per the EIP-712 encode data spec
-  @spec encode_value_map(%{String.t() => term()}, Type.type_list(), type_map()) :: binary()
+  @spec encode_value_map(%{String.t() => term()}, Type.type_list(), type_map()) :: bitstring()
   defp encode_value_map(value, fields, types) do
     for {field, type} <- fields, into: <<>> do
       if is_binary(type) do
