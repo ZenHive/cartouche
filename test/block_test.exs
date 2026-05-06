@@ -4,6 +4,7 @@ defmodule Cartouche.BlockTest do
 
   alias Cartouche.Block
   alias Cartouche.Block.Withdrawal
+  alias Cartouche.Hex.InvalidHex
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V3
@@ -451,21 +452,44 @@ defmodule Cartouche.BlockTest do
       # silently truncate.
       json = Map.put(tx_v2_json(), "yParity", "0x2")
 
-      assert_raise Cartouche.Hex.InvalidHex, ~r/invalid y_parity/, fn ->
+      assert_raise InvalidHex, ~r/invalid y_parity/, fn ->
         Block.deserialize(pre_london_params(%{"transactions" => [json]}))
       end
     end
 
-    test "unsupported envelope type raises with a clear message" do
-      # `0x1` (EIP-2930) is intentionally unsupported in the matching raw
-      # `Cartouche.Transaction.decode/1` envelope dispatcher; the JSON
-      # path mirrors that — `module-name conventions trump generic EIP
-      # numbers` (per the issue). Unknown types raise rather than
-      # silently degrading to a wrong shape.
+    test "EIP-2930 (type 0x1) raises a specific 'not yet supported' error" do
+      # `0x1` is EIP-2930 (access lists, mainnet since Berlin 2021).
+      # Cartouche doesn't yet have a V_2930 envelope module, so the JSON
+      # path raises a specific message — distinct from the generic
+      # `unsupported envelope type` raised on truly unknown types — to
+      # signal "this is a known-real type we just haven't ported yet."
+      # Tracked as a follow-up roadmap task.
       json = %{"type" => "0x1", "nonce" => "0x0"}
+
+      assert_raise ArgumentError, ~r/EIP-2930 .* not yet supported/, fn ->
+        Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+      end
+    end
+
+    test "truly-unknown envelope type raises the generic message" do
+      # Distinct from the EIP-2930 (0x1) "not yet supported" case: a type
+      # byte we don't recognize at all should raise the generic message
+      # so the operator can tell "we know about this but haven't shipped
+      # support" apart from "we have no idea what this is."
+      json = %{"type" => "0x99", "nonce" => "0x0"}
 
       assert_raise ArgumentError, ~r/unsupported transaction envelope type/, fn ->
         Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+      end
+    end
+
+    test "hash-only path validates hex — non-hex string raises Cartouche.Hex.InvalidHex" do
+      # Cartouche.Block.transactions hash-only branch returns the wire
+      # String.t() unchanged but must not let a malformed hash leak
+      # through — otherwise downstream code that expects 0x-prefixed
+      # 32-byte hex breaks far from the failure point.
+      assert_raise InvalidHex, fn ->
+        Block.deserialize(pre_london_params(%{"transactions" => ["not-a-hash"]}))
       end
     end
   end

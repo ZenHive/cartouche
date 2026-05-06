@@ -1370,24 +1370,57 @@ defmodule Cartouche.Transaction do
   end
 
   defmodule JsonField do
-    @moduledoc false
-    # Shared JSON-field decoders used by `from_json/1` on V1/V2/V3/V4. Kept
-    # internal — these helpers tightly mirror the `eth_getBlockBy*` wire
-    # shape and aren't part of the public API.
+    @moduledoc """
+    Shared JSON-field decoders used by `from_json/1` on V1/V2/V3/V4.
+
+    Tightly mirrors the `eth_getBlockBy*` wire shape — these helpers are
+    cross-module callable from each envelope's `from_json/1` and apply
+    consistent decode rules (padding signature words, handling pre-Berlin
+    `v` vs post-Berlin `yParity`, defensive `nil → []` for optional-on-wire
+    list fields).
+    """
 
     alias Cartouche.Hex
 
+    @doc """
+    Decode a `to` address from JSON.
+
+    Returns `nil` for contract-creation transactions (where `to` is omitted
+    or `null` on the wire) and a 20-byte binary otherwise.
+    """
     @spec decode_destination(String.t() | nil) :: <<_::160>> | nil
     def decode_destination(nil), do: nil
     def decode_destination(addr) when is_binary(addr), do: Hex.decode_address!(addr)
 
+    @doc """
+    Decode a 256-bit signature word (`r` or `s`) from hex.
+
+    Pads short hex values to a full 32 bytes — Geth and some other nodes
+    strip leading zeros from signature components, so `"0x1"` is a valid
+    on-wire representation of a word.
+    """
     @spec decode_signature_word(String.t()) :: <<_::256>>
     def decode_signature_word(hex) when is_binary(hex), do: hex |> Hex.decode_hex!() |> Hex.pad(32)
 
+    @doc """
+    Decode `yParity` (post-Berlin) or fall back to `v` (pre-Berlin) into a
+    boolean parity bit.
+
+    Raises `Cartouche.Hex.InvalidHex` if the value decodes to anything
+    other than 0 or 1.
+    """
     @spec decode_y_parity(map()) :: boolean()
     def decode_y_parity(%{"yParity" => y_parity}) when not is_nil(y_parity), do: hex_to_y_parity(y_parity)
     def decode_y_parity(%{"v" => v}) when not is_nil(v), do: hex_to_y_parity(v)
 
+    @doc """
+    Decode an EIP-2930 access list (`[{address, storage_keys}]`).
+
+    Defensive `nil → []`: although `accessList` is required on the wire
+    for type 2/3/4 transactions, `from_json/1` is publicly callable and
+    tolerates omission to stay symmetric with other optional-on-wire
+    fields. Pass the parsed JSON value directly.
+    """
     @spec decode_access_list(list() | nil) :: [{<<_::160>>, [<<_::256>>]}]
     def decode_access_list(nil), do: []
 
@@ -1397,10 +1430,21 @@ defmodule Cartouche.Transaction do
       end)
     end
 
+    @doc """
+    Decode an EIP-4844 blob-versioned-hashes list into 32-byte words.
+
+    Defensive `nil → []` for the same reason as `decode_access_list/1`.
+    """
     @spec decode_blob_versioned_hashes(list() | nil) :: [<<_::256>>]
     def decode_blob_versioned_hashes(nil), do: []
     def decode_blob_versioned_hashes(hashes) when is_list(hashes), do: Enum.map(hashes, &Hex.decode_word!/1)
 
+    @doc """
+    Decode an EIP-7702 authorization list into a tuple of
+    `{chain_id, address, nonce, y_parity, r, s}` per entry.
+
+    Defensive `nil → []` for the same reason as `decode_access_list/1`.
+    """
     @spec decode_authorization_list(list() | nil) :: [
             {non_neg_integer(), <<_::160>>, non_neg_integer(), boolean(), <<_::256>>, <<_::256>>}
           ]

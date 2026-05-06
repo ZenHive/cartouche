@@ -15,6 +15,7 @@ defmodule Cartouche.Block do
   use Descripex, namespace: "/ethereum/block"
   use Cartouche.Hex
 
+  alias Cartouche.Hex
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V3
@@ -381,16 +382,35 @@ defmodule Cartouche.Block do
           | V2.t()
           | V3.t()
           | V4.t()
-  defp deserialize_transaction(hash) when is_binary(hash), do: hash
+  defp deserialize_transaction(hash) when is_binary(hash) do
+    _ = Hex.decode_word!(hash)
+    hash
+  end
 
   defp deserialize_transaction(%{} = params) do
     case params["type"] do
-      nil -> V1.from_json(params)
-      "0x0" -> V1.from_json(params)
-      "0x2" -> V2.from_json(params)
-      "0x3" -> V3.from_json(params)
-      "0x4" -> V4.from_json(params)
-      other -> raise ArgumentError, "unsupported transaction envelope type #{inspect(other)} in block JSON"
+      nil ->
+        V1.from_json(params)
+
+      "0x0" ->
+        V1.from_json(params)
+
+      "0x2" ->
+        V2.from_json(params)
+
+      "0x3" ->
+        V3.from_json(params)
+
+      "0x4" ->
+        V4.from_json(params)
+
+      "0x1" ->
+        raise ArgumentError,
+              "EIP-2930 (type 0x1) transactions are not yet supported by Cartouche.Block JSON deserialization"
+
+      other ->
+        raise ArgumentError,
+              "unsupported transaction envelope type #{inspect(other)} in block JSON"
     end
   end
 end
