@@ -75,6 +75,41 @@ jobs:
       - name: Doctor (--raise overrides .doctor.exs raise=false to gate CI)
         run: mix doctor --raise
 
+      # ── Sobelow drift check ──────────────────────────────────────────────
+      # `.sobelow-skips` is a list of line-fingerprint hashes for known-acceptable
+      # findings. Every PR that shifts lines in `lib/mix/cartouche.gen.ex` (heavy
+      # File.* macro callsites, see lines 722, 920, 1062, 1100, 1101 of that file)
+      # invalidates fingerprints, and the Sobelow step below would fail until
+      # `.sobelow-skips` is regenerated.
+      #
+      # This step regenerates and diffs against the committed file. If drift,
+      # fail loudly with the diff inline. The local reviewer (commit-review skill,
+      # Step 14) applies the regen on `main` after merge as part of the post-merge
+      # bookkeeping commit — agents never touch `.sobelow-skips`. Auto-commit-back
+      # from CI would require write tokens; we trade that security tradeoff for
+      # a single visible drift diff that commit-review handles deterministically.
+      - name: Sobelow drift check (.sobelow-skips fingerprints)
+        run: |
+          cp .sobelow-skips .sobelow-skips.committed
+          mix sobelow --mark-skip-all
+          if ! diff -q .sobelow-skips.committed .sobelow-skips > /dev/null; then
+            echo "::error::.sobelow-skips drift detected — line fingerprints stale."
+            echo ""
+            echo "The committed .sobelow-skips no longer matches what 'mix sobelow --mark-skip-all'"
+            echo "produces against the current source. This usually means a PR shifted lines in a"
+            echo "file referenced by fingerprint (e.g. lib/mix/cartouche.gen.ex)."
+            echo ""
+            echo "Fix path:"
+            echo "  Local: 'mix sobelow --mark-skip-all && git add .sobelow-skips' on main after merge."
+            echo "  Or: commit-review skill (Step 14) applies the regen automatically as part of"
+            echo "  post-merge bookkeeping. Agents (Codex/Cursor) should not touch .sobelow-skips."
+            echo ""
+            echo "--- diff (committed vs regenerated) ---"
+            diff .sobelow-skips.committed .sobelow-skips || true
+            exit 1
+          fi
+          echo "Sobelow skips fingerprints in sync with source."
+
       - name: Sobelow (honors .sobelow-conf, exit=Low)
         run: mix sobelow --config
 
