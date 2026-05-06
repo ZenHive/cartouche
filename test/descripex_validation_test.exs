@@ -1,6 +1,8 @@
 defmodule Cartouche.DescripexValidationTest do
   use ExUnit.Case, async: true
 
+  alias Cartouche.Solana.Transaction
+
   describe "Cartouche.__descripex_modules__/0" do
     test "every public function in a registered module carries descripex :hints metadata" do
       for module <- Cartouche.__descripex_modules__() do
@@ -37,6 +39,10 @@ defmodule Cartouche.DescripexValidationTest do
       assert is_list(Cartouche.__descripex_modules__())
     end
 
+    test "describe/0 lists registered modules" do
+      assert Enum.any?(Cartouche.describe(), &(&1.module == Transaction))
+    end
+
     test "Solana modules resolve through explicit discovery aliases" do
       aliases = [
         :solana_signer,
@@ -57,11 +63,25 @@ defmodule Cartouche.DescripexValidationTest do
       end
     end
 
+    test "Solana discovery accepts full module atoms" do
+      assert Cartouche.describe(Transaction) == Cartouche.describe(:solana_transaction)
+    end
+
     test "Solana sign_partial metadata documents unsigned placeholder signatures" do
       detail = Cartouche.describe(:solana_transaction, :sign_partial)
 
       assert detail.returns.description =~ "placeholder signatures"
       assert detail.returns.description =~ "empty signer map"
+    end
+
+    test "Cartouche contract address helper handles binary and configured atom inputs" do
+      address = "0x0000000000000000000000000000000000000001"
+      Application.put_env(:cartouche, :contracts, test_descripex: address)
+
+      on_exit(fn -> Application.delete_env(:cartouche, :contracts) end)
+
+      assert <<1::160>> = Cartouche.get_contract_address(address)
+      assert <<1::160>> = Cartouche.get_contract_address(:test_descripex)
     end
   end
 end
