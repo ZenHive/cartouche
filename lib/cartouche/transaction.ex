@@ -58,7 +58,11 @@ defmodule Cartouche.Transaction do
           description: "Maximum gas units the transaction may consume."
         ],
         to: [kind: :value, description: "20-byte destination address."],
-        value: [kind: :value, description: "Ether value as wei or `{amount, :wei | :gwei | :eth}`."],
+        value: [
+          kind: :value,
+          description:
+            "Ether value as an integer of wei or `{amount, :wei | :gwei}` (matches V1 `@spec` and the `{2, :wei}` doctest example)."
+        ],
         data: [kind: :value, description: "Contract calldata or raw transaction input bytes."],
         chain_id: [
           kind: :exchange_data,
@@ -1187,8 +1191,16 @@ defmodule Cartouche.Transaction do
       encoded: [kind: :value, description: "Raw RLP/typed-RLP transaction bytes."]
     ],
     returns: %{
-      type: :transaction_struct,
-      description: "{:ok, V1.t() | V2.t() | V3.t() | V4.t()} or {:error, atom() | String.t()}"
+      type: :ok_error_tuple,
+      description:
+        "Tagged union of seven dispatcher outcomes: " <>
+          "`{:ok, %Cartouche.Transaction.V1{}}` for legacy/EIP-155 RLP bodies (first byte >= 0x80); " <>
+          "`{:ok, %Cartouche.Transaction.V2{}}` for `0x02`-prefixed EIP-1559 envelopes; " <>
+          "`{:ok, %Cartouche.Transaction.V3{}}` for `0x03`-prefixed envelopes; " <>
+          "`{:ok, %Cartouche.Transaction.V4{}}` for `0x04`-prefixed envelopes; " <>
+          "`{:error, :empty_transaction}` for empty input; " <>
+          "`{:error, :unknown_envelope_type}` for reserved envelope bytes (`< 0x80`, including `0x01`); " <>
+          "`{:error, String.t()}` for malformed bodies delegated from `V1/V2/V3/V4.decode/1`."
     }
   )
 

@@ -36,6 +36,7 @@ defmodule Cartouche do
   alias Cartouche.Transaction.V2
 
   @descripex_modules [
+    Cartouche,
     Cartouche.Signer,
     Cartouche.Keys,
     Cartouche.Hex,
@@ -76,6 +77,7 @@ defmodule Cartouche do
   ]
 
   @descripex_aliases %{
+    cartouche: Cartouche,
     signer: Cartouche.Signer,
     keys: Cartouche.Keys,
     transaction: Cartouche.Transaction,
@@ -149,6 +151,26 @@ defmodule Cartouche do
   @doc false
   @spec __descripex_modules__() :: [module()]
   def __descripex_modules__, do: @descripex_modules
+
+  api(
+    :get_contract_address,
+    "Resolve a configured contract reference (raw address, 0x-hex, or alias atom) to a 20-byte address.",
+    params: [
+      address: [
+        kind: :value,
+        description:
+          "Either a 20-byte binary, a `0x`-hex address string, or an atom alias registered under " <>
+            "`config :cartouche, :contracts, [alias: \"0x...\"]`."
+      ]
+    ],
+    returns: %{
+      type: :address,
+      description: "20-byte binary address."
+    },
+    errors: [
+      key_error: "Raised by `Keyword.fetch!/2` when an atom alias is not found in `:cartouche, :contracts`."
+    ]
+  )
 
   @doc ~S"""
   Returns a contract address, that may have been set in configuration.
