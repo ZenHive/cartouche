@@ -12,6 +12,7 @@ defmodule Cartouche.Trace do
     * Infura trace object: https://docs.infura.io/networks/ethereum/json-rpc-methods/trace-methods/#trace
   """
 
+  use Descripex, namespace: "/ethereum/trace"
   use Cartouche.Hex
 
   defmodule Action do
@@ -20,6 +21,7 @@ defmodule Cartouche.Trace do
     or `suicide` operation the traced transaction performed at one frame of
     its call graph (from, to, value, gas, input, and call-type metadata).
     """
+    use Descripex, namespace: "/ethereum/trace/action"
 
     @type t() :: %__MODULE__{
             call_type: String.t() | nil,
@@ -44,6 +46,22 @@ defmodule Cartouche.Trace do
       :refund_address,
       :balance
     ]
+
+    api(:deserialize, "Decode a trace action object from a JSON-RPC trace result.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source: "Cartouche.RPC.trace_trx/2, Cartouche.RPC.trace_call/2, or Cartouche.RPC.trace_call_many/2",
+          description:
+            "Map describing a `call`, `create`, or `suicide` trace action with hex quantity and address fields."
+        ]
+      ],
+      returns: %{
+        type: :trace_action,
+        description:
+          "%Cartouche.Trace.Action{} with decoded call/create/suicide fields such as from, to, gas, input, value, refund address, and balance."
+      }
+    )
 
     @doc ~S"""
     Deserializes a trace sub-action into a struct.
@@ -129,6 +147,21 @@ defmodule Cartouche.Trace do
       }
     end
 
+    api(:serialize, "Encode a `Cartouche.Trace.Action` struct back into a JSON-RPC trace action map.",
+      params: [
+        action: [
+          kind: :value,
+          description:
+            "%Cartouche.Trace.Action{} containing decoded action fields to serialize as hex quantities, addresses, and byte strings."
+        ]
+      ],
+      returns: %{
+        type: :json_rpc_trace_action,
+        description:
+          "Map with JSON-RPC action fields such as `callType`, `from`, `to`, `gas`, `input`, `value`, and `init`."
+      }
+    )
+
     @doc ~S"""
     Serializes a struct into a json map.
 
@@ -202,6 +235,22 @@ defmodule Cartouche.Trace do
     :transaction_position,
     :type
   ]
+
+  api(:deserialize, "Decode a single JSON-RPC trace result into a `Cartouche.Trace` struct.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.trace_trx/2, Cartouche.RPC.trace_call/2, or Cartouche.RPC.trace_call_many/2",
+        description:
+          "Trace result map with nested `action`, block/transaction location, result, error, subtrace count, and trace address fields."
+      ]
+    ],
+    returns: %{
+      type: :trace,
+      description:
+        "%Cartouche.Trace{} with decoded `%Cartouche.Trace.Action{}` action, optional block and transaction identifiers, result bytes/address/code, error, and trace address."
+    }
+  )
 
   @doc ~S"""
   Deserializes a single trace result from `trace_transction`. Note: a JSON-RPC response will
@@ -428,6 +477,21 @@ defmodule Cartouche.Trace do
     }
   end
 
+  api(:serialize, "Encode a `Cartouche.Trace` struct back into a JSON-RPC trace result map.",
+    params: [
+      trace: [
+        kind: :value,
+        description:
+          "%Cartouche.Trace{} containing decoded action, block/transaction location, result, error, and trace-address fields."
+      ]
+    ],
+    returns: %{
+      type: :json_rpc_trace,
+      description:
+        "Map with serialized action, block/transaction identifiers, result object, error, subtraces, traceAddress, and type fields."
+    }
+  )
+
   @doc ~S"""
   Serializes a single trace to a corresponding json map.
 
@@ -507,6 +571,20 @@ defmodule Cartouche.Trace do
       type: trace.type
     }
   end
+
+  api(:deserialize_many, "Decode an array of JSON-RPC trace result objects.",
+    params: [
+      traces: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.trace_trx/2, Cartouche.RPC.trace_call/2, or Cartouche.RPC.trace_call_many/2",
+        description: "List of JSON-RPC trace result maps."
+      ]
+    ],
+    returns: %{
+      type: :trace_list,
+      description: "List of `%Cartouche.Trace{}` structs, each with nested `%Cartouche.Trace.Action{}` data."
+    }
+  )
 
   @doc ~S"""
   Deserializes an array of trace results from `trace_transction`.

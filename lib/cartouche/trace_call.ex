@@ -12,6 +12,7 @@ defmodule Cartouche.TraceCall do
     * Infura docs: https://docs.infura.io/api/networks/ethereum/json-rpc-methods/trace-methods/trace_callmany
   """
 
+  use Descripex, namespace: "/ethereum/trace_call"
   use Cartouche.Hex
 
   @type t :: %__MODULE__{
@@ -23,8 +24,23 @@ defmodule Cartouche.TraceCall do
 
   defstruct [:output, :state_diff, :trace, :vm_trace]
 
+  api(:deserialize, "Decode one `trace_call` or `trace_callMany` JSON-RPC result.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.trace_call/2 or Cartouche.RPC.trace_call_many/2",
+        description: "Trace-call result map with `output`, `stateDiff`, `trace`, and `vmTrace` fields."
+      ]
+    ],
+    returns: %{
+      type: :trace_call,
+      description:
+        "%Cartouche.TraceCall{} with decoded output bytes and nested `%Cartouche.Trace{}` entries; `state_diff` and `vm_trace` remain nil when unsupported."
+    }
+  )
+
   @doc ~S"""
-  Deserializes a single of trace result from `trace_callMany`.
+  Deserializes a single trace result from `trace_callMany`.
 
   ## Examples
 
@@ -129,8 +145,22 @@ defmodule Cartouche.TraceCall do
     }
   end
 
+  api(:serialize, "Encode a `Cartouche.TraceCall` struct back to a JSON-RPC-style map.",
+    params: [
+      trace_call: [
+        kind: :value,
+        description:
+          "%Cartouche.TraceCall{} containing output bytes and nested `%Cartouche.Trace{}` entries to serialize."
+      ]
+    ],
+    returns: %{
+      type: :json_rpc_trace_call,
+      description: "Map with hex output, nil state/vm trace placeholders, and serialized nested trace objects."
+    }
+  )
+
   @doc ~S"""
-  Deserializes a single of trace result from `trace_callMany`.
+  Serializes a single trace result for `trace_callMany`.
 
   ## Examples
 
@@ -248,6 +278,20 @@ defmodule Cartouche.TraceCall do
       trace: Enum.map(trace_call.trace, &Cartouche.Trace.serialize/1)
     }
   end
+
+  api(:deserialize_many, "Decode an array of `trace_callMany` JSON-RPC results.",
+    params: [
+      trace_calls: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.trace_call_many/2",
+        description: "List of trace-call result maps returned by `trace_callMany`."
+      ]
+    ],
+    returns: %{
+      type: :trace_call_list,
+      description: "List of `%Cartouche.TraceCall{}` structs, each with nested decoded traces."
+    }
+  )
 
   @doc ~S"""
   Deserializes an array of trace results from `trace_callMany`.

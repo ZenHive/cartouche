@@ -12,6 +12,7 @@ defmodule Cartouche.Block do
   PoW mix hash and post-Merge as PREVRANDAO (EIP-4399).
   """
 
+  use Descripex, namespace: "/ethereum/block"
   use Cartouche.Hex
 
   defmodule Withdrawal do
@@ -21,6 +22,8 @@ defmodule Cartouche.Block do
     Embedded in `Cartouche.Block.t().withdrawals` when the block is
     post-Shanghai (block ≥ 17,034,870 on mainnet).
     """
+
+    use Descripex, namespace: "/ethereum/block/withdrawal"
 
     @type t :: %__MODULE__{
             # QUANTITY - the index of the withdrawal in the validator pool.
@@ -34,6 +37,22 @@ defmodule Cartouche.Block do
           }
 
     defstruct [:index, :validator_index, :address, :amount]
+
+    api(:deserialize, "Decode a validator withdrawal entry from an Ethereum block JSON-RPC object.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source: "Cartouche.RPC.get_block_by_number/2 or Cartouche.RPC.get_block_by_hash/2",
+          description:
+            "Map with `index`, `validatorIndex`, `address`, and `amount` hex fields from a post-Shanghai block withdrawal."
+        ]
+      ],
+      returns: %{
+        type: :block_withdrawal,
+        description:
+          "%Cartouche.Block.Withdrawal{} with integer indices, a 20-byte recipient address, and amount in gwei."
+      }
+    )
 
     @doc ~S"""
     Deserializes a withdrawal object from JSON-RPC.
@@ -155,6 +174,22 @@ defmodule Cartouche.Block do
           # excessBlobGas: QUANTITY - excess blob gas. Cancun+ (EIP-4844); nil pre-Cancun.
           excess_blob_gas: integer() | nil
         }
+
+  api(:deserialize, "Decode an Ethereum block JSON-RPC object into a Cartouche.Block struct.",
+    params: [
+      params: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.get_block_by_number/2 or Cartouche.RPC.get_block_by_hash/2",
+        description:
+          "Block response map containing DATA hex strings, QUANTITY hex strings, transactions, uncles, and optional fork-tier fields."
+      ]
+    ],
+    returns: %{
+      type: :ethereum_block,
+      description:
+        "%Cartouche.Block{} with decoded hashes, addresses, quantities, uncle hashes, and optional nested Cartouche.Block.Withdrawal entries."
+    }
+  )
 
   @doc ~S"""
   Deserializes a block object from JSON-RPC.

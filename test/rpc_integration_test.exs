@@ -78,6 +78,26 @@ defmodule Cartouche.RPC.IntegrationTest do
   @type_3_receipt_blob_gas_used 0x20_000
   @type_3_receipt_blob_gas_price 0x1
 
+  # Type-4 (EIP-7702) trace anchor — delegation tx post-Pectra. Top-level action
+  # remains a CALL because EIP-7702 ships no new opcode mnemonics; delegation
+  # executes through the existing CALL-family.
+  @type_4_trace_hash <<0xABBB91F9F26DE50D689EEF62092AF9693CAA92D8CD18D813310F2F43E87CB423::256>>
+  @type_4_trace_block 23_600_000
+
+  # CREATE trace anchor — contract-deployment tx at block 18,000,000.
+  # Exercises `Cartouche.Trace.Action.deserialize/1`'s `"init"` clause: action.init
+  # carries the constructor bytecode, and the trace's result_address/result_code
+  # carry the deployed address + runtime bytecode.
+  @create_trace_hash <<0x24578BF2676FABD01269543DDA61E53496A3282B1D9794DDB141319578052359::256>>
+  @create_trace_block 18_000_000
+
+  # SELFDESTRUCT trace anchor — pre-Cancun (block < 19,426,587 to avoid the
+  # EIP-6780 no-op). The CHI gas-token (0x000000…1c) free-up at block 11,500,000
+  # produces 4 internal "suicide" actions inside a 27-trace tx, exercising
+  # `Trace.Action.deserialize/1`'s `"refundAddress"` clause.
+  @selfdestruct_trace_hash <<0x2FA0398F9B38B1510B6618713769124D1D42CB32F3D81773B708389DC70F33DD::256>>
+  @selfdestruct_trace_block 11_500_000
+
   # WETH9 anchor at block 18,000,000
   @weth9 <<0xC02AAA39B223FE8D0A0E5C4F27EAD9083C756CC2::160>>
   @weth9_anchor_block 18_000_000
@@ -86,6 +106,7 @@ defmodule Cartouche.RPC.IntegrationTest do
   @weth9_balance 0x2B30B5DBA159D35B4FEC1
   @weth9_nonce 0x1
   @weth9_total_supply 0x2B30B5DBA159D35B4FEC1
+  @weth9_total_supply_selector <<0x18, 0x16, 0x0D, 0xDD>>
 
   # feeHistory anchor at block 18,000,000
   @fee_history_newest_block 18_000_000
@@ -269,9 +290,7 @@ defmodule Cartouche.RPC.IntegrationTest do
 
   describe "speculative reads" do
     test "eth_call WETH9.totalSupply() at block 18,000,000" do
-      # selector for totalSupply() => 0x18160ddd
-      data = <<0x18, 0x16, 0x0D, 0xDD>>
-      trx = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, data)
+      trx = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, @weth9_total_supply_selector)
 
       opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
       assert {:ok, result} = Cartouche.RPC.call_trx(trx, opts)
@@ -307,6 +326,145 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert length(fh.gas_used_ratio) == @fee_history_block_count
       assert length(fh.reward) == @fee_history_block_count
       assert Enum.all?(fh.reward, fn inner -> length(inner) == 3 end)
+    end
+  end
+
+  describe "trace methods" do
+    # Pin: wrapper struct, transaction_hash round-trip, block_number, top-level
+    # type/call_type. Shape-only: gas_used (positive int — varies across nodes),
+    # subtraces count (depends on internal trace structure).
+    test "trace_transaction at type-0 anchor (block 10,000,000, ETH transfer)" do
+      assert {:ok, [trace]} = Cartouche.RPC.trace_trx(@type_0_receipt_hash, live_opts())
+      assert %Cartouche.Trace{} = trace
+      assert trace.transaction_hash == @type_0_receipt_hash
+      assert trace.block_number == @type_0_receipt_block
+      assert trace.type == "call"
+      assert trace.action.call_type == "call"
+      # Plain ETH transfer — no subtraces, no contract execution.
+      assert trace.subtraces == 0
+      assert is_integer(trace.gas_used)
+      assert trace.gas_used >= 0
+    end
+
+    test "trace_transaction at type-2 anchor (block 18,000,000, contract call)" do
+      assert {:ok, traces} = Cartouche.RPC.trace_trx(@type_2_receipt_hash, live_opts())
+      assert [%Cartouche.Trace{} = top | _] = traces
+      assert top.transaction_hash == @type_2_receipt_hash
+      assert top.block_number == @type_2_receipt_block
+      assert top.type == "call"
+      assert top.action.call_type == "call"
+      assert is_integer(top.gas_used)
+      assert is_integer(top.subtraces)
+      assert top.subtraces >= 0
+    end
+
+    test "trace_call WETH9.totalSupply() at block 18,000,000" do
+      trx = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, @weth9_total_supply_selector)
+      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
+
+      assert {:ok, %Cartouche.TraceCall{} = result} = Cartouche.RPC.trace_call(trx, opts)
+      assert is_binary(result.output)
+      assert byte_size(result.output) == 32
+      assert :binary.decode_unsigned(result.output) == @weth9_total_supply
+      # `state_diff` and `vm_trace` are unsupported — always nil per moduledoc.
+      assert result.state_diff == nil
+      assert result.vm_trace == nil
+      assert [%Cartouche.Trace{} = top | _] = result.trace
+      assert top.type == "call"
+      assert top.action.call_type == "call"
+    end
+
+    test "trace_callMany — two WETH9 reads at block 18,000,000" do
+      # balanceOf(address(0)) = 0x70a08231 ++ 32-byte zero-padded zero address.
+      balance_of_zero = <<0x70, 0xA0, 0x82, 0x31>> <> <<0::256>>
+
+      trx_total = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, @weth9_total_supply_selector)
+      trx_balance = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, balance_of_zero)
+      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
+
+      assert {:ok, [first, second]} = Cartouche.RPC.trace_call_many([trx_total, trx_balance], opts)
+      assert %Cartouche.TraceCall{} = first
+      assert %Cartouche.TraceCall{} = second
+
+      assert byte_size(first.output) == 32
+      assert :binary.decode_unsigned(first.output) == @weth9_total_supply
+
+      # balanceOf(0x0) returns a uint256; value not pinned (any address can hold
+      # WETH historically), but the wire shape is always a 32-byte word.
+      assert byte_size(second.output) == 32
+    end
+
+    test "debug_traceCall WETH9.totalSupply() at block 18,000,000" do
+      trx = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, @weth9_total_supply_selector)
+      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
+
+      assert {:ok, %Cartouche.DebugTrace{} = dt} = Cartouche.RPC.debug_trace_call(trx, opts)
+      assert dt.failed == false
+      assert is_integer(dt.gas)
+      assert dt.gas > 0
+      assert is_binary(dt.return_value)
+      assert byte_size(dt.return_value) == 32
+      assert :binary.decode_unsigned(dt.return_value) == @weth9_total_supply
+      # struct_logs shape only — opcode coverage is unit-tested via
+      # `test/debug_trace_atom_safety_test.exs`. The cons-pattern match below
+      # both type-checks and pins non-emptiness in one line.
+      assert is_list(dt.struct_logs)
+      assert [%Cartouche.DebugTrace.StructLog{} | _] = dt.struct_logs
+    end
+
+    test "trace_transaction at type-4 (EIP-7702) anchor — delegation tx" do
+      assert {:ok, traces} = Cartouche.RPC.trace_trx(@type_4_trace_hash, live_opts())
+      assert [%Cartouche.Trace{} = top | _] = traces
+      assert top.transaction_hash == @type_4_trace_hash
+      assert top.block_number == @type_4_trace_block
+      # 7702 delegation runs through the existing CALL-family — no new opcodes,
+      # so the wrapper action stays a call. This is the precise property that
+      # justifies leaving the `lib/cartouche/debug_trace.ex` opcode whitelist
+      # unchanged for Pectra (verified under Task 68 closure).
+      assert top.type == "call"
+      assert top.action.call_type == "call"
+    end
+
+    test "trace_transaction at CREATE anchor — exercises action.init / result_address / result_code" do
+      assert {:ok, [%Cartouche.Trace{} = trace]} =
+               Cartouche.RPC.trace_trx(@create_trace_hash, live_opts())
+
+      assert trace.transaction_hash == @create_trace_hash
+      assert trace.block_number == @create_trace_block
+
+      # CREATE-action shape: `type == "create"`, action.init carries the
+      # constructor bytecode, action.call_type is nil, and the result fields
+      # carry the deployed contract address + runtime bytecode.
+      assert trace.type == "create"
+      assert trace.action.call_type == nil
+      assert is_binary(trace.action.init)
+      assert byte_size(trace.action.init) > 0
+
+      assert is_binary(trace.result_address)
+      assert byte_size(trace.result_address) == 20
+      assert is_binary(trace.result_code)
+      assert byte_size(trace.result_code) > 0
+    end
+
+    test "trace_transaction at SELFDESTRUCT anchor — exercises action.refund_address" do
+      assert {:ok, traces} = Cartouche.RPC.trace_trx(@selfdestruct_trace_hash, live_opts())
+
+      # CHI-token gas refund tx at block 11,500,000 — internal "suicide" actions.
+      # We don't pin the count (depends on how many CHI tokens were freed in the
+      # tx), only that at least one suicide action surfaces and its shape is
+      # correct.
+      suicides = Enum.filter(traces, fn t -> t.type == "suicide" end)
+      assert suicides != []
+
+      Enum.each(suicides, fn trace ->
+        assert %Cartouche.Trace{} = trace
+        assert trace.transaction_hash == @selfdestruct_trace_hash
+        assert trace.block_number == @selfdestruct_trace_block
+        assert is_binary(trace.action.refund_address)
+        assert byte_size(trace.action.refund_address) == 20
+        assert is_integer(trace.action.balance)
+        assert trace.action.balance >= 0
+      end)
     end
   end
 end

@@ -2,11 +2,13 @@ defmodule Cartouche.RPC do
   @moduledoc """
   Excessively simple RPC client for Ethereum.
   """
+  use Descripex, namespace: "/ethereum/rpc"
   use Cartouche.Hex
 
   import Cartouche.HTTP, only: [normalize_finch_result: 1]
   import Cartouche.Wei, only: [to_wei: 1]
 
+  alias Cartouche.Signer.Default
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
@@ -171,6 +173,37 @@ defmodule Cartouche.RPC do
     end
   end
 
+  api(:send_rpc, "Send one Ethereum JSON-RPC request and optionally decode the result.",
+    params: [
+      method: [kind: :value, description: "JSON-RPC method name, such as `eth_getBalance` or `trace_call`."],
+      params: [kind: :value, description: "Ordered JSON-RPC parameter list for the method."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options for transport and decoding: `:ethereum_node`, `:timeout`, `:headers`, `:verbose`, `:client`, `:decode`, `:errors`, and `:id`."
+      ]
+    ],
+    opts: [
+      decode: [
+        kind: :value,
+        default: nil,
+        description:
+          "`nil` for raw result, `:hex` for bytes, `:hex_unsigned` for integer quantities, or a decoder function."
+      ],
+      errors: [
+        kind: :value,
+        default: nil,
+        description: "Optional Solidity custom error ABI strings used to decode revert data."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, decoded_result}` on JSON-RPC success, `{:error, reason}` for transport/RPC/decode failures, or `:invalid_hex` for invalid hex decoding."
+    }
+  )
+
   @doc """
   Simple RPC client for a JSON-RPC Ethereum node.
 
@@ -273,6 +306,23 @@ defmodule Cartouche.RPC do
     {:error, "failed to decode `#{method}` response: #{inspect(e)}"}
   end
 
+  api(:get_nonce, "Fetch an account nonce at a block selector.",
+    params: [
+      account: [kind: :value, description: "20-byte Ethereum account address."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and common `send_rpc/3` options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, nonce}` as a non-negative integer decoded from `eth_getTransactionCount`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC call to get account nonce.
 
@@ -292,6 +342,21 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
+
+  api(:send_trx, "Submit a signed Ethereum transaction to the network.",
+    params: [
+      trx: [
+        kind: :exchange_data,
+        source: "Cartouche.Transaction.build_signed_trx/7 or Cartouche.Transaction.build_signed_trx_v2/9",
+        description: "Signed legacy or EIP-1559 transaction struct with signature fields populated."
+      ],
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, transaction_hash}` as 32 decoded bytes, or `{:error, reason}` from `eth_sendRawTransaction`."
+    }
+  )
 
   @doc """
   RPC call to send a raw transaction.
@@ -331,6 +396,27 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, :hex)
     )
   end
+
+  api(:call_trx, "Run `eth_call` against a transaction or call object without submitting it.",
+    params: [
+      trx: [
+        kind: :value,
+        description:
+          "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to simulate."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options including optional `:from`, block selector `:block_number`, `:decode`, `:errors`, trace options, and transport options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, bytes}` by default, another decoded shape when `:decode` is supplied, or `{:error, reason}` including decoded revert metadata."
+    }
+  )
 
   @doc ~S"""
   RPC call to call a transaction and preview results.
@@ -397,6 +483,26 @@ defmodule Cartouche.RPC do
     end
   end
 
+  api(:estimate_gas, "Estimate gas for a transaction or call object.",
+    params: [
+      trx: [
+        kind: :value,
+        description:
+          "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to estimate."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options including optional `:from`, block selector `:block_number`, and common `send_rpc/3` options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, gas_limit}` as a non-negative integer decoded from `eth_estimateGas`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC call to call to estimate gas used by a given call.
 
@@ -427,6 +533,16 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:eth_chain_id, "Fetch the current Ethereum chain id.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, chain_id}` as a non-negative integer decoded from `eth_chainId`, or `{:error, reason}`."
+    }
+  )
+
   @doc ~S"""
   RPC to get the current chain id.
 
@@ -441,6 +557,22 @@ defmodule Cartouche.RPC do
   def eth_chain_id(opts \\ []) do
     Cartouche.RPC.send_rpc("eth_chainId", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
+
+  api(:get_code, "Fetch contract bytecode at an address and block selector.",
+    params: [
+      address: [kind: :value, description: "20-byte Ethereum contract or account address."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, bytecode}` decoded from `eth_getCode`, or `{:error, reason}`."
+    }
+  )
 
   @doc """
   RPC call to get code for a contract at an address.
@@ -460,6 +592,22 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, :hex)
     )
   end
+
+  api(:get_balance, "Fetch an account ETH balance at a block selector.",
+    params: [
+      address: [kind: :value, description: "20-byte Ethereum account or contract address."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, wei_balance}` as a non-negative integer decoded from `eth_getBalance`, or `{:error, reason}`."
+    }
+  )
 
   @doc ~S"""
   RPC to get an account's eth balance.
@@ -482,6 +630,23 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:get_transaction_count, "Fetch an account transaction count at a block selector.",
+    params: [
+      address: [kind: :value, description: "20-byte Ethereum account address."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, nonce}` as a non-negative integer decoded from `eth_getTransactionCount`, or `{:error, reason}`."
+    }
+  )
+
   @doc ~S"""
   RPC to get an account's transaction count (i.e. nonce)
 
@@ -503,6 +668,17 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:eth_block_number, "Fetch the current Ethereum block number.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, block_number}` as a non-negative integer decoded from `eth_blockNumber`, or `{:error, reason}`."
+    }
+  )
+
   @doc ~S"""
   RPC to get the current block number.
 
@@ -517,6 +693,32 @@ defmodule Cartouche.RPC do
   def eth_block_number(opts \\ []) do
     Cartouche.RPC.send_rpc("eth_blockNumber", [], Keyword.put(opts, :decode, :hex_unsigned))
   end
+
+  api(:get_block_by_number, "Fetch a block by block number or block tag.",
+    params: [
+      block_number: [
+        kind: :value,
+        description: ~s(Block selector: integer block number, hex quantity string, `"latest"`, or `"pending"`.)
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options including `:include_transaction_details` and the common `send_rpc/3` transport options."
+      ]
+    ],
+    opts: [
+      include_transaction_details: [
+        kind: :value,
+        default: false,
+        description: "When true, ask the node to include full transaction objects instead of only transaction hashes."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, %Cartouche.Block{}}` decoded by `Cartouche.Block.deserialize/1`, or `{:error, reason}`."
+    }
+  )
 
   @doc ~S"""
   RPC to get a block by its block number.
@@ -584,6 +786,29 @@ defmodule Cartouche.RPC do
   defp normalize_block_param(n) when is_integer(n), do: Hex.encode_quantity(n)
   defp normalize_block_param(s) when is_binary(s), do: s
 
+  api(:get_block_by_hash, "Fetch a block by its 32-byte block hash.",
+    params: [
+      block_hash: [kind: :value, description: "32-byte block hash, encoded as Ethereum DATA for JSON-RPC."],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options including `:include_transaction_details` and the common `send_rpc/3` transport options."
+      ]
+    ],
+    opts: [
+      include_transaction_details: [
+        kind: :value,
+        default: false,
+        description: "When true, ask the node to include full transaction objects instead of only transaction hashes."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, %Cartouche.Block{}}` decoded by `Cartouche.Block.deserialize/1`, or `{:error, reason}`."
+    }
+  )
+
   @doc ~S"""
   RPC to get a block by its block hash.
 
@@ -642,6 +867,21 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, &Cartouche.Block.deserialize/1)
     )
   end
+
+  api(:get_trx_receipt, "Fetch and decode a transaction receipt by transaction hash.",
+    params: [
+      trx_id: [
+        kind: :value,
+        description: "Transaction hash as a 32-byte binary or a 0x-prefixed 66-character hex string."
+      ],
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport and decode logging options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.Receipt{}}`, `{:ok, nil}` when unavailable, or `{:error, reason}` when RPC or receipt decoding fails."
+    }
+  )
 
   @doc """
   RPC call to get a transaction receipt. Note, this will return {:ok, %Cartouche.Receipt{}} or {:ok, nil} if the
@@ -805,6 +1045,20 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:trace_trx, "Fetch parity-style traces for a transaction by transaction hash.",
+    params: [
+      trx_id: [
+        kind: :value,
+        description: "Transaction hash as a 32-byte binary or a 0x-prefixed 66-character hex string."
+      ],
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, [%Cartouche.Trace{}]}` decoded by `Cartouche.Trace.deserialize_many/1`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC call to get a transaction receipt
 
@@ -866,6 +1120,26 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, &Cartouche.Trace.deserialize_many/1)
     )
   end
+
+  api(:trace_call, "Trace a transaction call speculatively with the parity trace API.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to trace."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including optional `:from`, block selector `:block_number` (`"latest"`, `"pending"`, or integer), and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.TraceCall{trace: [%Cartouche.Trace{}]}}` decoded by `Cartouche.TraceCall.deserialize/1`, or `{:error, reason}`."
+    }
+  )
 
   @doc """
   RPC to trace a transaction call speculatively.
@@ -1000,6 +1274,27 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, &Cartouche.TraceCall.deserialize/1)
     )
   end
+
+  api(:trace_call_many, "Trace multiple transaction calls speculatively with the parity trace API.",
+    params: [
+      trxs: [
+        kind: :value,
+        description:
+          "List of transaction structs, call structs, or `{trx, from}` pairs; per-item `from` overrides the shared `:from` option."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including optional shared `:from`, block selector `:block_number` (`"latest"`, `"pending"`, or integer), and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, [%Cartouche.TraceCall{}]}` decoded by `Cartouche.TraceCall.deserialize_many/1`, or `{:error, reason}`."
+    }
+  )
 
   @doc """
   RPC to trace many transaction calls speculatively.
@@ -1193,6 +1488,26 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:debug_trace_call, "Trace a transaction call speculatively with the debug trace API.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to trace."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including optional `:from`, block selector `:block_number` (`"latest"`, `"pending"`, or integer), and transport options.}
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.DebugTrace{struct_logs: [%Cartouche.DebugTrace.StructLog{}]}}` decoded by `Cartouche.DebugTrace.deserialize/1`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC to trace a transaction call speculatively via debug API.
 
@@ -1246,6 +1561,16 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:gas_price, "Fetch the current legacy gas price.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, wei_per_gas}` decoded from `eth_gasPrice`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC call to call to get the current gas price.
 
@@ -1262,6 +1587,16 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, :hex_unsigned)
     )
   end
+
+  api(:max_priority_fee_per_gas, "Fetch the current max priority fee per gas.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, max_priority_fee_per_gas}` decoded from `eth_maxPriorityFeePerGas`, or `{:error, reason}`."
+    }
+  )
 
   @doc """
   RPC call to call to get the current max priority fee per gas.
@@ -1280,6 +1615,31 @@ defmodule Cartouche.RPC do
     )
   end
 
+  api(:fee_history, "Fetch and decode EIP-1559 fee history data.",
+    params: [
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          ~s{Keyword options including `:block_count`, `:newest_block` (`"latest"`, `"pending"`, integer, or hex quantity), `:reward_percentiles`, and transport options.}
+      ]
+    ],
+    opts: [
+      block_count: [kind: :value, default: 1, description: "Number of blocks to request in the fee history window."],
+      newest_block: [kind: :value, default: "latest", description: "Newest block selector for the requested fee window."],
+      reward_percentiles: [
+        kind: :value,
+        default: [],
+        description: "Reward percentile list forwarded to `eth_feeHistory`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.FeeHistory{}}` decoded by `Cartouche.FeeHistory.deserialize/1`, or `{:error, reason}`."
+    }
+  )
+
   @doc """
   RPC call to call to get the Eip-1559 fee history data.
 
@@ -1296,7 +1656,7 @@ defmodule Cartouche.RPC do
   @spec fee_history(Keyword.t()) :: {:ok, Cartouche.FeeHistory.t()} | {:error, term()}
   def fee_history(opts \\ []) do
     block_count = Keyword.get(opts, :block_count, 1)
-    newest_block = Keyword.get(opts, :newest_block, "latest")
+    newest_block = opts |> Keyword.get(:newest_block, "latest") |> normalize_block_param()
     reward_percentiles = Keyword.get(opts, :reward_percentiles, [])
 
     send_rpc(
@@ -1305,6 +1665,64 @@ defmodule Cartouche.RPC do
       Keyword.put(opts, :decode, &Cartouche.FeeHistory.deserialize/1)
     )
   end
+
+  api(:prepare_trx, "Prepare and sign a transaction for later submission.",
+    params: [
+      contract: [kind: :value, description: "20-byte destination contract address."],
+      call_data: [
+        kind: :value,
+        description: "Raw calldata bytes or `{function_signature, args}` ABI call data tuple."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword transaction assembly options, including signer, value, gas, nonce, verification, transaction type, trace, and transport options."
+      ]
+    ],
+    opts: [
+      nonce: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.get_transaction_count/2",
+        description: "Optional account nonce; fetched from the signer address when omitted."
+      ],
+      gas_limit: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.estimate_gas/2",
+        description: "Optional gas limit; estimated and buffered when omitted."
+      ],
+      gas_price: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.gas_price/1",
+        description: "Optional legacy gas price; fetched and buffered for V1 transactions when omitted."
+      ],
+      base_fee: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.fee_history/1",
+        description: "Optional EIP-1559 base fee; derived from fee history when omitted for V2 transactions."
+      ],
+      priority_fee: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.max_priority_fee_per_gas/1",
+        description: "Optional EIP-1559 priority fee; fetched when omitted for V2 transactions."
+      ],
+      signer: [
+        kind: :value,
+        default: Default,
+        description: "Signer process used to address and sign the transaction."
+      ],
+      verify: [
+        kind: :value,
+        default: true,
+        description: "When true, preview the call before finalizing gas and signature."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, %Cartouche.Transaction.V1{} | %Cartouche.Transaction.V2{}}` or `{:error, reason}`."
+    },
+    composes_with: [:get_nonce, :estimate_gas, :fee_history, :gas_price, :max_priority_fee_per_gas]
+  )
 
   @doc """
   Helper function to work with other Cartouche modules to get a nonce, sign a transction, and prepare it to be submitted on-chain.
@@ -1494,7 +1912,7 @@ defmodule Cartouche.RPC do
     {nonce, opts} = Keyword.pop(opts, :nonce)
     {verify, opts} = Keyword.pop(opts, :verify, true)
     {access_list, opts} = Keyword.pop(opts, :access_list, [])
-    {signer, opts} = Keyword.pop(opts, :signer, Cartouche.Signer.Default)
+    {signer, opts} = Keyword.pop(opts, :signer, Default)
     {trace_reverts, opts} = Keyword.pop(opts, :trace_reverts, false)
     {debug_trace, opts} = Keyword.pop(opts, :debug_trace, false)
     {trace_opts, opts} = Keyword.pop(opts, :trace_opts, [])
@@ -1602,6 +2020,26 @@ defmodule Cartouche.RPC do
       trx_res -> maybe_trace_revert(trx, trx_res, trace_reverts, debug_trace, opts, trace_opts)
     end
   end
+
+  api(:execute_trx, "Prepare, sign, and submit a transaction to the Ethereum network.",
+    params: [
+      contract: [kind: :value, description: "20-byte destination contract address."],
+      call_data: [
+        kind: :value,
+        description: "Raw calldata bytes or `{function_signature, args}` ABI call data tuple."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Same transaction assembly, signing, trace, and transport options accepted by `prepare_trx/3`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, transaction_hash}` with the submitted transaction hash bytes, or `{:error, reason}`."
+    },
+    composes_with: [:prepare_trx, :send_trx]
+  )
 
   @doc """
   Helper function to work with other Cartouche modules to get a nonce, sign a transction, and transmit it to the network.
