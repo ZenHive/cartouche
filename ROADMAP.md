@@ -78,7 +78,7 @@ Highest-Eff unblocked candidates after the Block bundle: Task 33 (raw transactio
 
 **Generator hardening bundle entrypoint landed.** Task 44 raised `Mix.Tasks.Cartouche.Gen` above the standard coverage tier with a synthetic ABI fixture. Downstream generator tasks 41 (bytecode-flag separation), 42 (`decode_error` cleanup follow-through), 50 (`@doc`/`@spec` emission), and the Task 59 `cartouche.gen.ex` hygiene items are now unblocked for the next generator-hardening PR.
 
-**VM dialyzer cleanup bundle entrypoint complete.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, so Tasks 21+22 (`none()` cascade investigation) and 23 (`VM.Context.@type t` alignment) are now unblocked. Next VM step: run the Phase 5 reach/dialyzer investigation before mutating VM specs or suppressions.
+**VM dialyzer cleanup bundle continuing.** Task 46 raised coverage on `Cartouche.VM.Context`, `Cartouche.Erc20.Call`, and `Cartouche.VM.InvalidVm`, unblocking Tasks 21+22 + 23. Phase 6 closed 2026-05-06 — Task 23 shipped via INE-29 / PR #40 (`init_from/2` spec narrowed to a concrete struct literal; `Context.t/0` kept broad for post-mutation runtime contexts). Tasks 21+22 (`none()` cascade investigation) remain — next VM step is the Phase 5 reach/dialyzer investigation before mutating VM specs or suppressions.
 
 **Phase 12 (descripex adoption) bootstrap landed 2026-05-05.** Task 82 promoted `:descripex` to a direct dep, wired `use Descripex.Discoverable, modules: @descripex_modules` into `lib/cartouche.ex` with an initially-empty registered list, and added a validation test that flunks-with-the-function-name when annotation drift hits any registered module. Tasks 83-88 are now unblocked — six `[P]`-eligible annotation passes that can run in parallel sessions; Task 89 wires the manifest export once they all land. Highest-Eff individual annotation candidate: Task 83 (Signer + Keys, Eff:2.0); largest single-task surface: Task 84 (RPC + 6 response decoders, 7 modules total).
 
@@ -306,13 +306,13 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 ---
 
-## Phase 6: `Cartouche.VM.Context.init_from/2` spec
+## Phase 6: `Cartouche.VM.Context.init_from/2` spec ✅
 
-**Why:** `vm.ex:104 invalid_contract`. Spec says `:: t()` but success typing is the concrete struct literal, suggesting `@type t` is too loose or missing. Low-impact standalone.
+**Closed 2026-05-06.** Task 46 cleared the coverage gate; Task 23 (PR #40 / INE-29) chose Option B (relax `init_from/2` to a concrete struct literal matching the actual initial-state construction). `Cartouche.VM.Context.@type t/0` stays broad to describe mutated runtime contexts. `vm.ex:104 invalid_contract` cleared.
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 23 | Align `Cartouche.VM.Context.@type t` with dialyzer's inferred struct shape, or relax `init_from/2` to return `struct()` `[CX]` [D:2/B:1/U:3 → Eff:1.0] 📋 | ⬜ | **Unblocked by Task 46.** Internal type. Bundle with Phase 5 if that opens a VM file anyway |
+| 23 | Align `Cartouche.VM.Context.@type t` with dialyzer's inferred struct shape, or relax `init_from/2` to return `struct()` `[CX]` [D:2/B:1/U:3 → Eff:1.0] 📋 | ✅ | Done 2026-05-06 (PR #40 / INE-29, delivered by Cursor). Option B (relax `init_from/2`) — `@spec init_from/2` narrowed to a concrete `%__MODULE__{...}` struct literal whose fields match the function's actual initial-state construction (`pc: 0`, `halted: false`, `stack: []`, `memory: <<>>`, `tstorage: %{}`, `reverted: false`, `return_data: <<>>`; varying fields use existing type aliases). `Cartouche.VM.Context.@type t/0` left broad on purpose — it describes mutated runtime contexts (post-`pc`-advance, post-stack-push, etc.) consumed by callers operating on post-init state. Surgical, single-file change in `lib/cartouche/vm.ex`. See [CHANGELOG.md](CHANGELOG.md#unreleased) |
 | 46 | ~~VM + Erc20.Call coverage push — gate Phases 5 and 6~~ `[CSR]` [D:4/B:5/U:5 → Eff:1.25] 📋 | ✅ | Done 2026-05-05. Focused ExUnit coverage now exercises `Cartouche.VM.Context.init_from/2` happy and empty-code paths, FFI lookup success/error, context stack/show rendering, `Cartouche.Erc20.Call` `balance_of/3` and `transfer/4` default and explicit option paths, and `Cartouche.VM.InvalidVm` raise/rescue message preservation. Tasks 21+22 and 23 are unblocked. See [CHANGELOG.md](CHANGELOG.md#unreleased). |
 
 ---
