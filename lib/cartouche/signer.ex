@@ -197,7 +197,8 @@ defmodule Cartouche.Signer do
       ],
       chain_id_or_name: [
         kind: :value,
-        description: "Ethereum chain id or configured chain name used for EIP-155 `v` calculation."
+        description:
+          "Ethereum chain id integer or configured chain atom, such as `:sepolia`, used for EIP-155 `v` calculation."
       ]
     ],
     returns: %{
