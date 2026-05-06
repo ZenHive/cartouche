@@ -15,6 +15,11 @@ defmodule Cartouche.Block do
   use Descripex, namespace: "/ethereum/block"
   use Cartouche.Hex
 
+  alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V3
+  alias Cartouche.Transaction.V4
+
   defmodule Withdrawal do
     @moduledoc """
     A validator withdrawal entry from a post-Shanghai block (EIP-4895).
@@ -154,9 +159,18 @@ defmodule Cartouche.Block do
           gas_used: integer(),
           # timestamp: QUANTITY - the unix timestamp for when the block was collated.
           timestamp: integer(),
-          # transactions: Array - Array of transaction objects, or 32 Bytes transaction
-          # hashes depending on the last given parameter.
-          transactions: [],
+          # transactions: Array - Array of transaction objects (when the
+          # node was queried with `:include_transaction_details, true`), or
+          # 0x-prefixed 32-byte transaction hash strings (default). Per-element
+          # dispatch is robust to mixed-shape lists; full-shape elements are
+          # decoded into the matching Vn struct via each module's `from_json/1`.
+          transactions: [
+            String.t()
+            | V1.t()
+            | V2.t()
+            | V3.t()
+            | V4.t()
+          ],
           # uncles: Array - Array of uncle hashes.
           uncles: [<<_::256>>],
           # mixHash: DATA, 32 Bytes - pre-Merge PoW mix hash; post-Merge PREVRANDAO (EIP-4399).
@@ -326,8 +340,7 @@ defmodule Cartouche.Block do
       gas_limit: map(get_in(params, ["gasLimit"]), &Hex.decode_hex_number!/1),
       gas_used: map(get_in(params, ["gasUsed"]), &Hex.decode_hex_number!/1),
       timestamp: map(get_in(params, ["timestamp"]), &Hex.decode_hex_number!/1),
-      # TODO(Task 66): decode params["transactions"] when :include_transaction_details is true
-      transactions: [],
+      transactions: map(get_in(params, ["transactions"]), fn txs -> Enum.map(txs, &deserialize_transaction/1) end),
       uncles: map(get_in(params, ["uncles"]), fn uncles -> Enum.map(uncles, &Hex.decode_word!/1) end),
       mix_hash: map(get_in(params, ["mixHash"]), &Hex.decode_word!/1),
       base_fee_per_gas: map(get_in(params, ["baseFeePerGas"]), &Hex.decode_hex_number!/1),
@@ -341,5 +354,42 @@ defmodule Cartouche.Block do
 
   defp map(x, f) do
     if is_nil(x), do: nil, else: f.(x)
+  end
+
+  # Per-element dispatch for `params["transactions"]`. The list is
+  # heterogeneous in shape per the JSON-RPC wire contract:
+  #
+  #   * `is_binary(elem)` — `eth_getBlockBy*` was called without
+  #     `:include_transaction_details, true` (or with `false`); the node
+  #     returned 0x-prefixed transaction hashes. We preserve them as
+  #     `String.t()` rather than decoding to `<<_::256>>` to keep the
+  #     wire shape addressable for downstream callers (display, logging,
+  #     direct comparison against API responses).
+  #
+  #   * `is_map(elem)` — `:include_transaction_details, true` was set;
+  #     the element is a full transaction JSON object. Dispatch by the
+  #     `"type"` field per EIP-2718, falling back to V1 when `"type"` is
+  #     `"0x0"`, `nil`, or absent (some nodes still omit the field on
+  #     pre-Berlin payloads).
+  #
+  # We dispatch per element rather than per block to be robust to nodes
+  # (e.g. some Erigon configurations) that may return mixed-shape lists.
+  @spec deserialize_transaction(String.t() | map()) ::
+          String.t()
+          | V1.t()
+          | V2.t()
+          | V3.t()
+          | V4.t()
+  defp deserialize_transaction(hash) when is_binary(hash), do: hash
+
+  defp deserialize_transaction(%{} = params) do
+    case params["type"] do
+      nil -> V1.from_json(params)
+      "0x0" -> V1.from_json(params)
+      "0x2" -> V2.from_json(params)
+      "0x3" -> V3.from_json(params)
+      "0x4" -> V4.from_json(params)
+      other -> raise ArgumentError, "unsupported transaction envelope type #{inspect(other)} in block JSON"
+    end
   end
 end

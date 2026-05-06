@@ -4,6 +4,10 @@ defmodule Cartouche.BlockTest do
 
   alias Cartouche.Block
   alias Cartouche.Block.Withdrawal
+  alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V3
+  alias Cartouche.Transaction.V4
 
   doctest Block
   doctest Withdrawal
@@ -154,6 +158,315 @@ defmodule Cartouche.BlockTest do
                ~h[0x4fffe9ae21f1c9e15207b1f472d5bbdd68c9595d461666602f2be20daf5e7843]
 
       assert byte_size(b.mix_hash) == 32
+    end
+  end
+
+  describe "deserialize/1 — transactions field shape (Task 66)" do
+    # Minimal full V1 (legacy / type 0) transaction JSON shape — mirrors what
+    # `eth_getBlockBy*` returns when `:include_transaction_details, true`.
+    defp tx_v1_json(extra \\ %{}) do
+      Map.merge(
+        %{
+          "type" => "0x0",
+          "nonce" => "0x1",
+          "gasPrice" => "0x174876e800",
+          "gas" => "0x186a0",
+          "to" => "0x0000000000000000000000000000000000000001",
+          "value" => "0x2",
+          "input" => "0x010203",
+          "v" => "0x25",
+          "r" => "0x1",
+          "s" => "0x2"
+        },
+        extra
+      )
+    end
+
+    defp tx_v2_json(extra \\ %{}) do
+      Map.merge(
+        %{
+          "type" => "0x2",
+          "chainId" => "0x1",
+          "nonce" => "0x1",
+          "maxPriorityFeePerGas" => "0x3b9aca00",
+          "maxFeePerGas" => "0x174876e800",
+          "gas" => "0x186a0",
+          "to" => "0x0000000000000000000000000000000000000002",
+          "value" => "0x2",
+          "input" => "0x010203",
+          "accessList" => [],
+          "yParity" => "0x1",
+          "r" => "0x1",
+          "s" => "0x2"
+        },
+        extra
+      )
+    end
+
+    defp tx_v3_json(extra \\ %{}) do
+      Map.merge(
+        %{
+          "type" => "0x3",
+          "chainId" => "0x1",
+          "nonce" => "0x1",
+          "maxPriorityFeePerGas" => "0x3b9aca00",
+          "maxFeePerGas" => "0x174876e800",
+          "gas" => "0x186a0",
+          "to" => "0x0000000000000000000000000000000000000003",
+          "value" => "0x2",
+          "input" => "0x010203",
+          "accessList" => [],
+          "maxFeePerBlobGas" => "0x1",
+          "blobVersionedHashes" => [
+            "0x0100000000000000000000000000000000000000000000000000000000000000"
+          ],
+          "yParity" => "0x0",
+          "r" => "0x1",
+          "s" => "0x2"
+        },
+        extra
+      )
+    end
+
+    defp tx_v4_json(extra \\ %{}) do
+      Map.merge(
+        %{
+          "type" => "0x4",
+          "chainId" => "0x1",
+          "nonce" => "0x1",
+          "maxPriorityFeePerGas" => "0x3b9aca00",
+          "maxFeePerGas" => "0x174876e800",
+          "gas" => "0x186a0",
+          "to" => "0x0000000000000000000000000000000000000004",
+          "value" => "0x2",
+          "input" => "0x010203",
+          "accessList" => [],
+          "authorizationList" => [
+            %{
+              "chainId" => "0x1",
+              "address" => "0x000000000000000000000000000000000000beef",
+              "nonce" => "0x7",
+              "yParity" => "0x0",
+              "r" => "0x1",
+              "s" => "0x2"
+            }
+          ],
+          "yParity" => "0x1",
+          "r" => "0x1",
+          "s" => "0x2"
+        },
+        extra
+      )
+    end
+
+    test "hash-only response (`:include_transaction_details` false / default) — preserves wire String.t() shape" do
+      hashes = [
+        "0x4a1e3e3a2aa4aa79a777d0ae3e2c3a6de158226134123f6c14334964c6ec70cf",
+        "0x16e199673891df518e25db2ef5320155da82a3dd71a677e7d84363251885d133"
+      ]
+
+      b = Block.deserialize(pre_london_params(%{"transactions" => hashes}))
+
+      # Hash-only path: each element preserved as-is (String.t()), not
+      # decoded into <<_::256>>. This matches the @type t/0 union and
+      # keeps the wire shape addressable for direct equality comparisons
+      # against API responses.
+      assert b.transactions == hashes
+      assert Enum.all?(b.transactions, &is_binary/1)
+      # Sanity-check: each hash is a 0x-prefixed hex string of the expected width.
+      assert Enum.all?(b.transactions, fn h -> String.starts_with?(h, "0x") and String.length(h) == 66 end)
+    end
+
+    test "empty transactions list — distinguishes [] from nil at the wire boundary" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => []}))
+      assert b.transactions == []
+    end
+
+    test "full-detail V1 response — decodes legacy transaction shape" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v1_json()]}))
+
+      assert [%V1{} = tx] = b.transactions
+      assert tx.nonce == 1
+      assert tx.gas_price == 100_000_000_000
+      assert tx.gas_limit == 100_000
+      assert tx.to == ~h[0x0000000000000000000000000000000000000001]
+      assert tx.value == 2
+      assert tx.data == <<1, 2, 3>>
+      assert tx.v == 0x25
+      assert tx.r == 1
+      assert tx.s == 2
+    end
+
+    test "full-detail V1 with absent `type` field — defaults to V1 (pre-Berlin nodes)" do
+      json = Map.delete(tx_v1_json(), "type")
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+
+      # Some older / non-canonical node responses omit `type` on legacy txs.
+      # The dispatch must treat absent `type` as V1, matching the EIP-2718
+      # default-to-legacy semantics.
+      assert [%V1{}] = b.transactions
+    end
+
+    test "full-detail V1 contract creation — `to: nil` preserved" do
+      json = tx_v1_json(%{"to" => nil, "input" => "0x60606040"})
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+
+      # Contract creations are common on mainnet; the JSON `to: null` must
+      # round-trip as `to: nil` rather than crashing the address decoder.
+      # The strict RLP `decode/1` path enforces a 20-byte address, but the
+      # JSON path mirrors the wire shape per the type widening on V1.t/0.
+      assert [%V1{to: nil, data: <<0x60, 0x60, 0x60, 0x40>>}] = b.transactions
+    end
+
+    test "full-detail V2 response — decodes EIP-1559 transaction shape" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v2_json()]}))
+
+      assert [%V2{} = tx] = b.transactions
+      assert tx.chain_id == 1
+      assert tx.max_priority_fee_per_gas == 1_000_000_000
+      assert tx.max_fee_per_gas == 100_000_000_000
+      assert tx.destination == ~h[0x0000000000000000000000000000000000000002]
+      assert tx.access_list == []
+      assert tx.signature_y_parity == true
+      # `r`/`s` are normalised to 32-byte words even when the wire value
+      # ships with leading zeros stripped (here: "0x1"/"0x2").
+      assert tx.signature_r == <<1::256>>
+      assert tx.signature_s == <<2::256>>
+    end
+
+    test "full-detail V2 with `v` instead of `yParity` (legacy backwards-compat shape)" do
+      json =
+        tx_v2_json()
+        |> Map.delete("yParity")
+        |> Map.put("v", "0x1")
+
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+
+      # Per the execution-apis spec, `yParity` is the canonical field on
+      # signed typed transactions; `v` is provided as an optional
+      # backwards-compat shadow holding the y-parity bit directly. We
+      # accept either to be robust to nodes that haven't migrated yet.
+      assert [%V2{signature_y_parity: true}] = b.transactions
+    end
+
+    test "full-detail V2 contract creation — `destination: nil` preserved" do
+      json = tx_v2_json(%{"to" => nil})
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+
+      assert [%V2{destination: nil}] = b.transactions
+    end
+
+    test "full-detail V2 with non-empty access list" do
+      json =
+        tx_v2_json(%{
+          "accessList" => [
+            %{
+              "address" => "0x0000000000000000000000000000000000000005",
+              "storageKeys" => [
+                "0x0000000000000000000000000000000000000000000000000000000000000016"
+              ]
+            }
+          ]
+        })
+
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+
+      assert [%V2{access_list: [{address, [storage_key]}]}] = b.transactions
+      assert address == <<5::160>>
+      assert storage_key == <<22::256>>
+    end
+
+    test "full-detail V3 response — decodes EIP-4844 blob transaction shape" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v3_json()]}))
+
+      assert [%V3{} = tx] = b.transactions
+      assert tx.chain_id == 1
+      assert tx.max_fee_per_blob_gas == 1
+
+      assert tx.blob_versioned_hashes == [
+               ~h[0x0100000000000000000000000000000000000000000000000000000000000000]
+             ]
+
+      assert tx.signature_y_parity == false
+    end
+
+    test "full-detail V4 response — decodes EIP-7702 set-code transaction shape" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v4_json()]}))
+
+      assert [%V4{} = tx] = b.transactions
+      assert tx.chain_id == 1
+      # Authorization list is decoded into the {chain_id, address, nonce,
+      # y_parity, r, s} tuple shape used elsewhere in V4 (matches
+      # `Cartouche.Transaction.V4.authorization()` type).
+      assert tx.authorization_list == [
+               {1, ~h[0x000000000000000000000000000000000000beef], 7, false, <<1::256>>, <<2::256>>}
+             ]
+    end
+
+    test "mixed-shape response — defensive per-element dispatch (V1 + V2 in same list)" do
+      # Per the issue: "per-element dispatch is robust to node implementations
+      # that mix shapes (some Erigon configs)." Verify a heterogeneous list
+      # decodes per element rather than per block.
+      b =
+        Block.deserialize(
+          pre_london_params(%{
+            "transactions" => [
+              tx_v1_json(),
+              tx_v2_json(),
+              "0x4a1e3e3a2aa4aa79a777d0ae3e2c3a6de158226134123f6c14334964c6ec70cf"
+            ]
+          })
+        )
+
+      assert [%V1{}, %V2{}, hash] = b.transactions
+      assert is_binary(hash)
+      assert hash == "0x4a1e3e3a2aa4aa79a777d0ae3e2c3a6de158226134123f6c14334964c6ec70cf"
+    end
+
+    test "V2.from_json/1 with `accessList` omitted — defensive nil → []" do
+      # `accessList` is required on the wire for type 2/3/4 per the
+      # execution-apis spec, but `from_json/1` is publicly callable and
+      # tolerates omission to keep the JSON-decoder defensively
+      # symmetric with the optional-on-wire fields elsewhere.
+      json = Map.delete(tx_v2_json(), "accessList")
+      tx = V2.from_json(json)
+      assert tx.access_list == []
+    end
+
+    test "V3.from_json/1 with `blobVersionedHashes` omitted — defensive nil → []" do
+      json = Map.delete(tx_v3_json(), "blobVersionedHashes")
+      tx = V3.from_json(json)
+      assert tx.blob_versioned_hashes == []
+    end
+
+    test "V4.from_json/1 with `authorizationList` omitted — defensive nil → []" do
+      json = Map.delete(tx_v4_json(), "authorizationList")
+      tx = V4.from_json(json)
+      assert tx.authorization_list == []
+    end
+
+    test "y_parity hex value other than 0/1 raises Cartouche.Hex.InvalidHex" do
+      # Defensive: the spec says yParity ∈ {0, 1}; a malformed node
+      # response with `"yParity": "0x2"` should raise rather than
+      # silently truncate.
+      json = Map.put(tx_v2_json(), "yParity", "0x2")
+
+      assert_raise Cartouche.Hex.InvalidHex, ~r/invalid y_parity/, fn ->
+        Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+      end
+    end
+
+    test "unsupported envelope type raises with a clear message" do
+      # `0x1` (EIP-2930) is intentionally unsupported in the matching raw
+      # `Cartouche.Transaction.decode/1` envelope dispatcher; the JSON
+      # path mirrors that — `module-name conventions trump generic EIP
+      # numbers` (per the issue). Unknown types raise rather than
+      # silently degrading to a wrong shape.
+      json = %{"type" => "0x1", "nonce" => "0x0"}
+
+      assert_raise ArgumentError, ~r/unsupported transaction envelope type/, fn ->
+        Block.deserialize(pre_london_params(%{"transactions" => [json]}))
+      end
     end
   end
 

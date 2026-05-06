@@ -20,7 +20,10 @@ defmodule Cartouche.Transaction do
             nonce: integer(),
             gas_price: integer(),
             gas_limit: integer(),
-            to: <<_::160>>,
+            # Wire `to` is `null` for contract creation; the RLP `decode/1`
+            # path enforces a 20-byte address, but `from_json/1` (which
+            # mirrors the JSON-RPC envelope verbatim) preserves `nil`.
+            to: <<_::160>> | nil,
             value: integer(),
             data: binary(),
             v: integer(),
@@ -340,6 +343,100 @@ defmodule Cartouche.Transaction do
         {:ok, Cartouche.Recover.recover_eth(trx_encoded, signature)}
       end
     end
+
+    api(:from_json, "Decode a legacy transaction JSON object from `eth_getBlockBy*` into a V1 struct.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source:
+            "Cartouche.RPC.get_block_by_number/2 or Cartouche.RPC.get_block_by_hash/2 with `:include_transaction_details, true`",
+          description:
+            "JSON transaction object with `nonce`, `gasPrice`, `gas`, `to`, `value`, `input`, `v`, `r`, `s` hex fields (legacy / EIP-155 shape)."
+        ]
+      ],
+      returns: %{
+        type: :transaction_v1,
+        description:
+          "%Cartouche.Transaction.V1{} with integer `nonce`/`gas_price`/`gas_limit`/`value`/`v`/`r`/`s`, raw-bytes `data`, and `to` as a 20-byte address or `nil` for contract creation."
+      },
+      errors: [
+        invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when a required hex field is missing or malformed."
+      ]
+    )
+
+    @doc ~S"""
+    Decodes a legacy (type 0) transaction object as returned in the
+    `transactions` array of `eth_getBlockByNumber` / `eth_getBlockByHash`
+    when `include_transaction_details: true` is requested.
+
+    `to` is preserved as `nil` for contract-creation transactions per the
+    wire shape (the strict RLP `decode/1` path requires an explicit 20-byte
+    address; this JSON path does not).
+
+    ## Examples
+
+        iex> use Cartouche.Hex
+        iex> %{
+        ...>   "type" => "0x0",
+        ...>   "nonce" => "0x1",
+        ...>   "gasPrice" => "0x174876e800",
+        ...>   "gas" => "0x186a0",
+        ...>   "to" => "0x0000000000000000000000000000000000000001",
+        ...>   "value" => "0x2",
+        ...>   "input" => "0x010203",
+        ...>   "v" => "0x2a",
+        ...>   "r" => "0x0",
+        ...>   "s" => "0x0"
+        ...> }
+        ...> |> Cartouche.Transaction.V1.from_json()
+        %Cartouche.Transaction.V1{
+          nonce: 1,
+          gas_price: 100_000_000_000,
+          gas_limit: 100_000,
+          to: ~h[0x0000000000000000000000000000000000000001],
+          value: 2,
+          data: <<1, 2, 3>>,
+          v: 0x2a,
+          r: 0,
+          s: 0
+        }
+
+    Contract creation: `"to": null` is preserved as `to: nil`.
+
+        iex> %{
+        ...>   "type" => "0x0",
+        ...>   "nonce" => "0x0",
+        ...>   "gasPrice" => "0x1",
+        ...>   "gas" => "0x186a0",
+        ...>   "to" => nil,
+        ...>   "value" => "0x0",
+        ...>   "input" => "0x60606040",
+        ...>   "v" => "0x1c",
+        ...>   "r" => "0x0",
+        ...>   "s" => "0x0"
+        ...> }
+        ...> |> Cartouche.Transaction.V1.from_json()
+        ...> |> Map.fetch!(:to)
+        nil
+    """
+    @spec from_json(map()) :: t() | no_return()
+    def from_json(%{} = params) do
+      %__MODULE__{
+        nonce: Cartouche.Hex.decode_hex_number!(params["nonce"]),
+        gas_price: Cartouche.Hex.decode_hex_number!(params["gasPrice"]),
+        gas_limit: Cartouche.Hex.decode_hex_number!(params["gas"]),
+        to: decode_to(params["to"]),
+        value: Cartouche.Hex.decode_hex_number!(params["value"]),
+        data: Cartouche.Hex.decode_hex!(params["input"]),
+        v: Cartouche.Hex.decode_hex_number!(params["v"]),
+        r: Cartouche.Hex.decode_hex_number!(params["r"]),
+        s: Cartouche.Hex.decode_hex_number!(params["s"])
+      }
+    end
+
+    @spec decode_to(String.t() | nil) :: <<_::160>> | nil
+    defp decode_to(nil), do: nil
+    defp decode_to(addr) when is_binary(addr), do: Cartouche.Hex.decode_address!(addr)
   end
 
   defmodule V2 do
@@ -349,13 +446,18 @@ defmodule Cartouche.Transaction do
 
     use Descripex, namespace: "/ethereum/transaction/v2"
 
+    alias Cartouche.Transaction.JsonField
+
     @type t :: %__MODULE__{
             chain_id: integer(),
             nonce: integer(),
             max_priority_fee_per_gas: integer(),
             max_fee_per_gas: integer(),
             gas_limit: integer(),
-            destination: <<_::160>>,
+            # Wire `to` is `null` for contract creation; the RLP `decode/1`
+            # path enforces a 20-byte address, but `from_json/1` (which
+            # mirrors the JSON-RPC envelope verbatim) preserves `nil`.
+            destination: <<_::160>> | nil,
             amount: integer(),
             data: binary(),
             access_list: [{<<_::160>>, [<<_::256>>]}],
@@ -1164,6 +1266,153 @@ defmodule Cartouche.Transaction do
 
       with {:ok, signature} <- get_signature(transaction) do
         {:ok, Cartouche.Recover.recover_eth(trx_encoded, signature)}
+      end
+    end
+
+    api(:from_json, "Decode an EIP-1559 transaction JSON object from `eth_getBlockBy*` into a V2 struct.",
+      params: [
+        params: [
+          kind: :exchange_data,
+          source:
+            "Cartouche.RPC.get_block_by_number/2 or Cartouche.RPC.get_block_by_hash/2 with `:include_transaction_details, true`",
+          description:
+            "JSON transaction object with `chainId`, `nonce`, `maxPriorityFeePerGas`, `maxFeePerGas`, `gas`, `to`, `value`, `input`, `accessList`, and `yParity`/`v` + `r`/`s` hex fields."
+        ]
+      ],
+      returns: %{
+        type: :transaction_v2,
+        description:
+          "%Cartouche.Transaction.V2{} with integer fee fields, decoded `access_list` tuples, 32-byte `signature_r`/`signature_s` words, and `destination` as a 20-byte address or `nil` for contract creation."
+      },
+      errors: [
+        invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when a required hex field is missing or malformed."
+      ]
+    )
+
+    @doc ~S"""
+    Decodes an EIP-1559 (type 2) transaction object as returned in the
+    `transactions` array of `eth_getBlockByNumber` / `eth_getBlockByHash`
+    when `include_transaction_details: true` is requested.
+
+    `signature_y_parity` is taken from the `"yParity"` field (typed-tx
+    canonical) or, when absent, derived from `"v"` (legacy backwards-compat
+    field, which on typed transactions always holds the y-parity bit
+    directly). `signature_r` and `signature_s` are normalised to 32-byte
+    binaries even when the wire encoding strips leading zeros.
+
+    ## Examples
+
+        iex> use Cartouche.Hex
+        iex> %{
+        ...>   "type" => "0x2",
+        ...>   "chainId" => "0x1",
+        ...>   "nonce" => "0x1",
+        ...>   "maxPriorityFeePerGas" => "0x3b9aca00",
+        ...>   "maxFeePerGas" => "0x174876e800",
+        ...>   "gas" => "0x186a0",
+        ...>   "to" => "0x0000000000000000000000000000000000000001",
+        ...>   "value" => "0x2",
+        ...>   "input" => "0x010203",
+        ...>   "accessList" => [],
+        ...>   "yParity" => "0x1",
+        ...>   "r" => "0x1",
+        ...>   "s" => "0x2"
+        ...> }
+        ...> |> Cartouche.Transaction.V2.from_json()
+        %Cartouche.Transaction.V2{
+          chain_id: 1,
+          nonce: 1,
+          max_priority_fee_per_gas: 1_000_000_000,
+          max_fee_per_gas: 100_000_000_000,
+          gas_limit: 100_000,
+          destination: ~h[0x0000000000000000000000000000000000000001],
+          amount: 2,
+          data: <<1, 2, 3>>,
+          access_list: [],
+          signature_y_parity: true,
+          signature_r: <<1::256>>,
+          signature_s: <<2::256>>
+        }
+    """
+    @spec from_json(map()) :: t() | no_return()
+    def from_json(%{} = params) do
+      %__MODULE__{
+        chain_id: Cartouche.Hex.decode_hex_number!(params["chainId"]),
+        nonce: Cartouche.Hex.decode_hex_number!(params["nonce"]),
+        max_priority_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxPriorityFeePerGas"]),
+        max_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxFeePerGas"]),
+        gas_limit: Cartouche.Hex.decode_hex_number!(params["gas"]),
+        destination: JsonField.decode_destination(params["to"]),
+        amount: Cartouche.Hex.decode_hex_number!(params["value"]),
+        data: Cartouche.Hex.decode_hex!(params["input"]),
+        access_list: JsonField.decode_access_list(params["accessList"]),
+        signature_y_parity: JsonField.decode_y_parity(params),
+        signature_r: JsonField.decode_signature_word(params["r"]),
+        signature_s: JsonField.decode_signature_word(params["s"])
+      }
+    end
+  end
+
+  defmodule JsonField do
+    @moduledoc false
+    # Shared JSON-field decoders used by `from_json/1` on V1/V2/V3/V4. Kept
+    # internal — these helpers tightly mirror the `eth_getBlockBy*` wire
+    # shape and aren't part of the public API.
+
+    alias Cartouche.Hex
+
+    @spec decode_destination(String.t() | nil) :: <<_::160>> | nil
+    def decode_destination(nil), do: nil
+    def decode_destination(addr) when is_binary(addr), do: Hex.decode_address!(addr)
+
+    @spec decode_signature_word(String.t()) :: <<_::256>>
+    def decode_signature_word(hex) when is_binary(hex), do: hex |> Hex.decode_hex!() |> Hex.pad(32)
+
+    @spec decode_y_parity(map()) :: boolean()
+    def decode_y_parity(%{"yParity" => y_parity}) when not is_nil(y_parity), do: hex_to_y_parity(y_parity)
+    def decode_y_parity(%{"v" => v}) when not is_nil(v), do: hex_to_y_parity(v)
+
+    @spec decode_access_list(list() | nil) :: [{<<_::160>>, [<<_::256>>]}]
+    def decode_access_list(nil), do: []
+
+    def decode_access_list(entries) when is_list(entries) do
+      Enum.map(entries, fn %{"address" => address, "storageKeys" => storage_keys} ->
+        {Hex.decode_address!(address), Enum.map(storage_keys, &Hex.decode_word!/1)}
+      end)
+    end
+
+    @spec decode_blob_versioned_hashes(list() | nil) :: [<<_::256>>]
+    def decode_blob_versioned_hashes(nil), do: []
+    def decode_blob_versioned_hashes(hashes) when is_list(hashes), do: Enum.map(hashes, &Hex.decode_word!/1)
+
+    @spec decode_authorization_list(list() | nil) :: [
+            {non_neg_integer(), <<_::160>>, non_neg_integer(), boolean(), <<_::256>>, <<_::256>>}
+          ]
+    def decode_authorization_list(nil), do: []
+
+    def decode_authorization_list(entries) when is_list(entries) do
+      Enum.map(entries, fn %{
+                             "chainId" => chain_id,
+                             "address" => address,
+                             "nonce" => nonce
+                           } = entry ->
+        {
+          Hex.decode_hex_number!(chain_id),
+          Hex.decode_address!(address),
+          Hex.decode_hex_number!(nonce),
+          decode_y_parity(entry),
+          decode_signature_word(entry["r"]),
+          decode_signature_word(entry["s"])
+        }
+      end)
+    end
+
+    @spec hex_to_y_parity(String.t()) :: boolean()
+    defp hex_to_y_parity(hex) do
+      case Hex.decode_hex_number!(hex) do
+        0 -> false
+        1 -> true
+        v -> raise Hex.InvalidHex, "invalid y_parity hex value: #{inspect(hex)} (decoded to #{v})"
       end
     end
   end

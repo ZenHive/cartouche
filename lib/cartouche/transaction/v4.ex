@@ -38,6 +38,7 @@ defmodule Cartouche.Transaction.V4 do
   """
 
   alias Cartouche.Signer.Default
+  alias Cartouche.Transaction.JsonField
 
   @type authorization :: {
           non_neg_integer(),
@@ -57,7 +58,10 @@ defmodule Cartouche.Transaction.V4 do
           max_priority_fee_per_gas: non_neg_integer() | nil,
           max_fee_per_gas: non_neg_integer() | nil,
           gas_limit: non_neg_integer(),
-          destination: <<_::160>>,
+          # Wire `to` is `null` for contract creation; the RLP `decode/1`
+          # path enforces a 20-byte address, but `from_json/1` (which
+          # mirrors the JSON-RPC envelope verbatim) preserves `nil`.
+          destination: <<_::160>> | nil,
           amount: non_neg_integer(),
           data: binary(),
           access_list: [{<<_::160>>, [<<_::256>>]}],
@@ -284,6 +288,75 @@ defmodule Cartouche.Transaction.V4 do
 
   def get_authorization_signature({_chain_id, _address, _nonce, v, r, s}) do
     {:ok, r <> s <> <<y_parity_integer(v)>>}
+  end
+
+  @doc ~S"""
+  Decodes an EIP-7702 (type 4) set-code transaction object as returned in
+  the `transactions` array of `eth_getBlockByNumber` /
+  `eth_getBlockByHash` when `include_transaction_details: true` is
+  requested.
+
+  Mirrors `Cartouche.Transaction.V2.from_json/1` plus the
+  `authorizationList` — each entry decoded into the
+  `{chain_id, address, nonce, y_parity, r, s}` tuple shape used by
+  `Cartouche.Transaction.V4`.
+
+  ## Examples
+
+      iex> use Cartouche.Hex
+      iex> %{
+      ...>   "type" => "0x4",
+      ...>   "chainId" => "0x1",
+      ...>   "nonce" => "0x1",
+      ...>   "maxPriorityFeePerGas" => "0x3b9aca00",
+      ...>   "maxFeePerGas" => "0x174876e800",
+      ...>   "gas" => "0x186a0",
+      ...>   "to" => "0x0000000000000000000000000000000000000001",
+      ...>   "value" => "0x2",
+      ...>   "input" => "0x010203",
+      ...>   "accessList" => [],
+      ...>   "authorizationList" => [
+      ...>     %{
+      ...>       "chainId" => "0x1",
+      ...>       "address" => "0x0000000000000000000000000000000000000002",
+      ...>       "nonce" => "0x7",
+      ...>       "yParity" => "0x0",
+      ...>       "r" => "0x1",
+      ...>       "s" => "0x2"
+      ...>     }
+      ...>   ],
+      ...>   "yParity" => "0x1",
+      ...>   "r" => "0x1",
+      ...>   "s" => "0x2"
+      ...> }
+      ...> |> Cartouche.Transaction.V4.from_json()
+      ...> |> Map.take([:chain_id, :destination, :authorization_list, :signature_y_parity])
+      %{
+        chain_id: 1,
+        destination: ~h[0x0000000000000000000000000000000000000001],
+        authorization_list: [
+          {1, ~h[0x0000000000000000000000000000000000000002], 7, false, <<1::256>>, <<2::256>>}
+        ],
+        signature_y_parity: true
+      }
+  """
+  @spec from_json(map()) :: t() | no_return()
+  def from_json(%{} = params) do
+    %__MODULE__{
+      chain_id: Cartouche.Hex.decode_hex_number!(params["chainId"]),
+      nonce: Cartouche.Hex.decode_hex_number!(params["nonce"]),
+      max_priority_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxPriorityFeePerGas"]),
+      max_fee_per_gas: Cartouche.Hex.decode_hex_number!(params["maxFeePerGas"]),
+      gas_limit: Cartouche.Hex.decode_hex_number!(params["gas"]),
+      destination: JsonField.decode_destination(params["to"]),
+      amount: Cartouche.Hex.decode_hex_number!(params["value"]),
+      data: Cartouche.Hex.decode_hex!(params["input"]),
+      access_list: JsonField.decode_access_list(params["accessList"]),
+      authorization_list: JsonField.decode_authorization_list(params["authorizationList"]),
+      signature_y_parity: JsonField.decode_y_parity(params),
+      signature_r: JsonField.decode_signature_word(params["r"]),
+      signature_s: JsonField.decode_signature_word(params["s"])
+    }
   end
 
   @spec encoded_fields(tx_input()) :: list()
