@@ -227,6 +227,53 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert contents =~ "@spec deployed_bytecode() :: binary()"
       assert contents =~ "@spec abi() :: [map()]"
     end
+
+    test "generated specs track calldata inputs and exec_vm return unwrapping", %{tmp: tmp} do
+      abi = [
+        %{
+          "type" => "function",
+          "name" => "differentShapes",
+          "inputs" => [
+            %{"name" => "who", "type" => "address"},
+            %{"name" => "label", "type" => "string"}
+          ],
+          "outputs" => [%{"name" => "", "type" => "bool"}],
+          "stateMutability" => "pure"
+        },
+        %{
+          "type" => "function",
+          "name" => "triple",
+          "inputs" => [],
+          "outputs" => [
+            %{
+              "name" => "",
+              "type" => "tuple",
+              "components" => [
+                %{"name" => "", "type" => "uint256"},
+                %{"name" => "", "type" => "bool"},
+                %{"name" => "", "type" => "address"}
+              ]
+            }
+          ],
+          "stateMutability" => "pure"
+        }
+      ]
+
+      contents = generate(tmp, "SpecShapes", "0x6080604052348015", abi)
+
+      assert contents =~ "@spec decode_different_shapes_call(binary()) :: [<<_::160>> | String.t()]"
+      assert contents =~ "@spec exec_vm_different_shapes(<<_::160>>, String.t(), Keyword.t()) ::"
+      assert contents =~ "{:ok, boolean()} | {:revert, String.t(), term()}"
+      assert contents =~ "@spec exec_vm_triple(Keyword.t()) ::"
+      assert contents =~ "{:ok, {non_neg_integer(), boolean(), <<_::160>>}} | {:revert, String.t(), term()}"
+    end
+
+    test "fallback and receive docs describe synthesized calldata argument", %{tmp: tmp} do
+      contents = generate(tmp, "FallbackDocs", "0x6080604052348015", synthetic_abi())
+
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_fallback/fallback(bytes)`."|
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_receive/receive(bytes)`."|
+    end
   end
 
   describe "selector shapes" do

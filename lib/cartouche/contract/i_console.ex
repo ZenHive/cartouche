@@ -4332,7 +4332,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_call/log(address,address,string)`."
-  @spec decode_log_call(binary()) :: [term()]
+  @spec decode_log_call(binary()) :: [<<_::160>> | <<_::160>> | String.t()]
   def decode_log_call(<<0, 113, 80, 190>> <> calldata) do
     _signature = hex!("0x007150be")
     ABI.decode(log_selector(), calldata)
@@ -4428,7 +4428,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_00dd87b9_call/log(bool,uint256,uint256,address)`."
-  @spec decode_log_00dd87b9_call(binary()) :: [term()]
+  @spec decode_log_00dd87b9_call(binary()) :: [
+          boolean() | non_neg_integer() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_00dd87b9_call(<<0, 221, 135, 185>> <> calldata) do
     _signature = hex!("0x00dd87b9")
     ABI.decode(log_00dd87b9_selector(), calldata)
@@ -4493,7 +4495,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_018c84c2_call/log(address,address,address)`."
-  @spec decode_log_018c84c2_call(binary()) :: [term()]
+  @spec decode_log_018c84c2_call(binary()) :: [<<_::160>> | <<_::160>> | <<_::160>>]
   def decode_log_018c84c2_call(<<1, 140, 132, 194>> <> calldata) do
     _signature = hex!("0x018c84c2")
     ABI.decode(log_018c84c2_selector(), calldata)
@@ -4583,7 +4585,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_031c6f73_call/log(uint256,address,address,string)`."
-  @spec decode_log_031c6f73_call(binary()) :: [term()]
+  @spec decode_log_031c6f73_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | <<_::160>> | String.t()
+        ]
   def decode_log_031c6f73_call(<<3, 28, 111, 115>> <> calldata) do
     _signature = hex!("0x031c6f73")
     ABI.decode(log_031c6f73_selector(), calldata)
@@ -4667,7 +4671,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0454c079_call/log(string,address,bool,string)`."
-  @spec decode_log_0454c079_call(binary()) :: [term()]
+  @spec decode_log_0454c079_call(binary()) :: [String.t() | <<_::160>> | boolean() | String.t()]
   def decode_log_0454c079_call(<<4, 84, 192, 121>> <> calldata) do
     _signature = hex!("0x0454c079")
     ABI.decode(log_0454c079_selector(), calldata)
@@ -4763,7 +4767,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_078287f5_call/log(uint256,bool,address,uint256)`."
-  @spec decode_log_078287f5_call(binary()) :: [term()]
+  @spec decode_log_078287f5_call(binary()) :: [
+          non_neg_integer() | boolean() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_078287f5_call(<<7, 130, 135, 245>> <> calldata) do
     _signature = hex!("0x078287f5")
     ABI.decode(log_078287f5_selector(), calldata)
@@ -4853,7 +4859,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_07831502_call/log(bool,address,bool,uint256)`."
-  @spec decode_log_07831502_call(binary()) :: [term()]
+  @spec decode_log_07831502_call(binary()) :: [
+          boolean() | <<_::160>> | boolean() | non_neg_integer()
+        ]
   def decode_log_07831502_call(<<7, 131, 21, 2>> <> calldata) do
     _signature = hex!("0x07831502")
     ABI.decode(log_07831502_selector(), calldata)
@@ -4923,7 +4931,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_088ef9d2_call/log(bool,uint256,address)`."
-  @spec decode_log_088ef9d2_call(binary()) :: [term()]
+  @spec decode_log_088ef9d2_call(binary()) :: [boolean() | non_neg_integer() | <<_::160>>]
   def decode_log_088ef9d2_call(<<8, 142, 249, 210>> <> calldata) do
     _signature = hex!("0x088ef9d2")
     ABI.decode(log_088ef9d2_selector(), calldata)
@@ -5013,7 +5021,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_091ffaf5_call/log(uint256,address,address,bool)`."
-  @spec decode_log_091ffaf5_call(binary()) :: [term()]
+  @spec decode_log_091ffaf5_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | <<_::160>> | boolean()
+        ]
   def decode_log_091ffaf5_call(<<9, 31, 250, 245>> <> calldata) do
     _signature = hex!("0x091ffaf5")
     ABI.decode(log_091ffaf5_selector(), calldata)
@@ -5103,7 +5113,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0aa6cfad_call/log(address,bool,uint256,string)`."
-  @spec decode_log_0aa6cfad_call(binary()) :: [term()]
+  @spec decode_log_0aa6cfad_call(binary()) :: [
+          <<_::160>> | boolean() | non_neg_integer() | String.t()
+        ]
   def decode_log_0aa6cfad_call(<<10, 166, 207, 173>> <> calldata) do
     _signature = hex!("0x0aa6cfad")
     ABI.decode(log_0aa6cfad_selector(), calldata)
@@ -5199,7 +5211,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0bb00eab_call/log(bool,bool,uint256,uint256)`."
-  @spec decode_log_0bb00eab_call(binary()) :: [term()]
+  @spec decode_log_0bb00eab_call(binary()) :: [
+          boolean() | boolean() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_0bb00eab_call(<<11, 176, 14, 171>> <> calldata) do
     _signature = hex!("0x0bb00eab")
     ABI.decode(log_0bb00eab_selector(), calldata)
@@ -5289,7 +5303,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0c66d1be_call/log(bool,address,address,uint256)`."
-  @spec decode_log_0c66d1be_call(binary()) :: [term()]
+  @spec decode_log_0c66d1be_call(binary()) :: [
+          boolean() | <<_::160>> | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_0c66d1be_call(<<12, 102, 209, 190>> <> calldata) do
     _signature = hex!("0x0c66d1be")
     ABI.decode(log_0c66d1be_selector(), calldata)
@@ -5385,7 +5401,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0c9cd9c1_call/log(uint256,address,uint256,uint256)`."
-  @spec decode_log_0c9cd9c1_call(binary()) :: [term()]
+  @spec decode_log_0c9cd9c1_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_0c9cd9c1_call(<<12, 156, 217, 193>> <> calldata) do
     _signature = hex!("0x0c9cd9c1")
     ABI.decode(log_0c9cd9c1_selector(), calldata)
@@ -5455,7 +5473,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0d26b925_call/log(string,address,uint256)`."
-  @spec decode_log_0d26b925_call(binary()) :: [term()]
+  @spec decode_log_0d26b925_call(binary()) :: [String.t() | <<_::160>> | non_neg_integer()]
   def decode_log_0d26b925_call(<<13, 38, 185, 37>> <> calldata) do
     _signature = hex!("0x0d26b925")
     ABI.decode(log_0d26b925_selector(), calldata)
@@ -5539,7 +5557,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0d36fa20_call/log(address,string,address,address)`."
-  @spec decode_log_0d36fa20_call(binary()) :: [term()]
+  @spec decode_log_0d36fa20_call(binary()) :: [<<_::160>> | String.t() | <<_::160>> | <<_::160>>]
   def decode_log_0d36fa20_call(<<13, 54, 250, 32>> <> calldata) do
     _signature = hex!("0x0d36fa20")
     ABI.decode(log_0d36fa20_selector(), calldata)
@@ -5623,7 +5641,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0df12b76_call/log(address,string,address,bool)`."
-  @spec decode_log_0df12b76_call(binary()) :: [term()]
+  @spec decode_log_0df12b76_call(binary()) :: [<<_::160>> | String.t() | <<_::160>> | boolean()]
   def decode_log_0df12b76_call(<<13, 241, 43, 118>> <> calldata) do
     _signature = hex!("0x0df12b76")
     ABI.decode(log_0df12b76_selector(), calldata)
@@ -5707,7 +5725,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0e378994_call/log(address,address,address,bool)`."
-  @spec decode_log_0e378994_call(binary()) :: [term()]
+  @spec decode_log_0e378994_call(binary()) :: [<<_::160>> | <<_::160>> | <<_::160>> | boolean()]
   def decode_log_0e378994_call(<<14, 55, 137, 148>> <> calldata) do
     _signature = hex!("0x0e378994")
     ABI.decode(log_0e378994_selector(), calldata)
@@ -5797,7 +5815,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_0ef7e050_call/log(address,string,uint256,bool)`."
-  @spec decode_log_0ef7e050_call(binary()) :: [term()]
+  @spec decode_log_0ef7e050_call(binary()) :: [
+          <<_::160>> | String.t() | non_neg_integer() | boolean()
+        ]
   def decode_log_0ef7e050_call(<<14, 247, 224, 80>> <> calldata) do
     _signature = hex!("0x0ef7e050")
     ABI.decode(log_0ef7e050_selector(), calldata)
@@ -5893,7 +5913,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_100f650e_call/log(address,uint256,address,uint256)`."
-  @spec decode_log_100f650e_call(binary()) :: [term()]
+  @spec decode_log_100f650e_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_100f650e_call(<<16, 15, 101, 14>> <> calldata) do
     _signature = hex!("0x100f650e")
     ABI.decode(log_100f650e_selector(), calldata)
@@ -5983,7 +6005,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1023f7b2_call/log(string,string,uint256,address)`."
-  @spec decode_log_1023f7b2_call(binary()) :: [term()]
+  @spec decode_log_1023f7b2_call(binary()) :: [
+          String.t() | String.t() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_1023f7b2_call(<<16, 35, 247, 178>> <> calldata) do
     _signature = hex!("0x1023f7b2")
     ABI.decode(log_1023f7b2_selector(), calldata)
@@ -6048,7 +6072,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1078f68d_call/log(bool,bool,address)`."
-  @spec decode_log_1078f68d_call(binary()) :: [term()]
+  @spec decode_log_1078f68d_call(binary()) :: [boolean() | boolean() | <<_::160>>]
   def decode_log_1078f68d_call(<<16, 120, 246, 141>> <> calldata) do
     _signature = hex!("0x1078f68d")
     ABI.decode(log_1078f68d_selector(), calldata)
@@ -6118,7 +6142,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1093ee11_call/log(bool,string,uint256)`."
-  @spec decode_log_1093ee11_call(binary()) :: [term()]
+  @spec decode_log_1093ee11_call(binary()) :: [boolean() | String.t() | non_neg_integer()]
   def decode_log_1093ee11_call(<<16, 147, 238, 17>> <> calldata) do
     _signature = hex!("0x1093ee11")
     ABI.decode(log_1093ee11_selector(), calldata)
@@ -6202,7 +6226,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_12d6c788_call/log(bool,string,address,string)`."
-  @spec decode_log_12d6c788_call(binary()) :: [term()]
+  @spec decode_log_12d6c788_call(binary()) :: [boolean() | String.t() | <<_::160>> | String.t()]
   def decode_log_12d6c788_call(<<18, 214, 199, 136>> <> calldata) do
     _signature = hex!("0x12d6c788")
     ABI.decode(log_12d6c788_selector(), calldata)
@@ -6272,7 +6296,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_12f21602_call/log(bool,bool,uint256)`."
-  @spec decode_log_12f21602_call(binary()) :: [term()]
+  @spec decode_log_12f21602_call(binary()) :: [boolean() | boolean() | non_neg_integer()]
   def decode_log_12f21602_call(<<18, 242, 22, 2>> <> calldata) do
     _signature = hex!("0x12f21602")
     ABI.decode(log_12f21602_selector(), calldata)
@@ -6362,7 +6386,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_136b05dd_call/log(bool,address,uint256,address)`."
-  @spec decode_log_136b05dd_call(binary()) :: [term()]
+  @spec decode_log_136b05dd_call(binary()) :: [
+          boolean() | <<_::160>> | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_136b05dd_call(<<19, 107, 5, 221>> <> calldata) do
     _signature = hex!("0x136b05dd")
     ABI.decode(log_136b05dd_selector(), calldata)
@@ -6458,7 +6484,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1537dc87_call/log(bool,uint256,address,uint256)`."
-  @spec decode_log_1537dc87_call(binary()) :: [term()]
+  @spec decode_log_1537dc87_call(binary()) :: [
+          boolean() | non_neg_integer() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_1537dc87_call(<<21, 55, 220, 135>> <> calldata) do
     _signature = hex!("0x1537dc87")
     ABI.decode(log_1537dc87_selector(), calldata)
@@ -6548,7 +6576,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1596a1ce_call/log(bool,string,uint256,address)`."
-  @spec decode_log_1596a1ce_call(binary()) :: [term()]
+  @spec decode_log_1596a1ce_call(binary()) :: [
+          boolean() | String.t() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_1596a1ce_call(<<21, 150, 161, 206>> <> calldata) do
     _signature = hex!("0x1596a1ce")
     ABI.decode(log_1596a1ce_selector(), calldata)
@@ -6638,7 +6668,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_159f8927_call/log(address,string,string,uint256)`."
-  @spec decode_log_159f8927_call(binary()) :: [term()]
+  @spec decode_log_159f8927_call(binary()) :: [
+          <<_::160>> | String.t() | String.t() | non_neg_integer()
+        ]
   def decode_log_159f8927_call(<<21, 159, 137, 39>> <> calldata) do
     _signature = hex!("0x159f8927")
     ABI.decode(log_159f8927_selector(), calldata)
@@ -6734,7 +6766,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_15c127b5_call/log(uint256,address,uint256,address)`."
-  @spec decode_log_15c127b5_call(binary()) :: [term()]
+  @spec decode_log_15c127b5_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_15c127b5_call(<<21, 193, 39, 181>> <> calldata) do
     _signature = hex!("0x15c127b5")
     ABI.decode(log_15c127b5_selector(), calldata)
@@ -6830,7 +6864,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_15cac476_call/log(uint256,uint256,address,bool)`."
-  @spec decode_log_15cac476_call(binary()) :: [term()]
+  @spec decode_log_15cac476_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | <<_::160>> | boolean()
+        ]
   def decode_log_15cac476_call(<<21, 202, 196, 118>> <> calldata) do
     _signature = hex!("0x15cac476")
     ABI.decode(log_15cac476_selector(), calldata)
@@ -6920,7 +6956,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1606a393_call/log(bool,string,bool,uint256)`."
-  @spec decode_log_1606a393_call(binary()) :: [term()]
+  @spec decode_log_1606a393_call(binary()) :: [
+          boolean() | String.t() | boolean() | non_neg_integer()
+        ]
   def decode_log_1606a393_call(<<22, 6, 163, 147>> <> calldata) do
     _signature = hex!("0x1606a393")
     ABI.decode(log_1606a393_selector(), calldata)
@@ -7004,7 +7042,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1762e32a_call/log(bool,string,string,string)`."
-  @spec decode_log_1762e32a_call(binary()) :: [term()]
+  @spec decode_log_1762e32a_call(binary()) :: [boolean() | String.t() | String.t() | String.t()]
   def decode_log_1762e32a_call(<<23, 98, 227, 42>> <> calldata) do
     _signature = hex!("0x1762e32a")
     ABI.decode(log_1762e32a_selector(), calldata)
@@ -7074,7 +7112,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_17fe6185_call/log(address,address,uint256)`."
-  @spec decode_log_17fe6185_call(binary()) :: [term()]
+  @spec decode_log_17fe6185_call(binary()) :: [<<_::160>> | <<_::160>> | non_neg_integer()]
   def decode_log_17fe6185_call(<<23, 254, 97, 133>> <> calldata) do
     _signature = hex!("0x17fe6185")
     ABI.decode(log_17fe6185_selector(), calldata)
@@ -7139,7 +7177,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_18c9c746_call/log(bool,address,bool)`."
-  @spec decode_log_18c9c746_call(binary()) :: [term()]
+  @spec decode_log_18c9c746_call(binary()) :: [boolean() | <<_::160>> | boolean()]
   def decode_log_18c9c746_call(<<24, 201, 199, 70>> <> calldata) do
     _signature = hex!("0x18c9c746")
     ABI.decode(log_18c9c746_selector(), calldata)
@@ -7239,7 +7277,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_193fb800_call/log(uint256,uint256,uint256,uint256)`."
-  @spec decode_log_193fb800_call(binary()) :: [term()]
+  @spec decode_log_193fb800_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_193fb800_call(<<25, 63, 184, 0>> <> calldata) do
     _signature = hex!("0x193fb800")
     ABI.decode(log_193fb800_selector(), calldata)
@@ -7323,7 +7363,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_19fd4956_call/log(address,bool,string,address)`."
-  @spec decode_log_19fd4956_call(binary()) :: [term()]
+  @spec decode_log_19fd4956_call(binary()) :: [<<_::160>> | boolean() | String.t() | <<_::160>>]
   def decode_log_19fd4956_call(<<25, 253, 73, 86>> <> calldata) do
     _signature = hex!("0x19fd4956")
     ABI.decode(log_19fd4956_selector(), calldata)
@@ -7413,7 +7453,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1ad96de6_call/log(bool,string,uint256,string)`."
-  @spec decode_log_1ad96de6_call(binary()) :: [term()]
+  @spec decode_log_1ad96de6_call(binary()) :: [
+          boolean() | String.t() | non_neg_integer() | String.t()
+        ]
   def decode_log_1ad96de6_call(<<26, 217, 109, 230>> <> calldata) do
     _signature = hex!("0x1ad96de6")
     ABI.decode(log_1ad96de6_selector(), calldata)
@@ -7503,7 +7545,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1bb3b09a_call/log(bool,uint256,address,string)`."
-  @spec decode_log_1bb3b09a_call(binary()) :: [term()]
+  @spec decode_log_1bb3b09a_call(binary()) :: [
+          boolean() | non_neg_integer() | <<_::160>> | String.t()
+        ]
   def decode_log_1bb3b09a_call(<<27, 179, 176, 154>> <> calldata) do
     _signature = hex!("0x1bb3b09a")
     ABI.decode(log_1bb3b09a_selector(), calldata)
@@ -7587,7 +7631,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1c41a336_call/log(bool,address,bool,address)`."
-  @spec decode_log_1c41a336_call(binary()) :: [term()]
+  @spec decode_log_1c41a336_call(binary()) :: [boolean() | <<_::160>> | boolean() | <<_::160>>]
   def decode_log_1c41a336_call(<<28, 65, 163, 54>> <> calldata) do
     _signature = hex!("0x1c41a336")
     ABI.decode(log_1c41a336_selector(), calldata)
@@ -7657,7 +7701,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1c7ec448_call/log(string,uint256,address)`."
-  @spec decode_log_1c7ec448_call(binary()) :: [term()]
+  @spec decode_log_1c7ec448_call(binary()) :: [String.t() | non_neg_integer() | <<_::160>>]
   def decode_log_1c7ec448_call(<<28, 126, 196, 72>> <> calldata) do
     _signature = hex!("0x1c7ec448")
     ABI.decode(log_1c7ec448_selector(), calldata)
@@ -7718,7 +7762,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1c9d7eb3_call/log(uint256,bool)`."
-  @spec decode_log_1c9d7eb3_call(binary()) :: [term()]
+  @spec decode_log_1c9d7eb3_call(binary()) :: [non_neg_integer() | boolean()]
   def decode_log_1c9d7eb3_call(<<28, 157, 126, 179>> <> calldata) do
     _signature = hex!("0x1c9d7eb3")
     ABI.decode(log_1c9d7eb3_selector(), calldata)
@@ -7802,7 +7846,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1d14d001_call/log(bool,address,address,address)`."
-  @spec decode_log_1d14d001_call(binary()) :: [term()]
+  @spec decode_log_1d14d001_call(binary()) :: [boolean() | <<_::160>> | <<_::160>> | <<_::160>>]
   def decode_log_1d14d001_call(<<29, 20, 208, 1>> <> calldata) do
     _signature = hex!("0x1d14d001")
     ABI.decode(log_1d14d001_selector(), calldata)
@@ -7892,7 +7936,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1da986ea_call/log(address,uint256,address,string)`."
-  @spec decode_log_1da986ea_call(binary()) :: [term()]
+  @spec decode_log_1da986ea_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | <<_::160>> | String.t()
+        ]
   def decode_log_1da986ea_call(<<29, 169, 134, 234>> <> calldata) do
     _signature = hex!("0x1da986ea")
     ABI.decode(log_1da986ea_selector(), calldata)
@@ -7988,7 +8034,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1dc8e1b8_call/log(address,string,uint256,uint256)`."
-  @spec decode_log_1dc8e1b8_call(binary()) :: [term()]
+  @spec decode_log_1dc8e1b8_call(binary()) :: [
+          <<_::160>> | String.t() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_1dc8e1b8_call(<<29, 200, 225, 184>> <> calldata) do
     _signature = hex!("0x1dc8e1b8")
     ABI.decode(log_1dc8e1b8_selector(), calldata)
@@ -8072,7 +8120,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_1e4b87e5_call/log(bool,string,string,bool)`."
-  @spec decode_log_1e4b87e5_call(binary()) :: [term()]
+  @spec decode_log_1e4b87e5_call(binary()) :: [boolean() | String.t() | String.t() | boolean()]
   def decode_log_1e4b87e5_call(<<30, 75, 135, 229>> <> calldata) do
     _signature = hex!("0x1e4b87e5")
     ABI.decode(log_1e4b87e5_selector(), calldata)
@@ -8157,7 +8205,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_20098014_call/log(uint256,bool,uint256)`."
-  @spec decode_log_20098014_call(binary()) :: [term()]
+  @spec decode_log_20098014_call(binary()) :: [non_neg_integer() | boolean() | non_neg_integer()]
   def decode_log_20098014_call(<<32, 9, 128, 20>> <> calldata) do
     _signature = hex!("0x20098014")
     ABI.decode(log_20098014_selector(), calldata)
@@ -8241,7 +8289,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_205871c2_call/log(address,string,bool,address)`."
-  @spec decode_log_205871c2_call(binary()) :: [term()]
+  @spec decode_log_205871c2_call(binary()) :: [<<_::160>> | String.t() | boolean() | <<_::160>>]
   def decode_log_205871c2_call(<<32, 88, 113, 194>> <> calldata) do
     _signature = hex!("0x205871c2")
     ABI.decode(log_205871c2_selector(), calldata)
@@ -8311,7 +8359,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_20718650_call/log(uint256,bool,bool)`."
-  @spec decode_log_20718650_call(binary()) :: [term()]
+  @spec decode_log_20718650_call(binary()) :: [non_neg_integer() | boolean() | boolean()]
   def decode_log_20718650_call(<<32, 113, 134, 80>> <> calldata) do
     _signature = hex!("0x20718650")
     ABI.decode(log_20718650_selector(), calldata)
@@ -8407,7 +8455,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_20e3984d_call/log(address,uint256,uint256,address)`."
-  @spec decode_log_20e3984d_call(binary()) :: [term()]
+  @spec decode_log_20e3984d_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_20e3984d_call(<<32, 227, 152, 77>> <> calldata) do
     _signature = hex!("0x20e3984d")
     ABI.decode(log_20e3984d_selector(), calldata)
@@ -8472,7 +8522,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_212255cc_call/log(address,bool,string)`."
-  @spec decode_log_212255cc_call(binary()) :: [term()]
+  @spec decode_log_212255cc_call(binary()) :: [<<_::160>> | boolean() | String.t()]
   def decode_log_212255cc_call(<<33, 34, 85, 204>> <> calldata) do
     _signature = hex!("0x212255cc")
     ABI.decode(log_212255cc_selector(), calldata)
@@ -8562,7 +8612,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_21ad0683_call/log(uint256,string,string,string)`."
-  @spec decode_log_21ad0683_call(binary()) :: [term()]
+  @spec decode_log_21ad0683_call(binary()) :: [
+          non_neg_integer() | String.t() | String.t() | String.t()
+        ]
   def decode_log_21ad0683_call(<<33, 173, 6, 131>> <> calldata) do
     _signature = hex!("0x21ad0683")
     ABI.decode(log_21ad0683_selector(), calldata)
@@ -8646,7 +8698,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_21bdaf25_call/log(address,address,string,string)`."
-  @spec decode_log_21bdaf25_call(binary()) :: [term()]
+  @spec decode_log_21bdaf25_call(binary()) :: [<<_::160>> | <<_::160>> | String.t() | String.t()]
   def decode_log_21bdaf25_call(<<33, 189, 175, 37>> <> calldata) do
     _signature = hex!("0x21bdaf25")
     ABI.decode(log_21bdaf25_selector(), calldata)
@@ -8730,7 +8782,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_223603bd_call/log(string,address,bool,address)`."
-  @spec decode_log_223603bd_call(binary()) :: [term()]
+  @spec decode_log_223603bd_call(binary()) :: [String.t() | <<_::160>> | boolean() | <<_::160>>]
   def decode_log_223603bd_call(<<34, 54, 3, 189>> <> calldata) do
     _signature = hex!("0x223603bd")
     ABI.decode(log_223603bd_selector(), calldata)
@@ -8826,7 +8878,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_22f6b999_call/log(address,uint256,bool,uint256)`."
-  @spec decode_log_22f6b999_call(binary()) :: [term()]
+  @spec decode_log_22f6b999_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | boolean() | non_neg_integer()
+        ]
   def decode_log_22f6b999_call(<<34, 246, 185, 153>> <> calldata) do
     _signature = hex!("0x22f6b999")
     ABI.decode(log_22f6b999_selector(), calldata)
@@ -8910,7 +8964,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_245986f2_call/log(string,address,string,string)`."
-  @spec decode_log_245986f2_call(binary()) :: [term()]
+  @spec decode_log_245986f2_call(binary()) :: [String.t() | <<_::160>> | String.t() | String.t()]
   def decode_log_245986f2_call(<<36, 89, 134, 242>> <> calldata) do
     _signature = hex!("0x245986f2")
     ABI.decode(log_245986f2_selector(), calldata)
@@ -9000,7 +9054,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2488b414_call/log(uint256,address,address,address)`."
-  @spec decode_log_2488b414_call(binary()) :: [term()]
+  @spec decode_log_2488b414_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | <<_::160>> | <<_::160>>
+        ]
   def decode_log_2488b414_call(<<36, 136, 180, 20>> <> calldata) do
     _signature = hex!("0x2488b414")
     ABI.decode(log_2488b414_selector(), calldata)
@@ -9090,7 +9146,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_24f91465_call/log(string,bool,string,uint256)`."
-  @spec decode_log_24f91465_call(binary()) :: [term()]
+  @spec decode_log_24f91465_call(binary()) :: [
+          String.t() | boolean() | String.t() | non_neg_integer()
+        ]
   def decode_log_24f91465_call(<<36, 249, 20, 101>> <> calldata) do
     _signature = hex!("0x24f91465")
     ABI.decode(log_24f91465_selector(), calldata)
@@ -9155,7 +9213,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2555fa46_call/log(bool,bool,string)`."
-  @spec decode_log_2555fa46_call(binary()) :: [term()]
+  @spec decode_log_2555fa46_call(binary()) :: [boolean() | boolean() | String.t()]
   def decode_log_2555fa46_call(<<37, 85, 250, 70>> <> calldata) do
     _signature = hex!("0x2555fa46")
     ABI.decode(log_2555fa46_selector(), calldata)
@@ -9245,7 +9303,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_26f560a8_call/log(bool,uint256,address,address)`."
-  @spec decode_log_26f560a8_call(binary()) :: [term()]
+  @spec decode_log_26f560a8_call(binary()) :: [
+          boolean() | non_neg_integer() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_26f560a8_call(<<38, 245, 96, 168>> <> calldata) do
     _signature = hex!("0x26f560a8")
     ABI.decode(log_26f560a8_selector(), calldata)
@@ -9341,7 +9401,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_27d8afd2_call/log(uint256,uint256,string,string)`."
-  @spec decode_log_27d8afd2_call(binary()) :: [term()]
+  @spec decode_log_27d8afd2_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | String.t() | String.t()
+        ]
   def decode_log_27d8afd2_call(<<39, 216, 175, 210>> <> calldata) do
     _signature = hex!("0x27d8afd2")
     ABI.decode(log_27d8afd2_selector(), calldata)
@@ -9437,7 +9499,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_28863fcb_call/log(bool,string,uint256,uint256)`."
-  @spec decode_log_28863fcb_call(binary()) :: [term()]
+  @spec decode_log_28863fcb_call(binary()) :: [
+          boolean() | String.t() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_28863fcb_call(<<40, 134, 63, 203>> <> calldata) do
     _signature = hex!("0x28863fcb")
     ABI.decode(log_28863fcb_selector(), calldata)
@@ -9497,7 +9561,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2a110e83_call/log(bool,bool)`."
-  @spec decode_log_2a110e83_call(binary()) :: [term()]
+  @spec decode_log_2a110e83_call(binary()) :: [boolean() | boolean()]
   def decode_log_2a110e83_call(<<42, 17, 14, 131>> <> calldata) do
     _signature = hex!("0x2a110e83")
     ABI.decode(log_2a110e83_selector(), calldata)
@@ -9569,7 +9633,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2ae408d4_call/log(bool,bool,bool,string)`."
-  @spec decode_log_2ae408d4_call(binary()) :: [term()]
+  @spec decode_log_2ae408d4_call(binary()) :: [boolean() | boolean() | boolean() | String.t()]
   def decode_log_2ae408d4_call(<<42, 228, 8, 212>> <> calldata) do
     _signature = hex!("0x2ae408d4")
     ABI.decode(log_2ae408d4_selector(), calldata)
@@ -9653,7 +9717,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2b2b18dc_call/log(bool,string,address,address)`."
-  @spec decode_log_2b2b18dc_call(binary()) :: [term()]
+  @spec decode_log_2b2b18dc_call(binary()) :: [boolean() | String.t() | <<_::160>> | <<_::160>>]
   def decode_log_2b2b18dc_call(<<43, 43, 24, 220>> <> calldata) do
     _signature = hex!("0x2b2b18dc")
     ABI.decode(log_2b2b18dc_selector(), calldata)
@@ -9737,7 +9801,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2c1754ed_call/log(string,string,string,bool)`."
-  @spec decode_log_2c1754ed_call(binary()) :: [term()]
+  @spec decode_log_2c1754ed_call(binary()) :: [String.t() | String.t() | String.t() | boolean()]
   def decode_log_2c1754ed_call(<<44, 23, 84, 237>> <> calldata) do
     _signature = hex!("0x2c1754ed")
     ABI.decode(log_2c1754ed_selector(), calldata)
@@ -9833,7 +9897,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2c1d0746_call/log(uint256,bool,string,uint256)`."
-  @spec decode_log_2c1d0746_call(binary()) :: [term()]
+  @spec decode_log_2c1d0746_call(binary()) :: [
+          non_neg_integer() | boolean() | String.t() | non_neg_integer()
+        ]
   def decode_log_2c1d0746_call(<<44, 29, 7, 70>> <> calldata) do
     _signature = hex!("0x2c1d0746")
     ABI.decode(log_2c1d0746_selector(), calldata)
@@ -9977,7 +10043,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2cd4134a_call/log(address,address,bool,bool)`."
-  @spec decode_log_2cd4134a_call(binary()) :: [term()]
+  @spec decode_log_2cd4134a_call(binary()) :: [<<_::160>> | <<_::160>> | boolean() | boolean()]
   def decode_log_2cd4134a_call(<<44, 212, 19, 74>> <> calldata) do
     _signature = hex!("0x2cd4134a")
     ABI.decode(log_2cd4134a_selector(), calldata)
@@ -10042,7 +10108,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2ced7cef_call/log(string,string,string)`."
-  @spec decode_log_2ced7cef_call(binary()) :: [term()]
+  @spec decode_log_2ced7cef_call(binary()) :: [String.t() | String.t() | String.t()]
   def decode_log_2ced7cef_call(<<44, 237, 124, 239>> <> calldata) do
     _signature = hex!("0x2ced7cef")
     ABI.decode(log_2ced7cef_selector(), calldata)
@@ -10186,7 +10252,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2d8e33a4_call/log(string,bool,address,string)`."
-  @spec decode_log_2d8e33a4_call(binary()) :: [term()]
+  @spec decode_log_2d8e33a4_call(binary()) :: [String.t() | boolean() | <<_::160>> | String.t()]
   def decode_log_2d8e33a4_call(<<45, 142, 51, 164>> <> calldata) do
     _signature = hex!("0x2d8e33a4")
     ABI.decode(log_2d8e33a4_selector(), calldata)
@@ -10270,7 +10336,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_2dd778e6_call/log(address,bool,address,string)`."
-  @spec decode_log_2dd778e6_call(binary()) :: [term()]
+  @spec decode_log_2dd778e6_call(binary()) :: [<<_::160>> | boolean() | <<_::160>> | String.t()]
   def decode_log_2dd778e6_call(<<45, 215, 120, 230>> <> calldata) do
     _signature = hex!("0x2dd778e6")
     ABI.decode(log_2dd778e6_selector(), calldata)
@@ -10331,7 +10397,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_319af333_call/log(string,address)`."
-  @spec decode_log_319af333_call(binary()) :: [term()]
+  @spec decode_log_319af333_call(binary()) :: [String.t() | <<_::160>>]
   def decode_log_319af333_call(<<49, 154, 243, 51>> <> calldata) do
     _signature = hex!("0x319af333")
     ABI.decode(log_319af333_selector(), calldata)
@@ -10475,7 +10541,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_33e9dd1d_call/log(string,bool,address,address)`."
-  @spec decode_log_33e9dd1d_call(binary()) :: [term()]
+  @spec decode_log_33e9dd1d_call(binary()) :: [String.t() | boolean() | <<_::160>> | <<_::160>>]
   def decode_log_33e9dd1d_call(<<51, 233, 221, 29>> <> calldata) do
     _signature = hex!("0x33e9dd1d")
     ABI.decode(log_33e9dd1d_selector(), calldata)
@@ -10571,7 +10637,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_34f0e636_call/log(address,uint256,uint256,uint256)`."
-  @spec decode_log_34f0e636_call(binary()) :: [term()]
+  @spec decode_log_34f0e636_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_34f0e636_call(<<52, 240, 230, 54>> <> calldata) do
     _signature = hex!("0x34f0e636")
     ABI.decode(log_34f0e636_selector(), calldata)
@@ -10641,7 +10709,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_35085f7b_call/log(uint256,bool,address)`."
-  @spec decode_log_35085f7b_call(binary()) :: [term()]
+  @spec decode_log_35085f7b_call(binary()) :: [non_neg_integer() | boolean() | <<_::160>>]
   def decode_log_35085f7b_call(<<53, 8, 95, 123>> <> calldata) do
     _signature = hex!("0x35085f7b")
     ABI.decode(log_35085f7b_selector(), calldata)
@@ -10731,7 +10799,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_354c36d6_call/log(string,uint256,bool,bool)`."
-  @spec decode_log_354c36d6_call(binary()) :: [term()]
+  @spec decode_log_354c36d6_call(binary()) :: [
+          String.t() | non_neg_integer() | boolean() | boolean()
+        ]
   def decode_log_354c36d6_call(<<53, 76, 54, 214>> <> calldata) do
     _signature = hex!("0x354c36d6")
     ABI.decode(log_354c36d6_selector(), calldata)
@@ -10815,7 +10885,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_35a5071f_call/log(address,string,string,bool)`."
-  @spec decode_log_35a5071f_call(binary()) :: [term()]
+  @spec decode_log_35a5071f_call(binary()) :: [<<_::160>> | String.t() | String.t() | boolean()]
   def decode_log_35a5071f_call(<<53, 165, 7, 31>> <> calldata) do
     _signature = hex!("0x35a5071f")
     ABI.decode(log_35a5071f_selector(), calldata)
@@ -10900,7 +10970,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_37103367_call/log(bool,uint256,uint256)`."
-  @spec decode_log_37103367_call(binary()) :: [term()]
+  @spec decode_log_37103367_call(binary()) :: [boolean() | non_neg_integer() | non_neg_integer()]
   def decode_log_37103367_call(<<55, 16, 51, 103>> <> calldata) do
     _signature = hex!("0x37103367")
     ABI.decode(log_37103367_selector(), calldata)
@@ -10996,7 +11066,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_374bb4b2_call/log(bool,uint256,uint256,uint256)`."
-  @spec decode_log_374bb4b2_call(binary()) :: [term()]
+  @spec decode_log_374bb4b2_call(binary()) :: [
+          boolean() | non_neg_integer() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_374bb4b2_call(<<55, 75, 180, 178>> <> calldata) do
     _signature = hex!("0x374bb4b2")
     ABI.decode(log_374bb4b2_selector(), calldata)
@@ -11081,7 +11153,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_37aa7d4c_call/log(uint256,string,uint256)`."
-  @spec decode_log_37aa7d4c_call(binary()) :: [term()]
+  @spec decode_log_37aa7d4c_call(binary()) :: [non_neg_integer() | String.t() | non_neg_integer()]
   def decode_log_37aa7d4c_call(<<55, 170, 125, 76>> <> calldata) do
     _signature = hex!("0x37aa7d4c")
     ABI.decode(log_37aa7d4c_selector(), calldata)
@@ -11177,7 +11249,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_386ff5f4_call/log(address,bool,uint256,uint256)`."
-  @spec decode_log_386ff5f4_call(binary()) :: [term()]
+  @spec decode_log_386ff5f4_call(binary()) :: [
+          <<_::160>> | boolean() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_386ff5f4_call(<<56, 111, 245, 244>> <> calldata) do
     _signature = hex!("0x386ff5f4")
     ABI.decode(log_386ff5f4_selector(), calldata)
@@ -11267,7 +11341,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3971e78c_call/log(address,address,bool,uint256)`."
-  @spec decode_log_3971e78c_call(binary()) :: [term()]
+  @spec decode_log_3971e78c_call(binary()) :: [
+          <<_::160>> | <<_::160>> | boolean() | non_neg_integer()
+        ]
   def decode_log_3971e78c_call(<<57, 113, 231, 140>> <> calldata) do
     _signature = hex!("0x3971e78c")
     ABI.decode(log_3971e78c_selector(), calldata)
@@ -11328,7 +11404,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_399174d3_call/log(bool,uint256)`."
-  @spec decode_log_399174d3_call(binary()) :: [term()]
+  @spec decode_log_399174d3_call(binary()) :: [boolean() | non_neg_integer()]
   def decode_log_399174d3_call(<<57, 145, 116, 211>> <> calldata) do
     _signature = hex!("0x399174d3")
     ABI.decode(log_399174d3_selector(), calldata)
@@ -11424,7 +11500,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3b2279b4_call/log(uint256,string,uint256,address)`."
-  @spec decode_log_3b2279b4_call(binary()) :: [term()]
+  @spec decode_log_3b2279b4_call(binary()) :: [
+          non_neg_integer() | String.t() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_3b2279b4_call(<<59, 34, 121, 180>> <> calldata) do
     _signature = hex!("0x3b2279b4")
     ABI.decode(log_3b2279b4_selector(), calldata)
@@ -11496,7 +11574,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3b2a5ce0_call/log(bool,bool,bool,bool)`."
-  @spec decode_log_3b2a5ce0_call(binary()) :: [term()]
+  @spec decode_log_3b2a5ce0_call(binary()) :: [boolean() | boolean() | boolean() | boolean()]
   def decode_log_3b2a5ce0_call(<<59, 42, 92, 224>> <> calldata) do
     _signature = hex!("0x3b2a5ce0")
     ABI.decode(log_3b2a5ce0_selector(), calldata)
@@ -11586,7 +11664,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3bf5e537_call/log(address,uint256,bool,bool)`."
-  @spec decode_log_3bf5e537_call(binary()) :: [term()]
+  @spec decode_log_3bf5e537_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | boolean() | boolean()
+        ]
   def decode_log_3bf5e537_call(<<59, 245, 229, 55>> <> calldata) do
     _signature = hex!("0x3bf5e537")
     ABI.decode(log_3bf5e537_selector(), calldata)
@@ -11647,7 +11727,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3ca6268e_call/log(string,int256)`."
-  @spec decode_log_3ca6268e_call(binary()) :: [term()]
+  @spec decode_log_3ca6268e_call(binary()) :: [String.t() | integer()]
   def decode_log_3ca6268e_call(<<60, 166, 38, 142>> <> calldata) do
     _signature = hex!("0x3ca6268e")
     ABI.decode(log_3ca6268e_selector(), calldata)
@@ -11737,7 +11817,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3e128ca3_call/log(uint256,address,string,string)`."
-  @spec decode_log_3e128ca3_call(binary()) :: [term()]
+  @spec decode_log_3e128ca3_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | String.t() | String.t()
+        ]
   def decode_log_3e128ca3_call(<<62, 18, 140, 163>> <> calldata) do
     _signature = hex!("0x3e128ca3")
     ABI.decode(log_3e128ca3_selector(), calldata)
@@ -11827,7 +11909,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3e9f866a_call/log(string,address,bool,uint256)`."
-  @spec decode_log_3e9f866a_call(binary()) :: [term()]
+  @spec decode_log_3e9f866a_call(binary()) :: [
+          String.t() | <<_::160>> | boolean() | non_neg_integer()
+        ]
   def decode_log_3e9f866a_call(<<62, 159, 134, 106>> <> calldata) do
     _signature = hex!("0x3e9f866a")
     ABI.decode(log_3e9f866a_selector(), calldata)
@@ -11911,7 +11995,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_3f8a701d_call/log(string,bool,string,bool)`."
-  @spec decode_log_3f8a701d_call(binary()) :: [term()]
+  @spec decode_log_3f8a701d_call(binary()) :: [String.t() | boolean() | String.t() | boolean()]
   def decode_log_3f8a701d_call(<<63, 138, 112, 29>> <> calldata) do
     _signature = hex!("0x3f8a701d")
     ABI.decode(log_3f8a701d_selector(), calldata)
@@ -11995,7 +12079,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_40785869_call/log(string,string,bool,bool)`."
-  @spec decode_log_40785869_call(binary()) :: [term()]
+  @spec decode_log_40785869_call(binary()) :: [String.t() | String.t() | boolean() | boolean()]
   def decode_log_40785869_call(<<64, 120, 88, 105>> <> calldata) do
     _signature = hex!("0x40785869")
     ABI.decode(log_40785869_selector(), calldata)
@@ -12151,7 +12235,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_42d21db7_call/log(uint256,uint256,string,address)`."
-  @spec decode_log_42d21db7_call(binary()) :: [term()]
+  @spec decode_log_42d21db7_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | String.t() | <<_::160>>
+        ]
   def decode_log_42d21db7_call(<<66, 210, 29, 183>> <> calldata) do
     _signature = hex!("0x42d21db7")
     ABI.decode(log_42d21db7_selector(), calldata)
@@ -12235,7 +12321,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_439c7bef_call/log(string,string,address,address)`."
-  @spec decode_log_439c7bef_call(binary()) :: [term()]
+  @spec decode_log_439c7bef_call(binary()) :: [String.t() | String.t() | <<_::160>> | <<_::160>>]
   def decode_log_439c7bef_call(<<67, 156, 123, 239>> <> calldata) do
     _signature = hex!("0x439c7bef")
     ABI.decode(log_439c7bef_selector(), calldata)
@@ -12325,7 +12411,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_448830a8_call/log(address,string,uint256,string)`."
-  @spec decode_log_448830a8_call(binary()) :: [term()]
+  @spec decode_log_448830a8_call(binary()) :: [
+          <<_::160>> | String.t() | non_neg_integer() | String.t()
+        ]
   def decode_log_448830a8_call(<<68, 136, 48, 168>> <> calldata) do
     _signature = hex!("0x448830a8")
     ABI.decode(log_448830a8_selector(), calldata)
@@ -12415,7 +12503,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_454d54a5_call/log(uint256,bool,address,bool)`."
-  @spec decode_log_454d54a5_call(binary()) :: [term()]
+  @spec decode_log_454d54a5_call(binary()) :: [
+          non_neg_integer() | boolean() | <<_::160>> | boolean()
+        ]
   def decode_log_454d54a5_call(<<69, 77, 84, 165>> <> calldata) do
     _signature = hex!("0x454d54a5")
     ABI.decode(log_454d54a5_selector(), calldata)
@@ -12505,7 +12595,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_457fe3cf_call/log(address,string,address,uint256)`."
-  @spec decode_log_457fe3cf_call(binary()) :: [term()]
+  @spec decode_log_457fe3cf_call(binary()) :: [
+          <<_::160>> | String.t() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_457fe3cf_call(<<69, 127, 227, 207>> <> calldata) do
     _signature = hex!("0x457fe3cf")
     ABI.decode(log_457fe3cf_selector(), calldata)
@@ -12589,7 +12681,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_46600be0_call/log(bool,address,address,bool)`."
-  @spec decode_log_46600be0_call(binary()) :: [term()]
+  @spec decode_log_46600be0_call(binary()) :: [boolean() | <<_::160>> | <<_::160>> | boolean()]
   def decode_log_46600be0_call(<<70, 96, 11, 224>> <> calldata) do
     _signature = hex!("0x46600be0")
     ABI.decode(log_46600be0_selector(), calldata)
@@ -12685,7 +12777,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_46826b5d_call/log(uint256,address,string,uint256)`."
-  @spec decode_log_46826b5d_call(binary()) :: [term()]
+  @spec decode_log_46826b5d_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | String.t() | non_neg_integer()
+        ]
   def decode_log_46826b5d_call(<<70, 130, 107, 93>> <> calldata) do
     _signature = hex!("0x46826b5d")
     ABI.decode(log_46826b5d_selector(), calldata)
@@ -12769,7 +12863,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_475c5c33_call/log(address,bool,string,string)`."
-  @spec decode_log_475c5c33_call(binary()) :: [term()]
+  @spec decode_log_475c5c33_call(binary()) :: [<<_::160>> | boolean() | String.t() | String.t()]
   def decode_log_475c5c33_call(<<71, 92, 92, 51>> <> calldata) do
     _signature = hex!("0x475c5c33")
     ABI.decode(log_475c5c33_selector(), calldata)
@@ -12854,7 +12948,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4766da72_call/log(uint256,uint256,bool)`."
-  @spec decode_log_4766da72_call(binary()) :: [term()]
+  @spec decode_log_4766da72_call(binary()) :: [non_neg_integer() | non_neg_integer() | boolean()]
   def decode_log_4766da72_call(<<71, 102, 218, 114>> <> calldata) do
     _signature = hex!("0x4766da72")
     ABI.decode(log_4766da72_selector(), calldata)
@@ -12944,7 +13038,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_478d1c62_call/log(address,uint256,address,address)`."
-  @spec decode_log_478d1c62_call(binary()) :: [term()]
+  @spec decode_log_478d1c62_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_478d1c62_call(<<71, 141, 28, 98>> <> calldata) do
     _signature = hex!("0x478d1c62")
     ABI.decode(log_478d1c62_selector(), calldata)
@@ -13028,7 +13124,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_483d0416_call/log(bool,string,bool,string)`."
-  @spec decode_log_483d0416_call(binary()) :: [term()]
+  @spec decode_log_483d0416_call(binary()) :: [boolean() | String.t() | boolean() | String.t()]
   def decode_log_483d0416_call(<<72, 61, 4, 22>> <> calldata) do
     _signature = hex!("0x483d0416")
     ABI.decode(log_483d0416_selector(), calldata)
@@ -13124,7 +13220,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4a28c017_call/log(address,uint256,uint256,string)`."
-  @spec decode_log_4a28c017_call(binary()) :: [term()]
+  @spec decode_log_4a28c017_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | non_neg_integer() | String.t()
+        ]
   def decode_log_4a28c017_call(<<74, 40, 192, 23>> <> calldata) do
     _signature = hex!("0x4a28c017")
     ABI.decode(log_4a28c017_selector(), calldata)
@@ -13208,7 +13306,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4a66cb34_call/log(bool,address,bool,string)`."
-  @spec decode_log_4a66cb34_call(binary()) :: [term()]
+  @spec decode_log_4a66cb34_call(binary()) :: [boolean() | <<_::160>> | boolean() | String.t()]
   def decode_log_4a66cb34_call(<<74, 102, 203, 52>> <> calldata) do
     _signature = hex!("0x4a66cb34")
     ABI.decode(log_4a66cb34_selector(), calldata)
@@ -13269,7 +13367,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4b5c4277_call/log(string,string)`."
-  @spec decode_log_4b5c4277_call(binary()) :: [term()]
+  @spec decode_log_4b5c4277_call(binary()) :: [String.t() | String.t()]
   def decode_log_4b5c4277_call(<<75, 92, 66, 119>> <> calldata) do
     _signature = hex!("0x4b5c4277")
     ABI.decode(log_4b5c4277_selector(), calldata)
@@ -13359,7 +13457,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4c123d57_call/log(bool,bool,address,uint256)`."
-  @spec decode_log_4c123d57_call(binary()) :: [term()]
+  @spec decode_log_4c123d57_call(binary()) :: [
+          boolean() | boolean() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_4c123d57_call(<<76, 18, 61, 87>> <> calldata) do
     _signature = hex!("0x4c123d57")
     ABI.decode(log_4c123d57_selector(), calldata)
@@ -13429,7 +13529,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4ceda75a_call/log(uint256,string,bool)`."
-  @spec decode_log_4ceda75a_call(binary()) :: [term()]
+  @spec decode_log_4ceda75a_call(binary()) :: [non_neg_integer() | String.t() | boolean()]
   def decode_log_4ceda75a_call(<<76, 237, 167, 90>> <> calldata) do
     _signature = hex!("0x4ceda75a")
     ABI.decode(log_4ceda75a_selector(), calldata)
@@ -13525,7 +13625,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_4f04fdc6_call/log(string,uint256,address,uint256)`."
-  @spec decode_log_4f04fdc6_call(binary()) :: [term()]
+  @spec decode_log_4f04fdc6_call(binary()) :: [
+          String.t() | non_neg_integer() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_4f04fdc6_call(<<79, 4, 253, 198>> <> calldata) do
     _signature = hex!("0x4f04fdc6")
     ABI.decode(log_4f04fdc6_selector(), calldata)
@@ -13586,7 +13688,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_50709698_call/log(bool,bool,bool)`."
-  @spec decode_log_50709698_call(binary()) :: [term()]
+  @spec decode_log_50709698_call(binary()) :: [boolean() | boolean() | boolean()]
   def decode_log_50709698_call(<<80, 112, 150, 152>> <> calldata) do
     _signature = hex!("0x50709698")
     ABI.decode(log_50709698_selector(), calldata)
@@ -13670,7 +13772,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_50ad461d_call/log(address,bool,string,bool)`."
-  @spec decode_log_50ad461d_call(binary()) :: [term()]
+  @spec decode_log_50ad461d_call(binary()) :: [<<_::160>> | boolean() | String.t() | boolean()]
   def decode_log_50ad461d_call(<<80, 173, 70, 29>> <> calldata) do
     _signature = hex!("0x50ad461d")
     ABI.decode(log_50ad461d_selector(), calldata)
@@ -13760,7 +13862,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_515e38b6_call/log(address,string,bool,uint256)`."
-  @spec decode_log_515e38b6_call(binary()) :: [term()]
+  @spec decode_log_515e38b6_call(binary()) :: [
+          <<_::160>> | String.t() | boolean() | non_neg_integer()
+        ]
   def decode_log_515e38b6_call(<<81, 94, 56, 182>> <> calldata) do
     _signature = hex!("0x515e38b6")
     ABI.decode(log_515e38b6_selector(), calldata)
@@ -13908,7 +14012,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_51f09ff8_call/log(bool,address,uint256,string)`."
-  @spec decode_log_51f09ff8_call(binary()) :: [term()]
+  @spec decode_log_51f09ff8_call(binary()) :: [
+          boolean() | <<_::160>> | non_neg_integer() | String.t()
+        ]
   def decode_log_51f09ff8_call(<<81, 240, 159, 248>> <> calldata) do
     _signature = hex!("0x51f09ff8")
     ABI.decode(log_51f09ff8_selector(), calldata)
@@ -13992,7 +14098,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_538e06ab_call/log(bool,string,bool,address)`."
-  @spec decode_log_538e06ab_call(binary()) :: [term()]
+  @spec decode_log_538e06ab_call(binary()) :: [boolean() | String.t() | boolean() | <<_::160>>]
   def decode_log_538e06ab_call(<<83, 142, 6, 171>> <> calldata) do
     _signature = hex!("0x538e06ab")
     ABI.decode(log_538e06ab_selector(), calldata)
@@ -14082,7 +14188,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_54a7a9a0_call/log(bool,bool,uint256,address)`."
-  @spec decode_log_54a7a9a0_call(binary()) :: [term()]
+  @spec decode_log_54a7a9a0_call(binary()) :: [
+          boolean() | boolean() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_54a7a9a0_call(<<84, 167, 169, 160>> <> calldata) do
     _signature = hex!("0x54a7a9a0")
     ABI.decode(log_54a7a9a0_selector(), calldata)
@@ -14178,7 +14286,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_56a5d1b1_call/log(uint256,uint256,address,address)`."
-  @spec decode_log_56a5d1b1_call(binary()) :: [term()]
+  @spec decode_log_56a5d1b1_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_56a5d1b1_call(<<86, 165, 209, 177>> <> calldata) do
     _signature = hex!("0x56a5d1b1")
     ABI.decode(log_56a5d1b1_selector(), calldata)
@@ -14248,7 +14358,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5821efa1_call/log(string,string,uint256)`."
-  @spec decode_log_5821efa1_call(binary()) :: [term()]
+  @spec decode_log_5821efa1_call(binary()) :: [String.t() | String.t() | non_neg_integer()]
   def decode_log_5821efa1_call(<<88, 33, 239, 161>> <> calldata) do
     _signature = hex!("0x5821efa1")
     ABI.decode(log_5821efa1_selector(), calldata)
@@ -14318,7 +14428,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5970e089_call/log(string,uint256,string)`."
-  @spec decode_log_5970e089_call(binary()) :: [term()]
+  @spec decode_log_5970e089_call(binary()) :: [String.t() | non_neg_integer() | String.t()]
   def decode_log_5970e089_call(<<89, 112, 224, 137>> <> calldata) do
     _signature = hex!("0x5970e089")
     ABI.decode(log_5970e089_selector(), calldata)
@@ -14414,7 +14524,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_59cfcbe3_call/log(uint256,uint256,uint256,string)`."
-  @spec decode_log_59cfcbe3_call(binary()) :: [term()]
+  @spec decode_log_59cfcbe3_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | non_neg_integer() | String.t()
+        ]
   def decode_log_59cfcbe3_call(<<89, 207, 203, 227>> <> calldata) do
     _signature = hex!("0x59cfcbe3")
     ABI.decode(log_59cfcbe3_selector(), calldata)
@@ -14504,7 +14616,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5a477632_call/log(string,address,uint256,string)`."
-  @spec decode_log_5a477632_call(binary()) :: [term()]
+  @spec decode_log_5a477632_call(binary()) :: [
+          String.t() | <<_::160>> | non_neg_integer() | String.t()
+        ]
   def decode_log_5a477632_call(<<90, 71, 118, 50>> <> calldata) do
     _signature = hex!("0x5a477632")
     ABI.decode(log_5a477632_selector(), calldata)
@@ -14589,7 +14703,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5a9b5ed5_call/log(uint256,address,uint256)`."
-  @spec decode_log_5a9b5ed5_call(binary()) :: [term()]
+  @spec decode_log_5a9b5ed5_call(binary()) :: [non_neg_integer() | <<_::160>> | non_neg_integer()]
   def decode_log_5a9b5ed5_call(<<90, 155, 94, 213>> <> calldata) do
     _signature = hex!("0x5a9b5ed5")
     ABI.decode(log_5a9b5ed5_selector(), calldata)
@@ -14679,7 +14793,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5ab84e1f_call/log(string,uint256,string,string)`."
-  @spec decode_log_5ab84e1f_call(binary()) :: [term()]
+  @spec decode_log_5ab84e1f_call(binary()) :: [
+          String.t() | non_neg_integer() | String.t() | String.t()
+        ]
   def decode_log_5ab84e1f_call(<<90, 184, 78, 31>> <> calldata) do
     _signature = hex!("0x5ab84e1f")
     ABI.decode(log_5ab84e1f_selector(), calldata)
@@ -14775,7 +14891,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5abd992a_call/log(uint256,address,bool,uint256)`."
-  @spec decode_log_5abd992a_call(binary()) :: [term()]
+  @spec decode_log_5abd992a_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | boolean() | non_neg_integer()
+        ]
   def decode_log_5abd992a_call(<<90, 189, 153, 42>> <> calldata) do
     _signature = hex!("0x5abd992a")
     ABI.decode(log_5abd992a_selector(), calldata)
@@ -14865,7 +14983,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5c430d47_call/log(address,uint256,string,address)`."
-  @spec decode_log_5c430d47_call(binary()) :: [term()]
+  @spec decode_log_5c430d47_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | String.t() | <<_::160>>
+        ]
   def decode_log_5c430d47_call(<<92, 67, 13, 71>> <> calldata) do
     _signature = hex!("0x5c430d47")
     ABI.decode(log_5c430d47_selector(), calldata)
@@ -14950,7 +15070,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5c96b331_call/log(uint256,uint256,address)`."
-  @spec decode_log_5c96b331_call(binary()) :: [term()]
+  @spec decode_log_5c96b331_call(binary()) :: [non_neg_integer() | non_neg_integer() | <<_::160>>]
   def decode_log_5c96b331_call(<<92, 150, 179, 49>> <> calldata) do
     _signature = hex!("0x5c96b331")
     ABI.decode(log_5c96b331_selector(), calldata)
@@ -15034,7 +15154,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5ccd4e37_call/log(string,string,address,bool)`."
-  @spec decode_log_5ccd4e37_call(binary()) :: [term()]
+  @spec decode_log_5ccd4e37_call(binary()) :: [String.t() | String.t() | <<_::160>> | boolean()]
   def decode_log_5ccd4e37_call(<<92, 205, 78, 55>> <> calldata) do
     _signature = hex!("0x5ccd4e37")
     ABI.decode(log_5ccd4e37_selector(), calldata)
@@ -15118,7 +15238,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5d02c50b_call/log(address,string,string,string)`."
-  @spec decode_log_5d02c50b_call(binary()) :: [term()]
+  @spec decode_log_5d02c50b_call(binary()) :: [<<_::160>> | String.t() | String.t() | String.t()]
   def decode_log_5d02c50b_call(<<93, 2, 197, 11>> <> calldata) do
     _signature = hex!("0x5d02c50b")
     ABI.decode(log_5d02c50b_selector(), calldata)
@@ -15208,7 +15328,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5d08bb05_call/log(string,bool,address,uint256)`."
-  @spec decode_log_5d08bb05_call(binary()) :: [term()]
+  @spec decode_log_5d08bb05_call(binary()) :: [
+          String.t() | boolean() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_5d08bb05_call(<<93, 8, 187, 5>> <> calldata) do
     _signature = hex!("0x5d08bb05")
     ABI.decode(log_5d08bb05_selector(), calldata)
@@ -15298,7 +15420,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5d1a971a_call/log(string,string,uint256,string)`."
-  @spec decode_log_5d1a971a_call(binary()) :: [term()]
+  @spec decode_log_5d1a971a_call(binary()) :: [
+          String.t() | String.t() | non_neg_integer() | String.t()
+        ]
   def decode_log_5d1a971a_call(<<93, 26, 151, 26>> <> calldata) do
     _signature = hex!("0x5d1a971a")
     ABI.decode(log_5d1a971a_selector(), calldata)
@@ -15394,7 +15518,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5da297eb_call/log(uint256,uint256,string,uint256)`."
-  @spec decode_log_5da297eb_call(binary()) :: [term()]
+  @spec decode_log_5da297eb_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | String.t() | non_neg_integer()
+        ]
   def decode_log_5da297eb_call(<<93, 162, 151, 235>> <> calldata) do
     _signature = hex!("0x5da297eb")
     ABI.decode(log_5da297eb_selector(), calldata)
@@ -15478,7 +15604,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5e84b0ea_call/log(string,string,bool,string)`."
-  @spec decode_log_5e84b0ea_call(binary()) :: [term()]
+  @spec decode_log_5e84b0ea_call(binary()) :: [String.t() | String.t() | boolean() | String.t()]
   def decode_log_5e84b0ea_call(<<94, 132, 176, 234>> <> calldata) do
     _signature = hex!("0x5e84b0ea")
     ABI.decode(log_5e84b0ea_selector(), calldata)
@@ -15568,7 +15694,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5ea2b7ae_call/log(string,uint256,address,address)`."
-  @spec decode_log_5ea2b7ae_call(binary()) :: [term()]
+  @spec decode_log_5ea2b7ae_call(binary()) :: [
+          String.t() | non_neg_integer() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_5ea2b7ae_call(<<94, 162, 183, 174>> <> calldata) do
     _signature = hex!("0x5ea2b7ae")
     ABI.decode(log_5ea2b7ae_selector(), calldata)
@@ -15652,7 +15780,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5f15d28c_call/log(string,address,string,bool)`."
-  @spec decode_log_5f15d28c_call(binary()) :: [term()]
+  @spec decode_log_5f15d28c_call(binary()) :: [String.t() | <<_::160>> | String.t() | boolean()]
   def decode_log_5f15d28c_call(<<95, 21, 210, 140>> <> calldata) do
     _signature = hex!("0x5f15d28c")
     ABI.decode(log_5f15d28c_selector(), calldata)
@@ -15736,7 +15864,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5f1d5c9f_call/log(address,string,bool,bool)`."
-  @spec decode_log_5f1d5c9f_call(binary()) :: [term()]
+  @spec decode_log_5f1d5c9f_call(binary()) :: [<<_::160>> | String.t() | boolean() | boolean()]
   def decode_log_5f1d5c9f_call(<<95, 29, 92, 159>> <> calldata) do
     _signature = hex!("0x5f1d5c9f")
     ABI.decode(log_5f1d5c9f_selector(), calldata)
@@ -15832,7 +15960,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5f743a7c_call/log(uint256,address,uint256,bool)`."
-  @spec decode_log_5f743a7c_call(binary()) :: [term()]
+  @spec decode_log_5f743a7c_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | non_neg_integer() | boolean()
+        ]
   def decode_log_5f743a7c_call(<<95, 116, 58, 124>> <> calldata) do
     _signature = hex!("0x5f743a7c")
     ABI.decode(log_5f743a7c_selector(), calldata)
@@ -15902,7 +16032,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_5f7b9afb_call/log(bool,address,uint256)`."
-  @spec decode_log_5f7b9afb_call(binary()) :: [term()]
+  @spec decode_log_5f7b9afb_call(binary()) :: [boolean() | <<_::160>> | non_neg_integer()]
   def decode_log_5f7b9afb_call(<<95, 123, 154, 251>> <> calldata) do
     _signature = hex!("0x5f7b9afb")
     ABI.decode(log_5f7b9afb_selector(), calldata)
@@ -15992,7 +16122,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6168ed61_call/log(uint256,string,address,address)`."
-  @spec decode_log_6168ed61_call(binary()) :: [term()]
+  @spec decode_log_6168ed61_call(binary()) :: [
+          non_neg_integer() | String.t() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_6168ed61_call(<<97, 104, 237, 97>> <> calldata) do
     _signature = hex!("0x6168ed61")
     ABI.decode(log_6168ed61_selector(), calldata)
@@ -16082,7 +16214,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_619e4d0e_call/log(bool,bool,uint256,bool)`."
-  @spec decode_log_619e4d0e_call(binary()) :: [term()]
+  @spec decode_log_619e4d0e_call(binary()) :: [
+          boolean() | boolean() | non_neg_integer() | boolean()
+        ]
   def decode_log_619e4d0e_call(<<97, 158, 77, 14>> <> calldata) do
     _signature = hex!("0x619e4d0e")
     ABI.decode(log_619e4d0e_selector(), calldata)
@@ -16172,7 +16306,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_63183678_call/log(address,string,uint256,address)`."
-  @spec decode_log_63183678_call(binary()) :: [term()]
+  @spec decode_log_63183678_call(binary()) :: [
+          <<_::160>> | String.t() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_63183678_call(<<99, 24, 54, 120>> <> calldata) do
     _signature = hex!("0x63183678")
     ABI.decode(log_63183678_selector(), calldata)
@@ -16242,7 +16378,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_63cb41f9_call/log(uint256,address,string)`."
-  @spec decode_log_63cb41f9_call(binary()) :: [term()]
+  @spec decode_log_63cb41f9_call(binary()) :: [non_neg_integer() | <<_::160>> | String.t()]
   def decode_log_63cb41f9_call(<<99, 203, 65, 249>> <> calldata) do
     _signature = hex!("0x63cb41f9")
     ABI.decode(log_63cb41f9_selector(), calldata)
@@ -16332,7 +16468,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_63fb8bc5_call/log(string,address,uint256,address)`."
-  @spec decode_log_63fb8bc5_call(binary()) :: [term()]
+  @spec decode_log_63fb8bc5_call(binary()) :: [
+          String.t() | <<_::160>> | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_63fb8bc5_call(<<99, 251, 139, 197>> <> calldata) do
     _signature = hex!("0x63fb8bc5")
     ABI.decode(log_63fb8bc5_selector(), calldata)
@@ -16393,7 +16531,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_643fd0df_call/log(uint256,string)`."
-  @spec decode_log_643fd0df_call(binary()) :: [term()]
+  @spec decode_log_643fd0df_call(binary()) :: [non_neg_integer() | String.t()]
   def decode_log_643fd0df_call(<<100, 63, 208, 223>> <> calldata) do
     _signature = hex!("0x643fd0df")
     ABI.decode(log_643fd0df_selector(), calldata)
@@ -16489,7 +16627,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_64b5bb67_call/log(string,bool,uint256,uint256)`."
-  @spec decode_log_64b5bb67_call(binary()) :: [term()]
+  @spec decode_log_64b5bb67_call(binary()) :: [
+          String.t() | boolean() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_64b5bb67_call(<<100, 181, 187, 103>> <> calldata) do
     _signature = hex!("0x64b5bb67")
     ABI.decode(log_64b5bb67_selector(), calldata)
@@ -16573,7 +16713,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_660375dd_call/log(address,bool,address,address)`."
-  @spec decode_log_660375dd_call(binary()) :: [term()]
+  @spec decode_log_660375dd_call(binary()) :: [<<_::160>> | boolean() | <<_::160>> | <<_::160>>]
   def decode_log_660375dd_call(<<102, 3, 117, 221>> <> calldata) do
     _signature = hex!("0x660375dd")
     ABI.decode(log_660375dd_selector(), calldata)
@@ -16657,7 +16797,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_665bf134_call/log(address,address,address,address)`."
-  @spec decode_log_665bf134_call(binary()) :: [term()]
+  @spec decode_log_665bf134_call(binary()) :: [<<_::160>> | <<_::160>> | <<_::160>> | <<_::160>>]
   def decode_log_665bf134_call(<<102, 91, 241, 52>> <> calldata) do
     _signature = hex!("0x665bf134")
     ABI.decode(log_665bf134_selector(), calldata)
@@ -16753,7 +16893,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_66f1bc67_call/log(address,uint256,uint256,bool)`."
-  @spec decode_log_66f1bc67_call(binary()) :: [term()]
+  @spec decode_log_66f1bc67_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | non_neg_integer() | boolean()
+        ]
   def decode_log_66f1bc67_call(<<102, 241, 188, 103>> <> calldata) do
     _signature = hex!("0x66f1bc67")
     ABI.decode(log_66f1bc67_selector(), calldata)
@@ -16823,7 +16965,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_678209a8_call/log(address,uint256,bool)`."
-  @spec decode_log_678209a8_call(binary()) :: [term()]
+  @spec decode_log_678209a8_call(binary()) :: [<<_::160>> | non_neg_integer() | boolean()]
   def decode_log_678209a8_call(<<103, 130, 9, 168>> <> calldata) do
     _signature = hex!("0x678209a8")
     ABI.decode(log_678209a8_selector(), calldata)
@@ -16893,7 +17035,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_67dd6ff1_call/log(address,string,uint256)`."
-  @spec decode_log_67dd6ff1_call(binary()) :: [term()]
+  @spec decode_log_67dd6ff1_call(binary()) :: [<<_::160>> | String.t() | non_neg_integer()]
   def decode_log_67dd6ff1_call(<<103, 221, 111, 241>> <> calldata) do
     _signature = hex!("0x67dd6ff1")
     ABI.decode(log_67dd6ff1_selector(), calldata)
@@ -16983,7 +17125,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_68c8b8bd_call/log(uint256,bool,string,string)`."
-  @spec decode_log_68c8b8bd_call(binary()) :: [term()]
+  @spec decode_log_68c8b8bd_call(binary()) :: [
+          non_neg_integer() | boolean() | String.t() | String.t()
+        ]
   def decode_log_68c8b8bd_call(<<104, 200, 184, 189>> <> calldata) do
     _signature = hex!("0x68c8b8bd")
     ABI.decode(log_68c8b8bd_selector(), calldata)
@@ -17079,7 +17223,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_691a8f74_call/log(uint256,string,uint256,bool)`."
-  @spec decode_log_691a8f74_call(binary()) :: [term()]
+  @spec decode_log_691a8f74_call(binary()) :: [
+          non_neg_integer() | String.t() | non_neg_integer() | boolean()
+        ]
   def decode_log_691a8f74_call(<<105, 26, 143, 116>> <> calldata) do
     _signature = hex!("0x691a8f74")
     ABI.decode(log_691a8f74_selector(), calldata)
@@ -17140,7 +17286,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_69276c86_call/log(uint256,address)`."
-  @spec decode_log_69276c86_call(binary()) :: [term()]
+  @spec decode_log_69276c86_call(binary()) :: [non_neg_integer() | <<_::160>>]
   def decode_log_69276c86_call(<<105, 39, 108, 134>> <> calldata) do
     _signature = hex!("0x69276c86")
     ABI.decode(log_69276c86_selector(), calldata)
@@ -17230,7 +17376,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_69640b59_call/log(uint256,bool,bool,address)`."
-  @spec decode_log_69640b59_call(binary()) :: [term()]
+  @spec decode_log_69640b59_call(binary()) :: [
+          non_neg_integer() | boolean() | boolean() | <<_::160>>
+        ]
   def decode_log_69640b59_call(<<105, 100, 11, 89>> <> calldata) do
     _signature = hex!("0x69640b59")
     ABI.decode(log_69640b59_selector(), calldata)
@@ -17326,7 +17474,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6a1199e2_call/log(bool,uint256,string,uint256)`."
-  @spec decode_log_6a1199e2_call(binary()) :: [term()]
+  @spec decode_log_6a1199e2_call(binary()) :: [
+          boolean() | non_neg_integer() | String.t() | non_neg_integer()
+        ]
   def decode_log_6a1199e2_call(<<106, 17, 153, 226>> <> calldata) do
     _signature = hex!("0x6a1199e2")
     ABI.decode(log_6a1199e2_selector(), calldata)
@@ -17398,7 +17548,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6a9c478b_call/log(bool,address,bool,bool)`."
-  @spec decode_log_6a9c478b_call(binary()) :: [term()]
+  @spec decode_log_6a9c478b_call(binary()) :: [boolean() | <<_::160>> | boolean() | boolean()]
   def decode_log_6a9c478b_call(<<106, 156, 71, 139>> <> calldata) do
     _signature = hex!("0x6a9c478b")
     ABI.decode(log_6a9c478b_selector(), calldata)
@@ -17488,7 +17638,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6b0e5d53_call/log(bool,string,uint256,bool)`."
-  @spec decode_log_6b0e5d53_call(binary()) :: [term()]
+  @spec decode_log_6b0e5d53_call(binary()) :: [
+          boolean() | String.t() | non_neg_integer() | boolean()
+        ]
   def decode_log_6b0e5d53_call(<<107, 14, 93, 83>> <> calldata) do
     _signature = hex!("0x6b0e5d53")
     ABI.decode(log_6b0e5d53_selector(), calldata)
@@ -17584,7 +17736,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6cde40b8_call/log(uint256,uint256,address,string)`."
-  @spec decode_log_6cde40b8_call(binary()) :: [term()]
+  @spec decode_log_6cde40b8_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | <<_::160>> | String.t()
+        ]
   def decode_log_6cde40b8_call(<<108, 222, 64, 184>> <> calldata) do
     _signature = hex!("0x6cde40b8")
     ABI.decode(log_6cde40b8_selector(), calldata)
@@ -17668,7 +17822,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6d1e8751_call/log(bool,bool,string,string)`."
-  @spec decode_log_6d1e8751_call(binary()) :: [term()]
+  @spec decode_log_6d1e8751_call(binary()) :: [boolean() | boolean() | String.t() | String.t()]
   def decode_log_6d1e8751_call(<<109, 30, 135, 81>> <> calldata) do
     _signature = hex!("0x6d1e8751")
     ABI.decode(log_6d1e8751_selector(), calldata)
@@ -17752,7 +17906,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6d572f44_call/log(string,string,string,address)`."
-  @spec decode_log_6d572f44_call(binary()) :: [term()]
+  @spec decode_log_6d572f44_call(binary()) :: [String.t() | String.t() | String.t() | <<_::160>>]
   def decode_log_6d572f44_call(<<109, 87, 47, 68>> <> calldata) do
     _signature = hex!("0x6d572f44")
     ABI.decode(log_6d572f44_selector(), calldata)
@@ -17842,7 +17996,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6d7045c1_call/log(bool,bool,bool,uint256)`."
-  @spec decode_log_6d7045c1_call(binary()) :: [term()]
+  @spec decode_log_6d7045c1_call(binary()) :: [
+          boolean() | boolean() | boolean() | non_neg_integer()
+        ]
   def decode_log_6d7045c1_call(<<109, 112, 69, 193>> <> calldata) do
     _signature = hex!("0x6d7045c1")
     ABI.decode(log_6d7045c1_selector(), calldata)
@@ -17926,7 +18082,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6dd434ca_call/log(bool,string,address,bool)`."
-  @spec decode_log_6dd434ca_call(binary()) :: [term()]
+  @spec decode_log_6dd434ca_call(binary()) :: [boolean() | String.t() | <<_::160>> | boolean()]
   def decode_log_6dd434ca_call(<<109, 212, 52, 202>> <> calldata) do
     _signature = hex!("0x6dd434ca")
     ABI.decode(log_6dd434ca_selector(), calldata)
@@ -18010,7 +18166,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6f1a594e_call/log(address,address,string,bool)`."
-  @spec decode_log_6f1a594e_call(binary()) :: [term()]
+  @spec decode_log_6f1a594e_call(binary()) :: [<<_::160>> | <<_::160>> | String.t() | boolean()]
   def decode_log_6f1a594e_call(<<111, 26, 89, 78>> <> calldata) do
     _signature = hex!("0x6f1a594e")
     ABI.decode(log_6f1a594e_selector(), calldata)
@@ -18094,7 +18250,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_6f7c603e_call/log(bool,address,string,address)`."
-  @spec decode_log_6f7c603e_call(binary()) :: [term()]
+  @spec decode_log_6f7c603e_call(binary()) :: [boolean() | <<_::160>> | String.t() | <<_::160>>]
   def decode_log_6f7c603e_call(<<111, 124, 96, 62>> <> calldata) do
     _signature = hex!("0x6f7c603e")
     ABI.decode(log_6f7c603e_selector(), calldata)
@@ -18178,7 +18334,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7190a529_call/log(string,bool,bool,address)`."
-  @spec decode_log_7190a529_call(binary()) :: [term()]
+  @spec decode_log_7190a529_call(binary()) :: [String.t() | boolean() | boolean() | <<_::160>>]
   def decode_log_7190a529_call(<<113, 144, 165, 41>> <> calldata) do
     _signature = hex!("0x7190a529")
     ABI.decode(log_7190a529_selector(), calldata)
@@ -18263,7 +18419,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_71d04af2_call/log(uint256,uint256,string)`."
-  @spec decode_log_71d04af2_call(binary()) :: [term()]
+  @spec decode_log_71d04af2_call(binary()) :: [non_neg_integer() | non_neg_integer() | String.t()]
   def decode_log_71d04af2_call(<<113, 208, 74, 242>> <> calldata) do
     _signature = hex!("0x71d04af2")
     ABI.decode(log_71d04af2_selector(), calldata)
@@ -18359,7 +18515,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_736efbb6_call/log(uint256,address,address,uint256)`."
-  @spec decode_log_736efbb6_call(binary()) :: [term()]
+  @spec decode_log_736efbb6_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_736efbb6_call(<<115, 110, 251, 182>> <> calldata) do
     _signature = hex!("0x736efbb6")
     ABI.decode(log_736efbb6_selector(), calldata)
@@ -18449,7 +18607,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_742d6ee7_call/log(string,bool,uint256,string)`."
-  @spec decode_log_742d6ee7_call(binary()) :: [term()]
+  @spec decode_log_742d6ee7_call(binary()) :: [
+          String.t() | boolean() | non_neg_integer() | String.t()
+        ]
   def decode_log_742d6ee7_call(<<116, 45, 110, 231>> <> calldata) do
     _signature = hex!("0x742d6ee7")
     ABI.decode(log_742d6ee7_selector(), calldata)
@@ -18545,7 +18705,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7464ce23_call/log(uint256,bool,bool,uint256)`."
-  @spec decode_log_7464ce23_call(binary()) :: [term()]
+  @spec decode_log_7464ce23_call(binary()) :: [
+          non_neg_integer() | boolean() | boolean() | non_neg_integer()
+        ]
   def decode_log_7464ce23_call(<<116, 100, 206, 35>> <> calldata) do
     _signature = hex!("0x7464ce23")
     ABI.decode(log_7464ce23_selector(), calldata)
@@ -18606,7 +18768,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_759f86bb_call/log(address,string)`."
-  @spec decode_log_759f86bb_call(binary()) :: [term()]
+  @spec decode_log_759f86bb_call(binary()) :: [<<_::160>> | String.t()]
   def decode_log_759f86bb_call(<<117, 159, 134, 187>> <> calldata) do
     _signature = hex!("0x759f86bb")
     ABI.decode(log_759f86bb_selector(), calldata)
@@ -18667,7 +18829,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_75b605d3_call/log(address,bool)`."
-  @spec decode_log_75b605d3_call(binary()) :: [term()]
+  @spec decode_log_75b605d3_call(binary()) :: [<<_::160>> | boolean()]
   def decode_log_75b605d3_call(<<117, 182, 5, 211>> <> calldata) do
     _signature = hex!("0x75b605d3")
     ABI.decode(log_75b605d3_selector(), calldata)
@@ -18763,7 +18925,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7626db92_call/log(string,uint256,uint256,bool)`."
-  @spec decode_log_7626db92_call(binary()) :: [term()]
+  @spec decode_log_7626db92_call(binary()) :: [
+          String.t() | non_neg_integer() | non_neg_integer() | boolean()
+        ]
   def decode_log_7626db92_call(<<118, 38, 219, 146>> <> calldata) do
     _signature = hex!("0x7626db92")
     ABI.decode(log_7626db92_selector(), calldata)
@@ -18847,7 +19011,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_79884c2b_call/log(string,address,bool,bool)`."
-  @spec decode_log_79884c2b_call(binary()) :: [term()]
+  @spec decode_log_79884c2b_call(binary()) :: [String.t() | <<_::160>> | boolean() | boolean()]
   def decode_log_79884c2b_call(<<121, 136, 76, 43>> <> calldata) do
     _signature = hex!("0x79884c2b")
     ABI.decode(log_79884c2b_selector(), calldata)
@@ -18943,7 +19107,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7af6ab25_call/log(uint256,uint256,string,bool)`."
-  @spec decode_log_7af6ab25_call(binary()) :: [term()]
+  @spec decode_log_7af6ab25_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | String.t() | boolean()
+        ]
   def decode_log_7af6ab25_call(<<122, 246, 171, 37>> <> calldata) do
     _signature = hex!("0x7af6ab25")
     ABI.decode(log_7af6ab25_selector(), calldata)
@@ -19013,7 +19179,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7afac959_call/log(uint256,string,address)`."
-  @spec decode_log_7afac959_call(binary()) :: [term()]
+  @spec decode_log_7afac959_call(binary()) :: [non_neg_integer() | String.t() | <<_::160>>]
   def decode_log_7afac959_call(<<122, 250, 201, 89>> <> calldata) do
     _signature = hex!("0x7afac959")
     ABI.decode(log_7afac959_selector(), calldata)
@@ -19083,7 +19249,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7bc0d848_call/log(address,uint256,address)`."
-  @spec decode_log_7bc0d848_call(binary()) :: [term()]
+  @spec decode_log_7bc0d848_call(binary()) :: [<<_::160>> | non_neg_integer() | <<_::160>>]
   def decode_log_7bc0d848_call(<<123, 192, 216, 72>> <> calldata) do
     _signature = hex!("0x7bc0d848")
     ABI.decode(log_7bc0d848_selector(), calldata)
@@ -19173,7 +19339,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7be0c3eb_call/log(bool,string,string,uint256)`."
-  @spec decode_log_7be0c3eb_call(binary()) :: [term()]
+  @spec decode_log_7be0c3eb_call(binary()) :: [
+          boolean() | String.t() | String.t() | non_neg_integer()
+        ]
   def decode_log_7be0c3eb_call(<<123, 224, 195, 235>> <> calldata) do
     _signature = hex!("0x7be0c3eb")
     ABI.decode(log_7be0c3eb_selector(), calldata)
@@ -19269,7 +19437,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7bf181a1_call/log(bool,address,uint256,uint256)`."
-  @spec decode_log_7bf181a1_call(binary()) :: [term()]
+  @spec decode_log_7bf181a1_call(binary()) :: [
+          boolean() | <<_::160>> | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_7bf181a1_call(<<123, 241, 129, 161>> <> calldata) do
     _signature = hex!("0x7bf181a1")
     ABI.decode(log_7bf181a1_selector(), calldata)
@@ -19359,7 +19529,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7c4632a4_call/log(string,uint256,string,address)`."
-  @spec decode_log_7c4632a4_call(binary()) :: [term()]
+  @spec decode_log_7c4632a4_call(binary()) :: [
+          String.t() | non_neg_integer() | String.t() | <<_::160>>
+        ]
   def decode_log_7c4632a4_call(<<124, 70, 50, 164>> <> calldata) do
     _signature = hex!("0x7c4632a4")
     ABI.decode(log_7c4632a4_selector(), calldata)
@@ -19449,7 +19621,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7cc3c607_call/log(string,string,address,uint256)`."
-  @spec decode_log_7cc3c607_call(binary()) :: [term()]
+  @spec decode_log_7cc3c607_call(binary()) :: [
+          String.t() | String.t() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_7cc3c607_call(<<124, 195, 198, 7>> <> calldata) do
     _signature = hex!("0x7cc3c607")
     ABI.decode(log_7cc3c607_selector(), calldata)
@@ -19539,7 +19713,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7d24491d_call/log(string,uint256,string,bool)`."
-  @spec decode_log_7d24491d_call(binary()) :: [term()]
+  @spec decode_log_7d24491d_call(binary()) :: [
+          String.t() | non_neg_integer() | String.t() | boolean()
+        ]
   def decode_log_7d24491d_call(<<125, 36, 73, 29>> <> calldata) do
     _signature = hex!("0x7d24491d")
     ABI.decode(log_7d24491d_selector(), calldata)
@@ -19629,7 +19805,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7dd4d0e0_call/log(bool,bool,uint256,string)`."
-  @spec decode_log_7dd4d0e0_call(binary()) :: [term()]
+  @spec decode_log_7dd4d0e0_call(binary()) :: [
+          boolean() | boolean() | non_neg_integer() | String.t()
+        ]
   def decode_log_7dd4d0e0_call(<<125, 212, 208, 224>> <> calldata) do
     _signature = hex!("0x7dd4d0e0")
     ABI.decode(log_7dd4d0e0_selector(), calldata)
@@ -19725,7 +19903,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_7f9bbca2_call/log(bool,uint256,bool,uint256)`."
-  @spec decode_log_7f9bbca2_call(binary()) :: [term()]
+  @spec decode_log_7f9bbca2_call(binary()) :: [
+          boolean() | non_neg_integer() | boolean() | non_neg_integer()
+        ]
   def decode_log_7f9bbca2_call(<<127, 155, 188, 162>> <> calldata) do
     _signature = hex!("0x7f9bbca2")
     ABI.decode(log_7f9bbca2_selector(), calldata)
@@ -19809,7 +19989,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_800a1c67_call/log(string,address,address,string)`."
-  @spec decode_log_800a1c67_call(binary()) :: [term()]
+  @spec decode_log_800a1c67_call(binary()) :: [String.t() | <<_::160>> | <<_::160>> | String.t()]
   def decode_log_800a1c67_call(<<128, 10, 28, 103>> <> calldata) do
     _signature = hex!("0x800a1c67")
     ABI.decode(log_800a1c67_selector(), calldata)
@@ -19899,7 +20079,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_80e6a20b_call/log(address,bool,string,uint256)`."
-  @spec decode_log_80e6a20b_call(binary()) :: [term()]
+  @spec decode_log_80e6a20b_call(binary()) :: [
+          <<_::160>> | boolean() | String.t() | non_neg_integer()
+        ]
   def decode_log_80e6a20b_call(<<128, 230, 162, 11>> <> calldata) do
     _signature = hex!("0x80e6a20b")
     ABI.decode(log_80e6a20b_selector(), calldata)
@@ -19989,7 +20171,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_82112a42_call/log(string,uint256,address,bool)`."
-  @spec decode_log_82112a42_call(binary()) :: [term()]
+  @spec decode_log_82112a42_call(binary()) :: [
+          String.t() | non_neg_integer() | <<_::160>> | boolean()
+        ]
   def decode_log_82112a42_call(<<130, 17, 42, 66>> <> calldata) do
     _signature = hex!("0x82112a42")
     ABI.decode(log_82112a42_selector(), calldata)
@@ -20085,7 +20269,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_82c25b74_call/log(uint256,string,uint256,uint256)`."
-  @spec decode_log_82c25b74_call(binary()) :: [term()]
+  @spec decode_log_82c25b74_call(binary()) :: [
+          non_neg_integer() | String.t() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_82c25b74_call(<<130, 194, 91, 116>> <> calldata) do
     _signature = hex!("0x82c25b74")
     ABI.decode(log_82c25b74_selector(), calldata)
@@ -20146,7 +20332,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8309e8a8_call/log(address,uint256)`."
-  @spec decode_log_8309e8a8_call(binary()) :: [term()]
+  @spec decode_log_8309e8a8_call(binary()) :: [<<_::160>> | non_neg_integer()]
   def decode_log_8309e8a8_call(<<131, 9, 232, 168>> <> calldata) do
     _signature = hex!("0x8309e8a8")
     ABI.decode(log_8309e8a8_selector(), calldata)
@@ -20211,7 +20397,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_850b7ad6_call/log(string,bool,bool)`."
-  @spec decode_log_850b7ad6_call(binary()) :: [term()]
+  @spec decode_log_850b7ad6_call(binary()) :: [String.t() | boolean() | boolean()]
   def decode_log_850b7ad6_call(<<133, 11, 122, 214>> <> calldata) do
     _signature = hex!("0x850b7ad6")
     ABI.decode(log_850b7ad6_selector(), calldata)
@@ -20272,7 +20458,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_853c4849_call/log(bool,address)`."
-  @spec decode_log_853c4849_call(binary()) :: [term()]
+  @spec decode_log_853c4849_call(binary()) :: [boolean() | <<_::160>>]
   def decode_log_853c4849_call(<<133, 60, 72, 73>> <> calldata) do
     _signature = hex!("0x853c4849")
     ABI.decode(log_853c4849_selector(), calldata)
@@ -20368,7 +20554,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_854b3496_call/log(string,uint256,uint256,string)`."
-  @spec decode_log_854b3496_call(binary()) :: [term()]
+  @spec decode_log_854b3496_call(binary()) :: [
+          String.t() | non_neg_integer() | non_neg_integer() | String.t()
+        ]
   def decode_log_854b3496_call(<<133, 75, 52, 150>> <> calldata) do
     _signature = hex!("0x854b3496")
     ABI.decode(log_854b3496_selector(), calldata)
@@ -20438,7 +20626,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_85775021_call/log(uint256,bool,string)`."
-  @spec decode_log_85775021_call(binary()) :: [term()]
+  @spec decode_log_85775021_call(binary()) :: [non_neg_integer() | boolean() | String.t()]
   def decode_log_85775021_call(<<133, 119, 80, 33>> <> calldata) do
     _signature = hex!("0x85775021")
     ABI.decode(log_85775021_selector(), calldata)
@@ -20528,7 +20716,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_88a8c406_call/log(address,uint256,string,string)`."
-  @spec decode_log_88a8c406_call(binary()) :: [term()]
+  @spec decode_log_88a8c406_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | String.t() | String.t()
+        ]
   def decode_log_88a8c406_call(<<136, 168, 196, 6>> <> calldata) do
     _signature = hex!("0x88a8c406")
     ABI.decode(log_88a8c406_selector(), calldata)
@@ -20624,7 +20814,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_88cb6041_call/log(uint256,bool,uint256,address)`."
-  @spec decode_log_88cb6041_call(binary()) :: [term()]
+  @spec decode_log_88cb6041_call(binary()) :: [
+          non_neg_integer() | boolean() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_88cb6041_call(<<136, 203, 96, 65>> <> calldata) do
     _signature = hex!("0x88cb6041")
     ABI.decode(log_88cb6041_selector(), calldata)
@@ -20720,7 +20912,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_88f6e4b2_call/log(uint256,uint256,address,uint256)`."
-  @spec decode_log_88f6e4b2_call(binary()) :: [term()]
+  @spec decode_log_88f6e4b2_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_88f6e4b2_call(<<136, 246, 228, 178>> <> calldata) do
     _signature = hex!("0x88f6e4b2")
     ABI.decode(log_88f6e4b2_selector(), calldata)
@@ -20792,7 +20986,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_895af8c5_call/log(string,bool,bool,bool)`."
-  @spec decode_log_895af8c5_call(binary()) :: [term()]
+  @spec decode_log_895af8c5_call(binary()) :: [String.t() | boolean() | boolean() | boolean()]
   def decode_log_895af8c5_call(<<137, 90, 248, 197>> <> calldata) do
     _signature = hex!("0x895af8c5")
     ABI.decode(log_895af8c5_selector(), calldata)
@@ -20882,7 +21076,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8af7cf8a_call/log(string,bool,uint256,bool)`."
-  @spec decode_log_8af7cf8a_call(binary()) :: [term()]
+  @spec decode_log_8af7cf8a_call(binary()) :: [
+          String.t() | boolean() | non_neg_integer() | boolean()
+        ]
   def decode_log_8af7cf8a_call(<<138, 247, 207, 138>> <> calldata) do
     _signature = hex!("0x8af7cf8a")
     ABI.decode(log_8af7cf8a_selector(), calldata)
@@ -20954,7 +21150,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8c329b1a_call/log(bool,bool,bool,address)`."
-  @spec decode_log_8c329b1a_call(binary()) :: [term()]
+  @spec decode_log_8c329b1a_call(binary()) :: [boolean() | boolean() | boolean() | <<_::160>>]
   def decode_log_8c329b1a_call(<<140, 50, 155, 26>> <> calldata) do
     _signature = hex!("0x8c329b1a")
     ABI.decode(log_8c329b1a_selector(), calldata)
@@ -21044,7 +21240,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8c4e5de6_call/log(address,bool,bool,uint256)`."
-  @spec decode_log_8c4e5de6_call(binary()) :: [term()]
+  @spec decode_log_8c4e5de6_call(binary()) :: [
+          <<_::160>> | boolean() | boolean() | non_neg_integer()
+        ]
   def decode_log_8c4e5de6_call(<<140, 78, 93, 230>> <> calldata) do
     _signature = hex!("0x8c4e5de6")
     ABI.decode(log_8c4e5de6_selector(), calldata)
@@ -21134,7 +21332,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8da6def5_call/log(address,address,uint256,address)`."
-  @spec decode_log_8da6def5_call(binary()) :: [term()]
+  @spec decode_log_8da6def5_call(binary()) :: [
+          <<_::160>> | <<_::160>> | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_8da6def5_call(<<141, 166, 222, 245>> <> calldata) do
     _signature = hex!("0x8da6def5")
     ABI.decode(log_8da6def5_selector(), calldata)
@@ -21224,7 +21424,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8e3f78a9_call/log(string,bool,bool,uint256)`."
-  @spec decode_log_8e3f78a9_call(binary()) :: [term()]
+  @spec decode_log_8e3f78a9_call(binary()) :: [
+          String.t() | boolean() | boolean() | non_neg_integer()
+        ]
   def decode_log_8e3f78a9_call(<<142, 63, 120, 169>> <> calldata) do
     _signature = hex!("0x8e3f78a9")
     ABI.decode(log_8e3f78a9_selector(), calldata)
@@ -21320,7 +21522,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8e69fb5d_call/log(bool,uint256,uint256,string)`."
-  @spec decode_log_8e69fb5d_call(binary()) :: [term()]
+  @spec decode_log_8e69fb5d_call(binary()) :: [
+          boolean() | non_neg_integer() | non_neg_integer() | String.t()
+        ]
   def decode_log_8e69fb5d_call(<<142, 105, 251, 93>> <> calldata) do
     _signature = hex!("0x8e69fb5d")
     ABI.decode(log_8e69fb5d_selector(), calldata)
@@ -21410,7 +21614,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8eafb02b_call/log(string,string,string,uint256)`."
-  @spec decode_log_8eafb02b_call(binary()) :: [term()]
+  @spec decode_log_8eafb02b_call(binary()) :: [
+          String.t() | String.t() | String.t() | non_neg_integer()
+        ]
   def decode_log_8eafb02b_call(<<142, 175, 176, 43>> <> calldata) do
     _signature = hex!("0x8eafb02b")
     ABI.decode(log_8eafb02b_selector(), calldata)
@@ -21500,7 +21706,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8ef3f399_call/log(string,address,address,uint256)`."
-  @spec decode_log_8ef3f399_call(binary()) :: [term()]
+  @spec decode_log_8ef3f399_call(binary()) :: [
+          String.t() | <<_::160>> | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_8ef3f399_call(<<142, 243, 243, 153>> <> calldata) do
     _signature = hex!("0x8ef3f399")
     ABI.decode(log_8ef3f399_selector(), calldata)
@@ -21584,7 +21792,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8f736d16_call/log(address,address,string,address)`."
-  @spec decode_log_8f736d16_call(binary()) :: [term()]
+  @spec decode_log_8f736d16_call(binary()) :: [<<_::160>> | <<_::160>> | String.t() | <<_::160>>]
   def decode_log_8f736d16_call(<<143, 115, 109, 22>> <> calldata) do
     _signature = hex!("0x8f736d16")
     ABI.decode(log_8f736d16_selector(), calldata)
@@ -21645,7 +21853,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_8feac525_call/log(bool,string)`."
-  @spec decode_log_8feac525_call(binary()) :: [term()]
+  @spec decode_log_8feac525_call(binary()) :: [boolean() | String.t()]
   def decode_log_8feac525_call(<<143, 234, 197, 37>> <> calldata) do
     _signature = hex!("0x8feac525")
     ABI.decode(log_8feac525_selector(), calldata)
@@ -21735,7 +21943,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_90c30a56_call/log(uint256,string,address,bool)`."
-  @spec decode_log_90c30a56_call(binary()) :: [term()]
+  @spec decode_log_90c30a56_call(binary()) :: [
+          non_neg_integer() | String.t() | <<_::160>> | boolean()
+        ]
   def decode_log_90c30a56_call(<<144, 195, 10, 86>> <> calldata) do
     _signature = hex!("0x90c30a56")
     ABI.decode(log_90c30a56_selector(), calldata)
@@ -21825,7 +22035,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_90fb06aa_call/log(uint256,address,bool,string)`."
-  @spec decode_log_90fb06aa_call(binary()) :: [term()]
+  @spec decode_log_90fb06aa_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | boolean() | String.t()
+        ]
   def decode_log_90fb06aa_call(<<144, 251, 6, 170>> <> calldata) do
     _signature = hex!("0x90fb06aa")
     ABI.decode(log_90fb06aa_selector(), calldata)
@@ -21915,7 +22127,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9143dbb1_call/log(bool,uint256,bool,string)`."
-  @spec decode_log_9143dbb1_call(binary()) :: [term()]
+  @spec decode_log_9143dbb1_call(binary()) :: [
+          boolean() | non_neg_integer() | boolean() | String.t()
+        ]
   def decode_log_9143dbb1_call(<<145, 67, 219, 177>> <> calldata) do
     _signature = hex!("0x9143dbb1")
     ABI.decode(log_9143dbb1_selector(), calldata)
@@ -22011,7 +22225,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_91a02e2a_call/log(uint256,bool,uint256,bool)`."
-  @spec decode_log_91a02e2a_call(binary()) :: [term()]
+  @spec decode_log_91a02e2a_call(binary()) :: [
+          non_neg_integer() | boolean() | non_neg_integer() | boolean()
+        ]
   def decode_log_91a02e2a_call(<<145, 160, 46, 42>> <> calldata) do
     _signature = hex!("0x91a02e2a")
     ABI.decode(log_91a02e2a_selector(), calldata)
@@ -22101,7 +22317,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_91d1112e_call/log(string,address,string,uint256)`."
-  @spec decode_log_91d1112e_call(binary()) :: [term()]
+  @spec decode_log_91d1112e_call(binary()) :: [
+          String.t() | <<_::160>> | String.t() | non_neg_integer()
+        ]
   def decode_log_91d1112e_call(<<145, 209, 17, 46>> <> calldata) do
     _signature = hex!("0x91d1112e")
     ABI.decode(log_91d1112e_selector(), calldata)
@@ -22166,7 +22384,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_932bbb38_call/log(string,bool,address)`."
-  @spec decode_log_932bbb38_call(binary()) :: [term()]
+  @spec decode_log_932bbb38_call(binary()) :: [String.t() | boolean() | <<_::160>>]
   def decode_log_932bbb38_call(<<147, 43, 187, 56>> <> calldata) do
     _signature = hex!("0x932bbb38")
     ABI.decode(log_932bbb38_selector(), calldata)
@@ -22256,7 +22474,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_935e09bf_call/log(string,bool,uint256,address)`."
-  @spec decode_log_935e09bf_call(binary()) :: [term()]
+  @spec decode_log_935e09bf_call(binary()) :: [
+          String.t() | boolean() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_935e09bf_call(<<147, 94, 9, 191>> <> calldata) do
     _signature = hex!("0x935e09bf")
     ABI.decode(log_935e09bf_selector(), calldata)
@@ -22346,7 +22566,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_94250d77_call/log(address,address,address,uint256)`."
-  @spec decode_log_94250d77_call(binary()) :: [term()]
+  @spec decode_log_94250d77_call(binary()) :: [
+          <<_::160>> | <<_::160>> | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_94250d77_call(<<148, 37, 13, 119>> <> calldata) do
     _signature = hex!("0x94250d77")
     ABI.decode(log_94250d77_selector(), calldata)
@@ -22430,7 +22652,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_958c28c6_call/log(string,bool,address,bool)`."
-  @spec decode_log_958c28c6_call(binary()) :: [term()]
+  @spec decode_log_958c28c6_call(binary()) :: [String.t() | boolean() | <<_::160>> | boolean()]
   def decode_log_958c28c6_call(<<149, 140, 40, 198>> <> calldata) do
     _signature = hex!("0x958c28c6")
     ABI.decode(log_958c28c6_selector(), calldata)
@@ -22495,7 +22717,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9591b953_call/log(bool,string,address)`."
-  @spec decode_log_9591b953_call(binary()) :: [term()]
+  @spec decode_log_9591b953_call(binary()) :: [boolean() | String.t() | <<_::160>>]
   def decode_log_9591b953_call(<<149, 145, 185, 83>> <> calldata) do
     _signature = hex!("0x9591b953")
     ABI.decode(log_9591b953_selector(), calldata)
@@ -22560,7 +22782,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_95ed0195_call/log(string,string,address)`."
-  @spec decode_log_95ed0195_call(binary()) :: [term()]
+  @spec decode_log_95ed0195_call(binary()) :: [String.t() | String.t() | <<_::160>>]
   def decode_log_95ed0195_call(<<149, 237, 1, 149>> <> calldata) do
     _signature = hex!("0x95ed0195")
     ABI.decode(log_95ed0195_selector(), calldata)
@@ -22644,7 +22866,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_97d394d8_call/log(bool,string,string,address)`."
-  @spec decode_log_97d394d8_call(binary()) :: [term()]
+  @spec decode_log_97d394d8_call(binary()) :: [boolean() | String.t() | String.t() | <<_::160>>]
   def decode_log_97d394d8_call(<<151, 211, 148, 216>> <> calldata) do
     _signature = hex!("0x97d394d8")
     ABI.decode(log_97d394d8_selector(), calldata)
@@ -22740,7 +22962,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9a816a83_call/log(uint256,uint256,bool,address)`."
-  @spec decode_log_9a816a83_call(binary()) :: [term()]
+  @spec decode_log_9a816a83_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | boolean() | <<_::160>>
+        ]
   def decode_log_9a816a83_call(<<154, 129, 106, 131>> <> calldata) do
     _signature = hex!("0x9a816a83")
     ABI.decode(log_9a816a83_selector(), calldata)
@@ -22830,7 +23054,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9acd3616_call/log(bool,uint256,bool,address)`."
-  @spec decode_log_9acd3616_call(binary()) :: [term()]
+  @spec decode_log_9acd3616_call(binary()) :: [
+          boolean() | non_neg_integer() | boolean() | <<_::160>>
+        ]
   def decode_log_9acd3616_call(<<154, 205, 54, 22>> <> calldata) do
     _signature = hex!("0x9acd3616")
     ABI.decode(log_9acd3616_selector(), calldata)
@@ -22920,7 +23146,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9b4254e2_call/log(address,address,uint256,bool)`."
-  @spec decode_log_9b4254e2_call(binary()) :: [term()]
+  @spec decode_log_9b4254e2_call(binary()) :: [
+          <<_::160>> | <<_::160>> | non_neg_integer() | boolean()
+        ]
   def decode_log_9b4254e2_call(<<155, 66, 84, 226>> <> calldata) do
     _signature = hex!("0x9b4254e2")
     ABI.decode(log_9b4254e2_selector(), calldata)
@@ -22990,7 +23218,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9b6ec042_call/log(uint256,address,bool)`."
-  @spec decode_log_9b6ec042_call(binary()) :: [term()]
+  @spec decode_log_9b6ec042_call(binary()) :: [non_neg_integer() | <<_::160>> | boolean()]
   def decode_log_9b6ec042_call(<<155, 110, 192, 66>> <> calldata) do
     _signature = hex!("0x9b6ec042")
     ABI.decode(log_9b6ec042_selector(), calldata)
@@ -23080,7 +23308,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9c3adfa1_call/log(uint256,string,address,string)`."
-  @spec decode_log_9c3adfa1_call(binary()) :: [term()]
+  @spec decode_log_9c3adfa1_call(binary()) :: [
+          non_neg_integer() | String.t() | <<_::160>> | String.t()
+        ]
   def decode_log_9c3adfa1_call(<<156, 58, 223, 161>> <> calldata) do
     _signature = hex!("0x9c3adfa1")
     ABI.decode(log_9c3adfa1_selector(), calldata)
@@ -23150,7 +23380,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9c4f99fb_call/log(address,bool,uint256)`."
-  @spec decode_log_9c4f99fb_call(binary()) :: [term()]
+  @spec decode_log_9c4f99fb_call(binary()) :: [<<_::160>> | boolean() | non_neg_integer()]
   def decode_log_9c4f99fb_call(<<156, 79, 153, 251>> <> calldata) do
     _signature = hex!("0x9c4f99fb")
     ABI.decode(log_9c4f99fb_selector(), calldata)
@@ -23240,7 +23470,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9cba8fff_call/log(uint256,address,string,address)`."
-  @spec decode_log_9cba8fff_call(binary()) :: [term()]
+  @spec decode_log_9cba8fff_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | String.t() | <<_::160>>
+        ]
   def decode_log_9cba8fff_call(<<156, 186, 143, 255>> <> calldata) do
     _signature = hex!("0x9cba8fff")
     ABI.decode(log_9cba8fff_selector(), calldata)
@@ -23324,7 +23556,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9d22d5dd_call/log(string,bool,bool,string)`."
-  @spec decode_log_9d22d5dd_call(binary()) :: [term()]
+  @spec decode_log_9d22d5dd_call(binary()) :: [String.t() | boolean() | boolean() | String.t()]
   def decode_log_9d22d5dd_call(<<157, 34, 213, 221>> <> calldata) do
     _signature = hex!("0x9d22d5dd")
     ABI.decode(log_9d22d5dd_selector(), calldata)
@@ -23408,7 +23640,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9f1bc36e_call/log(address,address,bool,address)`."
-  @spec decode_log_9f1bc36e_call(binary()) :: [term()]
+  @spec decode_log_9f1bc36e_call(binary()) :: [<<_::160>> | <<_::160>> | boolean() | <<_::160>>]
   def decode_log_9f1bc36e_call(<<159, 27, 195, 110>> <> calldata) do
     _signature = hex!("0x9f1bc36e")
     ABI.decode(log_9f1bc36e_selector(), calldata)
@@ -23498,7 +23730,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_9ffb2f93_call/log(string,uint256,address,string)`."
-  @spec decode_log_9ffb2f93_call(binary()) :: [term()]
+  @spec decode_log_9ffb2f93_call(binary()) :: [
+          String.t() | non_neg_integer() | <<_::160>> | String.t()
+        ]
   def decode_log_9ffb2f93_call(<<159, 251, 47, 147>> <> calldata) do
     _signature = hex!("0x9ffb2f93")
     ABI.decode(log_9ffb2f93_selector(), calldata)
@@ -23582,7 +23816,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a04e2f87_call/log(address,string,string,address)`."
-  @spec decode_log_a04e2f87_call(binary()) :: [term()]
+  @spec decode_log_a04e2f87_call(binary()) :: [<<_::160>> | String.t() | String.t() | <<_::160>>]
   def decode_log_a04e2f87_call(<<160, 78, 47, 135>> <> calldata) do
     _signature = hex!("0xa04e2f87")
     ABI.decode(log_a04e2f87_selector(), calldata)
@@ -23666,7 +23900,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a0a47963_call/log(bool,bool,address,string)`."
-  @spec decode_log_a0a47963_call(binary()) :: [term()]
+  @spec decode_log_a0a47963_call(binary()) :: [boolean() | boolean() | <<_::160>> | String.t()]
   def decode_log_a0a47963_call(<<160, 164, 121, 99>> <> calldata) do
     _signature = hex!("0xa0a47963")
     ABI.decode(log_a0a47963_selector(), calldata)
@@ -23756,7 +23990,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a1bcc9b3_call/log(address,uint256,address,bool)`."
-  @spec decode_log_a1bcc9b3_call(binary()) :: [term()]
+  @spec decode_log_a1bcc9b3_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | <<_::160>> | boolean()
+        ]
   def decode_log_a1bcc9b3_call(<<161, 188, 201, 179>> <> calldata) do
     _signature = hex!("0xa1bcc9b3")
     ABI.decode(log_a1bcc9b3_selector(), calldata)
@@ -23846,7 +24082,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a1ef4cbb_call/log(uint256,bool,address,address)`."
-  @spec decode_log_a1ef4cbb_call(binary()) :: [term()]
+  @spec decode_log_a1ef4cbb_call(binary()) :: [
+          non_neg_integer() | boolean() | <<_::160>> | <<_::160>>
+        ]
   def decode_log_a1ef4cbb_call(<<161, 239, 76, 187>> <> calldata) do
     _signature = hex!("0xa1ef4cbb")
     ABI.decode(log_a1ef4cbb_selector(), calldata)
@@ -23916,7 +24154,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a1f2e8aa_call/log(address,uint256,string)`."
-  @spec decode_log_a1f2e8aa_call(binary()) :: [term()]
+  @spec decode_log_a1f2e8aa_call(binary()) :: [<<_::160>> | non_neg_integer() | String.t()]
   def decode_log_a1f2e8aa_call(<<161, 242, 232, 170>> <> calldata) do
     _signature = hex!("0xa1f2e8aa")
     ABI.decode(log_a1f2e8aa_selector(), calldata)
@@ -24006,7 +24244,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a31bfdcc_call/log(address,uint256,bool,address)`."
-  @spec decode_log_a31bfdcc_call(binary()) :: [term()]
+  @spec decode_log_a31bfdcc_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | boolean() | <<_::160>>
+        ]
   def decode_log_a31bfdcc_call(<<163, 27, 253, 204>> <> calldata) do
     _signature = hex!("0xa31bfdcc")
     ABI.decode(log_a31bfdcc_selector(), calldata)
@@ -24102,7 +24342,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a5b4fc99_call/log(uint256,uint256,bool,string)`."
-  @spec decode_log_a5b4fc99_call(binary()) :: [term()]
+  @spec decode_log_a5b4fc99_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | boolean() | String.t()
+        ]
   def decode_log_a5b4fc99_call(<<165, 180, 252, 153>> <> calldata) do
     _signature = hex!("0xa5b4fc99")
     ABI.decode(log_a5b4fc99_selector(), calldata)
@@ -24192,7 +24434,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a5cada94_call/log(bool,string,address,uint256)`."
-  @spec decode_log_a5cada94_call(binary()) :: [term()]
+  @spec decode_log_a5cada94_call(binary()) :: [
+          boolean() | String.t() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_a5cada94_call(<<165, 202, 218, 148>> <> calldata) do
     _signature = hex!("0xa5cada94")
     ABI.decode(log_a5cada94_selector(), calldata)
@@ -24276,7 +24520,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a6f50b0f_call/log(address,bool,address,bool)`."
-  @spec decode_log_a6f50b0f_call(binary()) :: [term()]
+  @spec decode_log_a6f50b0f_call(binary()) :: [<<_::160>> | boolean() | <<_::160>> | boolean()]
   def decode_log_a6f50b0f_call(<<166, 245, 11, 15>> <> calldata) do
     _signature = hex!("0xa6f50b0f")
     ABI.decode(log_a6f50b0f_selector(), calldata)
@@ -24360,7 +24604,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a73c1db6_call/log(bool,address,string,string)`."
-  @spec decode_log_a73c1db6_call(binary()) :: [term()]
+  @spec decode_log_a73c1db6_call(binary()) :: [boolean() | <<_::160>> | String.t() | String.t()]
   def decode_log_a73c1db6_call(<<167, 60, 29, 182>> <> calldata) do
     _signature = hex!("0xa73c1db6")
     ABI.decode(log_a73c1db6_selector(), calldata)
@@ -24450,7 +24694,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a75c59de_call/log(address,bool,address,uint256)`."
-  @spec decode_log_a75c59de_call(binary()) :: [term()]
+  @spec decode_log_a75c59de_call(binary()) :: [
+          <<_::160>> | boolean() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_a75c59de_call(<<167, 92, 89, 222>> <> calldata) do
     _signature = hex!("0xa75c59de")
     ABI.decode(log_a75c59de_selector(), calldata)
@@ -24546,7 +24792,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a7a87853_call/log(string,uint256,uint256,uint256)`."
-  @spec decode_log_a7a87853_call(binary()) :: [term()]
+  @spec decode_log_a7a87853_call(binary()) :: [
+          String.t() | non_neg_integer() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_a7a87853_call(<<167, 168, 120, 83>> <> calldata) do
     _signature = hex!("0xa7a87853")
     ABI.decode(log_a7a87853_selector(), calldata)
@@ -24630,7 +24878,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_a826caeb_call/log(string,bool,string,string)`."
-  @spec decode_log_a826caeb_call(binary()) :: [term()]
+  @spec decode_log_a826caeb_call(binary()) :: [String.t() | boolean() | String.t() | String.t()]
   def decode_log_a826caeb_call(<<168, 38, 202, 235>> <> calldata) do
     _signature = hex!("0xa826caeb")
     ABI.decode(log_a826caeb_selector(), calldata)
@@ -24714,7 +24962,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_aa6540c8_call/log(address,address,bool,string)`."
-  @spec decode_log_aa6540c8_call(binary()) :: [term()]
+  @spec decode_log_aa6540c8_call(binary()) :: [<<_::160>> | <<_::160>> | boolean() | String.t()]
   def decode_log_aa6540c8_call(<<170, 101, 64, 200>> <> calldata) do
     _signature = hex!("0xaa6540c8")
     ABI.decode(log_aa6540c8_selector(), calldata)
@@ -24798,7 +25046,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_aabc9a31_call/log(string,address,string,address)`."
-  @spec decode_log_aabc9a31_call(binary()) :: [term()]
+  @spec decode_log_aabc9a31_call(binary()) :: [String.t() | <<_::160>> | String.t() | <<_::160>>]
   def decode_log_aabc9a31_call(<<170, 188, 154, 49>> <> calldata) do
     _signature = hex!("0xaabc9a31")
     ABI.decode(log_aabc9a31_selector(), calldata)
@@ -24894,7 +25142,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ab085ae6_call/log(uint256,uint256,bool,bool)`."
-  @spec decode_log_ab085ae6_call(binary()) :: [term()]
+  @spec decode_log_ab085ae6_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | boolean() | boolean()
+        ]
   def decode_log_ab085ae6_call(<<171, 8, 90, 230>> <> calldata) do
     _signature = hex!("0xab085ae6")
     ABI.decode(log_ab085ae6_selector(), calldata)
@@ -24984,7 +25234,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_abf73a98_call/log(string,uint256,bool,string)`."
-  @spec decode_log_abf73a98_call(binary()) :: [term()]
+  @spec decode_log_abf73a98_call(binary()) :: [
+          String.t() | non_neg_integer() | boolean() | String.t()
+        ]
   def decode_log_abf73a98_call(<<171, 247, 58, 152>> <> calldata) do
     _signature = hex!("0xabf73a98")
     ABI.decode(log_abf73a98_selector(), calldata)
@@ -25074,7 +25326,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ade052c7_call/log(uint256,bool,address,string)`."
-  @spec decode_log_ade052c7_call(binary()) :: [term()]
+  @spec decode_log_ade052c7_call(binary()) :: [
+          non_neg_integer() | boolean() | <<_::160>> | String.t()
+        ]
   def decode_log_ade052c7_call(<<173, 224, 82, 199>> <> calldata) do
     _signature = hex!("0xade052c7")
     ABI.decode(log_ade052c7_selector(), calldata)
@@ -25164,7 +25418,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ae2ec581_call/log(uint256,string,bool,address)`."
-  @spec decode_log_ae2ec581_call(binary()) :: [term()]
+  @spec decode_log_ae2ec581_call(binary()) :: [
+          non_neg_integer() | String.t() | boolean() | <<_::160>>
+        ]
   def decode_log_ae2ec581_call(<<174, 46, 197, 129>> <> calldata) do
     _signature = hex!("0xae2ec581")
     ABI.decode(log_ae2ec581_selector(), calldata)
@@ -25260,7 +25516,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b028c9bd_call/log(uint256,string,string,uint256)`."
-  @spec decode_log_b028c9bd_call(binary()) :: [term()]
+  @spec decode_log_b028c9bd_call(binary()) :: [
+          non_neg_integer() | String.t() | String.t() | non_neg_integer()
+        ]
   def decode_log_b028c9bd_call(<<176, 40, 201, 189>> <> calldata) do
     _signature = hex!("0xb028c9bd")
     ABI.decode(log_b028c9bd_selector(), calldata)
@@ -25325,7 +25583,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b076847f_call/log(bool,string,string)`."
-  @spec decode_log_b076847f_call(binary()) :: [term()]
+  @spec decode_log_b076847f_call(binary()) :: [boolean() | String.t() | String.t()]
   def decode_log_b076847f_call(<<176, 118, 132, 127>> <> calldata) do
     _signature = hex!("0xb076847f")
     ABI.decode(log_b076847f_selector(), calldata)
@@ -25390,7 +25648,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b0e0f9b5_call/log(string,string,bool)`."
-  @spec decode_log_b0e0f9b5_call(binary()) :: [term()]
+  @spec decode_log_b0e0f9b5_call(binary()) :: [String.t() | String.t() | boolean()]
   def decode_log_b0e0f9b5_call(<<176, 224, 249, 181>> <> calldata) do
     _signature = hex!("0xb0e0f9b5")
     ABI.decode(log_b0e0f9b5_selector(), calldata)
@@ -25460,7 +25718,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b115611f_call/log(uint256,string,string)`."
-  @spec decode_log_b115611f_call(binary()) :: [term()]
+  @spec decode_log_b115611f_call(binary()) :: [non_neg_integer() | String.t() | String.t()]
   def decode_log_b115611f_call(<<177, 21, 97, 31>> <> calldata) do
     _signature = hex!("0xb115611f")
     ABI.decode(log_b115611f_selector(), calldata)
@@ -25550,7 +25808,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b3a6b6bd_call/log(uint256,string,string,bool)`."
-  @spec decode_log_b3a6b6bd_call(binary()) :: [term()]
+  @spec decode_log_b3a6b6bd_call(binary()) :: [
+          non_neg_integer() | String.t() | String.t() | boolean()
+        ]
   def decode_log_b3a6b6bd_call(<<179, 166, 182, 189>> <> calldata) do
     _signature = hex!("0xb3a6b6bd")
     ABI.decode(log_b3a6b6bd_selector(), calldata)
@@ -25640,7 +25900,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b4c314ff_call/log(bool,uint256,address,bool)`."
-  @spec decode_log_b4c314ff_call(binary()) :: [term()]
+  @spec decode_log_b4c314ff_call(binary()) :: [
+          boolean() | non_neg_integer() | <<_::160>> | boolean()
+        ]
   def decode_log_b4c314ff_call(<<180, 195, 20, 255>> <> calldata) do
     _signature = hex!("0xb4c314ff")
     ABI.decode(log_b4c314ff_selector(), calldata)
@@ -25724,7 +25986,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b59dbd60_call/log(string,address,address,bool)`."
-  @spec decode_log_b59dbd60_call(binary()) :: [term()]
+  @spec decode_log_b59dbd60_call(binary()) :: [String.t() | <<_::160>> | <<_::160>> | boolean()]
   def decode_log_b59dbd60_call(<<181, 157, 189, 96>> <> calldata) do
     _signature = hex!("0xb59dbd60")
     ABI.decode(log_b59dbd60_selector(), calldata)
@@ -25785,7 +26047,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b60e72cc_call/log(string,uint256)`."
-  @spec decode_log_b60e72cc_call(binary()) :: [term()]
+  @spec decode_log_b60e72cc_call(binary()) :: [String.t() | non_neg_integer()]
   def decode_log_b60e72cc_call(<<182, 14, 114, 204>> <> calldata) do
     _signature = hex!("0xb60e72cc")
     ABI.decode(log_b60e72cc_selector(), calldata)
@@ -25870,7 +26132,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b69bcaf6_call/log(address,uint256,uint256)`."
-  @spec decode_log_b69bcaf6_call(binary()) :: [term()]
+  @spec decode_log_b69bcaf6_call(binary()) :: [<<_::160>> | non_neg_integer() | non_neg_integer()]
   def decode_log_b69bcaf6_call(<<182, 155, 202, 246>> <> calldata) do
     _signature = hex!("0xb69bcaf6")
     ABI.decode(log_b69bcaf6_selector(), calldata)
@@ -25960,7 +26222,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b6f577a1_call/log(uint256,bool,bool,bool)`."
-  @spec decode_log_b6f577a1_call(binary()) :: [term()]
+  @spec decode_log_b6f577a1_call(binary()) :: [
+          non_neg_integer() | boolean() | boolean() | boolean()
+        ]
   def decode_log_b6f577a1_call(<<182, 245, 119, 161>> <> calldata) do
     _signature = hex!("0xb6f577a1")
     ABI.decode(log_b6f577a1_selector(), calldata)
@@ -26056,7 +26320,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b7b914ca_call/log(uint256,string,uint256,string)`."
-  @spec decode_log_b7b914ca_call(binary()) :: [term()]
+  @spec decode_log_b7b914ca_call(binary()) :: [
+          non_neg_integer() | String.t() | non_neg_integer() | String.t()
+        ]
   def decode_log_b7b914ca_call(<<183, 185, 20, 202>> <> calldata) do
     _signature = hex!("0xb7b914ca")
     ABI.decode(log_b7b914ca_selector(), calldata)
@@ -26128,7 +26394,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_b857163a_call/log(bool,bool,string,bool)`."
-  @spec decode_log_b857163a_call(binary()) :: [term()]
+  @spec decode_log_b857163a_call(binary()) :: [boolean() | boolean() | String.t() | boolean()]
   def decode_log_b857163a_call(<<184, 87, 22, 58>> <> calldata) do
     _signature = hex!("0xb857163a")
     ABI.decode(log_b857163a_selector(), calldata)
@@ -26218,7 +26484,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ba535d9c_call/log(uint256,string,bool,bool)`."
-  @spec decode_log_ba535d9c_call(binary()) :: [term()]
+  @spec decode_log_ba535d9c_call(binary()) :: [
+          non_neg_integer() | String.t() | boolean() | boolean()
+        ]
   def decode_log_ba535d9c_call(<<186, 83, 93, 156>> <> calldata) do
     _signature = hex!("0xba535d9c")
     ABI.decode(log_ba535d9c_selector(), calldata)
@@ -26302,7 +26570,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_bc0b61fe_call/log(address,string,bool,string)`."
-  @spec decode_log_bc0b61fe_call(binary()) :: [term()]
+  @spec decode_log_bc0b61fe_call(binary()) :: [<<_::160>> | String.t() | boolean() | String.t()]
   def decode_log_bc0b61fe_call(<<188, 11, 97, 254>> <> calldata) do
     _signature = hex!("0xbc0b61fe")
     ABI.decode(log_bc0b61fe_selector(), calldata)
@@ -26372,7 +26640,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_bcfd9be0_call/log(uint256,address,address)`."
-  @spec decode_log_bcfd9be0_call(binary()) :: [term()]
+  @spec decode_log_bcfd9be0_call(binary()) :: [non_neg_integer() | <<_::160>> | <<_::160>>]
   def decode_log_bcfd9be0_call(<<188, 253, 155, 224>> <> calldata) do
     _signature = hex!("0xbcfd9be0")
     ABI.decode(log_bcfd9be0_selector(), calldata)
@@ -26468,7 +26736,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_be553481_call/log(address,address,uint256,uint256)`."
-  @spec decode_log_be553481_call(binary()) :: [term()]
+  @spec decode_log_be553481_call(binary()) :: [
+          <<_::160>> | <<_::160>> | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_be553481_call(<<190, 85, 52, 129>> <> calldata) do
     _signature = hex!("0xbe553481")
     ABI.decode(log_be553481_selector(), calldata)
@@ -26564,7 +26834,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_be984353_call/log(bool,uint256,uint256,bool)`."
-  @spec decode_log_be984353_call(binary()) :: [term()]
+  @spec decode_log_be984353_call(binary()) :: [
+          boolean() | non_neg_integer() | non_neg_integer() | boolean()
+        ]
   def decode_log_be984353_call(<<190, 152, 67, 83>> <> calldata) do
     _signature = hex!("0xbe984353")
     ABI.decode(log_be984353_selector(), calldata)
@@ -26660,7 +26932,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_bf01f891_call/log(address,uint256,string,uint256)`."
-  @spec decode_log_bf01f891_call(binary()) :: [term()]
+  @spec decode_log_bf01f891_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | String.t() | non_neg_integer()
+        ]
   def decode_log_bf01f891_call(<<191, 1, 248, 145>> <> calldata) do
     _signature = hex!("0xbf01f891")
     ABI.decode(log_bf01f891_selector(), calldata)
@@ -26732,7 +27006,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c0a302d8_call/log(bool,bool,address,bool)`."
-  @spec decode_log_c0a302d8_call(binary()) :: [term()]
+  @spec decode_log_c0a302d8_call(binary()) :: [boolean() | boolean() | <<_::160>> | boolean()]
   def decode_log_c0a302d8_call(<<192, 163, 2, 216>> <> calldata) do
     _signature = hex!("0xc0a302d8")
     ABI.decode(log_c0a302d8_selector(), calldata)
@@ -26822,7 +27096,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c21f64c7_call/log(bool,address,string,uint256)`."
-  @spec decode_log_c21f64c7_call(binary()) :: [term()]
+  @spec decode_log_c21f64c7_call(binary()) :: [
+          boolean() | <<_::160>> | String.t() | non_neg_integer()
+        ]
   def decode_log_c21f64c7_call(<<194, 31, 100, 199>> <> calldata) do
     _signature = hex!("0xc21f64c7")
     ABI.decode(log_c21f64c7_selector(), calldata)
@@ -26906,7 +27182,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c371c7db_call/log(string,string,bool,address)`."
-  @spec decode_log_c371c7db_call(binary()) :: [term()]
+  @spec decode_log_c371c7db_call(binary()) :: [String.t() | String.t() | boolean() | <<_::160>>]
   def decode_log_c371c7db_call(<<195, 113, 199, 219>> <> calldata) do
     _signature = hex!("0xc371c7db")
     ABI.decode(log_c371c7db_selector(), calldata)
@@ -26996,7 +27272,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c3a8a654_call/log(string,string,uint256,bool)`."
-  @spec decode_log_c3a8a654_call(binary()) :: [term()]
+  @spec decode_log_c3a8a654_call(binary()) :: [
+          String.t() | String.t() | non_neg_integer() | boolean()
+        ]
   def decode_log_c3a8a654_call(<<195, 168, 166, 84>> <> calldata) do
     _signature = hex!("0xc3a8a654")
     ABI.decode(log_c3a8a654_selector(), calldata)
@@ -27057,7 +27335,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c3b55635_call/log(string,bool)`."
-  @spec decode_log_c3b55635_call(binary()) :: [term()]
+  @spec decode_log_c3b55635_call(binary()) :: [String.t() | boolean()]
   def decode_log_c3b55635_call(<<195, 181, 86, 53>> <> calldata) do
     _signature = hex!("0xc3b55635")
     ABI.decode(log_c3b55635_selector(), calldata)
@@ -27127,7 +27405,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c3fc3970_call/log(bool,uint256,string)`."
-  @spec decode_log_c3fc3970_call(binary()) :: [term()]
+  @spec decode_log_c3fc3970_call(binary()) :: [boolean() | non_neg_integer() | String.t()]
   def decode_log_c3fc3970_call(<<195, 252, 57, 112>> <> calldata) do
     _signature = hex!("0xc3fc3970")
     ABI.decode(log_c3fc3970_selector(), calldata)
@@ -27217,7 +27495,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c4643e20_call/log(address,bool,uint256,bool)`."
-  @spec decode_log_c4643e20_call(binary()) :: [term()]
+  @spec decode_log_c4643e20_call(binary()) :: [
+          <<_::160>> | boolean() | non_neg_integer() | boolean()
+        ]
   def decode_log_c4643e20_call(<<196, 100, 62, 32>> <> calldata) do
     _signature = hex!("0xc4643e20")
     ABI.decode(log_c4643e20_selector(), calldata)
@@ -27313,7 +27593,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c598d185_call/log(uint256,uint256,uint256,bool)`."
-  @spec decode_log_c598d185_call(binary()) :: [term()]
+  @spec decode_log_c598d185_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | non_neg_integer() | boolean()
+        ]
   def decode_log_c598d185_call(<<197, 152, 209, 133>> <> calldata) do
     _signature = hex!("0xc598d185")
     ABI.decode(log_c598d185_selector(), calldata)
@@ -27403,7 +27685,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c5ad85f9_call/log(address,uint256,bool,string)`."
-  @spec decode_log_c5ad85f9_call(binary()) :: [term()]
+  @spec decode_log_c5ad85f9_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | boolean() | String.t()
+        ]
   def decode_log_c5ad85f9_call(<<197, 173, 133, 249>> <> calldata) do
     _signature = hex!("0xc5ad85f9")
     ABI.decode(log_c5ad85f9_selector(), calldata)
@@ -27499,7 +27783,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c67ea9d1_call/log(string,uint256,string,uint256)`."
-  @spec decode_log_c67ea9d1_call(binary()) :: [term()]
+  @spec decode_log_c67ea9d1_call(binary()) :: [
+          String.t() | non_neg_integer() | String.t() | non_neg_integer()
+        ]
   def decode_log_c67ea9d1_call(<<198, 126, 169, 209>> <> calldata) do
     _signature = hex!("0xc67ea9d1")
     ABI.decode(log_c67ea9d1_selector(), calldata)
@@ -27595,7 +27881,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c6acc7a8_call/log(uint256,bool,uint256,uint256)`."
-  @spec decode_log_c6acc7a8_call(binary()) :: [term()]
+  @spec decode_log_c6acc7a8_call(binary()) :: [
+          non_neg_integer() | boolean() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_c6acc7a8_call(<<198, 172, 199, 168>> <> calldata) do
     _signature = hex!("0xc6acc7a8")
     ABI.decode(log_c6acc7a8_selector(), calldata)
@@ -27660,7 +27948,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c91d5ed4_call/log(string,address,bool)`."
-  @spec decode_log_c91d5ed4_call(binary()) :: [term()]
+  @spec decode_log_c91d5ed4_call(binary()) :: [String.t() | <<_::160>> | boolean()]
   def decode_log_c91d5ed4_call(<<201, 29, 94, 212>> <> calldata) do
     _signature = hex!("0xc91d5ed4")
     ABI.decode(log_c91d5ed4_selector(), calldata)
@@ -27730,7 +28018,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_c95958d6_call/log(string,bool,uint256)`."
-  @spec decode_log_c95958d6_call(binary()) :: [term()]
+  @spec decode_log_c95958d6_call(binary()) :: [String.t() | boolean() | non_neg_integer()]
   def decode_log_c95958d6_call(<<201, 89, 88, 214>> <> calldata) do
     _signature = hex!("0xc95958d6")
     ABI.decode(log_c95958d6_selector(), calldata)
@@ -27815,7 +28103,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ca47c4eb_call/log(string,uint256,uint256)`."
-  @spec decode_log_ca47c4eb_call(binary()) :: [term()]
+  @spec decode_log_ca47c4eb_call(binary()) :: [String.t() | non_neg_integer() | non_neg_integer()]
   def decode_log_ca47c4eb_call(<<202, 71, 196, 235>> <> calldata) do
     _signature = hex!("0xca47c4eb")
     ABI.decode(log_ca47c4eb_selector(), calldata)
@@ -27885,7 +28173,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ca7733b1_call/log(string,uint256,bool)`."
-  @spec decode_log_ca7733b1_call(binary()) :: [term()]
+  @spec decode_log_ca7733b1_call(binary()) :: [String.t() | non_neg_integer() | boolean()]
   def decode_log_ca7733b1_call(<<202, 119, 51, 177>> <> calldata) do
     _signature = hex!("0xca7733b1")
     ABI.decode(log_ca7733b1_selector(), calldata)
@@ -27957,7 +28245,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cac43479_call/log(address,bool,bool,bool)`."
-  @spec decode_log_cac43479_call(binary()) :: [term()]
+  @spec decode_log_cac43479_call(binary()) :: [<<_::160>> | boolean() | boolean() | boolean()]
   def decode_log_cac43479_call(<<202, 196, 52, 121>> <> calldata) do
     _signature = hex!("0xcac43479")
     ABI.decode(log_cac43479_selector(), calldata)
@@ -28047,7 +28335,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cc32ab07_call/log(uint256,address,string,bool)`."
-  @spec decode_log_cc32ab07_call(binary()) :: [term()]
+  @spec decode_log_cc32ab07_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | String.t() | boolean()
+        ]
   def decode_log_cc32ab07_call(<<204, 50, 171, 7>> <> calldata) do
     _signature = hex!("0xcc32ab07")
     ABI.decode(log_cc32ab07_selector(), calldata)
@@ -28137,7 +28427,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ccf790a1_call/log(address,bool,uint256,address)`."
-  @spec decode_log_ccf790a1_call(binary()) :: [term()]
+  @spec decode_log_ccf790a1_call(binary()) :: [
+          <<_::160>> | boolean() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_ccf790a1_call(<<204, 247, 144, 161>> <> calldata) do
     _signature = hex!("0xccf790a1")
     ABI.decode(log_ccf790a1_selector(), calldata)
@@ -28227,7 +28519,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ceb5f4d7_call/log(bool,uint256,bool,bool)`."
-  @spec decode_log_ceb5f4d7_call(binary()) :: [term()]
+  @spec decode_log_ceb5f4d7_call(binary()) :: [
+          boolean() | non_neg_integer() | boolean() | boolean()
+        ]
   def decode_log_ceb5f4d7_call(<<206, 181, 244, 215>> <> calldata) do
     _signature = hex!("0xceb5f4d7")
     ABI.decode(log_ceb5f4d7_selector(), calldata)
@@ -28323,7 +28617,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cf009880_call/log(uint256,string,bool,uint256)`."
-  @spec decode_log_cf009880_call(binary()) :: [term()]
+  @spec decode_log_cf009880_call(binary()) :: [
+          non_neg_integer() | String.t() | boolean() | non_neg_integer()
+        ]
   def decode_log_cf009880_call(<<207, 0, 152, 128>> <> calldata) do
     _signature = hex!("0xcf009880")
     ABI.decode(log_cf009880_selector(), calldata)
@@ -28388,7 +28684,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cf020fb1_call/log(address,string,bool)`."
-  @spec decode_log_cf020fb1_call(binary()) :: [term()]
+  @spec decode_log_cf020fb1_call(binary()) :: [<<_::160>> | String.t() | boolean()]
   def decode_log_cf020fb1_call(<<207, 2, 15, 177>> <> calldata) do
     _signature = hex!("0xcf020fb1")
     ABI.decode(log_cf020fb1_selector(), calldata)
@@ -28478,7 +28774,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cf18105c_call/log(address,uint256,string,bool)`."
-  @spec decode_log_cf18105c_call(binary()) :: [term()]
+  @spec decode_log_cf18105c_call(binary()) :: [
+          <<_::160>> | non_neg_integer() | String.t() | boolean()
+        ]
   def decode_log_cf18105c_call(<<207, 24, 16, 92>> <> calldata) do
     _signature = hex!("0xcf18105c")
     ABI.decode(log_cf18105c_selector(), calldata)
@@ -28562,7 +28860,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_cf394485_call/log(address,bool,bool,address)`."
-  @spec decode_log_cf394485_call(binary()) :: [term()]
+  @spec decode_log_cf394485_call(binary()) :: [<<_::160>> | boolean() | boolean() | <<_::160>>]
   def decode_log_cf394485_call(<<207, 57, 68, 133>> <> calldata) do
     _signature = hex!("0xcf394485")
     ABI.decode(log_cf394485_selector(), calldata)
@@ -28651,7 +28949,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d1ed7a3c_call/log(uint256,uint256,uint256)`."
-  @spec decode_log_d1ed7a3c_call(binary()) :: [term()]
+  @spec decode_log_d1ed7a3c_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_d1ed7a3c_call(<<209, 237, 122, 60>> <> calldata) do
     _signature = hex!("0xd1ed7a3c")
     ABI.decode(log_d1ed7a3c_selector(), calldata)
@@ -28716,7 +29016,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d2763667_call/log(bool,address,address)`."
-  @spec decode_log_d2763667_call(binary()) :: [term()]
+  @spec decode_log_d2763667_call(binary()) :: [boolean() | <<_::160>> | <<_::160>>]
   def decode_log_d2763667_call(<<210, 118, 54, 103>> <> calldata) do
     _signature = hex!("0xd2763667")
     ABI.decode(log_d2763667_selector(), calldata)
@@ -28806,7 +29106,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d2d423cd_call/log(uint256,string,bool,string)`."
-  @spec decode_log_d2d423cd_call(binary()) :: [term()]
+  @spec decode_log_d2d423cd_call(binary()) :: [
+          non_neg_integer() | String.t() | boolean() | String.t()
+        ]
   def decode_log_d2d423cd_call(<<210, 212, 35, 205>> <> calldata) do
     _signature = hex!("0xd2d423cd")
     ABI.decode(log_d2d423cd_selector(), calldata)
@@ -28896,7 +29198,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d583c602_call/log(uint256,string,string,address)`."
-  @spec decode_log_d583c602_call(binary()) :: [term()]
+  @spec decode_log_d583c602_call(binary()) :: [
+          non_neg_integer() | String.t() | String.t() | <<_::160>>
+        ]
   def decode_log_d583c602_call(<<213, 131, 198, 2>> <> calldata) do
     _signature = hex!("0xd583c602")
     ABI.decode(log_d583c602_selector(), calldata)
@@ -28986,7 +29290,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d6019f1c_call/log(bool,address,uint256,bool)`."
-  @spec decode_log_d6019f1c_call(binary()) :: [term()]
+  @spec decode_log_d6019f1c_call(binary()) :: [
+          boolean() | <<_::160>> | non_neg_integer() | boolean()
+        ]
   def decode_log_d6019f1c_call(<<214, 1, 159, 28>> <> calldata) do
     _signature = hex!("0xd6019f1c")
     ABI.decode(log_d6019f1c_selector(), calldata)
@@ -29076,7 +29382,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d6aefad2_call/log(string,string,bool,uint256)`."
-  @spec decode_log_d6aefad2_call(binary()) :: [term()]
+  @spec decode_log_d6aefad2_call(binary()) :: [
+          String.t() | String.t() | boolean() | non_neg_integer()
+        ]
   def decode_log_d6aefad2_call(<<214, 174, 250, 210>> <> calldata) do
     _signature = hex!("0xd6aefad2")
     ABI.decode(log_d6aefad2_selector(), calldata)
@@ -29160,7 +29468,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_d812a167_call/log(bool,address,address,string)`."
-  @spec decode_log_d812a167_call(binary()) :: [term()]
+  @spec decode_log_d812a167_call(binary()) :: [boolean() | <<_::160>> | <<_::160>> | String.t()]
   def decode_log_d812a167_call(<<216, 18, 161, 103>> <> calldata) do
     _signature = hex!("0xd812a167")
     ABI.decode(log_d812a167_selector(), calldata)
@@ -29221,7 +29529,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_daf0d4aa_call/log(address,address)`."
-  @spec decode_log_daf0d4aa_call(binary()) :: [term()]
+  @spec decode_log_daf0d4aa_call(binary()) :: [<<_::160>> | <<_::160>>]
   def decode_log_daf0d4aa_call(<<218, 240, 212, 170>> <> calldata) do
     _signature = hex!("0xdaf0d4aa")
     ABI.decode(log_daf0d4aa_selector(), calldata)
@@ -29286,7 +29594,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_dbb4c247_call/log(bool,string,bool)`."
-  @spec decode_log_dbb4c247_call(binary()) :: [term()]
+  @spec decode_log_dbb4c247_call(binary()) :: [boolean() | String.t() | boolean()]
   def decode_log_dbb4c247_call(<<219, 180, 194, 71>> <> calldata) do
     _signature = hex!("0xdbb4c247")
     ABI.decode(log_dbb4c247_selector(), calldata)
@@ -29358,7 +29666,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_dc5e935b_call/log(bool,string,bool,bool)`."
-  @spec decode_log_dc5e935b_call(binary()) :: [term()]
+  @spec decode_log_dc5e935b_call(binary()) :: [boolean() | String.t() | boolean() | boolean()]
   def decode_log_dc5e935b_call(<<220, 94, 147, 91>> <> calldata) do
     _signature = hex!("0xdc5e935b")
     ABI.decode(log_dc5e935b_selector(), calldata)
@@ -29454,7 +29762,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ddb06521_call/log(uint256,address,uint256,string)`."
-  @spec decode_log_ddb06521_call(binary()) :: [term()]
+  @spec decode_log_ddb06521_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | non_neg_integer() | String.t()
+        ]
   def decode_log_ddb06521_call(<<221, 176, 101, 33>> <> calldata) do
     _signature = hex!("0xddb06521")
     ABI.decode(log_ddb06521_selector(), calldata)
@@ -29544,7 +29854,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_dddb9561_call/log(uint256,bool,bool,string)`."
-  @spec decode_log_dddb9561_call(binary()) :: [term()]
+  @spec decode_log_dddb9561_call(binary()) :: [
+          non_neg_integer() | boolean() | boolean() | String.t()
+        ]
   def decode_log_dddb9561_call(<<221, 219, 149, 97>> <> calldata) do
     _signature = hex!("0xdddb9561")
     ABI.decode(log_dddb9561_selector(), calldata)
@@ -29640,7 +29952,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_de03e774_call/log(uint256,bool,uint256,string)`."
-  @spec decode_log_de03e774_call(binary()) :: [term()]
+  @spec decode_log_de03e774_call(binary()) :: [
+          non_neg_integer() | boolean() | non_neg_integer() | String.t()
+        ]
   def decode_log_de03e774_call(<<222, 3, 231, 116>> <> calldata) do
     _signature = hex!("0xde03e774")
     ABI.decode(log_de03e774_selector(), calldata)
@@ -29724,7 +30038,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_de68f20a_call/log(string,string,string,string)`."
-  @spec decode_log_de68f20a_call(binary()) :: [term()]
+  @spec decode_log_de68f20a_call(binary()) :: [String.t() | String.t() | String.t() | String.t()]
   def decode_log_de68f20a_call(<<222, 104, 242, 10>> <> calldata) do
     _signature = hex!("0xde68f20a")
     ABI.decode(log_de68f20a_selector(), calldata)
@@ -29789,7 +30103,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_de9a9270_call/log(bool,address,string)`."
-  @spec decode_log_de9a9270_call(binary()) :: [term()]
+  @spec decode_log_de9a9270_call(binary()) :: [boolean() | <<_::160>> | String.t()]
   def decode_log_de9a9270_call(<<222, 154, 146, 112>> <> calldata) do
     _signature = hex!("0xde9a9270")
     ABI.decode(log_de9a9270_selector(), calldata)
@@ -29873,7 +30187,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_dfc4a2e8_call/log(address,bool,bool,string)`."
-  @spec decode_log_dfc4a2e8_call(binary()) :: [term()]
+  @spec decode_log_dfc4a2e8_call(binary()) :: [<<_::160>> | boolean() | boolean() | String.t()]
   def decode_log_dfc4a2e8_call(<<223, 196, 162, 232>> <> calldata) do
     _signature = hex!("0xdfc4a2e8")
     ABI.decode(log_dfc4a2e8_selector(), calldata)
@@ -29957,7 +30271,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e0625b29_call/log(string,bool,string,address)`."
-  @spec decode_log_e0625b29_call(binary()) :: [term()]
+  @spec decode_log_e0625b29_call(binary()) :: [String.t() | boolean() | String.t() | <<_::160>>]
   def decode_log_e0625b29_call(<<224, 98, 91, 41>> <> calldata) do
     _signature = hex!("0xe0625b29")
     ABI.decode(log_e0625b29_selector(), calldata)
@@ -30047,7 +30361,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e0e95b98_call/log(string,uint256,bool,address)`."
-  @spec decode_log_e0e95b98_call(binary()) :: [term()]
+  @spec decode_log_e0e95b98_call(binary()) :: [
+          String.t() | non_neg_integer() | boolean() | <<_::160>>
+        ]
   def decode_log_e0e95b98_call(<<224, 233, 91, 152>> <> calldata) do
     _signature = hex!("0xe0e95b98")
     ABI.decode(log_e0e95b98_selector(), calldata)
@@ -30112,7 +30428,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e0e9ad4f_call/log(string,address,string)`."
-  @spec decode_log_e0e9ad4f_call(binary()) :: [term()]
+  @spec decode_log_e0e9ad4f_call(binary()) :: [String.t() | <<_::160>> | String.t()]
   def decode_log_e0e9ad4f_call(<<224, 233, 173, 79>> <> calldata) do
     _signature = hex!("0xe0e9ad4f")
     ABI.decode(log_e0e9ad4f_selector(), calldata)
@@ -30208,7 +30524,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e21de278_call/log(string,uint256,uint256,address)`."
-  @spec decode_log_e21de278_call(binary()) :: [term()]
+  @spec decode_log_e21de278_call(binary()) :: [
+          String.t() | non_neg_integer() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_e21de278_call(<<226, 29, 226, 120>> <> calldata) do
     _signature = hex!("0xe21de278")
     ABI.decode(log_e21de278_selector(), calldata)
@@ -30273,7 +30591,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e298f47d_call/log(string,bool,string)`."
-  @spec decode_log_e298f47d_call(binary()) :: [term()]
+  @spec decode_log_e298f47d_call(binary()) :: [String.t() | boolean() | String.t()]
   def decode_log_e298f47d_call(<<226, 152, 244, 125>> <> calldata) do
     _signature = hex!("0xe298f47d")
     ABI.decode(log_e298f47d_selector(), calldata)
@@ -30357,7 +30675,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e2bfd60b_call/log(bool,address,string,bool)`."
-  @spec decode_log_e2bfd60b_call(binary()) :: [term()]
+  @spec decode_log_e2bfd60b_call(binary()) :: [boolean() | <<_::160>> | String.t() | boolean()]
   def decode_log_e2bfd60b_call(<<226, 191, 214, 11>> <> calldata) do
     _signature = hex!("0xe2bfd60b")
     ABI.decode(log_e2bfd60b_selector(), calldata)
@@ -30447,7 +30765,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e351140f_call/log(uint256,address,bool,bool)`."
-  @spec decode_log_e351140f_call(binary()) :: [term()]
+  @spec decode_log_e351140f_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | boolean() | boolean()
+        ]
   def decode_log_e351140f_call(<<227, 81, 20, 15>> <> calldata) do
     _signature = hex!("0xe351140f")
     ABI.decode(log_e351140f_selector(), calldata)
@@ -30537,7 +30857,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e3a9ca2f_call/log(bool,bool,string,uint256)`."
-  @spec decode_log_e3a9ca2f_call(binary()) :: [term()]
+  @spec decode_log_e3a9ca2f_call(binary()) :: [
+          boolean() | boolean() | String.t() | non_neg_integer()
+        ]
   def decode_log_e3a9ca2f_call(<<227, 169, 202, 47>> <> calldata) do
     _signature = hex!("0xe3a9ca2f")
     ABI.decode(log_e3a9ca2f_selector(), calldata)
@@ -30633,7 +30955,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e41b6f6f_call/log(string,uint256,bool,uint256)`."
-  @spec decode_log_e41b6f6f_call(binary()) :: [term()]
+  @spec decode_log_e41b6f6f_call(binary()) :: [
+          String.t() | non_neg_integer() | boolean() | non_neg_integer()
+        ]
   def decode_log_e41b6f6f_call(<<228, 27, 111, 111>> <> calldata) do
     _signature = hex!("0xe41b6f6f")
     ABI.decode(log_e41b6f6f_selector(), calldata)
@@ -30723,7 +31047,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e5e70b2b_call/log(bool,uint256,string,bool)`."
-  @spec decode_log_e5e70b2b_call(binary()) :: [term()]
+  @spec decode_log_e5e70b2b_call(binary()) :: [
+          boolean() | non_neg_integer() | String.t() | boolean()
+        ]
   def decode_log_e5e70b2b_call(<<229, 231, 11, 43>> <> calldata) do
     _signature = hex!("0xe5e70b2b")
     ABI.decode(log_e5e70b2b_selector(), calldata)
@@ -30819,7 +31145,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e8d3018d_call/log(uint256,string,address,uint256)`."
-  @spec decode_log_e8d3018d_call(binary()) :: [term()]
+  @spec decode_log_e8d3018d_call(binary()) :: [
+          non_neg_integer() | String.t() | <<_::160>> | non_neg_integer()
+        ]
   def decode_log_e8d3018d_call(<<232, 211, 1, 141>> <> calldata) do
     _signature = hex!("0xe8d3018d")
     ABI.decode(log_e8d3018d_selector(), calldata)
@@ -30889,7 +31217,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_e8defba9_call/log(bool,uint256,bool)`."
-  @spec decode_log_e8defba9_call(binary()) :: [term()]
+  @spec decode_log_e8defba9_call(binary()) :: [boolean() | non_neg_integer() | boolean()]
   def decode_log_e8defba9_call(<<232, 222, 251, 169>> <> calldata) do
     _signature = hex!("0xe8defba9")
     ABI.decode(log_e8defba9_selector(), calldata)
@@ -30973,7 +31301,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_eb1bff80_call/log(string,string,address,string)`."
-  @spec decode_log_eb1bff80_call(binary()) :: [term()]
+  @spec decode_log_eb1bff80_call(binary()) :: [String.t() | String.t() | <<_::160>> | String.t()]
   def decode_log_eb1bff80_call(<<235, 27, 255, 128>> <> calldata) do
     _signature = hex!("0xeb1bff80")
     ABI.decode(log_eb1bff80_selector(), calldata)
@@ -31069,7 +31397,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_eb7f6fd2_call/log(uint256,uint256,bool,uint256)`."
-  @spec decode_log_eb7f6fd2_call(binary()) :: [term()]
+  @spec decode_log_eb7f6fd2_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | boolean() | non_neg_integer()
+        ]
   def decode_log_eb7f6fd2_call(<<235, 127, 111, 210>> <> calldata) do
     _signature = hex!("0xeb7f6fd2")
     ABI.decode(log_eb7f6fd2_selector(), calldata)
@@ -31134,7 +31464,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_eb830c92_call/log(address,bool,bool)`."
-  @spec decode_log_eb830c92_call(binary()) :: [term()]
+  @spec decode_log_eb830c92_call(binary()) :: [<<_::160>> | boolean() | boolean()]
   def decode_log_eb830c92_call(<<235, 131, 12, 146>> <> calldata) do
     _signature = hex!("0xeb830c92")
     ABI.decode(log_eb830c92_selector(), calldata)
@@ -31224,7 +31554,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_eb928d7f_call/log(uint256,bool,string,bool)`."
-  @spec decode_log_eb928d7f_call(binary()) :: [term()]
+  @spec decode_log_eb928d7f_call(binary()) :: [
+          non_neg_integer() | boolean() | String.t() | boolean()
+        ]
   def decode_log_eb928d7f_call(<<235, 146, 141, 127>> <> calldata) do
     _signature = hex!("0xeb928d7f")
     ABI.decode(log_eb928d7f_selector(), calldata)
@@ -31308,7 +31640,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ed8f28f6_call/log(string,address,address,address)`."
-  @spec decode_log_ed8f28f6_call(binary()) :: [term()]
+  @spec decode_log_ed8f28f6_call(binary()) :: [String.t() | <<_::160>> | <<_::160>> | <<_::160>>]
   def decode_log_ed8f28f6_call(<<237, 143, 40, 246>> <> calldata) do
     _signature = hex!("0xed8f28f6")
     ABI.decode(log_ed8f28f6_selector(), calldata)
@@ -31398,7 +31730,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ef1cefe7_call/log(address,address,string,uint256)`."
-  @spec decode_log_ef1cefe7_call(binary()) :: [term()]
+  @spec decode_log_ef1cefe7_call(binary()) :: [
+          <<_::160>> | <<_::160>> | String.t() | non_neg_integer()
+        ]
   def decode_log_ef1cefe7_call(<<239, 28, 239, 231>> <> calldata) do
     _signature = hex!("0xef1cefe7")
     ABI.decode(log_ef1cefe7_selector(), calldata)
@@ -31488,7 +31822,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ef529018_call/log(uint256,bool,string,address)`."
-  @spec decode_log_ef529018_call(binary()) :: [term()]
+  @spec decode_log_ef529018_call(binary()) :: [
+          non_neg_integer() | boolean() | String.t() | <<_::160>>
+        ]
   def decode_log_ef529018_call(<<239, 82, 144, 24>> <> calldata) do
     _signature = hex!("0xef529018")
     ABI.decode(log_ef529018_selector(), calldata)
@@ -31578,7 +31914,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_ef72c513_call/log(uint256,address,bool,address)`."
-  @spec decode_log_ef72c513_call(binary()) :: [term()]
+  @spec decode_log_ef72c513_call(binary()) :: [
+          non_neg_integer() | <<_::160>> | boolean() | <<_::160>>
+        ]
   def decode_log_ef72c513_call(<<239, 114, 197, 19>> <> calldata) do
     _signature = hex!("0xef72c513")
     ABI.decode(log_ef72c513_selector(), calldata)
@@ -31643,7 +31981,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f08744e8_call/log(address,string,address)`."
-  @spec decode_log_f08744e8_call(binary()) :: [term()]
+  @spec decode_log_f08744e8_call(binary()) :: [<<_::160>> | String.t() | <<_::160>>]
   def decode_log_f08744e8_call(<<240, 135, 68, 232>> <> calldata) do
     _signature = hex!("0xf08744e8")
     ABI.decode(log_f08744e8_selector(), calldata)
@@ -31708,7 +32046,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f11699ed_call/log(address,bool,address)`."
-  @spec decode_log_f11699ed_call(binary()) :: [term()]
+  @spec decode_log_f11699ed_call(binary()) :: [<<_::160>> | boolean() | <<_::160>>]
   def decode_log_f11699ed_call(<<241, 22, 153, 237>> <> calldata) do
     _signature = hex!("0xf11699ed")
     ABI.decode(log_f11699ed_selector(), calldata)
@@ -31773,7 +32111,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f2a66286_call/log(address,address,bool)`."
-  @spec decode_log_f2a66286_call(binary()) :: [term()]
+  @spec decode_log_f2a66286_call(binary()) :: [<<_::160>> | <<_::160>> | boolean()]
   def decode_log_f2a66286_call(<<242, 166, 98, 134>> <> calldata) do
     _signature = hex!("0xf2a66286")
     ABI.decode(log_f2a66286_selector(), calldata)
@@ -31869,7 +32207,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f45d7d2c_call/log(string,string,uint256,uint256)`."
-  @spec decode_log_f45d7d2c_call(binary()) :: [term()]
+  @spec decode_log_f45d7d2c_call(binary()) :: [
+          String.t() | String.t() | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_f45d7d2c_call(<<244, 93, 125, 44>> <> calldata) do
     _signature = hex!("0xf45d7d2c")
     ABI.decode(log_f45d7d2c_selector(), calldata)
@@ -31953,7 +32293,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f4880ea4_call/log(bool,bool,address,address)`."
-  @spec decode_log_f4880ea4_call(binary()) :: [term()]
+  @spec decode_log_f4880ea4_call(binary()) :: [boolean() | boolean() | <<_::160>> | <<_::160>>]
   def decode_log_f4880ea4_call(<<244, 136, 14, 164>> <> calldata) do
     _signature = hex!("0xf4880ea4")
     ABI.decode(log_f4880ea4_selector(), calldata)
@@ -32043,7 +32383,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f5bc2249_call/log(bool,uint256,string,string)`."
-  @spec decode_log_f5bc2249_call(binary()) :: [term()]
+  @spec decode_log_f5bc2249_call(binary()) :: [
+          boolean() | non_neg_integer() | String.t() | String.t()
+        ]
   def decode_log_f5bc2249_call(<<245, 188, 34, 73>> <> calldata) do
     _signature = hex!("0xf5bc2249")
     ABI.decode(log_f5bc2249_selector(), calldata)
@@ -32104,7 +32446,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f666715a_call/log(uint256,uint256)`."
-  @spec decode_log_f666715a_call(binary()) :: [term()]
+  @spec decode_log_f666715a_call(binary()) :: [non_neg_integer() | non_neg_integer()]
   def decode_log_f666715a_call(<<246, 102, 113, 90>> <> calldata) do
     _signature = hex!("0xf666715a")
     ABI.decode(log_f666715a_selector(), calldata)
@@ -32188,7 +32530,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f7e36245_call/log(address,string,address,string)`."
-  @spec decode_log_f7e36245_call(binary()) :: [term()]
+  @spec decode_log_f7e36245_call(binary()) :: [<<_::160>> | String.t() | <<_::160>> | String.t()]
   def decode_log_f7e36245_call(<<247, 227, 98, 69>> <> calldata) do
     _signature = hex!("0xf7e36245")
     ABI.decode(log_f7e36245_selector(), calldata)
@@ -32272,7 +32614,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f808da20_call/log(address,address,address,string)`."
-  @spec decode_log_f808da20_call(binary()) :: [term()]
+  @spec decode_log_f808da20_call(binary()) :: [<<_::160>> | <<_::160>> | <<_::160>> | String.t()]
   def decode_log_f808da20_call(<<248, 8, 218, 32>> <> calldata) do
     _signature = hex!("0xf808da20")
     ABI.decode(log_f808da20_selector(), calldata)
@@ -32428,7 +32770,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f8f51b1e_call/log(string,address,uint256,uint256)`."
-  @spec decode_log_f8f51b1e_call(binary()) :: [term()]
+  @spec decode_log_f8f51b1e_call(binary()) :: [
+          String.t() | <<_::160>> | non_neg_integer() | non_neg_integer()
+        ]
   def decode_log_f8f51b1e_call(<<248, 245, 27, 30>> <> calldata) do
     _signature = hex!("0xf8f51b1e")
     ABI.decode(log_f8f51b1e_selector(), calldata)
@@ -32512,7 +32856,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_f9ad2b89_call/log(bool,bool,string,address)`."
-  @spec decode_log_f9ad2b89_call(binary()) :: [term()]
+  @spec decode_log_f9ad2b89_call(binary()) :: [boolean() | boolean() | String.t() | <<_::160>>]
   def decode_log_f9ad2b89_call(<<249, 173, 43, 137>> <> calldata) do
     _signature = hex!("0xf9ad2b89")
     ABI.decode(log_f9ad2b89_selector(), calldata)
@@ -32608,7 +32952,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fa8185af_call/log(uint256,uint256,uint256,address)`."
-  @spec decode_log_fa8185af_call(binary()) :: [term()]
+  @spec decode_log_fa8185af_call(binary()) :: [
+          non_neg_integer() | non_neg_integer() | non_neg_integer() | <<_::160>>
+        ]
   def decode_log_fa8185af_call(<<250, 129, 133, 175>> <> calldata) do
     _signature = hex!("0xfa8185af")
     ABI.decode(log_fa8185af_selector(), calldata)
@@ -32673,7 +33019,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fb772265_call/log(address,string,string)`."
-  @spec decode_log_fb772265_call(binary()) :: [term()]
+  @spec decode_log_fb772265_call(binary()) :: [<<_::160>> | String.t() | String.t()]
   def decode_log_fb772265_call(<<251, 119, 34, 101>> <> calldata) do
     _signature = hex!("0xfb772265")
     ABI.decode(log_fb772265_selector(), calldata)
@@ -32763,7 +33109,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fc4845f0_call/log(string,address,uint256,bool)`."
-  @spec decode_log_fc4845f0_call(binary()) :: [term()]
+  @spec decode_log_fc4845f0_call(binary()) :: [
+          String.t() | <<_::160>> | non_neg_integer() | boolean()
+        ]
   def decode_log_fc4845f0_call(<<252, 72, 69, 240>> <> calldata) do
     _signature = hex!("0xfc4845f0")
     ABI.decode(log_fc4845f0_selector(), calldata)
@@ -32828,7 +33176,7 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fcec75e0_call/log(string,address,address)`."
-  @spec decode_log_fcec75e0_call(binary()) :: [term()]
+  @spec decode_log_fcec75e0_call(binary()) :: [String.t() | <<_::160>> | <<_::160>>]
   def decode_log_fcec75e0_call(<<252, 236, 117, 224>> <> calldata) do
     _signature = hex!("0xfcec75e0")
     ABI.decode(log_fcec75e0_selector(), calldata)
@@ -32918,7 +33266,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fdb4f990_call/log(address,address,uint256,string)`."
-  @spec decode_log_fdb4f990_call(binary()) :: [term()]
+  @spec decode_log_fdb4f990_call(binary()) :: [
+          <<_::160>> | <<_::160>> | non_neg_integer() | String.t()
+        ]
   def decode_log_fdb4f990_call(<<253, 180, 249, 144>> <> calldata) do
     _signature = hex!("0xfdb4f990")
     ABI.decode(log_fdb4f990_selector(), calldata)
@@ -33008,7 +33358,9 @@ defmodule Cartouche.Contract.IConsole do
   end
 
   @doc "Decodes ABI calldata for `decode_log_fedd1fff_call/log(bool,uint256,string,address)`."
-  @spec decode_log_fedd1fff_call(binary()) :: [term()]
+  @spec decode_log_fedd1fff_call(binary()) :: [
+          boolean() | non_neg_integer() | String.t() | <<_::160>>
+        ]
   def decode_log_fedd1fff_call(<<254, 221, 31, 255>> <> calldata) do
     _signature = hex!("0xfedd1fff")
     ABI.decode(log_fedd1fff_selector(), calldata)

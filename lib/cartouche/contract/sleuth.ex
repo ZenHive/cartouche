@@ -90,7 +90,7 @@ defmodule Cartouche.Contract.Sleuth do
   end
 
   @doc "Decodes ABI calldata for `decode_query_call/query(bytes,bytes)`."
-  @spec decode_query_call(binary()) :: [term()]
+  @spec decode_query_call(binary()) :: [binary() | binary()]
   def decode_query_call(<<52, 104, 110, 175>> <> calldata) do
     _signature = hex!("0x34686eaf")
     ABI.decode(query_selector(), calldata)

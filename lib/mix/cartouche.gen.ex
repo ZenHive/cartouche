@@ -504,9 +504,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   defp build_encode_fn(%{selector: %{function_type: t}} = ctx) when t in [:fallback, :receive] do
-    %{names: names, encode_arguments: encode_arguments, input_types: input_types, sig: sig} = ctx
+    %{names: names, encode_arguments: encode_arguments, input_types: input_types} = ctx
     spec_args = spec_args(input_types)
-    doc = doc_for(:encode, names.encode, doc_signature(sig.abi, input_types))
+    doc = doc_for(:encode, names.encode, "#{t}(bytes)")
 
     quote do
       @doc unquote(doc)
@@ -1076,7 +1076,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     |> List.wrap()
   end
 
-  defp abi_decode_return_spec(_types), do: quote(do: [term()])
+  defp abi_decode_return_spec(types) do
+    types
+    |> Enum.map(&abi_argument_spec/1)
+    |> union_list_spec()
+  end
 
   @spec exec_vm_return_spec([ABI.FunctionSelector.argument_type()]) :: Macro.t()
   defp exec_vm_return_spec([]) do
@@ -1093,7 +1097,20 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  defp exec_vm_return_spec(_types), do: quote(do: {:ok, [term()]} | {:revert, String.t(), term()})
+  defp exec_vm_return_spec(types) do
+    value_spec = abi_decode_return_spec(types)
+
+    quote do
+      {:ok, unquote(value_spec)} | {:revert, String.t(), term()}
+    end
+  end
+
+  @spec union_list_spec([Macro.t()]) :: Macro.t()
+  defp union_list_spec(specs), do: [union_spec(specs)]
+
+  @spec union_spec([Macro.t()]) :: Macro.t()
+  defp union_spec([spec]), do: spec
+  defp union_spec([spec | rest]), do: {:|, [], [spec, union_spec(rest)]}
 
   @spec abi_type_spec(ABI.FunctionSelector.type()) :: Macro.t()
   defp abi_type_spec({:uint, _}), do: quote(do: non_neg_integer())
@@ -1153,13 +1170,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp doc_for(kind, generated_name, signature) do
     "#{Map.fetch!(@doc_purposes, kind)} for `#{generated_name}/#{signature}`."
   end
-
-  @spec doc_signature(binary(), [ABI.FunctionSelector.argument_type()]) :: binary()
-  defp doc_signature(signature, [%{type: :bytes, name: "data"}]) do
-    String.replace_suffix(signature, "()", "(bytes)")
-  end
-
-  defp doc_signature(signature, _input_types), do: signature
 
   defp select_emitted_fns(%{function_type: :error}, _has_deployed_bytecode, fns) do
     {[fns.selector_fn, fns.encode_fn, fns.decode_error_fn], nil, nil, fns.generic_error_fn}
