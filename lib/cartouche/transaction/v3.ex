@@ -129,7 +129,11 @@ defmodule Cartouche.Transaction.V3 do
   end
 
   @doc """
-  Decode a signed EIP-4844 blob transaction envelope.
+  Decode an EIP-4844 blob transaction envelope.
+
+  Accepts both signed transaction bytes and unsigned signing preimages. Unsigned
+  payloads omit `signature_y_parity`, `signature_r`, and `signature_s`; the
+  decoded struct sets those fields to `nil`.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
   def decode(<<0x03, trx_enc::binary>>) do

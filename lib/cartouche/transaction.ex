@@ -138,7 +138,7 @@ defmodule Cartouche.Transaction do
 
     @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
     defp decode_fields([nonce, gas_price, gas_limit, to, value, data, v, r, s])
-         when byte_size(r) <= 32 and byte_size(s) <= 32 do
+         when is_binary(to) and byte_size(to) == 20 and is_binary(data) and byte_size(r) <= 32 and byte_size(s) <= 32 do
       {:ok,
        %__MODULE__{
          nonce: :binary.decode_unsigned(nonce),
@@ -532,8 +532,11 @@ defmodule Cartouche.Transaction do
     end
 
     @doc ~S"""
-    Decode an RLP-encoded transaction. Note: the signature must have been
-    signed (i.e. properly encoded), not simply encoded for signing.
+    Decode an RLP-encoded transaction.
+
+    Accepts both signed payloads and unsigned signing payloads. Unsigned
+    payloads omit `signature_y_parity`, `signature_r`, and `signature_s`; those
+    fields decode as `nil`.
 
     ## Examples
 
@@ -719,7 +722,7 @@ defmodule Cartouche.Transaction do
     defp decode_access_list(_), do: {:error, "invalid v2 transaction"}
 
     @spec decode_address(binary()) :: {:ok, <<_::160>>} | {:error, String.t()}
-    defp decode_address(address) when byte_size(address) <= 20, do: {:ok, Cartouche.Hex.pad(address, 20)}
+    defp decode_address(address) when byte_size(address) == 20, do: {:ok, address}
     defp decode_address(_), do: {:error, "invalid v2 transaction"}
 
     @spec decode_word(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
@@ -738,10 +741,10 @@ defmodule Cartouche.Transaction do
     end
 
     @spec pad_address(binary()) :: <<_::160>>
-    defp pad_address(address) when byte_size(address) <= 20, do: Cartouche.Hex.pad(address, 20)
+    defp pad_address(address) when byte_size(address) == 20, do: address
 
     @spec pad_word(binary()) :: <<_::256>>
-    defp pad_word(word) when byte_size(word) <= 32, do: Cartouche.Hex.pad(word, 32)
+    defp pad_word(word) when byte_size(word) == 32, do: word
 
     @spec safe_rlp_decode(binary()) :: {:ok, term()} | {:error, String.t()}
     defp safe_rlp_decode(trx_enc) do
@@ -912,7 +915,28 @@ defmodule Cartouche.Transaction do
   end
 
   @doc """
-  Decodes a raw Ethereum transaction into the matching transaction struct.
+  Decodes raw Ethereum transaction bytes into the matching transaction struct.
+
+  Dispatches typed envelopes by their first byte:
+
+    * `0x02` - `Cartouche.Transaction.V2`
+    * `0x03` - `Cartouche.Transaction.V3`
+    * `0x04` - `Cartouche.Transaction.V4`
+
+  Legacy transactions are untyped RLP and are decoded as
+  `Cartouche.Transaction.V1` when the first byte is an RLP prefix (`>= 0x80`).
+  Empty input returns `{:error, :empty_transaction}`. Unknown typed envelopes
+  (`< 0x80`, including `0x01`) return `{:error, :unknown_envelope_type}`.
+
+  ## Examples
+
+      iex> tx = Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      iex> {:ok, decoded} = Cartouche.Transaction.decode(Cartouche.Transaction.V1.encode(tx))
+      iex> decoded == tx
+      true
+
+      iex> Cartouche.Transaction.decode(<<>>)
+      {:error, :empty_transaction}
   """
   @spec decode(binary()) ::
           {:ok, V1.t() | V2.t() | V3.t() | V4.t()}

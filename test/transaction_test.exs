@@ -357,6 +357,44 @@ defmodule Cartouche.TransactionTest do
       assert {:error, "invalid v2 transaction"} = V2.decode(bad_y_parity)
     end
 
+    test "rejects short destination and access-list widths" do
+      short_destination =
+        <<0x02>> <>
+          ExRLP.encode([1, 1, 1_000_000_000, 100_000_000_000, 100_000, <<1>>, 2, <<>>, []])
+
+      short_access_address =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [[<<2>>, [<<22::256>>]]]
+          ])
+
+      short_storage_key =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<>>,
+            [[<<2::160>>, [<<22>>]]]
+          ])
+
+      assert {:error, "invalid v2 transaction"} = V2.decode(short_destination)
+      assert {:error, "invalid v2 transaction"} = V2.decode(short_access_address)
+      assert {:error, "invalid v2 transaction"} = V2.decode(short_storage_key)
+    end
+
     test "rejects malformed scalar, data, and signature fields without raising" do
       bad_scalar =
         <<0x02>> <>
@@ -607,6 +645,41 @@ defmodule Cartouche.TransactionTest do
       assert {:error, "invalid v4 transaction"} = V4.decode(<<0x04, 0xFF>>)
     end
 
+    test "decode rejects malformed unsigned typed payloads" do
+      bad_access_list =
+        <<0x04>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1::160>>,
+            2,
+            <<1, 2, 3>>,
+            [[<<2::160>>, [<<1, 2>>]]],
+            [encode_authorization_for_test(signed_authorization(1, <<2::160>>, 7))]
+          ])
+
+      bad_destination =
+        <<0x04>> <>
+          ExRLP.encode([
+            1,
+            1,
+            1_000_000_000,
+            100_000_000_000,
+            100_000,
+            <<1, 2>>,
+            2,
+            <<1, 2, 3>>,
+            [],
+            [encode_authorization_for_test(signed_authorization(1, <<2::160>>, 7))]
+          ])
+
+      assert {:error, "invalid v4 transaction"} = V4.decode(bad_access_list)
+      assert {:error, "invalid v4 transaction"} = V4.decode(bad_destination)
+    end
+
     test "decode rejects malformed authorization entries" do
       malformed_authorization = [<<1>>, <<2::160>>, <<7>>, <<0>>, <<1, 0::256>>, <<2::256>>]
 
@@ -820,6 +893,11 @@ defmodule Cartouche.TransactionTest do
           ])
 
       assert {:error, "invalid v4 transaction"} = V4.decode(encoded)
+    end
+
+    test "decode returns errors for malformed RLP and wrong typed envelopes" do
+      assert {:error, "invalid v4 transaction"} = V4.decode(<<0x04, 0xFF>>)
+      assert {:error, "invalid v4 transaction"} = V4.decode(<<0x03, 0xC0>>)
     end
   end
 
@@ -1063,6 +1141,51 @@ defmodule Cartouche.TransactionTest do
         ])
 
       assert {:error, "invalid legacy transaction"} = V1.decode(adversarial)
+    end
+
+    test "decode/1 rejects malformed to and data fields without raising" do
+      malformed_to =
+        ExRLP.encode([
+          <<1>>,
+          <<100_000_000_000::40>>,
+          <<100_000::24>>,
+          [<<1::160>>],
+          <<2>>,
+          <<1, 2, 3>>,
+          <<42>>,
+          <<1::256>>,
+          <<2::256>>
+        ])
+
+      malformed_data =
+        ExRLP.encode([
+          <<1>>,
+          <<100_000_000_000::40>>,
+          <<100_000::24>>,
+          <<1::160>>,
+          <<2>>,
+          [<<1, 2, 3>>],
+          <<42>>,
+          <<1::256>>,
+          <<2::256>>
+        ])
+
+      short_to =
+        ExRLP.encode([
+          <<1>>,
+          <<100_000_000_000::40>>,
+          <<100_000::24>>,
+          <<1>>,
+          <<2>>,
+          <<1, 2, 3>>,
+          <<42>>,
+          <<1::256>>,
+          <<2::256>>
+        ])
+
+      assert {:error, "invalid legacy transaction"} = V1.decode(malformed_to)
+      assert {:error, "invalid legacy transaction"} = V1.decode(malformed_data)
+      assert {:error, "invalid legacy transaction"} = V1.decode(short_to)
     end
   end
 
