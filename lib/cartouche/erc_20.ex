@@ -130,7 +130,7 @@ defmodule Cartouche.Erc20 do
 
   ## Examples
 
-      iex> {:ok, _trx_id} = Cartouche.Erc20.transfer(<<0xCC>>, <<0xDD>>, 100_000)
+      iex> {:ok, _trx_id} = Cartouche.Erc20.transfer(<<0xCC::160>>, <<0xDD::160>>, 100_000)
   """
   @spec transfer(Cartouche.contract(), Cartouche.address(), non_neg_integer(), exec_opts()) ::
           {:ok, binary()} | {:error, term()}
