@@ -251,6 +251,74 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  describe "V2.encode/1 access_list shapes" do
+    test "unsigned encode accepts bare-address access list entries" do
+      hex =
+        1
+        |> V2.new(
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<1, 2, 3>>,
+          [<<2::160>>, <<3::160>>],
+          :goerli
+        )
+        |> V2.encode()
+        |> Cartouche.Hex.encode_big_hex()
+
+      assert hex ==
+               "0x02F8560501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003"
+    end
+
+    test "signed encode accepts bare-address access list entries" do
+      hex =
+        1
+        |> V2.new(
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<1, 2, 3>>,
+          [<<2::160>>, <<3::160>>],
+          true,
+          <<0x01::256>>,
+          <<0x02::256>>,
+          :goerli
+        )
+        |> V2.encode()
+        |> Cartouche.Hex.encode_big_hex()
+
+      assert hex ==
+               "0x02F8590501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003010102"
+    end
+
+    test "signed encode accepts mixed tuple and bare-address access list entries" do
+      hex =
+        1
+        |> V2.new(
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<1, 2, 3>>,
+          [{<<2::160>>, [<<22::256>>]}, <<3::160>>],
+          true,
+          <<0x01::256>>,
+          <<0x02::256>>,
+          :goerli
+        )
+        |> V2.encode()
+        |> Cartouche.Hex.encode_big_hex()
+
+      assert hex ==
+               "0x02F87D0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203F84DF7940000000000000000000000000000000000000002E1A00000000000000000000000000000000000000000000000000000000000000016940000000000000000000000000000000000000003010102"
+    end
+  end
+
   describe "V2.decode/1" do
     test "round-trips signed transactions" do
       transaction =

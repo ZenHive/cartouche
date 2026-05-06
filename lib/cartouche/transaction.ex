@@ -359,9 +359,9 @@ defmodule Cartouche.Transaction do
             amount: integer(),
             data: binary(),
             access_list: [{<<_::160>>, [<<_::256>>]}],
-            signature_y_parity: boolean(),
-            signature_r: <<_::256>>,
-            signature_s: <<_::256>>
+            signature_y_parity: boolean() | nil,
+            signature_r: <<_::256>> | nil,
+            signature_s: <<_::256>> | nil
           }
 
     defstruct [
@@ -620,10 +620,20 @@ defmodule Cartouche.Transaction do
         ...> |> Cartouche.Hex.encode_big_hex()
         "0x02EC0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203C0"
 
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], :goerli)
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02F8560501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003"
+
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], true, <<0x01::256>>, <<0x02::256>>, :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
         ...> |> Cartouche.Hex.encode_big_hex()
         "0x02EF0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203C0010102"
+
+        iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], true, <<0x01::256>>, <<0x02::256>>, :goerli)
+        ...> |> Cartouche.Transaction.V2.encode()
+        ...> |> Cartouche.Hex.encode_big_hex()
+        "0x02F8590501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003010102"
 
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}], true, <<0x01::256>>, <<0x00, 0x02::248>>, :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
@@ -666,67 +676,69 @@ defmodule Cartouche.Transaction do
                 signature_s: nil
               }
           ) :: binary()
-    def encode(%__MODULE__{
-          chain_id: chain_id,
-          nonce: nonce,
-          max_priority_fee_per_gas: max_priority_fee_per_gas,
-          max_fee_per_gas: max_fee_per_gas,
-          gas_limit: gas_limit,
-          destination: destination,
-          amount: amount,
-          data: data,
-          access_list: access_list,
-          signature_y_parity: signature_y_parity,
-          signature_r: signature_r,
-          signature_s: signature_s
-        })
+    def encode(
+          %__MODULE__{signature_y_parity: signature_y_parity, signature_r: signature_r, signature_s: signature_s} =
+            transaction
+        )
         when is_nil(signature_y_parity) or is_nil(signature_r) or is_nil(signature_s) do
-      <<0x02>> <>
-        ExRLP.encode([
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          access_list
-        ])
+      <<0x02>> <> ExRLP.encode(unsigned_rlp_list(transaction))
     end
 
-    def encode(%__MODULE__{
-          chain_id: chain_id,
-          nonce: nonce,
-          max_priority_fee_per_gas: max_priority_fee_per_gas,
-          max_fee_per_gas: max_fee_per_gas,
-          gas_limit: gas_limit,
-          destination: destination,
-          amount: amount,
-          data: data,
-          access_list: access_list,
-          signature_y_parity: signature_y_parity,
-          signature_r: signature_r,
-          signature_s: signature_s
-        }) do
+    def encode(
+          %__MODULE__{signature_y_parity: signature_y_parity, signature_r: signature_r, signature_s: signature_s} =
+            transaction
+        )
+        when is_boolean(signature_y_parity) and is_binary(signature_r) and is_binary(signature_s) do
       <<0x02>> <>
-        ExRLP.encode([
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          Enum.map(access_list, fn {address, storage} ->
-            [address, storage]
-          end),
-          if(signature_y_parity, do: 1, else: 0),
-          String.trim_leading(signature_r, <<0>>),
-          String.trim_leading(signature_s, <<0>>)
-        ])
+        (transaction
+         |> unsigned_rlp_list()
+         |> List.update_at(8, &normalize_access_list/1)
+         |> Kernel.++([
+           signature_y_parity(signature_y_parity),
+           String.trim_leading(signature_r, <<0>>),
+           String.trim_leading(signature_s, <<0>>)
+         ])
+         |> ExRLP.encode())
     end
+
+    @doc false
+    @spec unsigned_rlp_list(%__MODULE__{}) :: [term()]
+    defp unsigned_rlp_list(%__MODULE__{
+           chain_id: chain_id,
+           nonce: nonce,
+           max_priority_fee_per_gas: max_priority_fee_per_gas,
+           max_fee_per_gas: max_fee_per_gas,
+           gas_limit: gas_limit,
+           destination: destination,
+           amount: amount,
+           data: data,
+           access_list: access_list
+         }) do
+      [
+        chain_id,
+        nonce,
+        max_priority_fee_per_gas,
+        max_fee_per_gas,
+        gas_limit,
+        destination,
+        amount,
+        data,
+        access_list
+      ]
+    end
+
+    @spec normalize_access_list([{<<_::160>>, [<<_::256>>]} | <<_::160>>]) ::
+            [[<<_::160>> | [<<_::256>>]] | <<_::160>>]
+    defp normalize_access_list(access_list) do
+      Enum.map(access_list, fn
+        {address, storage} -> [address, storage]
+        bare_address when is_binary(bare_address) -> bare_address
+      end)
+    end
+
+    @spec signature_y_parity(boolean()) :: 0 | 1
+    defp signature_y_parity(true), do: 1
+    defp signature_y_parity(false), do: 0
 
     api(:decode, "Decode typed RLP bytes into an EIP-1559 transaction struct.",
       params: [
