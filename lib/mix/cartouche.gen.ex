@@ -902,7 +902,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_selector_fn(%{names: map(), selector: ABI.FunctionSelector.t(), sig: map()}) :: Macro.t()
+  @spec build_selector_fn(%{
+          :names => map(),
+          :selector => ABI.FunctionSelector.t(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_selector_fn(%{names: names, selector: selector, sig: sig}) do
     doc = doc_for(:selector, names.selector, sig.abi)
 
@@ -915,7 +920,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_event_selector_fn(%{names: map(), selector: ABI.FunctionSelector.t(), sig: map()}) :: Macro.t()
+  @spec build_event_selector_fn(%{
+          :names => map(),
+          :selector => ABI.FunctionSelector.t(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_event_selector_fn(%{names: names, selector: selector, sig: sig}) do
     doc = doc_for(:event_selector, names.event_selector, sig.abi)
 
@@ -928,7 +938,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_decode_event_fn(%{names: map(), sig: map()}) :: Macro.t()
+  @spec build_decode_event_fn(%{
+          :names => map(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_decode_event_fn(%{names: names, sig: sig}) do
     doc = doc_for(:decode_event, names.decode_event, sig.abi)
 
@@ -944,9 +958,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   @spec build_decode_call_fn(%{
-          names: map(),
-          input_types: [ABI.FunctionSelector.argument_type()],
-          sig: map()
+          :names => map(),
+          :input_types => [ABI.FunctionSelector.argument_type()],
+          :sig => map(),
+          optional(atom()) => any()
         }) :: Macro.t()
   defp build_decode_call_fn(%{names: names, input_types: input_types, sig: sig}) do
     doc = doc_for(:decode_call, names.decode_call, sig.abi)
@@ -963,9 +978,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   @spec build_decode_error_fn(%{
-          names: map(),
-          return_types: [ABI.FunctionSelector.argument_type()],
-          sig: map()
+          :names => map(),
+          :return_types => [ABI.FunctionSelector.argument_type()],
+          :sig => map(),
+          optional(atom()) => any()
         }) :: Macro.t()
   defp build_decode_error_fn(%{names: names, return_types: return_types, sig: sig}) do
     doc = doc_for(:decode_error, names.decode_error, sig.abi)
@@ -981,7 +997,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_decode_call_fn(%{names: map(), sig: map()}) :: Macro.t()
+  @spec build_generic_decode_call_fn(%{
+          :names => map(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_generic_decode_call_fn(%{names: names, sig: sig}) do
     quote do
       def decode_call(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = calldata) do
@@ -991,7 +1011,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_error_fn(%{names: map(), sig: map()}) :: Macro.t()
+  @spec build_generic_error_fn(%{
+          :names => map(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_generic_error_fn(%{names: names, sig: sig}) do
     quote do
       def decode_error(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = error) do
@@ -1001,7 +1025,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_event_fn(%{names: map(), sig: map()}) :: Macro.t()
+  @spec build_generic_event_fn(%{
+          :names => map(),
+          :sig => map(),
+          optional(atom()) => any()
+        }) :: Macro.t()
   defp build_generic_event_fn(%{names: names, sig: sig}) do
     quote do
       def decode_event([<<unquote_splicing(sig.signature_list)>> | _] = topics, data) do
@@ -1061,6 +1089,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
   @spec abi_argument_spec(ABI.FunctionSelector.argument_type()) :: Macro.t()
   defp abi_argument_spec(%{type: type}), do: abi_type_spec(type)
 
+  # ABI.FunctionSelector.t().returns is officially `type() | [argument_type()] | nil`
+  # (deps/hieroglyph/lib/abi/function_selector.ex:51), so the bare-type clause is
+  # part of the supported contract. The current upstream parser only emits nil or a
+  # list, which makes dialyzer narrow this clause to dead — suppress the narrowing
+  # rather than delete a clause that the public type still admits.
+  @dialyzer {:no_match, normalize_return_types: 1}
   @spec normalize_return_types(ABI.FunctionSelector.type() | [ABI.FunctionSelector.argument_type()] | nil) ::
           [ABI.FunctionSelector.argument_type()]
   defp normalize_return_types(nil), do: []
