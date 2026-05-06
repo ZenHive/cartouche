@@ -51,6 +51,38 @@ defmodule Cartouche.Solana.RPCTest do
     end
   end
 
+  defmodule RecordingClient do
+    @moduledoc false
+
+    @doc false
+    @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
+    def request(%Finch.Request{body: body}, _finch_name, _opts) do
+      decoded = Jason.decode!(body)
+      send(self(), {:solana_rpc_request, decoded})
+
+      response =
+        Jason.encode!(%{
+          "jsonrpc" => "2.0",
+          "result" => result_for(decoded["method"]),
+          "id" => decoded["id"]
+        })
+
+      {:ok, %Finch.Response{status: 200, body: response}}
+    end
+
+    @spec result_for(String.t()) :: term()
+    defp result_for("getAccountInfo") do
+      %{"context" => %{"slot" => 256_000}, "value" => nil}
+    end
+
+    defp result_for("getMultipleAccounts") do
+      %{"context" => %{"slot" => 256_000}, "value" => []}
+    end
+
+    defp result_for("getTransaction"), do: nil
+    defp result_for("sendTransaction"), do: "recorded_signature"
+  end
+
   # ---------------------------------------------------------------------------
   # Core transport
   # ---------------------------------------------------------------------------
@@ -123,6 +155,26 @@ defmodule Cartouche.Solana.RPCTest do
     test "returns nil for nonexistent account" do
       assert RPC.get_account_info(@nonexistent_pubkey) == {:ok, nil}
     end
+
+    test "accepts supported account encodings" do
+      Application.put_env(:cartouche, :client, RecordingClient)
+
+      for {encoding, expected} <- [
+            {:base58, "base58"},
+            {:base64, "base64"},
+            {:"base64+zstd", "base64+zstd"},
+            {:json_parsed, "jsonParsed"},
+            {"customEncoding", "customEncoding"}
+          ] do
+        assert {:ok, nil} = RPC.get_account_info(@test_pubkey, encoding: encoding)
+
+        assert_receive {:solana_rpc_request,
+                        %{
+                          "method" => "getAccountInfo",
+                          "params" => [_pubkey, %{"encoding" => ^expected}]
+                        }}
+      end
+    end
   end
 
   describe "get_multiple_accounts/2" do
@@ -138,6 +190,18 @@ defmodule Cartouche.Solana.RPCTest do
                rent_epoch: 0,
                space: 0
              }
+    end
+
+    test "propagates encoding config" do
+      Application.put_env(:cartouche, :client, RecordingClient)
+
+      assert {:ok, []} = RPC.get_multiple_accounts([@test_pubkey], encoding: :"base64+zstd")
+
+      assert_receive {:solana_rpc_request,
+                      %{
+                        "method" => "getMultipleAccounts",
+                        "params" => [[_pubkey], %{"encoding" => "base64+zstd"}]
+                      }}
     end
   end
 
@@ -205,6 +269,31 @@ defmodule Cartouche.Solana.RPCTest do
 
     test "returns nil for not-found transaction" do
       assert RPC.get_transaction("not_found_sig") == {:ok, nil}
+    end
+
+    test "accepts explicit transaction encodings" do
+      Application.put_env(:cartouche, :client, RecordingClient)
+
+      for {encoding, expected} <- [
+            {:base58, "base58"},
+            {:base64, "base64"},
+            {:json_parsed, "jsonParsed"},
+            {"json", "json"}
+          ] do
+        assert {:ok, nil} = RPC.get_transaction("some_signature", encoding: encoding)
+
+        assert_receive {:solana_rpc_request,
+                        %{
+                          "method" => "getTransaction",
+                          "params" => [
+                            "some_signature",
+                            %{
+                              "encoding" => ^expected,
+                              "maxSupportedTransactionVersion" => 0
+                            }
+                          ]
+                        }}
+      end
     end
   end
 
@@ -311,6 +400,12 @@ defmodule Cartouche.Solana.RPCTest do
 
       assert length(accounts) == 2
     end
+
+    test "requires a mint or program id filter" do
+      assert_raise ArgumentError, ~r/requires :mint or :program_id filter/, fn ->
+        RPC.get_token_accounts_by_owner(@test_pubkey, [])
+      end
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -368,6 +463,31 @@ defmodule Cartouche.Solana.RPCTest do
     test "sends raw bytes" do
       assert RPC.send_transaction(<<1, 2, 3>>) ==
                {:ok, "4Lz3raap9pEVGjT4EuVmNxTzMEj3EhVFKBonVFcnjiMwFKwEqh9TuPRYSv3TpK6ia4W33kMtJMdRJiL"}
+    end
+
+    test "accepts base58 encoding and send options" do
+      Application.put_env(:cartouche, :client, RecordingClient)
+
+      assert RPC.send_transaction(<<1, 2, 3>>,
+               encoding: :base58,
+               skip_preflight: true,
+               preflight_commitment: :confirmed,
+               max_retries: 5
+             ) == {:ok, "recorded_signature"}
+
+      assert_receive {:solana_rpc_request,
+                      %{
+                        "method" => "sendTransaction",
+                        "params" => [
+                          "Ldp",
+                          %{
+                            "encoding" => "base58",
+                            "skipPreflight" => true,
+                            "preflightCommitment" => "confirmed",
+                            "maxRetries" => 5
+                          }
+                        ]
+                      }}
     end
   end
 
