@@ -15,6 +15,8 @@ defmodule Cartouche do
   `ROADMAP.md` Phase 12 for the annotation pass.
   """
 
+  use Descripex, namespace: "/cartouche"
+
   alias Cartouche.Solana.ATA
   alias Cartouche.Solana.Keys
   alias Cartouche.Solana.PDA
@@ -58,6 +60,26 @@ defmodule Cartouche do
   @type bytes32 :: <<_::256>>
   @type contract :: address() | atom()
 
+  api(:describe, "Describe Cartouche's registered API surface at progressive levels of detail.",
+    params: [
+      mod_or_short: [
+        kind: :value,
+        description: "Full module atom, Descripex short name, or Cartouche alias to drill into."
+      ],
+      func_name: [
+        kind: :value,
+        description: "Function name atom for Level 3 detail."
+      ]
+    ],
+    returns: %{
+      type: :list_or_map,
+      description: "Level 1 module overview list, Level 2 function summary list, or Level 3 function detail map."
+    },
+    errors: [
+      argument_error: "Raised when the requested module short name or alias cannot be resolved."
+    ]
+  )
+
   @doc "Return a Level 1 overview of all modules in this library."
   @spec describe() :: [map()]
   def describe, do: Descripex.Describe.describe(@descripex_modules)
@@ -72,7 +94,7 @@ defmodule Cartouche do
     Descripex.Describe.describe(@descripex_modules, resolve_descripex_module(mod_or_short), func_name)
   end
 
-  @doc "Return the list of modules registered with this library."
+  @doc false
   @spec __descripex_modules__() :: [module()]
   def __descripex_modules__, do: @descripex_modules
 

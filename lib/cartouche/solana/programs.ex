@@ -66,7 +66,7 @@ defmodule Cartouche.Solana.Programs do
 
   api(:wrapped_sol_mint, "Return the Wrapped SOL mint address.",
     returns: %{
-      type: :solana_program_id,
+      type: :solana_mint,
       description: "32-byte mint address for base58 string `So11111111111111111111111111111111111111112`."
     }
   )
