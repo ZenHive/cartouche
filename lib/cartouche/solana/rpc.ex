@@ -64,7 +64,7 @@ defmodule Cartouche.Solana.RPC do
       type: :ok_error_tuple,
       ok: %{type: :term, description: "Decoded JSON-RPC `result` value returned by the node."},
       error: %{
-        type: :rpc_error,
+        type: :term,
         description:
           "JSON-RPC error map `%{code: integer, message: string}`, invalid params tuple, HTTP response, decode error, or string reason."
       }
