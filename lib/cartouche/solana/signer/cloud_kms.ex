@@ -72,11 +72,13 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
+    @spec key_version_name(any(), any(), any(), any(), any()) :: any()
     defp key_version_name(project, location, keychain, key, version) do
       "projects/#{project}/locations/#{location}/keyRings/#{keychain}" <>
         "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
+    @spec extract_ed25519_pubkey(any()) :: any()
     defp extract_ed25519_pubkey(pem) do
       [pem_entry] = :public_key.pem_decode(pem)
       {_type, der_bytes, _} = pem_entry
@@ -90,6 +92,7 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
+    @spec client(any()) :: any()
     defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do

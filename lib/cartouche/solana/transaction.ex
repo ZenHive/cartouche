@@ -108,6 +108,7 @@ defmodule Cartouche.Solana.Transaction do
     encode_compact_u16_acc(value, <<>>)
   end
 
+  @spec encode_compact_u16_acc(any(), any()) :: any()
   defp encode_compact_u16_acc(value, acc) when value < 0x80 do
     acc <> <<value>>
   end
@@ -135,6 +136,7 @@ defmodule Cartouche.Solana.Transaction do
     decode_compact_u16_acc(binary, 0, 0)
   end
 
+  @spec decode_compact_u16_acc(any(), any(), any()) :: any()
   defp decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) when byte >= 0x80 do
     decode_compact_u16_acc(rest, acc ||| (byte &&& 0x7F) <<< shift, shift + 7)
   end
@@ -147,6 +149,7 @@ defmodule Cartouche.Solana.Transaction do
           {:ok, non_neg_integer(), binary()} | {:error, :truncated_compact_u16}
   defp safe_decode_compact_u16(binary), do: safe_decode_compact_u16_acc(binary, 0, 0)
 
+  @spec safe_decode_compact_u16_acc(any(), any(), any()) :: any()
   defp safe_decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) when byte >= 0x80 do
     safe_decode_compact_u16_acc(rest, acc ||| (byte &&& 0x7F) <<< shift, shift + 7)
   end
@@ -211,24 +214,28 @@ defmodule Cartouche.Solana.Transaction do
     }
   end
 
+  @spec collect_accounts(any(), any()) :: any()
   defp collect_accounts(fee_payer, instructions) do
     # Start with fee payer as writable + signer
     init = %{fee_payer => {true, true}}
     Enum.reduce(instructions, init, &merge_instruction_accounts/2)
   end
 
+  @spec merge_instruction_accounts(any(), any()) :: any()
   defp merge_instruction_accounts(ix, acc) do
     # Program ID is a readonly non-signer
     acc = Map.update(acc, ix.program_id, {false, false}, fn {s, w} -> {s, w} end)
     Enum.reduce(ix.accounts, acc, &merge_account_meta/2)
   end
 
+  @spec merge_account_meta(any(), any()) :: any()
   defp merge_account_meta(am, acc) do
     Map.update(acc, am.pubkey, {am.is_signer, am.is_writable}, fn {s, w} ->
       {s or am.is_signer, w or am.is_writable}
     end)
   end
 
+  @spec partition_accounts(any(), any()) :: any()
   defp partition_accounts(account_map, fee_payer) do
     # Remove fee payer from the map; it's always first in writable_signers
     rest = Map.delete(account_map, fee_payer)
@@ -273,6 +280,7 @@ defmodule Cartouche.Solana.Transaction do
     header_bytes <> account_keys_bytes <> msg.recent_blockhash <> instructions_bytes
   end
 
+  @spec serialize_compiled_instruction(any()) :: any()
   defp serialize_compiled_instruction(%CompiledInstruction{} = ix) do
     <<ix.program_id_index>> <>
       encode_compact_u16(length(ix.accounts)) <>
@@ -362,6 +370,7 @@ defmodule Cartouche.Solana.Transaction do
 
   def deserialize_message(_), do: {:error, :invalid_message_header}
 
+  @spec read_signatures(any(), any(), any()) :: any()
   defp read_signatures(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_signatures(<<sig::binary-64, rest::binary>>, n, acc) when n > 0 do
@@ -370,6 +379,7 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_signatures(_, _, _), do: {:error, :insufficient_signature_data}
 
+  @spec read_pubkeys(any(), any(), any()) :: any()
   defp read_pubkeys(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_pubkeys(<<key::binary-32, rest::binary>>, n, acc) when n > 0 do
@@ -378,6 +388,7 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_pubkeys(_, _, _), do: {:error, :insufficient_pubkey_data}
 
+  @spec read_instructions(any(), any(), any()) :: any()
   defp read_instructions(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_instructions(<<program_id_index, rest::binary>>, n, acc) when n > 0 do

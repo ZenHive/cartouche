@@ -12,6 +12,7 @@ defmodule Cartouche.BlockTest do
   # logsBloom/extraData/etc. down to the smallest set deserialize/1 will
   # tolerate. Pre-London blocks omit baseFeePerGas, withdrawals*, and the
   # Cancun fields entirely on the wire.
+  @spec pre_london_params(any()) :: any()
   defp pre_london_params(extra \\ %{}) do
     Map.merge(
       %{

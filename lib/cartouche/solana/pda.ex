@@ -149,6 +149,7 @@ defmodule Cartouche.Solana.PDA do
     end
   end
 
+  @spec mod_pow(any(), any()) :: any()
   defp mod_pow(base, exp) do
     base |> :crypto.mod_pow(exp, @p) |> :binary.decode_unsigned()
   end

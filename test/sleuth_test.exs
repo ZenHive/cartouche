@@ -8,6 +8,7 @@ defmodule SleuthTest do
   defmodule StaticEthCallClient do
     @moduledoc false
 
+    @spec request(any(), any(), any()) :: any()
     def request(%Finch.Request{body: body}, _finch_name, _opts) do
       %{"id" => id} = Jason.decode!(body)
       result = Process.get(:sleuth_eth_call_result)
@@ -547,6 +548,7 @@ defmodule SleuthTest do
     end
   end
 
+  @spec query_static(any(), any(), any()) :: any()
   defp query_static(query_result, returns, opts \\ []) do
     set_sleuth_result(query_result)
     selector = %ABI.FunctionSelector{returns: returns}
@@ -559,10 +561,12 @@ defmodule SleuthTest do
     )
   end
 
+  @spec set_sleuth_result(any()) :: any()
   defp set_sleuth_result(query_result) do
     Process.put(:sleuth_eth_call_result, Base.encode16(ABI.encode("(bytes)", [{query_result}])))
   end
 
+  @spec existing_atom?(any()) :: any()
   defp existing_atom?(name) do
     _atom = String.to_existing_atom(name)
     true

@@ -362,6 +362,7 @@ defmodule Cartouche.Assembly do
     end)
   end
 
+  @spec resolve_jump_ptr(any(), any()) :: any()
   defp resolve_jump_ptr(jump_map, i) do
     case Map.fetch(jump_map, i) do
       {:ok, pc} ->
@@ -458,6 +459,7 @@ defmodule Cartouche.Assembly do
     disassemble_(bytes, [])
   end
 
+  @spec disassemble_(any(), any()) :: any()
   defp disassemble_(bytes, acc) do
     if bytes == <<>> do
       Enum.reverse(acc)
@@ -488,6 +490,7 @@ defmodule Cartouche.Assembly do
     |> assemble()
   end
 
+  @spec pad_to(any(), any()) :: any()
   defp pad_to(x, target_sz) do
     pad_sz = target_sz - byte_size(x)
 

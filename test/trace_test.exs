@@ -7,6 +7,7 @@ defmodule Cartouche.TraceTest do
   doctest Cartouche.Trace
   doctest Action
 
+  @spec base_trace_params() :: any()
   defp base_trace_params do
     %{
       "action" => %{

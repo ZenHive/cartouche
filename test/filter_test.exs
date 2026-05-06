@@ -8,6 +8,7 @@ defmodule Cartouche.FilterTest do
 
   defmodule ExpiredFilterClient do
     @moduledoc false
+    @spec request(any(), any(), any()) :: any()
     def request(%Finch.Request{body: body}, _finch_name, _opts) do
       %{"method" => method, "params" => params, "id" => id} = Jason.decode!(body)
 
@@ -55,6 +56,7 @@ defmodule Cartouche.FilterTest do
       {:ok, %Finch.Response{status: 200, body: Jason.encode!(response)}}
     end
 
+    @spec reference_type_log() :: any()
     defp reference_type_log do
       event = ABI.FunctionSelector.decode("Message(string indexed tag, uint256 value)")
       data = ABI.encode("(uint256)", [{7}])

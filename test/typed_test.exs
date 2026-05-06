@@ -74,6 +74,7 @@ defmodule Cartouche.TypedTest do
     end
   end
 
+  @spec message_params() :: any()
   defp message_params do
     %{
       "domain" => %{"name" => "Cartouche"},

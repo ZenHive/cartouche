@@ -4,6 +4,7 @@ defmodule Cartouche.TraceCallTest do
 
   doctest Cartouche.TraceCall
 
+  @spec single_trace_map() :: any()
   defp single_trace_map do
     %{
       "action" => %{

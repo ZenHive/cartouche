@@ -48,6 +48,7 @@ defmodule Cartouche.OpenChain do
       }
     end
 
+    @spec decode_entries(any()) :: any()
     defp decode_entries(entries) when is_map(entries) do
       entries
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
@@ -69,8 +70,10 @@ defmodule Cartouche.OpenChain do
     @spec http_client() :: module()
     def http_client, do: Application.get_env(:cartouche, :open_chain_client, Finch)
 
+    @spec base_url() :: any()
     defp base_url, do: Application.get_env(:cartouche, :open_chain_base_url, "https://api.4byte.sourcify.dev")
 
+    @spec finch_name() :: any()
     defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
 
     @doc false
@@ -93,6 +96,7 @@ defmodule Cartouche.OpenChain do
       end
     end
 
+    @spec decode_response(any()) :: any()
     defp decode_response(resp_body) do
       case Jason.decode(resp_body) do
         {:ok, %{"ok" => true, "result" => result}} -> {:ok, result}
@@ -194,6 +198,7 @@ defmodule Cartouche.OpenChain do
     end
   end
 
+  @spec pick_signature(any(), any(), any()) :: any()
   defp pick_signature([], _signature, _raise_on_multiple), do: {:error, "Signature not found"}
 
   defp pick_signature([{signature, abi}], signature, _raise_on_multiple), do: {:ok, abi}

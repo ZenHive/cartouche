@@ -8,6 +8,7 @@ defmodule Cartouche.Test.Client do
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
 
+  @spec parse_request(any()) :: any()
   defp parse_request(body) do
     %{
       "jsonrpc" => "2.0",

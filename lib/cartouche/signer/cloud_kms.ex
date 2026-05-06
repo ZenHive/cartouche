@@ -75,11 +75,13 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
+    @spec key_version_name(any(), any(), any(), any(), any()) :: any()
     defp key_version_name(project, location, keychain, key, version) do
       "projects/#{project}/locations/#{location}/keyRings/#{keychain}" <>
         "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
+    @spec client(any()) :: any()
     defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do

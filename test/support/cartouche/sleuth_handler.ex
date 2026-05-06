@@ -6,6 +6,7 @@ defmodule Cartouche.Test.SleuthHandler do
 
   @block_number_query BlockNumber.bytecode()
 
+  @spec handle_call(any(), any()) :: any()
   defp handle_call(@block_number_query, calldata) do
     case BlockNumber.decode_call(calldata) do
       {:ok, "query", _} ->
@@ -61,6 +62,7 @@ defmodule Cartouche.Test.SleuthHandler do
     end
   end
 
+  @spec encode_sleuth(any(), any()) :: any()
   defp encode_sleuth(query_selector, values) do
     return_selector = %ABI.FunctionSelector{
       types: [%{type: {:tuple, query_selector.returns}}]

@@ -10,6 +10,7 @@ defmodule Cartouche.VmTest do
 
   defmodule FFI do
     @moduledoc false
+    @spec simple_ffi(any()) :: any()
     def simple_ffi(args) do
       if byte_size(args) == 4 do
         case args do
@@ -27,6 +28,7 @@ defmodule Cartouche.VmTest do
       end
     end
 
+    @spec add_ffi(any()) :: any()
     def add_ffi(args) do
       if byte_size(args) == 0x44 do
         <<f::binary-size(4), a::256, b::256>> = args
@@ -44,6 +46,7 @@ defmodule Cartouche.VmTest do
       end
     end
 
+    @spec long_ffi(any()) :: any()
     def long_ffi(args) do
       if byte_size(args) == 4 do
         case args do

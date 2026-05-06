@@ -18,6 +18,7 @@ defmodule Cartouche.RPCTest do
     # Delegates to `Cartouche.Test.Client` so doctest fixtures still work,
     # and `send`s the decoded JSON-RPC request body back to the test pid
     # registered as `:cartouche_rpc_capture` for wire-format assertions.
+    @spec request(any(), any(), any()) :: any()
     def request(%Finch.Request{body: body} = req, finch_name, opts) do
       decoded = Jason.decode!(body)
       send(:cartouche_rpc_capture, {:rpc_request, decoded})

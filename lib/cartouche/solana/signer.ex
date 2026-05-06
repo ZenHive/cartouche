@@ -111,6 +111,7 @@ defmodule Cartouche.Solana.Signer do
     {:reply, address, Map.put(state, :address, address)}
   end
 
+  @spec sign_direct(any(), any()) :: any()
   defp sign_direct(message, {mod, fun, args}) do
     apply(mod, fun, [message | args])
   end

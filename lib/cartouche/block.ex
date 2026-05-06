@@ -304,6 +304,7 @@ defmodule Cartouche.Block do
     }
   end
 
+  @spec map(any(), any()) :: any()
   defp map(x, f) do
     if is_nil(x), do: nil, else: f.(x)
   end

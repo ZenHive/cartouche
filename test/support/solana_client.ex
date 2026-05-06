@@ -30,6 +30,7 @@ defmodule Cartouche.Solana.Test.Client do
   # getBalance
   # ---------------------------------------------------------------------------
 
+  @spec dispatch(any(), any()) :: any()
   defp dispatch("getBalance", [@error_account | _]) do
     {:rpc_error, %{"code" => -32_600, "message" => "Invalid request"}}
   end
@@ -383,6 +384,7 @@ defmodule Cartouche.Solana.Test.Client do
   # Helpers
   # ---------------------------------------------------------------------------
 
+  @spec token_account_fixture(any(), any(), any(), any()) :: any()
   defp token_account_fixture(pubkey, mint, amount, decimals) do
     %{
       "pubkey" => pubkey,

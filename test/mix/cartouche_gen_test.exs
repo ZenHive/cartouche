@@ -15,6 +15,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     {:ok, tmp: tmp}
   end
 
+  @spec pure_function_abi() :: any()
   defp pure_function_abi do
     [
       %{
@@ -27,6 +28,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     ]
   end
 
+  @spec synthetic_abi() :: any()
   defp synthetic_abi do
     __DIR__
     |> Path.join("../support/synthetic_abi.json")
@@ -34,6 +36,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     |> Jason.decode!()
   end
 
+  @spec write_artifact(any(), any(), any(), any(), any()) :: any()
   defp write_artifact(tmp, name, bytecode_object, abi, opts) do
     artifact = %{
       "abi" => abi,
@@ -43,18 +46,21 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     write_artifact_map(tmp, name, put_bytecode(artifact, bytecode_object))
   end
 
+  @spec write_artifact_map(any(), any(), any()) :: any()
   defp write_artifact_map(tmp, name, artifact) do
     path = Path.join(tmp, "#{name}.json")
     File.write!(path, Jason.encode!(artifact))
     path
   end
 
+  @spec metadata_for(any(), any()) :: any()
   defp metadata_for(name, opts) do
     if Keyword.get(opts, :metadata, true) do
       %{"settings" => %{"compilationTarget" => %{"src/#{name}.sol" => name}}}
     end
   end
 
+  @spec put_bytecode(any(), any()) :: any()
   defp put_bytecode(artifact, bytecode_object) do
     case bytecode_object do
       :absent ->
@@ -69,25 +75,30 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     end
   end
 
+  @spec put_bytecodes(any(), any(), any()) :: any()
   defp put_bytecodes(artifact, init_bytecode, deployed_bytecode) do
     artifact
     |> maybe_put_bytecode("bytecode", init_bytecode)
     |> maybe_put_bytecode("deployedBytecode", deployed_bytecode)
   end
 
+  @spec maybe_put_bytecode(any(), any(), any()) :: any()
   defp maybe_put_bytecode(artifact, _key, :absent), do: artifact
   defp maybe_put_bytecode(artifact, key, bytecode), do: Map.put(artifact, key, %{"object" => bytecode})
 
+  @spec generate(any(), any(), any(), any(), any()) :: any()
   defp generate(tmp, name, bytecode_object, abi \\ pure_function_abi(), opts \\ []) do
     artifact_path = write_artifact(tmp, name, bytecode_object, abi, opts)
     generate_file(tmp, name, artifact_path)
   end
 
+  @spec generate_artifact(any(), any(), any()) :: any()
   defp generate_artifact(tmp, name, artifact) do
     artifact_path = write_artifact_map(tmp, name, artifact)
     generate_file(tmp, name, artifact_path)
   end
 
+  @spec generate_file(any(), any(), any()) :: any()
   defp generate_file(tmp, name, artifact_path) do
     out_dir = Path.join(tmp, "out")
     File.mkdir_p!(out_dir)
@@ -106,6 +117,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     |> File.read!()
   end
 
+  @spec solidity_artifact(any(), any(), any()) :: any()
   defp solidity_artifact(name, abi, opts \\ []) do
     metadata =
       %{
@@ -124,6 +136,7 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     %{"abi" => abi, "metadata" => metadata}
   end
 
+  @spec ast_artifact(any(), any()) :: any()
   defp ast_artifact(name, abi) do
     %{
       "abi" => abi,
@@ -134,27 +147,32 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     }
   end
 
+  @spec abi_only_file(any(), any(), any()) :: any()
   defp abi_only_file(tmp, name, abi) do
     path = Path.join(tmp, "#{name}.json")
     File.write!(path, Jason.encode!(abi))
     path
   end
 
+  @spec generate_abi_file(any(), any(), any()) :: any()
   defp generate_abi_file(tmp, name, abi) do
     generate_file(tmp, name, abi_only_file(tmp, name, abi))
   end
 
+  @spec generated_module(any()) :: any()
   defp generated_module(contents) do
     [{module, _bytecode}] = Code.compile_string(contents)
     module
   end
 
+  @spec refute_bytecode_emission(any()) :: any()
   defp refute_bytecode_emission(contents) do
     refute contents =~ "def exec_vm_"
     refute contents =~ "def bytecode"
     refute contents =~ "def deployed_bytecode"
   end
 
+  @spec assert_bytecode_emission(any()) :: any()
   defp assert_bytecode_emission(contents) do
     assert contents =~ "def exec_vm_"
     assert contents =~ "def bytecode"

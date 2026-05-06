@@ -782,6 +782,7 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  @spec v4_transaction(any()) :: any()
   defp v4_transaction(authorization_list) do
     1
     |> V4.new(
@@ -798,10 +799,12 @@ defmodule Cartouche.TransactionTest do
     |> V4.add_signature(<<1::256, 2::256, 1>>)
   end
 
+  @spec signed_authorization(any(), any(), any()) :: any()
   defp signed_authorization(chain_id, address, nonce) do
     {chain_id, address, nonce, false, <<1::256>>, <<2::256>>}
   end
 
+  @spec encode_authorization_for_test(any()) :: any()
   defp encode_authorization_for_test({chain_id, address, nonce, y_parity, r, s}) do
     [chain_id, address, nonce, if(y_parity, do: 1, else: 0), r, s]
   end

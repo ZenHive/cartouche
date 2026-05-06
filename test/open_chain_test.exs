@@ -63,6 +63,7 @@ defmodule Cartouche.OpenChainTest do
     }
     """
 
+    @spec request(any(), any(), any()) :: any()
     def request(
           %Finch.Request{method: "GET", host: "example.com", path: "/open-chain/signature-database/v1/lookup"} = req,
           _finch_name,

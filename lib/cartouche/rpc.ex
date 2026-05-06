@@ -13,8 +13,11 @@ defmodule Cartouche.RPC do
 
   require Logger
 
+  @spec ethereum_node() :: any()
   defp ethereum_node, do: Cartouche.Application.ethereum_node()
+  @spec http_client() :: any()
   defp http_client, do: Cartouche.Application.http_client()
+  @spec finch_name() :: any()
   defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
   @default_timeout Application.compile_env(:cartouche, :timeout, 30_000)
 
@@ -39,6 +42,7 @@ defmodule Cartouche.RPC do
   @typedoc "All values that can appear inside an `{:error, reason}` tuple returned by `send_rpc/3`."
   @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | String.t()
 
+  @spec headers(any()) :: any()
   defp headers(extra_headers) do
     [
       {"Accept", "application/json"},
@@ -110,6 +114,7 @@ defmodule Cartouche.RPC do
     end)
   end
 
+  @spec build_revert_data(any(), any()) :: any()
   defp build_revert_data(data_hex, errors) do
     case Hex.decode_hex(data_hex) do
       {:ok, data} ->
@@ -120,6 +125,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec decode_revert_error(any(), any()) :: any()
   defp decode_revert_error(data, errors) do
     case decode_error(data, errors) do
       {:ok, error_abi, error_params} when not is_nil(error_params) ->
@@ -130,6 +136,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec decode_response(any(), any(), any(), any(), any()) :: any()
   defp decode_response(response, id, errors, method, body) do
     case Jason.decode(response) do
       {:ok, %{"jsonrpc" => "2.0", "result" => result, "id" => ^id}} ->
@@ -247,6 +254,7 @@ defmodule Cartouche.RPC do
       {:error, {:invalid_params, e}}
   end
 
+  @spec decode_result(any(), any(), any(), any()) :: any()
   defp decode_result(nil, result, _method, _verbose), do: {:ok, result}
 
   defp decode_result(:hex, result, _method, _verbose), do: Hex.decode_hex(result)
@@ -261,6 +269,7 @@ defmodule Cartouche.RPC do
     e -> log_decode_error(e, method, result, verbose)
   end
 
+  @spec log_decode_error(any(), any(), any(), any()) :: any()
   defp log_decode_error(e, method, result, true) do
     Logger.error("[Cartouche][RPC][#{method}] Error decoding response. error=#{inspect(e)}, response=#{inspect(result)}")
 
@@ -581,6 +590,7 @@ defmodule Cartouche.RPC do
   # through unchanged. Required because `Jason.encode!/1` would otherwise
   # serialise an integer as a bare JSON number, which real Ethereum nodes
   # reject with `-32602 Invalid params`.
+  @spec normalize_block_param(any()) :: any()
   defp normalize_block_param(n) when is_integer(n), do: Hex.encode_quantity(n)
   defp normalize_block_param(s) when is_binary(s), do: s
 
@@ -1482,6 +1492,7 @@ defmodule Cartouche.RPC do
   end
 
   @doc false
+  @spec prepare_trx_(any(), any(), any()) :: any()
   defp prepare_trx_(contract, call_data, opts) do
     {trx_type, opts} = Keyword.pop(opts, :trx_type, nil)
     {gas_price_user, opts} = Keyword.pop(opts, :gas_price, @default_gas_price)
@@ -1575,17 +1586,20 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec resolve_gas_limit(any(), any(), any(), any()) :: any()
   defp resolve_gas_limit(nil, trx, opts, gas_buffer) do
     with {:ok, limit} <- estimate_gas(trx, opts), do: {:ok, ceil(limit * gas_buffer)}
   end
 
   defp resolve_gas_limit(els, _trx, _opts, _gas_buffer), do: {:ok, els}
 
+  @spec maybe_trace_revert(any(), any(), any(), any(), any(), any()) :: any()
   defp maybe_trace_revert(trx, trx_res, true, debug_trace, opts, trace_opts),
     do: show_trace_revert(trx, trx_res, debug_trace, Keyword.merge(opts, trace_opts))
 
   defp maybe_trace_revert(_trx, trx_res, false, _debug_trace, _opts, _trace_opts), do: trx_res
 
+  @spec do_estimate_and_verify(any(), any()) :: any()
   defp do_estimate_and_verify(trx, %{
          verify: verify,
          gas_limit: gas_limit,
@@ -1687,6 +1701,7 @@ defmodule Cartouche.RPC do
     }
   end
 
+  @spec v1_gas_parameters(any(), any(), any()) :: any()
   defp v1_gas_parameters(user_gas_price, buffer, rpc_opts) do
     gas_price_result =
       if is_nil(user_gas_price) do
@@ -1702,6 +1717,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec v2_gas_parameters(any(), any(), any(), any()) :: any()
   defp v2_gas_parameters(user_base_fee, user_priority_fee, buffer, rpc_opts) do
     base_fee_result =
       if is_nil(user_base_fee) do
@@ -1725,6 +1741,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec get_fee_history_base_fee(any()) :: any()
   defp get_fee_history_base_fee(rpc_opts) do
     case fee_history(rpc_opts) do
       {:ok, %Cartouche.FeeHistory{base_fee_per_gas: [fee_history_base_fee | _]}} ->
@@ -1738,9 +1755,11 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec nil_map(any(), any()) :: any()
   defp nil_map(nil, _), do: nil
   defp nil_map(x, fun), do: fun.(x)
 
+  @spec show_trace_revert(any(), any(), any(), any()) :: any()
   defp show_trace_revert(trx, trx_res, debug_trace, opts) do
     with {:error, %{code: 3, message: "execution reverted" <> _} = error} <- trx_res do
       {tracer, label} =
@@ -1752,6 +1771,7 @@ defmodule Cartouche.RPC do
     end
   end
 
+  @spec apply_trace(any(), any(), any(), any(), any(), any()) :: any()
   defp apply_trace(tracer, label, trx, opts, error, trx_res) do
     case tracer.(trx, opts) do
       {:ok, trace} ->

@@ -232,6 +232,7 @@ defmodule Cartouche.Transaction.V3Test do
     end
   end
 
+  @spec representative_tx() :: any()
   defp representative_tx do
     1
     |> V3.new(

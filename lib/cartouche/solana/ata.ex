@@ -67,6 +67,7 @@ defmodule Cartouche.Solana.ATA do
   # data is the ATA program instruction index:
   #   <<0>> = Create (fails if ATA already exists)
   #   <<1>> = CreateIdempotent (no-op if ATA already exists)
+  @spec build_create_instruction(any(), any(), any(), any(), any()) :: any()
   defp build_create_instruction(payer, wallet, mint, data, opts) do
     token_program = Keyword.get(opts, :token_program, Programs.token_program())
     {ata, _bump} = find_address(wallet, mint, opts)

@@ -51,6 +51,7 @@ defmodule Cartouche.Solana.Token do
     end
   end
 
+  @spec summarize_balance(any(), any()) :: any()
   defp summarize_balance([], mint_b58), do: {:ok, %{amount: 0, decimals: 0, mint: mint_b58}}
 
   defp summarize_balance(accounts, mint_b58) do
@@ -58,6 +59,7 @@ defmodule Cartouche.Solana.Token do
     {:ok, %{amount: total, decimals: decimals, mint: mint_b58}}
   end
 
+  @spec accumulate_token_amount(any(), any()) :: any()
   defp accumulate_token_amount(acct, {sum, _dec}) do
     token_amount = get_in(acct, [:account, :data, "parsed", "info", "tokenAmount"])
     amount = String.to_integer(token_amount["amount"])
@@ -97,6 +99,7 @@ defmodule Cartouche.Solana.Token do
     end
   end
 
+  @spec maybe_include_token_2022(any(), any(), any(), any()) :: any()
   defp maybe_include_token_2022(balances, false, _wallet, _opts), do: {:ok, balances}
 
   defp maybe_include_token_2022(balances, true, wallet, opts) do
@@ -142,6 +145,7 @@ defmodule Cartouche.Solana.Token do
     [create_ix, transfer_ix]
   end
 
+  @spec parse_token_accounts(any()) :: any()
   defp parse_token_accounts(accounts) do
     Enum.map(accounts, fn acct ->
       info = get_in(acct, [:account, :data, "parsed", "info"])
