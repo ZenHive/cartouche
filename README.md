@@ -15,7 +15,7 @@ It bundles four capabilities into one library:
 
 **`0.2.0` — current release** (2026-05-05). Adds Pectra-era typed transactions (`Cartouche.Transaction.V3` for EIP-4844 blob, `V4` for EIP-7702 set-code), extracts `Cartouche.Transaction.Call` for `eth_call` shapes (collapses the `invalid_contract` cascade), preserves EIP-4844 blob fee fields on `Cartouche.Receipt`, hardens the RPC error envelope (`{:error, {:invalid_params, _}}` on encoder failure), adds `:eth` denomination support to `Cartouche.Wei.to_wei/1`, and pins regression coverage for the silent Hieroglyph 1.0–1.2 bug-fixes cartouche depends on. Earlier `0.1.x` releases ported the signet codebase under the `Cartouche` module tree, added the Solana surface, and shipped a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
-**Upcoming — Phase 12 (descripex adoption).** The top-level `Cartouche` module now exposes `describe/0,1,2` for machine-readable API discovery via [`descripex`](https://hexdocs.pm/descripex). `Cartouche.Signer` and `Cartouche.Keys` are registered (Task 83 ✅, 2026-05-06); the remaining annotation passes (Tasks 84-88) are in flight — see ROADMAP.md.
+**Upcoming — Phase 12 (descripex adoption).** The top-level `Cartouche` module now exposes `describe/0,1,2` for machine-readable API discovery via [`descripex`](https://hexdocs.pm/descripex). `Cartouche.Signer`, `Cartouche.Keys`, `Cartouche.RPC`, and its 6 response/trace decoders (`Block`, `Receipt`, `FeeHistory`, `DebugTrace`, `Trace`, `TraceCall` + 4 nested struct modules) are registered (Tasks 83 + 84 ✅, 2026-05-06); the remaining annotation passes (Tasks 85-88) are in flight — see ROADMAP.md.
 
 ## Installation
 
