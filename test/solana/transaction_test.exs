@@ -5,7 +5,9 @@ defmodule Cartouche.Solana.TransactionTest do
   alias Cartouche.Solana.SystemProgram
   alias Cartouche.Solana.Transaction
   alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Header
   alias Cartouche.Solana.Transaction.Instruction
+  alias Cartouche.Solana.Transaction.Message
 
   doctest Transaction
 
@@ -465,8 +467,8 @@ defmodule Cartouche.Solana.TransactionTest do
 
   describe "sign_partial/2 — zero-signer boundary (Task 57)" do
     test "returns empty signatures list when num_required_signatures == 0" do
-      msg = %Cartouche.Solana.Transaction.Message{
-        header: %Cartouche.Solana.Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 0,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -553,6 +555,148 @@ defmodule Cartouche.Solana.TransactionTest do
       assert {:ok, final} = Transaction.deserialize(final_bytes)
       assert final.signatures == full.signatures
       assert final.message == full.message
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Caller-error guards (Tasks 91 + 92)
+  # ---------------------------------------------------------------------------
+
+  describe "sign/2 — signer count mismatch (Task 91)" do
+    test "raises ArgumentError when seed count is less than num_required_signatures" do
+      msg = %Message{
+        header: %Header{
+          num_required_signatures: 2,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>, <<2::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      {_pub, single_seed} = Keys.from_seed(<<1::256>>)
+
+      assert_raise ArgumentError, ~r/signer count mismatch.*1.*2/i, fn ->
+        Transaction.sign(msg, [single_seed])
+      end
+    end
+
+    test "raises ArgumentError when seed count is greater than num_required_signatures" do
+      msg = %Message{
+        header: %Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      {_pub1, seed1} = Keys.from_seed(<<1::256>>)
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
+
+      assert_raise ArgumentError, ~r/signer count mismatch/i, fn ->
+        Transaction.sign(msg, [seed1, seed2])
+      end
+    end
+
+    test "succeeds when seed count exactly matches num_required_signatures" do
+      fee_payer = <<1::256>>
+      recipient = <<2::256>>
+      blockhash = <<99::256>>
+
+      ix = SystemProgram.transfer(fee_payer, recipient, 42)
+      msg = Transaction.build_message(fee_payer, [ix], blockhash)
+
+      {_pub, seed} = Keys.from_seed(<<1::256>>)
+
+      trx = Transaction.sign(msg, [seed])
+      assert length(trx.signatures) == msg.header.num_required_signatures
+    end
+  end
+
+  describe "add_signature/3 — index bounds check (Task 92)" do
+    test "raises ArgumentError when index equals length(transaction.signatures) (off-by-one)" do
+      msg = %Message{
+        header: %Header{
+          num_required_signatures: 2,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>, <<2::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      partial = Transaction.sign_partial(msg, %{})
+      sig = <<7::512>>
+
+      assert_raise ArgumentError, ~r/invalid signature slot.*index 2.*length 2/i, fn ->
+        Transaction.add_signature(partial, length(partial.signatures), sig)
+      end
+    end
+
+    test "raises ArgumentError on negative index" do
+      msg = %Message{
+        header: %Header{
+          num_required_signatures: 2,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>, <<2::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      partial = Transaction.sign_partial(msg, %{})
+      sig = <<7::512>>
+
+      assert_raise ArgumentError, ~r/invalid signature slot.*index -1/i, fn ->
+        Transaction.add_signature(partial, -1, sig)
+      end
+    end
+
+    test "raises ArgumentError on far-out-of-bounds positive index" do
+      msg = %Message{
+        header: %Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      partial = Transaction.sign_partial(msg, %{})
+      sig = <<7::512>>
+
+      assert_raise ArgumentError, ~r/invalid signature slot.*index 99.*length 1/i, fn ->
+        Transaction.add_signature(partial, 99, sig)
+      end
+    end
+
+    test "succeeds for in-range index (regression: existing behavior preserved)" do
+      fee_payer = <<1::256>>
+      new_account = <<2::256>>
+      owner = <<3::256>>
+      blockhash = <<99::256>>
+
+      ix = SystemProgram.create_account(fee_payer, new_account, 1_000_000, 165, owner)
+      msg = Transaction.build_message(fee_payer, [ix], blockhash)
+
+      {_pub2, seed2} = Keys.from_seed(<<2::256>>)
+      partial = Transaction.sign_partial(msg, %{1 => seed2})
+
+      {_pub1, seed1} = Keys.from_seed(<<1::256>>)
+      msg_bytes = Transaction.serialize_message(msg)
+      sponsor_sig = :crypto.sign(:eddsa, :none, msg_bytes, [seed1, :ed25519])
+
+      full = Transaction.add_signature(partial, 0, sponsor_sig)
+      assert Enum.at(full.signatures, 0) == sponsor_sig
+      assert Enum.at(full.signatures, 1) == Enum.at(partial.signatures, 1)
     end
   end
 
