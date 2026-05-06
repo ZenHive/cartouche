@@ -18,6 +18,8 @@ defmodule Cartouche.Solana.RPC do
       {:ok, %{blockhash: bh}} = Cartouche.Solana.RPC.get_latest_blockhash()
   """
 
+  use Descripex, namespace: "/solana/rpc"
+
   import Cartouche.HTTP, only: [normalize_finch_result: 1]
 
   alias Cartouche.Solana.Transaction
@@ -42,6 +44,32 @@ defmodule Cartouche.Solana.RPC do
   # ---------------------------------------------------------------------------
   # Core transport
   # ---------------------------------------------------------------------------
+
+  api(:send_rpc, "Send a raw JSON-RPC request to the configured Solana node.",
+    params: [
+      method: [kind: :value, description: "Solana JSON-RPC method name, such as `getSlot`."],
+      params: [kind: :value, description: "JSON-RPC positional params encoded as a list."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for RPC client configuration."
+      ]
+    ],
+    opts: [
+      solana_node: [kind: :value, description: "Override Solana JSON-RPC endpoint URL."],
+      timeout: [kind: :value, default: @default_timeout, description: "Request timeout in milliseconds."],
+      id: [kind: :value, description: "JSON-RPC request id; defaults to a generated positive integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :term, description: "Decoded JSON-RPC `result` value returned by the node."},
+      error: %{
+        type: :rpc_error,
+        description:
+          "JSON-RPC error map `%{code: integer, message: string}`, invalid params tuple, HTTP response, decode error, or string reason."
+      }
+    }
+  )
 
   @doc """
   Send a raw JSON-RPC request to the Solana node.
@@ -167,6 +195,25 @@ defmodule Cartouche.Solana.RPC do
   # Account methods
   # ---------------------------------------------------------------------------
 
+  api(:get_balance, "Get the SOL balance for an account.",
+    params: [
+      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes)."],
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :non_neg_integer, description: "Amount in lamports (1 SOL = 1_000_000_000 lamports)."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Get the SOL balance (in lamports) for an account.
 
@@ -180,6 +227,38 @@ defmodule Cartouche.Solana.RPC do
       {:ok, unwrap_value(result)}
     end
   end
+
+  api(:get_account_info, "Get account info for a Solana account.",
+    params: [
+      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes)."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for commitment, account encoding, and RPC client configuration."
+      ]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."],
+      encoding: [
+        kind: :value,
+        default: :base64,
+        description: "Account data encoding: `:base64`, `:base58`, `:\"base64+zstd\"`, `:json_parsed`, or string."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :account_info_or_nil,
+        description:
+          "`nil` when the account is missing, or a map with keys `:data`, `:executable`, `:lamports`, `:owner`, `:rent_epoch`, and `:space`."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get account info for a pubkey. Returns `nil` if the account doesn't exist.
@@ -196,6 +275,38 @@ defmodule Cartouche.Solana.RPC do
       {:ok, deserialize_account_info(unwrap_value(result))}
     end
   end
+
+  api(:get_multiple_accounts, "Get account info for multiple Solana accounts.",
+    params: [
+      pubkeys: [kind: :value, description: "List of Base58-encoded Solana public keys (32 bytes each), max 100."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for commitment, account encoding, and RPC client configuration."
+      ]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."],
+      encoding: [
+        kind: :value,
+        default: :base64,
+        description: "Account data encoding: `:base64`, `:base58`, `:\"base64+zstd\"`, `:json_parsed`, or string."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :account_info_list,
+        description:
+          "List containing `nil` for missing accounts or account maps with keys `:data`, `:executable`, `:lamports`, `:owner`, `:rent_epoch`, and `:space`."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get account info for multiple pubkeys (max 100).
@@ -230,6 +341,29 @@ defmodule Cartouche.Solana.RPC do
   # Blockhash / slot methods
   # ---------------------------------------------------------------------------
 
+  api(:get_latest_blockhash, "Get the latest blockhash and last valid block height.",
+    params: [
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :map,
+        keys: [:blockhash, :last_valid_block_height],
+        description:
+          "Map with decoded `:blockhash` bytes from the node's base58 blockhash string and integer `:last_valid_block_height`."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Get the latest blockhash and its last valid block height.
   """
@@ -248,6 +382,24 @@ defmodule Cartouche.Solana.RPC do
     end
   end
 
+  api(:get_slot, "Get the current slot.",
+    params: [
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :non_neg_integer, description: "Current Solana slot as a non-negative integer."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Get the current slot.
   """
@@ -255,6 +407,24 @@ defmodule Cartouche.Solana.RPC do
   def get_slot(opts \\ []) do
     send_rpc("getSlot", params_with_config([], opts), opts)
   end
+
+  api(:get_block_height, "Get the current block height.",
+    params: [
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :non_neg_integer, description: "Current Solana block height as a non-negative integer."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get the current block height.
@@ -267,6 +437,42 @@ defmodule Cartouche.Solana.RPC do
   # ---------------------------------------------------------------------------
   # Transaction methods
   # ---------------------------------------------------------------------------
+
+  api(:get_transaction, "Get a transaction by its base58 transaction signature.",
+    params: [
+      signature: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.RPC.send_transaction/2",
+        description: "Base58-encoded Solana transaction signature."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for commitment, response encoding, and RPC client configuration."
+      ]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description:
+          "Commitment level atom: `:finalized` or `:confirmed`; `:processed` is not supported by Solana for this method."
+      ],
+      encoding: [
+        kind: :value,
+        default: :json,
+        description: "Transaction response encoding: `:json`, `:json_parsed`, `:base64`, or `:base58`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :transaction_map_or_nil,
+        description:
+          "`nil` when not found, or the Solana RPC transaction response map including slot, meta, transaction, and block time fields as returned by the node."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get a transaction by its signature.
@@ -289,6 +495,29 @@ defmodule Cartouche.Solana.RPC do
 
     send_rpc("getTransaction", [signature, config], opts)
   end
+
+  api(:get_signature_statuses, "Get status records for base58 transaction signatures.",
+    params: [
+      signatures: [kind: :value, description: "List of base58-encoded Solana transaction signatures, max 256."],
+      opts: [kind: :value, default: [], description: "Keyword options for status lookup and RPC client configuration."]
+    ],
+    opts: [
+      search_transaction_history: [
+        kind: :value,
+        default: false,
+        description: "Boolean flag to search beyond the recent status cache."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :signature_status_list,
+        description:
+          "List containing `nil` for unknown signatures or maps with keys `:slot`, `:confirmations`, `:err`, and `:confirmation_status` (`:processed`, `:confirmed`, `:finalized`, or `nil`)."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get the statuses of transaction signatures (max 256).
@@ -334,6 +563,25 @@ defmodule Cartouche.Solana.RPC do
   defp parse_commitment("confirmed"), do: :confirmed
   defp parse_commitment("finalized"), do: :finalized
 
+  api(:get_minimum_balance_for_rent_exemption, "Get minimum rent-exempt balance for account data length.",
+    params: [
+      data_length: [kind: :value, description: "Account data length in bytes as a non-negative integer."],
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :non_neg_integer, description: "Amount in lamports (1 SOL = 1_000_000_000 lamports)."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Get the minimum balance for rent exemption for a given data size.
   """
@@ -350,6 +598,30 @@ defmodule Cartouche.Solana.RPC do
   # ---------------------------------------------------------------------------
   # Token methods
   # ---------------------------------------------------------------------------
+
+  api(:get_token_account_balance, "Get the SPL token balance for a token account.",
+    params: [
+      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) for the SPL token account."],
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :map,
+        keys: [:amount, :decimals, :ui_amount_string],
+        description:
+          "Map with integer raw token `:amount`, integer `:decimals`, and RPC-provided human-readable `:ui_amount_string`."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get the token balance for an SPL Token account.
@@ -378,6 +650,43 @@ defmodule Cartouche.Solana.RPC do
        }}
     end
   end
+
+  api(:get_token_accounts_by_owner, "Get SPL token accounts owned by a wallet.",
+    params: [
+      owner: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) for the owning wallet."],
+      filter: [
+        kind: :value,
+        description:
+          "Keyword list with exactly one filter: `:mint` or `:program_id`, each a Base58-encoded Solana public key (32 bytes)."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for commitment, account encoding, and RPC client configuration."
+      ]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."],
+      encoding: [
+        kind: :value,
+        default: :json_parsed,
+        description: "Account data encoding; defaults to `:json_parsed` for structured token account data."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :token_account_list,
+        description:
+          "List of maps with keys `:pubkey` (base58 account address) and `:account` (deserialized account info map)."
+      },
+      error: %{type: :term, description: "RPC transport, node, decode error, or `ArgumentError` for missing filters."}
+    }
+  )
 
   @doc """
   Get all token accounts owned by a wallet.
@@ -429,6 +738,26 @@ defmodule Cartouche.Solana.RPC do
   # Fee methods
   # ---------------------------------------------------------------------------
 
+  api(:get_recent_prioritization_fees, "Get recent prioritization fees for optional account locks.",
+    params: [
+      addresses: [
+        kind: :value,
+        default: [],
+        description: "List of Base58-encoded Solana public keys (32 bytes) for accounts that transactions lock."
+      ],
+      opts: [kind: :value, default: [], description: "Keyword options for RPC client configuration."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :prioritization_fee_list,
+        description:
+          "List of maps with integer `:slot` and integer `:prioritization_fee` in micro-lamports per compute unit as returned by Solana RPC."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Get recent prioritization fees. Pass account addresses to see fees for
   transactions locking those accounts.
@@ -454,6 +783,17 @@ defmodule Cartouche.Solana.RPC do
   # Node info methods
   # ---------------------------------------------------------------------------
 
+  api(:get_health, "Check Solana node health.",
+    params: [
+      opts: [kind: :value, default: [], description: "Keyword options for RPC client configuration."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :atom, description: "`:ok` when the node reports healthy."},
+      error: %{type: :term, description: "RPC transport, node, or decode error when unhealthy or unreachable."}
+    }
+  )
+
   @doc """
   Check node health. Returns `:ok` if healthy, `{:error, ...}` if unhealthy.
   """
@@ -465,6 +805,21 @@ defmodule Cartouche.Solana.RPC do
       error -> error
     end
   end
+
+  api(:get_version, "Get Solana node version information.",
+    params: [
+      opts: [kind: :value, default: [], description: "Keyword options for RPC client configuration."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :map,
+        keys: [:solana_core, :feature_set],
+        description: "Map with string `:solana_core` version and integer `:feature_set`."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
 
   @doc """
   Get the node version.
@@ -481,6 +836,40 @@ defmodule Cartouche.Solana.RPC do
   # ---------------------------------------------------------------------------
   # Write methods
   # ---------------------------------------------------------------------------
+
+  api(:send_transaction, "Send a signed Solana transaction to the network.",
+    params: [
+      transaction: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.Transaction.serialize/1",
+        description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for transaction submission and RPC client configuration."
+      ]
+    ],
+    opts: [
+      encoding: [
+        kind: :value,
+        default: :base64,
+        description: "Wire encoding for serialized transaction bytes: `:base64` or `:base58`."
+      ],
+      skip_preflight: [kind: :value, default: false, description: "Boolean flag to skip preflight checks."],
+      preflight_commitment: [
+        kind: :value,
+        description: "Preflight commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      max_retries: [kind: :value, description: "Maximum retry count as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :string, description: "Base58-encoded Solana transaction signature."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    },
+    composes_with: [:send_and_confirm]
+  )
 
   @doc """
   Send a signed transaction to the network.
@@ -530,6 +919,40 @@ defmodule Cartouche.Solana.RPC do
     send_rpc("sendTransaction", [encoded, config], opts)
   end
 
+  api(:simulate_transaction, "Simulate a signed Solana transaction without submitting it.",
+    params: [
+      transaction: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.Transaction.serialize/1",
+        description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
+      ],
+      opts: [kind: :value, default: [], description: "Keyword options for simulation and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      sig_verify: [kind: :value, default: false, description: "Boolean flag to verify signatures during simulation."],
+      replace_recent_blockhash: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.RPC.get_latest_blockhash/1",
+        default: false,
+        description: "Boolean flag allowing the node to replace the transaction's recent blockhash for simulation."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{
+        type: :map,
+        keys: [:err, :logs, :units_consumed],
+        description:
+          "Map with simulation `:err`, list of log strings in `:logs`, and integer `:units_consumed` when provided."
+      },
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Simulate a transaction without submitting it.
 
@@ -569,6 +992,26 @@ defmodule Cartouche.Solana.RPC do
     end
   end
 
+  api(:request_airdrop, "Request a devnet/testnet SOL airdrop.",
+    params: [
+      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) receiving the airdrop."],
+      lamports: [kind: :value, description: "Amount in lamports (1 SOL = 1_000_000_000 lamports)."],
+      opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        description: "Commitment level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      min_context_slot: [kind: :value, description: "Minimum context slot as a non-negative integer."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :string, description: "Base58-encoded Solana transaction signature for the airdrop."},
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    }
+  )
+
   @doc """
   Request an airdrop of SOL (devnet/testnet only).
 
@@ -587,6 +1030,44 @@ defmodule Cartouche.Solana.RPC do
   # ---------------------------------------------------------------------------
   # High-level helpers
   # ---------------------------------------------------------------------------
+
+  api(:send_and_confirm, "Send a signed transaction and poll until it reaches the target confirmation level.",
+    params: [
+      transaction: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.Transaction.serialize/1",
+        description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options for submission, confirmation polling, and RPC client configuration."
+      ]
+    ],
+    opts: [
+      commitment: [
+        kind: :value,
+        default: :confirmed,
+        description: "Target confirmation level atom: `:finalized`, `:confirmed`, or `:processed`."
+      ],
+      timeout: [kind: :value, default: 30_000, description: "Maximum confirmation wait in milliseconds."],
+      poll_interval: [kind: :value, default: 500, description: "Polling interval in milliseconds."],
+      encoding: [
+        kind: :value,
+        default: :base64,
+        description: "Wire encoding for serialized transaction bytes when submitting: `:base64` or `:base58`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      ok: %{type: :string, description: "Base58-encoded Solana transaction signature once confirmed."},
+      error: %{
+        type: :term,
+        description: "RPC error, `:timeout`, or `{:transaction_error, err}` from signature status."
+      }
+    },
+    composes_with: [:send_transaction, :get_signature_statuses]
+  )
 
   @doc """
   Send a transaction and poll for confirmation.

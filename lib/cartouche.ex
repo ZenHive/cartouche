@@ -23,6 +23,7 @@ defmodule Cartouche do
   @descripex_modules [
     Cartouche.Signer,
     Cartouche.Keys,
+    Cartouche.Solana.RPC,
     Cartouche.Transaction,
     V1,
     V2,
