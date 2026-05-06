@@ -5,10 +5,19 @@ defmodule Cartouche.Erc20 do
   transaction to it.
   """
 
+  use Descripex, namespace: "/ethereum/erc20"
+
   @type call_opts() :: Keyword.t()
   @type exec_opts() :: Keyword.t()
 
   @errors []
+
+  api(:errors, "Return the ERC-20 error signatures known to this wrapper.",
+    returns: %{
+      type: :abi_error_signatures,
+      description: "List of ABI error signature strings to merge into RPC error parsing."
+    }
+  )
 
   @doc ~S"""
   Returns a list of known error codes (ABI signatures), which can be used
@@ -16,6 +25,27 @@ defmodule Cartouche.Erc20 do
   """
   @spec errors() :: [String.t()]
   def errors, do: @errors
+
+  api(:exec_trx, "Execute ABI-encoded ERC-20 calldata as a signed transaction.",
+    params: [
+      token: [
+        kind: :value,
+        description: "ERC-20 token contract address or configured contract atom."
+      ],
+      call_data: [
+        kind: :value,
+        description: "ABI-encoded ERC-20 calldata bytes, such as `transfer(address,uint256)` calldata."
+      ],
+      exec_opts: [
+        kind: :value,
+        description: "Execution options forwarded to `Cartouche.RPC.execute_trx/3`; ERC-20 errors are merged in."
+      ]
+    ],
+    returns: %{
+      type: :rpc_result,
+      description: "Result returned by `Cartouche.RPC.execute_trx/3`, usually `{:ok, tx_hash}` or `{:error, reason}`."
+    }
+  )
 
   @doc ~S"""
   Executes a transaction against the given ERC-20 token, using the provided
@@ -31,6 +61,27 @@ defmodule Cartouche.Erc20 do
       Keyword.put_new(exec_opts, :errors, errors())
     )
   end
+
+  api(:call_trx, "Run ABI-encoded ERC-20 calldata as a read-only `eth_call`.",
+    params: [
+      token: [
+        kind: :value,
+        description: "ERC-20 token contract address or configured contract atom."
+      ],
+      call_data: [
+        kind: :value,
+        description: "ABI-encoded ERC-20 calldata bytes for the read-only call."
+      ],
+      call_opts: [
+        kind: :value,
+        description: "Call options forwarded to `Cartouche.RPC.call_trx/2`; ERC-20 errors are merged in."
+      ]
+    ],
+    returns: %{
+      type: :rpc_result,
+      description: "Result returned by `Cartouche.RPC.call_trx/2`, decoded according to `call_opts[:decode]`."
+    }
+  )
 
   @doc ~S"""
   Performs an `eth_call` against the given ERC-20 token with the provided
@@ -52,6 +103,21 @@ defmodule Cartouche.Erc20 do
     Module to encode `calldata` for given adaptor operations.
     """
 
+    use Descripex, namespace: "/ethereum/erc20/call_data"
+
+    api(:balance_of, "Encode ERC-20 `balanceOf(address)` calldata.",
+      params: [
+        address: [
+          kind: :value,
+          description: "20-byte Ethereum owner address whose token balance will be queried."
+        ]
+      ],
+      returns: %{
+        type: :abi_calldata,
+        description: "ABI-encoded calldata bytes for `balanceOf(address)`."
+      }
+    )
+
     @doc ~S"""
     Encodes the call data for a `balanceOf` operation.
 
@@ -64,6 +130,23 @@ defmodule Cartouche.Erc20 do
     def balance_of(address) do
       ABI.encode("balanceOf(address)", [address])
     end
+
+    api(:transfer, "Encode ERC-20 `transfer(address,uint256)` calldata.",
+      params: [
+        destination: [
+          kind: :value,
+          description: "20-byte Ethereum recipient address."
+        ],
+        amount_wei: [
+          kind: :value,
+          description: "Token base-unit amount to transfer; already scaled by the token's decimals."
+        ]
+      ],
+      returns: %{
+        type: :abi_calldata,
+        description: "ABI-encoded calldata bytes for `transfer(address,uint256)`."
+      }
+    )
 
     @doc ~S"""
     Encodes the call data for a `transfer` operation.
@@ -85,6 +168,30 @@ defmodule Cartouche.Erc20 do
     Module to call operations and receive return value, without sending a transaction.
     """
 
+    use Descripex, namespace: "/ethereum/erc20/call"
+
+    api(:balance_of, "Call ERC-20 `balanceOf(address)` and decode the token base-unit balance.",
+      params: [
+        token: [
+          kind: :value,
+          description: "ERC-20 token contract address or configured contract atom."
+        ],
+        address: [
+          kind: :value,
+          description: "20-byte Ethereum owner address whose token balance will be queried."
+        ],
+        call_opts: [
+          kind: :value,
+          default: [],
+          description: "RPC call options; this helper forces `decode: :hex_unsigned` for the returned balance."
+        ]
+      ],
+      returns: %{
+        type: :ok_error_tuple,
+        description: "`{:ok, amount_wei}` with the token base-unit balance, or `{:error, reason}`."
+      }
+    )
+
     @doc ~S"""
     Calls the `balanceOf` operation, returning the result of the Ethereum function call.
 
@@ -99,6 +206,32 @@ defmodule Cartouche.Erc20 do
       call_opts = Keyword.put(call_opts, :decode, :hex_unsigned)
       Cartouche.Erc20.call_trx(token, CallData.balance_of(address), call_opts)
     end
+
+    api(:transfer, "Call ERC-20 `transfer(address,uint256)` without sending a transaction.",
+      params: [
+        token: [
+          kind: :value,
+          description: "ERC-20 token contract address or configured contract atom."
+        ],
+        destination: [
+          kind: :value,
+          description: "20-byte Ethereum recipient address."
+        ],
+        amount_wei: [
+          kind: :value,
+          description: "Token base-unit amount to transfer; already scaled by the token's decimals."
+        ],
+        call_opts: [
+          kind: :value,
+          default: [],
+          description: "RPC call options; this helper forces `decode: :hex` for the returned bytes."
+        ]
+      ],
+      returns: %{
+        type: :ok_error_tuple,
+        description: "`{:ok, raw_return_bytes}` from the simulated transfer call, or `{:error, reason}`."
+      }
+    )
 
     @doc ~S"""
     Calls the `transfer` operation, returning the result of the Ethereum function call.
@@ -119,6 +252,32 @@ defmodule Cartouche.Erc20 do
       Cartouche.Erc20.call_trx(token, CallData.transfer(destination, amount_wei), call_opts)
     end
   end
+
+  api(:transfer, "Execute an ERC-20 `transfer(address,uint256)` transaction.",
+    params: [
+      token: [
+        kind: :value,
+        description: "ERC-20 token contract address or configured contract atom."
+      ],
+      destination: [
+        kind: :value,
+        description: "20-byte Ethereum recipient address."
+      ],
+      amount_wei: [
+        kind: :value,
+        description: "Token base-unit amount to transfer; already scaled by the token's decimals."
+      ],
+      exec_opts: [
+        kind: :value,
+        default: [],
+        description: "Execution options forwarded to `Cartouche.RPC.execute_trx/3`."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, tx_hash}` for the submitted transfer, or `{:error, reason}`."
+    }
+  )
 
   @doc ~S"""
   Executes a `transfer` transaction.

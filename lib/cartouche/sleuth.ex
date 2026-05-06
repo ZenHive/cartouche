@@ -5,11 +5,37 @@ defmodule Cartouche.Sleuth do
 
   Note: Cartouche.Contract.Sleuth generated from `mix cartouche.gen --prefix cartouche/contract ./priv/Sleuth.json`
   """
+  use Descripex, namespace: "/ethereum/sleuth"
   use Cartouche.Hex
 
   alias Cartouche.Contract.Sleuth
 
   @sleuth_address ~h[0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2]
+
+  api(:query, "Run a Sleuth contract query and return decoded values without ABI type annotations.",
+    params: [
+      bytecode: [kind: :value, description: "Raw contract bytecode to deploy in the simulated `eth_call`."],
+      query: [kind: :value, description: "ABI-encoded calldata sent to the deployed bytecode."],
+      selector: [kind: :value, description: "ABI function selector describing how to decode the returned bytes."],
+      opts: [kind: :value, default: [], description: "Keyword options forwarded to RPC plus Sleuth decode controls."]
+    ],
+    opts: [
+      sleuth_address: [
+        kind: :value,
+        default: @sleuth_address,
+        description: "20-byte address of the Sleuth helper contract."
+      ],
+      decode_binaries: [
+        kind: :value,
+        default: true,
+        description: "Whether decoded binary/address ABI values remain raw binaries."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, decoded}` with postprocessed ABI return values, or `{:error, reason}` on RPC/decode failure."
+    }
+  )
 
   @doc """
   Runs a Sleuth contract query: deploys `bytecode` on-chain via `eth_call`
@@ -20,6 +46,33 @@ defmodule Cartouche.Sleuth do
           {:ok, term()} | {:error, String.t()}
   def query(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, false, opts)
 
+  api(:query_annotated, "Run a Sleuth query and tag each decoded return value with its ABI type.",
+    params: [
+      bytecode: [kind: :value, description: "Raw contract bytecode to deploy in the simulated `eth_call`."],
+      query: [kind: :value, description: "ABI-encoded calldata sent to the deployed bytecode."],
+      selector: [kind: :value, description: "ABI function selector describing how to decode the returned bytes."],
+      opts: [kind: :value, default: [], description: "Keyword options forwarded to RPC plus Sleuth decode controls."]
+    ],
+    opts: [
+      sleuth_address: [
+        kind: :value,
+        default: @sleuth_address,
+        description: "20-byte address of the Sleuth helper contract."
+      ],
+      decode_binaries: [
+        kind: :value,
+        default: true,
+        description: "Whether decoded binary/address ABI values remain raw binaries."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, decoded}` where decoded values include ABI type tags, or `{:error, reason}` on RPC/decode failure."
+    },
+    composes_with: [:query]
+  )
+
   @doc """
   Same as `query/4`, but tags each decoded value with its ABI type for
   callers that need both type and value (e.g. when re-encoding).
@@ -27,6 +80,26 @@ defmodule Cartouche.Sleuth do
   @spec query_annotated(binary(), binary(), ABI.FunctionSelector.t(), Keyword.t()) ::
           {:ok, term()} | {:error, String.t()}
   def query_annotated(bytecode, query, selector, opts \\ []), do: query_internal(bytecode, query, selector, true, opts)
+
+  api(:query_by, "Run a Sleuth query using a generated contract module's bytecode, calldata encoder, and selector.",
+    params: [
+      mod: [
+        kind: :value,
+        description: "Generated contract module that exposes `bytecode/0`, `encode_<fun>/0`, and `<fun>_selector/0`."
+      ],
+      fun: [
+        kind: :value,
+        default: :query,
+        description: "Generated function name used to derive encoder and selector function names."
+      ],
+      opts: [kind: :value, default: [], description: "Keyword options forwarded to the Sleuth query and RPC call."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, decoded}` from the generated contract query, or `{:error, reason}` on RPC/decode failure."
+    },
+    composes_with: [:query]
+  )
 
   @doc """
   Convenience wrapper that derives bytecode, query calldata, and selector
@@ -75,6 +148,43 @@ defmodule Cartouche.Sleuth do
        )}
     end
   end
+
+  api(:query_v2, "Run a Sleuth query with the full decode option set exposed.",
+    params: [
+      bytecode: [kind: :value, description: "Raw contract bytecode to deploy in the simulated `eth_call`."],
+      query: [kind: :value, description: "ABI-encoded calldata sent to the deployed bytecode."],
+      selector: [kind: :value, description: "ABI function selector describing how to decode the returned bytes."],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options forwarded to RPC plus extended Sleuth decode controls."
+      ]
+    ],
+    opts: [
+      annotated: [kind: :value, default: false, description: "Whether each decoded value is returned with its ABI type."],
+      decode_binaries: [
+        kind: :value,
+        default: true,
+        description: "Whether decoded binary/address ABI values remain raw binaries."
+      ],
+      decode_structs: [
+        kind: :value,
+        default: true,
+        description: "Whether ABI tuple returns are decoded as structs/maps when possible."
+      ],
+      named_returns: [kind: :value, default: false, description: "Whether named ABI returns are emitted as named pairs."],
+      sleuth_address: [
+        kind: :value,
+        default: @sleuth_address,
+        description: "20-byte address of the Sleuth helper contract."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, decoded}` with postprocessing controlled by opts, or `{:error, reason}` on RPC/decode failure."
+    },
+    composes_with: [:query]
+  )
 
   @doc """
   Variant of `query/4` that exposes the full set of decode options

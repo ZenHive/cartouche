@@ -5,6 +5,19 @@ defmodule Cartouche.Hash do
   Returns either the 32-byte binary digest (`keccak/1`) or its unsigned
   integer interpretation (`keccak_unsigned/1`).
   """
+
+  use Descripex, namespace: "/ethereum/hash"
+
+  api(:keccak, "Hash a binary message with Keccak-256.",
+    params: [
+      message: [kind: :value, description: "Raw binary message to hash."]
+    ],
+    returns: %{
+      type: :bytes32,
+      description: "32-byte Keccak-256 digest of the input message."
+    }
+  )
+
   @doc ~S"""
   Returns the keccak of the given binary message.
 
@@ -16,6 +29,17 @@ defmodule Cartouche.Hash do
   """
   @spec keccak(binary()) :: <<_::256>>
   def keccak(message), do: ExSha3.keccak_256(message)
+
+  api(:keccak_unsigned, "Hash a binary message with Keccak-256 and decode the digest as an unsigned integer.",
+    params: [
+      message: [kind: :value, description: "Raw binary message to hash."]
+    ],
+    returns: %{
+      type: :non_neg_integer,
+      description: "Unsigned big-endian integer represented by the 32-byte Keccak-256 digest."
+    },
+    composes_with: [:keccak]
+  )
 
   @doc ~S"""
   Returns the keccak of the given binary message, as an unsigned.

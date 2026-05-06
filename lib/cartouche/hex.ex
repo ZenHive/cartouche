@@ -5,6 +5,7 @@ defmodule Cartouche.Hex do
   If you `use Cartouche.Hex`, then you can use the `~h` sigil for compile-time
   hex-to-binary compilation.
   """
+  use Descripex, namespace: "/ethereum/hex"
 
   defmodule InvalidHex do
     @moduledoc """
@@ -69,6 +70,20 @@ defmodule Cartouche.Hex do
     Cartouche.Hex.decode_hex!(hex_str)
   end
 
+  api(:decode_hex, "Decode a hex string into raw bytes without raising on invalid input.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Hex string with optional `0x` prefix; odd-length inputs are left-padded by one nibble."
+      ]
+    ],
+    returns: %{
+      type: :ok_or_invalid_hex,
+      description: "`{:ok, raw_binary}` that can be passed back to `encode_hex/1`, or `:invalid_hex` when decoding fails."
+    },
+    composes_with: [:encode_hex]
+  )
+
   @doc """
   Parses a hex string, but returns `:error` instead
   of raising if hex is invalid.
@@ -87,6 +102,20 @@ defmodule Cartouche.Hex do
   @spec decode_hex(String.t()) :: {:ok, t()} | :invalid_hex
   def decode_hex(b), do: decode_hex_(b)
 
+  api(:from_hex, "Alias for `decode_hex/1` that decodes a hex string into raw bytes.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Hex string with optional `0x` prefix; odd-length inputs are left-padded by one nibble."
+      ]
+    ],
+    returns: %{
+      type: :ok_or_invalid_hex,
+      description: "`{:ok, raw_binary}` that can be passed back to `to_hex/1`, or `:invalid_hex` when decoding fails."
+    },
+    composes_with: [:decode_hex, :to_hex]
+  )
+
   @doc """
   Alias for `decode_hex`.
 
@@ -101,6 +130,21 @@ defmodule Cartouche.Hex do
   @spec from_hex(String.t()) :: {:ok, t()} | :invalid_hex
   def from_hex(b), do: decode_hex(b)
 
+  api(:from_hex!, "Alias for `decode_hex!/1` that decodes a hex string into raw bytes or raises.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Hex string with optional `0x` prefix; odd-length inputs are left-padded by one nibble."
+      ]
+    ],
+    returns: %{
+      type: :raw_binary,
+      description: "Raw binary bytes that can be passed back to `to_hex/1`; inverse of `to_hex/1` for binary inputs."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when the input cannot be decoded."],
+    composes_with: [:decode_hex!, :to_hex]
+  )
+
   @doc """
   Alias for `decode_hex!`.
 
@@ -114,6 +158,22 @@ defmodule Cartouche.Hex do
   """
   @spec from_hex!(String.t()) :: t()
   def from_hex!(b), do: decode_hex!(b)
+
+  api(:decode_hex!, "Decode a hex string into raw bytes, raising on invalid input.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Hex string with optional `0x` prefix; odd-length inputs are left-padded by one nibble."
+      ]
+    ],
+    returns: %{
+      type: :raw_binary,
+      description:
+        "Raw binary bytes that can be passed back to `encode_hex/1`; inverse of `encode_hex/1` for binary inputs."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when the input cannot be decoded."],
+    composes_with: [:decode_hex, :encode_hex]
+  )
 
   @doc """
   Parses a hex string and raises if invalid.
@@ -137,6 +197,19 @@ defmodule Cartouche.Hex do
     end
   end
 
+  api(:decode_address!, "Decode a 20-byte Ethereum address hex string into raw address bytes.",
+    params: [
+      hex: [kind: :value, description: "0x-prefixed or bare hex string that must decode to exactly 20 bytes."]
+    ],
+    returns: %{
+      type: :ethereum_address_binary,
+      description:
+        "20 raw address bytes suitable for `encode_address/1`; inverse of `encode_address/1` for valid address bytes."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when the input is not exactly 20 decoded bytes."],
+    composes_with: [:decode_sized!, :encode_address]
+  )
+
   @doc """
   Parses an Ethereum 20-bytes hex string.
 
@@ -156,6 +229,15 @@ defmodule Cartouche.Hex do
     decode_sized!(hex, 20, "invalid hex address")
   end
 
+  api(:decode_word!, "Decode a 32-byte Ethereum word hex string into raw bytes.",
+    params: [
+      hex: [kind: :value, description: "0x-prefixed or bare hex string that must decode to exactly 32 bytes."]
+    ],
+    returns: %{type: :ethereum_word_binary, description: "32 raw bytes suitable for ABI words or hashes."},
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when the input is not exactly 32 decoded bytes."],
+    composes_with: [:decode_sized!]
+  )
+
   @doc """
   Parses an Ethereum 32-bytes hex string.
 
@@ -174,6 +256,21 @@ defmodule Cartouche.Hex do
   def decode_word!(hex) do
     decode_sized!(hex, 32, "invalid hex word")
   end
+
+  api(:decode_sized!, "Decode a hex string and require an exact byte size.",
+    params: [
+      hex: [kind: :value, description: "0x-prefixed or bare hex string to decode."],
+      sz: [kind: :value, description: "Required decoded byte length."],
+      msg: [
+        kind: :value,
+        default: nil,
+        description: "Optional error message prefix used when the decoded byte length is wrong."
+      ]
+    ],
+    returns: %{type: :raw_binary, description: "Raw decoded bytes of exactly `sz` bytes."},
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when decoding fails or decoded length differs from `sz`."],
+    composes_with: [:decode_hex!]
+  )
 
   @doc """
   Parses an Ethereum x-bytes hex string.
@@ -207,6 +304,18 @@ defmodule Cartouche.Hex do
     end
   end
 
+  api(:decode_maybe_hex!, "Decode a hex string into raw bytes, preserving `nil` inputs.",
+    params: [
+      h: [kind: :value, description: "Hex string with optional `0x` prefix, or `nil`."]
+    ],
+    returns: %{
+      type: :raw_binary_or_nil,
+      description: "Raw binary bytes that can be passed to `maybe_encode_hex/1`, or `nil` when input is `nil`."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when a non-nil input cannot be decoded."],
+    composes_with: [:decode_hex!, :maybe_encode_hex]
+  )
+
   @doc """
   Parses hex is value is not nil, otherwise returns `nil`.
 
@@ -221,6 +330,17 @@ defmodule Cartouche.Hex do
   @spec decode_maybe_hex!(String.t() | nil) :: t() | nil
   def decode_maybe_hex!(h) when is_nil(h), do: nil
   def decode_maybe_hex!(h) when is_binary(h), do: decode_hex!(h)
+
+  api(:decode_hex_number, "Decode a hex quantity string into a big-endian integer without raising on invalid input.",
+    params: [
+      b: [kind: :value, description: "Hex string with optional `0x` prefix representing an unsigned big-endian integer."]
+    ],
+    returns: %{
+      type: :ok_or_invalid_hex,
+      description: "`{:ok, integer}` inverse of `encode_quantity/1`, or `:invalid_hex` when decoding fails."
+    },
+    composes_with: [:decode_hex, :encode_quantity]
+  )
 
   @doc """
   Parses hex value as a big-endian integer. Raises if invalid.
@@ -244,6 +364,18 @@ defmodule Cartouche.Hex do
     end
   end
 
+  api(:decode_maybe_hex_number!, "Decode a hex quantity string into an integer, preserving `nil` inputs.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Hex string with optional `0x` prefix representing an unsigned big-endian integer, or `nil`."
+      ]
+    ],
+    returns: %{type: :integer_or_nil, description: "Unsigned integer value, or `nil` when input is `nil`."},
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when a non-nil input cannot be decoded."],
+    composes_with: [:decode_hex_number!]
+  )
+
   @doc """
   Parses a hex value as a big-endian integer if not nil, otherwise returns `nil`.
 
@@ -261,6 +393,22 @@ defmodule Cartouche.Hex do
   @spec decode_maybe_hex_number!(String.t() | nil) :: integer() | nil | no_return()
   def decode_maybe_hex_number!(b) when is_nil(b), do: nil
   def decode_maybe_hex_number!(b) when is_binary(b), do: decode_hex_number!(b)
+
+  api(:decode_hex_input!, "Normalize either a `0x` hex string or already-raw binary into raw bytes.",
+    params: [
+      hex: [
+        kind: :value,
+        description:
+          "Either a `0x`-prefixed hex string or raw binary bytes; bare non-prefixed strings are treated as raw bytes, not decoded hex."
+      ]
+    ],
+    returns: %{
+      type: :raw_binary,
+      description: "Raw binary bytes; `0x` strings are decoded, while already-raw binaries pass through unchanged."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when a `0x`-prefixed input cannot be decoded."],
+    composes_with: [:decode_hex!]
+  )
 
   @doc ~S"""
   Decodes hex, allowing it to either be `"0x..."` or a raw binary.
@@ -280,6 +428,17 @@ defmodule Cartouche.Hex do
   def decode_hex_input!("0x" <> _ = hex), do: decode_hex!(hex)
   def decode_hex_input!(hex) when is_binary(hex), do: hex
 
+  api(:decode_hex_number, "Decode a hex quantity string into a big-endian integer without raising on invalid input.",
+    params: [
+      b: [kind: :value, description: "Hex string with optional `0x` prefix representing an unsigned big-endian integer."]
+    ],
+    returns: %{
+      type: :ok_or_invalid_hex,
+      description: "`{:ok, integer}` inverse of `encode_quantity/1`, or `:invalid_hex` when decoding fails."
+    },
+    composes_with: [:decode_hex, :encode_quantity]
+  )
+
   @doc """
   Parses hex value as a big-endian integer.
 
@@ -296,6 +455,21 @@ defmodule Cartouche.Hex do
     with {:ok, x} <- decode_hex(b), do: {:ok, :binary.decode_unsigned(x)}
   end
 
+  api(:encode_hex, "Encode raw binary bytes as a lowercase `0x`-prefixed hex string.",
+    params: [
+      b: [
+        kind: :value,
+        description:
+          "Raw binary bytes; do not pass an already-encoded hex string unless you intend to encode its ASCII bytes."
+      ]
+    ],
+    returns: %{
+      type: :hex_string,
+      description: "Lowercase `0x`-prefixed hex string; inverse of `decode_hex!/1` and successful `decode_hex/1` results."
+    },
+    composes_with: [:decode_hex!, :decode_hex]
+  )
+
   @doc """
   Encodes a given value as a lowercase hex string, starting with `0x`.
 
@@ -306,6 +480,21 @@ defmodule Cartouche.Hex do
   """
   @spec encode_hex(t()) :: String.t()
   def encode_hex(b) when is_binary(b), do: "0x" <> Base.encode16(b, case: :lower)
+
+  api(:to_hex, "Alias for `encode_hex/1` that encodes raw binary bytes as lowercase `0x` hex.",
+    params: [
+      b: [
+        kind: :value,
+        description:
+          "Raw binary bytes; do not pass an already-encoded hex string unless you intend to encode its ASCII bytes."
+      ]
+    ],
+    returns: %{
+      type: :hex_string,
+      description: "Lowercase `0x`-prefixed hex string; inverse of `from_hex!/1` for binary inputs."
+    },
+    composes_with: [:encode_hex, :from_hex!]
+  )
 
   @doc """
   Alias for `encode_hex`.
@@ -318,6 +507,17 @@ defmodule Cartouche.Hex do
   @spec to_hex(t()) :: String.t()
   def to_hex(b), do: encode_hex(b)
 
+  api(:encode_big_hex, "Encode raw binary bytes as an uppercase `0x`-prefixed hex string.",
+    params: [
+      hex: [kind: :value, description: "Raw binary bytes to hex-encode in uppercase."]
+    ],
+    returns: %{
+      type: :hex_string,
+      description: "Uppercase `0x`-prefixed hex string; decodable by `decode_hex!/1` because decoding accepts mixed case."
+    },
+    composes_with: [:decode_hex!]
+  )
+
   @doc ~S"""
   Encodes hex, in CAPITALS.
 
@@ -328,6 +528,17 @@ defmodule Cartouche.Hex do
   """
   @spec encode_big_hex(binary()) :: String.t()
   def encode_big_hex(hex) when is_binary(hex), do: "0x" <> Base.encode16(hex)
+
+  api(:encode_short_hex, "Encode raw bytes or an integer as uppercase `0x` hex without leading zeros.",
+    params: [
+      hex: [kind: :value, description: "Raw binary bytes or non-negative integer to encode as a compact hex quantity."]
+    ],
+    returns: %{
+      type: :hex_string,
+      description: "Uppercase `0x`-prefixed hex string with leading zero nibbles stripped; `0` encodes as `0x0`."
+    },
+    composes_with: [:decode_hex_number!]
+  )
 
   @doc ~S"""
   Encodes hex, striping any leading zeros.
@@ -359,6 +570,17 @@ defmodule Cartouche.Hex do
 
   def encode_short_hex(v) when is_integer(v), do: encode_short_hex(:binary.encode_unsigned(v))
 
+  api(:encode_quantity, "Encode a non-negative integer as a JSON-RPC quantity string.",
+    params: [
+      n: [kind: :value, description: "Non-negative integer to encode as a JSON-RPC QUANTITY."]
+    ],
+    returns: %{
+      type: :json_rpc_quantity,
+      description: "Lowercase `0x`-prefixed quantity with no leading zeros; inverse of `decode_hex_number!/1`."
+    },
+    composes_with: [:decode_hex_number!, :decode_hex_number]
+  )
+
   @doc """
   Encodes a non-negative integer as a JSON-RPC "quantity" string.
 
@@ -383,6 +605,14 @@ defmodule Cartouche.Hex do
 
   def encode_quantity(n) when is_integer(n) and n > 0, do: "0x" <> (n |> Integer.to_string(16) |> String.downcase())
 
+  api(:pad, "Left-pad a raw binary with zero bytes to an exact byte length.",
+    params: [
+      bin: [kind: :value, description: "Raw binary bytes to left-pad."],
+      size: [kind: :value, description: "Target byte length; must be greater than or equal to the input byte size."]
+    ],
+    returns: %{type: :raw_binary, description: "Raw binary of exactly `size` bytes, with zero bytes prepended as needed."}
+  )
+
   @doc ~S"""
   Pads a binary to a given length.
 
@@ -405,6 +635,18 @@ defmodule Cartouche.Hex do
 
   def pad(bin, size) when size == byte_size(bin), do: bin
 
+  api(:encode_bytes, "Encode an integer as fixed-width raw bytes, left-padded with zeros.",
+    params: [
+      b: [kind: :value, description: "Integer amount to encode, or `nil` to preserve missing optional values."],
+      size: [kind: :value, description: "Target byte length of the encoded binary."]
+    ],
+    returns: %{
+      type: :raw_binary_or_nil,
+      description: "Fixed-width raw binary bytes suitable for `encode_hex/1`, or `nil` when input is `nil`."
+    },
+    composes_with: [:pad, :encode_hex]
+  )
+
   @doc ~S"""
   Encodes a number as a binary of a fixed byte length, left-padded with zeros.
 
@@ -420,6 +662,16 @@ defmodule Cartouche.Hex do
   def encode_bytes(nil, _), do: nil
   def encode_bytes(b, size), do: pad(:binary.encode_unsigned(b), size)
 
+  api(:nibbles, "Split raw binary bytes into high/low 4-bit nibbles.",
+    params: [
+      v: [kind: :value, description: "Raw binary bytes whose nibbles should be listed."]
+    ],
+    returns: %{
+      type: :nibble_list,
+      description: "List of integers in `0..15`, two entries per input byte, in original byte order."
+    }
+  )
+
   @doc ~S"""
   Returns the nibbles of a binary as a list.
 
@@ -433,6 +685,21 @@ defmodule Cartouche.Hex do
 
   defp do_nibbles(<<>>, acc), do: acc
   defp do_nibbles(<<high::4, low::4, rest::binary>>, acc), do: do_nibbles(rest, [low, high | acc])
+
+  api(:encode_address, "Encode 20 raw Ethereum address bytes as an EIP-55 checksummed address string.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Exactly 20 raw Ethereum address bytes; do not pass an already-encoded address string."
+      ]
+    ],
+    returns: %{
+      type: :ethereum_address_hex,
+      description: "EIP-55 mixed-case `0x` address string; inverse of `decode_address!/1` for valid address bytes."
+    },
+    errors: [invalid_hex: "Raised as `Cartouche.Hex.InvalidHex` when input is not exactly 20 bytes."],
+    composes_with: [:decode_address!, :checksum_address]
+  )
 
   @doc """
   Encodes a binary as a checksummed Ethereum address.
@@ -449,6 +716,17 @@ defmodule Cartouche.Hex do
   def encode_address(<<_::160>> = b), do: checksum_address(encode_hex(b))
 
   def encode_address(_), do: raise(InvalidHex, "Expected 20-byte address for in `Cartouche.Hex.encode_address/1`")
+
+  api(:checksum_address, "Apply EIP-55 checksum casing to an Ethereum address.",
+    params: [
+      address: [
+        kind: :value,
+        description: "Either a 20-byte raw address binary or a 42-character `0x`-prefixed hex address string."
+      ]
+    ],
+    returns: %{type: :ethereum_address_hex, description: "EIP-55 mixed-case `0x` address string."},
+    composes_with: [:decode_hex!, :encode_big_hex]
+  )
 
   @doc ~S"""
   Checksums an Ethereum address per [EIP-55](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-55.md).
@@ -490,6 +768,20 @@ defmodule Cartouche.Hex do
     "0x" <> to_string(res)
   end
 
+  api(:to_address, "Alias for `encode_address/1` that encodes 20 raw address bytes as EIP-55 `0x` hex.",
+    params: [
+      b: [
+        kind: :value,
+        description: "Exactly 20 raw Ethereum address bytes; do not pass an already-encoded address string."
+      ]
+    ],
+    returns: %{
+      type: :ethereum_address_hex,
+      description: "EIP-55 mixed-case `0x` address string; inverse of `decode_address!/1`."
+    },
+    composes_with: [:encode_address, :decode_address!]
+  )
+
   @doc """
   Alias for `encode_address`.
 
@@ -500,6 +792,17 @@ defmodule Cartouche.Hex do
   """
   @spec to_address(t()) :: String.t()
   def to_address(b), do: encode_address(b)
+
+  api(:encode_hex_result, "Encode the binary inside a successful result tuple while preserving all other terms.",
+    params: [
+      b: [kind: :value, description: "Either `{:ok, raw_binary}` to encode, or any other term to return unchanged."]
+    ],
+    returns: %{
+      type: :term,
+      description: "`{:ok, lowercase_0x_hex}` for successful binary tuples, otherwise the original input term unchanged."
+    },
+    composes_with: [:encode_hex]
+  )
 
   @doc """
   If input is a tuple `{:ok, x}` then returns a tuple `{:ok, hex}`
@@ -516,6 +819,18 @@ defmodule Cartouche.Hex do
   @spec encode_hex_result({:ok, t()} | term()) :: {:ok, String.t()} | term()
   def encode_hex_result({:ok, b}) when is_binary(b), do: {:ok, encode_hex(b)}
   def encode_hex_result(els), do: els
+
+  api(:maybe_encode_hex, "Encode raw binary bytes as lowercase `0x` hex, preserving `nil` inputs.",
+    params: [
+      b: [kind: :value, description: "Raw binary bytes to encode, or `nil`."]
+    ],
+    returns: %{
+      type: :hex_string_or_nil,
+      description:
+        "Lowercase `0x`-prefixed hex string that can be decoded by `decode_maybe_hex!/1`, or `nil` when input is `nil`."
+    },
+    composes_with: [:encode_hex, :decode_maybe_hex!]
+  )
 
   @doc """
   If input is non-`nil`, returns input encoded as a hex string. Otherwise,

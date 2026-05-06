@@ -3,6 +3,21 @@ defmodule Cartouche.Address do
   Helpers for Ethereum addresses.
   """
 
+  use Descripex, namespace: "/ethereum/address"
+
+  api(:from_public_key, "Derive an Ethereum address from an uncompressed DER-encoded secp256k1 public key.",
+    params: [
+      public_key: [
+        kind: :value,
+        description: "Uncompressed DER-encoded secp256k1 public key beginning with the `0x04` prefix byte."
+      ]
+    ],
+    returns: %{
+      type: :ethereum_address_binary,
+      description: "20-byte Ethereum address derived from the Keccak-256 hash of the raw public key coordinates."
+    }
+  )
+
   @doc ~S"""
   Returns an Ethereum address from a given DER-encoded public key.
 
