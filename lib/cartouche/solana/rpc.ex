@@ -450,8 +450,7 @@ defmodule Cartouche.Solana.RPC do
   api(:get_transaction, "Get a transaction by its base58 transaction signature.",
     params: [
       signature: [
-        kind: :exchange_data,
-        source: "Cartouche.Solana.RPC.send_transaction/2",
+        kind: :value,
         description: "Base58-encoded Solana transaction signature."
       ],
       opts: [
@@ -861,8 +860,7 @@ defmodule Cartouche.Solana.RPC do
   api(:send_transaction, "Send a signed Solana transaction to the network.",
     params: [
       transaction: [
-        kind: :exchange_data,
-        source: "Cartouche.Solana.Transaction.serialize/1",
+        kind: :value,
         description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
       ],
       opts: [
@@ -943,8 +941,7 @@ defmodule Cartouche.Solana.RPC do
   api(:simulate_transaction, "Simulate a signed Solana transaction without submitting it.",
     params: [
       transaction: [
-        kind: :exchange_data,
-        source: "Cartouche.Solana.Transaction.serialize/1",
+        kind: :value,
         description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
       ],
       opts: [kind: :value, default: [], description: "Keyword options for simulation and RPC client configuration."]
@@ -1058,8 +1055,7 @@ defmodule Cartouche.Solana.RPC do
   api(:send_and_confirm, "Send a signed transaction and poll until it reaches the target confirmation level.",
     params: [
       transaction: [
-        kind: :exchange_data,
-        source: "Cartouche.Solana.Transaction.serialize/1",
+        kind: :value,
         description: "Signed `Cartouche.Solana.Transaction` struct or raw serialized transaction bytes."
       ],
       opts: [

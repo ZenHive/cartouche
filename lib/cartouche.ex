@@ -10,6 +10,7 @@ defmodule Cartouche do
       Cartouche.describe()                  # registered modules + namespaces
       Cartouche.describe(:signer)            # function list for one module
       Cartouche.describe(:signer, :sign_direct)   # full param/return detail
+      Cartouche.describe(:solana_rpc)        # Solana RPC helpers
       Cartouche.describe(:transaction_v1)    # nested Transaction.V1 helpers
       Cartouche.describe(:transaction_v2)    # nested Transaction.V2 helpers
 
@@ -17,13 +18,14 @@ defmodule Cartouche do
   `ROADMAP.md` Phase 12 for the annotation pass.
   """
 
+  alias Cartouche.Solana.RPC
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
 
   @descripex_modules [
     Cartouche.Signer,
     Cartouche.Keys,
-    Cartouche.Solana.RPC,
+    RPC,
     Cartouche.Transaction,
     V1,
     V2,
@@ -99,11 +101,13 @@ defmodule Cartouche do
   end
 
   @spec normalize_descripex_module(module() | atom()) :: module() | atom()
+  defp normalize_descripex_module(:solana_rpc), do: RPC
   defp normalize_descripex_module(:transaction_v1), do: V1
   defp normalize_descripex_module(:transaction_v2), do: V2
   defp normalize_descripex_module(mod_or_short), do: mod_or_short
 
   @spec normalize_descripex_summary(map()) :: map()
+  defp normalize_descripex_summary(%{module: RPC} = summary), do: %{summary | short_name: :solana_rpc}
   defp normalize_descripex_summary(%{module: V1} = summary), do: %{summary | short_name: :transaction_v1}
   defp normalize_descripex_summary(%{module: V2} = summary), do: %{summary | short_name: :transaction_v2}
   defp normalize_descripex_summary(summary), do: summary
