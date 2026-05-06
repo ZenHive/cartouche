@@ -23,6 +23,8 @@ defmodule Cartouche.Base58 do
       {:error, {:invalid_character, "0"}}
   """
 
+  use Descripex, namespace: "/base58"
+
   defmacro __using__(_opts) do
     quote do
       import Cartouche.Base58, only: [sigil_B58: 2]
@@ -65,6 +67,18 @@ defmodule Cartouche.Base58 do
   # O(1) char → index lookup
   @decode_map for {char, idx} <- Enum.with_index(@alphabet), into: %{}, do: {char, idx}
 
+  api(:encode, "Encode raw binary bytes as a plain Base58 string.",
+    params: [
+      binary: [kind: :value, description: "Raw binary bytes to encode with the Bitcoin/Solana Base58 alphabet."]
+    ],
+    returns: %{
+      type: :base58_string,
+      description:
+        "Plain Base58 string; `decode/1` reverses it back to the original binary, preserving leading zero bytes as leading `1` characters."
+    },
+    composes_with: [:decode]
+  )
+
   @doc """
   Encode a binary to a Base58 string.
 
@@ -103,6 +117,18 @@ defmodule Cartouche.Base58 do
   defp count_leading_zeros(<<0, rest::binary>>, n), do: count_leading_zeros(rest, n + 1)
   defp count_leading_zeros(_, n), do: n
 
+  api(:decode, "Decode a plain Base58 string to raw binary bytes.",
+    params: [
+      string: [kind: :value, description: "Base58 string using the Bitcoin/Solana alphabet; this is not Base58Check."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, binary}` with the raw decoded bytes that `encode/1` can encode again, or `{:error, {:invalid_character, char}}` for non-Base58 input."
+    },
+    composes_with: [:encode, :decode!]
+  )
+
   @doc """
   Decode a Base58 string to a binary.
 
@@ -133,6 +159,18 @@ defmodule Cartouche.Base58 do
       error -> error
     end
   end
+
+  api(:decode!, "Decode a plain Base58 string to raw binary bytes, raising on invalid input.",
+    params: [
+      string: [kind: :value, description: "Base58 string using the Bitcoin/Solana alphabet; this is not Base58Check."]
+    ],
+    returns: %{
+      type: :binary,
+      description: "Raw decoded bytes that `encode/1` can encode back to the same Base58 string."
+    },
+    errors: [argument_error: "Raised when the string contains a character outside the Base58 alphabet."],
+    composes_with: [:encode, :decode]
+  )
 
   @doc """
   Decode a Base58 string to a binary, raising on invalid input.

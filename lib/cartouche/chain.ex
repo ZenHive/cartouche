@@ -3,6 +3,8 @@ defmodule Cartouche.Chain do
   Chain registry and chain-id parsing helpers.
   """
 
+  use Descripex, namespace: "/ethereum/chain"
+
   @chains %{
     mainnet: 1,
     ropsten: 2,
@@ -29,6 +31,19 @@ defmodule Cartouche.Chain do
     ink: 57_073,
     plume: 98_866
   }
+
+  api(:parse_id, "Parse an Ethereum chain id from either a numeric id or a known chain name.",
+    params: [
+      chain_id: [
+        kind: :value,
+        description: "Ethereum chain id integer or known chain atom such as `:mainnet`, `:sepolia`, or `:base`."
+      ]
+    ],
+    returns: %{
+      type: :integer,
+      description: "Ethereum chain id integer suitable for signing, RPC requests, and EIP-155 recovery-bit math."
+    }
+  )
 
   @doc ~S"""
   Parses a chain id, which can be given as an integer or an atom of a known network.

@@ -9,8 +9,28 @@ defmodule Cartouche.RecoveryBit do
   This module provides tools between switching through these choices.
   """
 
+  use Descripex, namespace: "/ethereum/recovery_bit"
+
   @rec_types [:base, :ethereum, :eip155]
   @type rec_type() :: :base | :ethereum | :eip155
+
+  api(:normalize, "Convert a recovery bit into the requested recovery-bit convention.",
+    params: [
+      recovery_bit: [
+        kind: :value,
+        description: "Recovery bit in base (`0` or `1`), Ethereum (`27` or `28`), or EIP-155 form."
+      ],
+      rec_type: [
+        kind: :value,
+        default: :eip155,
+        description: "Target convention: `:base`, `:ethereum`, or `:eip155`."
+      ]
+    ],
+    returns: %{
+      type: :non_neg_integer,
+      description: "Recovery bit normalized to the requested convention."
+    }
+  )
 
   @doc """
   Normalizes a binary-encoded signature to the given requested type,
@@ -43,6 +63,24 @@ defmodule Cartouche.RecoveryBit do
     end
   end
 
+  api(:normalize_signature, "Normalize the recovery byte of a 65-byte Ethereum signature.",
+    params: [
+      signature: [
+        kind: :value,
+        description: "65-byte Ethereum signature encoded as `r <> s <> v`."
+      ],
+      rec_type: [
+        kind: :value,
+        default: :eip155,
+        description: "Target convention for the final `v` byte: `:base`, `:ethereum`, or `:eip155`."
+      ]
+    ],
+    returns: %{
+      type: :ethereum_signature,
+      description: "Same `r` and `s` bytes with `v` normalized to the requested recovery-bit convention."
+    }
+  )
+
   @doc """
   Normalizes a binary-encoded signature to the given requested type,
   i.e. `:base`, `:ethereum`, or `:eip155`.
@@ -64,6 +102,19 @@ defmodule Cartouche.RecoveryBit do
 
     <<rs::binary-size(64), v_normalized::8>>
   end
+
+  api(:recover_base, "Convert a recovery bit from any supported convention into base form.",
+    params: [
+      v: [
+        kind: :value,
+        description: "Recovery bit in base (`0` or `1`), Ethereum (`27` or `28`), or EIP-155 form."
+      ]
+    ],
+    returns: %{
+      type: :base_recovery_bit,
+      description: "`0` or `1`, suitable for libraries that expect the raw secp256k1 recovery id."
+    }
+  )
 
   @doc """
   Normalizes a recovery bit to be either 0 or 1.

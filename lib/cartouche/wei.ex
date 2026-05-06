@@ -8,9 +8,26 @@ defmodule Cartouche.Wei do
   same short form as `:wei` and `:gwei`.
   """
 
+  use Descripex, namespace: "/ethereum/wei"
+
   @wei_per_gwei 1_000_000_000
   @wei_per_eth 1_000_000_000_000_000_000
   @decimal_wei_per_eth Decimal.new(@wei_per_eth)
+
+  api(:to_wei, "Convert an Ethereum-denominated amount into wei.",
+    params: [
+      amount: [
+        kind: :value,
+        description:
+          "Amount in wei as a non-negative integer, `{amount, :wei}`, `{amount, :gwei}`, or `{amount, :eth}`; Decimal ETH is accepted for fractional ether."
+      ]
+    ],
+    returns: %{
+      type: :wei,
+      description:
+        "Amount in wei. Wei input is returned unchanged, gwei is multiplied by 1,000,000,000, and eth is multiplied by 1,000,000,000,000,000,000."
+    }
+  )
 
   @doc ~S"""
   Converts a number to wei, possibly from gwei or eth.
