@@ -45,6 +45,18 @@
           {Credo.Check.Readability.SpaceAfterCommas, []},
           {Credo.Check.Readability.TrailingBlankLine, []},
           {Credo.Check.Readability.TrailingWhiteSpace, []},
+          # Specs is scoped to the cartouche library + its test support; tests
+          # outside test/support/ and the generator (lib/mix/cartouche.gen.ex)
+          # plus its output (lib/cartouche/contract/) are tracked by other tasks
+          # and excluded from this gate until those backfills land.
+          {Credo.Check.Readability.Specs,
+           [
+             include_defp: true,
+             files: %{
+               included: ["lib/cartouche/", "test/support/"],
+               excluded: [~r"lib/cartouche/contract/"]
+             }
+           ]},
           {Credo.Check.Readability.VariableNames, []},
 
           ## Refactor
@@ -125,7 +137,6 @@
           {Credo.Check.Readability.OnePipePerLine, []},
           {Credo.Check.Readability.SeparateAliasRequire, []},
           {Credo.Check.Readability.SingleFunctionToBlockPipe, []},
-          {Credo.Check.Readability.Specs, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Refactor.ABCSize, []},
           {Credo.Check.Refactor.AppendSingleItem, []},

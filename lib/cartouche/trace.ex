@@ -200,6 +200,7 @@ defmodule Cartouche.Trace do
       }
     end
 
+    @spec nil_map(nil | term(), (term() -> term())) :: term() | nil
     defp nil_map(nil, _), do: nil
     defp nil_map(x, fun), do: fun.(x)
   end
@@ -639,13 +640,16 @@ defmodule Cartouche.Trace do
   @spec deserialize_many([map()]) :: [t()] | no_return()
   def deserialize_many(traces), do: Enum.map(traces, &Cartouche.Trace.deserialize/1)
 
+  @spec decode_address_or_number(binary() | integer()) :: <<_::160>> | integer()
   defp decode_address_or_number(b) when is_binary(b), do: Hex.decode_address!(b)
   defp decode_address_or_number(n) when is_integer(n), do: n
 
+  @spec decode_trace_address(list() | term()) :: [<<_::160>> | integer()] | no_return()
   defp decode_trace_address(list) when is_list(list), do: Enum.map(list, &decode_address_or_number/1)
 
   defp decode_trace_address(_), do: raise(ArgumentError, "missing traceAddress in trace_transaction result element")
 
+  @spec map(nil | term(), (term() -> term())) :: term() | nil
   defp map(x, f) do
     if is_nil(x), do: nil, else: f.(x)
   end

@@ -339,6 +339,7 @@ defmodule Cartouche.Block do
     }
   end
 
+  @spec map(nil | term(), (term() -> term())) :: term() | nil
   defp map(x, f) do
     if is_nil(x), do: nil, else: f.(x)
   end

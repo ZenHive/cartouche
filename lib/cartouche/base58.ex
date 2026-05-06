@@ -108,12 +108,14 @@ defmodule Cartouche.Base58 do
     end
   end
 
+  @spec encode_int(non_neg_integer(), iodata()) :: binary()
   defp encode_int(0, acc), do: IO.iodata_to_binary(acc)
 
   defp encode_int(n, acc) do
     encode_int(div(n, 58), [elem(@alphabet_tuple, rem(n, 58)) | acc])
   end
 
+  @spec count_leading_zeros(binary(), non_neg_integer()) :: non_neg_integer()
   defp count_leading_zeros(<<0, rest::binary>>, n), do: count_leading_zeros(rest, n + 1)
   defp count_leading_zeros(_, n), do: n
 
@@ -188,9 +190,12 @@ defmodule Cartouche.Base58 do
     end
   end
 
+  @spec count_leading_ones(binary(), non_neg_integer()) :: {non_neg_integer(), binary()}
   defp count_leading_ones(<<"1", rest::binary>>, n), do: count_leading_ones(rest, n + 1)
   defp count_leading_ones(rest, n), do: {n, rest}
 
+  @spec decode_chars(binary(), non_neg_integer()) ::
+          {:ok, non_neg_integer()} | {:error, {:invalid_character, String.t()}}
   defp decode_chars(<<>>, acc), do: {:ok, acc}
 
   defp decode_chars(<<c, rest::binary>>, acc) do

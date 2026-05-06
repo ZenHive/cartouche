@@ -133,6 +133,7 @@ defmodule Cartouche.Filter do
     )
   end
 
+  @spec set_filter(map()) :: map()
   defp set_filter(%{address: nil, topics: topics, rpc_opts: rpc_opts} = state) do
     {:ok, filter_id} =
       RPC.send_rpc(
@@ -239,11 +240,14 @@ defmodule Cartouche.Filter do
     {:noreply, state}
   end
 
+  @spec parse_events([Log.t()], %{binary() => function()}) :: {[Log.t()], [{{atom(), [term()]}, Log.t()}]}
   defp parse_events(logs, decoders) do
     events = do_parse_events(logs, decoders, [])
     {logs, Enum.reverse(events)}
   end
 
+  @spec do_parse_events([Log.t()], %{binary() => function()}, [{{atom(), [term()]}, Log.t()}]) ::
+          [{{atom(), [term()]}, Log.t()}]
   defp do_parse_events([], _, events), do: events
 
   defp do_parse_events([log | rest_logs], decoders, acc_events) do

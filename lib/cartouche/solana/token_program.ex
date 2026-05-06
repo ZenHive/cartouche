@@ -268,5 +268,6 @@ defmodule Cartouche.Solana.TokenProgram do
     }
   end
 
+  @spec token_program(keyword()) :: <<_::256>>
   defp token_program(opts), do: Keyword.get(opts, :token_program, Programs.token_program())
 end

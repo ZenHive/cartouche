@@ -525,6 +525,7 @@ defmodule Cartouche.Typed do
       filter_nils(values)
     end
 
+    @spec filter_nils(map()) :: map()
     defp filter_nils(map) do
       map
       |> Map.to_list()
@@ -537,6 +538,7 @@ defmodule Cartouche.Typed do
   # Note: we could simplify this, but it's a deep-nested struct that
   #       sometimes has atoms as keys, so it's just easier to do it this
   #       way for now.
+  @spec fetch_value(map() | Enumerable.t(), String.t()) :: term()
   defp fetch_value(value, field) do
     string_keyed_value =
       for {k, v} <- value, into: %{} do
@@ -606,6 +608,7 @@ defmodule Cartouche.Typed do
     end
   end
 
+  @spec type_fields_match?({String.t(), Type.t()}, [String.t()]) :: boolean()
   defp type_fields_match?({_name, type}, sorted_field_names) do
     type.fields |> Enum.map(fn {k, _v} -> k end) |> Enum.sort() == sorted_field_names
   end

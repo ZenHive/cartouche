@@ -25,6 +25,7 @@ defmodule Cartouche.Recover do
   import Cartouche.Address, only: [from_public_key: 1]
   import Cartouche.Hash, only: [keccak: 1]
 
+  @spec decode_signature(Curvy.Signature.t() | String.t() | <<_::520>>) :: Curvy.Signature.t() | :invalid_hex
   defp decode_signature(%Curvy.Signature{} = s), do: s
 
   defp decode_signature("0x" <> _signature_hex = signature) do

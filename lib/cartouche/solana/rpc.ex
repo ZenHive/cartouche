@@ -37,8 +37,11 @@ defmodule Cartouche.Solana.RPC do
   @typedoc "All error shapes returned by `send_rpc/3`."
   @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | Jason.DecodeError.t() | String.t()
 
+  @spec solana_node() :: String.t() | nil
   defp solana_node, do: Application.get_env(:cartouche, :solana_node)
+  @spec http_client() :: module()
   defp http_client, do: Application.get_env(:cartouche, :client, Finch)
+  @spec finch_name() :: atom()
   defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
 
   # ---------------------------------------------------------------------------
@@ -128,6 +131,8 @@ defmodule Cartouche.Solana.RPC do
       {:error, {:invalid_params, e}}
   end
 
+  @spec decode_response(binary(), integer(), String.t()) ::
+          {:ok, term()} | {:error, rpc_error() | Jason.DecodeError.t()}
   defp decode_response(response, id, method) do
     with {:ok, decoded} <- Jason.decode(response) do
       case decoded do
@@ -148,8 +153,10 @@ defmodule Cartouche.Solana.RPC do
   # Helpers
   # ---------------------------------------------------------------------------
 
+  @spec encode_pubkey(<<_::256>>) :: String.t()
   defp encode_pubkey(<<pubkey::binary-32>>), do: Cartouche.Base58.encode(pubkey)
 
+  @spec commitment_config(keyword()) :: map()
   defp commitment_config(opts) do
     config = %{}
 
@@ -166,6 +173,7 @@ defmodule Cartouche.Solana.RPC do
     config
   end
 
+  @spec account_config(keyword()) :: map()
   defp account_config(opts) do
     config = commitment_config(opts)
 
@@ -177,15 +185,18 @@ defmodule Cartouche.Solana.RPC do
     config
   end
 
+  @spec encoding_string(atom() | binary()) :: String.t()
   defp encoding_string(:base58), do: "base58"
   defp encoding_string(:base64), do: "base64"
   defp encoding_string(:"base64+zstd"), do: "base64+zstd"
   defp encoding_string(:json_parsed), do: "jsonParsed"
   defp encoding_string(s) when is_binary(s), do: s
 
+  @spec unwrap_value(map()) :: term()
   defp unwrap_value(%{"context" => _ctx, "value" => value}), do: value
   defp unwrap_value(other), do: other
 
+  @spec params_with_config(list(), keyword()) :: list()
   defp params_with_config(params, opts) do
     config = commitment_config(opts)
     if config == %{}, do: params, else: params ++ [config]
@@ -333,6 +344,7 @@ defmodule Cartouche.Solana.RPC do
     end
   end
 
+  @spec deserialize_account_info(nil | map()) :: nil | map()
   defp deserialize_account_info(nil), do: nil
 
   defp deserialize_account_info(info) when is_map(info) do
@@ -566,6 +578,7 @@ defmodule Cartouche.Solana.RPC do
     end
   end
 
+  @spec parse_commitment(nil | String.t()) :: nil | :processed | :confirmed | :finalized
   defp parse_commitment(nil), do: nil
   defp parse_commitment("processed"), do: :processed
   defp parse_commitment("confirmed"), do: :confirmed
@@ -1113,6 +1126,8 @@ defmodule Cartouche.Solana.RPC do
     end
   end
 
+  @spec poll_signature(String.t(), atom(), pos_integer(), integer(), keyword()) ::
+          {:ok, String.t()} | {:error, term()}
   defp poll_signature(signature, target, interval, deadline, opts) do
     if System.monotonic_time(:millisecond) > deadline do
       {:error, :timeout}

@@ -75,11 +75,15 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
+    @spec key_version_name(String.t(), String.t(), String.t(), String.t(), String.t() | non_neg_integer()) ::
+            String.t()
     defp key_version_name(project, location, keychain, key, version) do
       "projects/#{project}/locations/#{location}/keyRings/#{keychain}" <>
         "/cryptoKeys/#{key}/cryptoKeyVersions/#{version}"
     end
 
+    # TODO: Tesla.Env.client() — Tesla is in plt_ignore_apps (OOM workaround), so dialyzer can't resolve the type
+    @spec client(binary() | atom() | pid()) :: term()
     defp client(token) when is_binary(token), do: Connection.new(token)
 
     defp client(cred) do
