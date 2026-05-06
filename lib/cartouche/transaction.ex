@@ -405,21 +405,6 @@ defmodule Cartouche.Transaction do
         amount: [kind: :value, description: "Ether value as wei or `{amount, :wei | :gwei}`."],
         data: [kind: :value, description: "Contract calldata or raw transaction input bytes."],
         access_list: [kind: :value, description: "EIP-2930/EIP-1559 access list entries."],
-        signature_y_parity: [
-          kind: :value,
-          default: nil,
-          description: "Optional typed-transaction y-parity signature bit for signed construction."
-        ],
-        signature_r: [
-          kind: :value,
-          default: nil,
-          description: "Optional 32-byte signature r value for signed construction."
-        ],
-        signature_s: [
-          kind: :value,
-          default: nil,
-          description: "Optional 32-byte signature s value for signed construction."
-        ],
         chain_id: [
           kind: :exchange_data,
           source: "Cartouche.RPC.eth_chain_id/1",
@@ -1183,38 +1168,16 @@ defmodule Cartouche.Transaction do
     end
   end
 
-  api(:build_trx, "Build a legacy transaction for a contract call or raw calldata.",
+  api(
+    :decode,
+    "Decode raw Ethereum transaction bytes into the matching transaction struct (V1/V2/V3/V4 by envelope byte).",
     params: [
-      address: [kind: :value, description: "20-byte contract or recipient address."],
-      nonce: [
-        kind: :exchange_data,
-        source: "Cartouche.RPC.get_transaction_count/2",
-        description: "Account nonce for the sender."
-      ],
-      call_data: [kind: :value, description: "Raw calldata bytes or `{abi_signature, params}` to ABI encode."],
-      gas_price: [
-        kind: :exchange_data,
-        source: "Cartouche.RPC.gas_price/1",
-        description: "Legacy gas price as wei or `{amount, :wei | :gwei}`; `nil` leaves it unset."
-      ],
-      gas_limit: [
-        kind: :exchange_data,
-        source: "Cartouche.RPC.estimate_gas/2",
-        description: "Maximum gas units the transaction may consume."
-      ],
-      value: [kind: :value, description: "Ether value as wei or `{amount, :wei | :gwei}`."],
-      chain_id: [
-        kind: :exchange_data,
-        source: "Cartouche.RPC.eth_chain_id/1",
-        default: nil,
-        description: "Ethereum chain id atom/integer passed to Cartouche.Transaction.V1.new/7."
-      ]
+      encoded: [kind: :value, description: "Raw RLP/typed-RLP transaction bytes."]
     ],
     returns: %{
-      type: :transaction_v1,
-      description: "%Cartouche.Transaction.V1{} ready to encode or sign."
-    },
-    composes_with: [:build_signed_trx]
+      type: :transaction_struct,
+      description: "{:ok, V1.t() | V2.t() | V3.t() | V4.t()} or {:error, atom() | String.t()}"
+    }
   )
 
   @doc """
@@ -1252,6 +1215,40 @@ defmodule Cartouche.Transaction do
   def decode(<<type, _::binary>>) when type < 0x80, do: {:error, :unknown_envelope_type}
   def decode(encoded) when is_binary(encoded), do: V1.decode(encoded)
   def decode(_), do: {:error, :unknown_envelope_type}
+
+  api(:build_trx, "Build a legacy transaction for a contract call or raw calldata.",
+    params: [
+      address: [kind: :value, description: "20-byte contract or recipient address."],
+      nonce: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.get_transaction_count/2",
+        description: "Account nonce for the sender."
+      ],
+      call_data: [kind: :value, description: "Raw calldata bytes or `{abi_signature, params}` to ABI encode."],
+      gas_price: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.gas_price/1",
+        description: "Legacy gas price as wei or `{amount, :wei | :gwei}`; `nil` leaves it unset."
+      ],
+      gas_limit: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.estimate_gas/2",
+        description: "Maximum gas units the transaction may consume."
+      ],
+      value: [kind: :value, description: "Ether value as wei or `{amount, :wei | :gwei}`."],
+      chain_id: [
+        kind: :exchange_data,
+        source: "Cartouche.RPC.eth_chain_id/1",
+        default: nil,
+        description: "Ethereum chain id atom/integer passed to Cartouche.Transaction.V1.new/7."
+      ]
+    ],
+    returns: %{
+      type: :transaction_v1,
+      description: "%Cartouche.Transaction.V1{} ready to encode or sign."
+    },
+    composes_with: [:build_signed_trx]
+  )
 
   @doc """
   Builds a v1-style call to a given contract

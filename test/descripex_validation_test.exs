@@ -80,5 +80,27 @@ defmodule Cartouche.DescripexValidationTest do
 
       assert description =~ "matching versioned transaction module"
     end
+
+    test "keeps top-level transaction decode and build metadata aligned" do
+      assert %{description: decode_description} = fetch_hints(Cartouche.Transaction, :decode, 1)
+      assert decode_description =~ "Decode raw Ethereum transaction bytes"
+
+      assert %{description: build_description} = fetch_hints(Cartouche.Transaction, :build_trx, 7)
+      assert build_description =~ "Build a legacy transaction"
+    end
+  end
+
+  defp fetch_hints(module, function, arity) do
+    {:docs_v1, _, _, _, _, _, docs} = Code.fetch_docs(module)
+
+    docs
+    |> Enum.find_value(fn
+      {{:function, ^function, ^arity}, _line, _sigs, _doc, meta} -> meta[:hints]
+      _ -> nil
+    end)
+    |> tap(fn
+      nil -> flunk("#{inspect(module)}.#{function}/#{arity} is missing docs metadata")
+      _ -> :ok
+    end)
   end
 end
