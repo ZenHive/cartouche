@@ -21,6 +21,8 @@ defmodule Cartouche.Solana.Transaction do
       bytes = Cartouche.Solana.Transaction.serialize(transaction)
   """
 
+  use Descripex, namespace: "/solana/transaction"
+
   import Bitwise
 
   defmodule AccountMeta do
@@ -86,6 +88,16 @@ defmodule Cartouche.Solana.Transaction do
   # Compact-u16 encoding
   # ---------------------------------------------------------------------------
 
+  api(:encode_compact_u16, "Encode a non-negative integer as Solana compact-u16 bytes.",
+    params: [
+      value: [kind: :value, description: "Integer in the compact-u16 range 0..65535."]
+    ],
+    returns: %{
+      type: :binary,
+      description: "Variable-length compact-u16 encoding used by Solana transaction messages."
+    }
+  )
+
   @doc """
   Encode a non-negative integer as a compact-u16 (variable-length).
 
@@ -108,6 +120,7 @@ defmodule Cartouche.Solana.Transaction do
     encode_compact_u16_acc(value, <<>>)
   end
 
+  @spec encode_compact_u16_acc(non_neg_integer(), binary()) :: binary()
   defp encode_compact_u16_acc(value, acc) when value < 0x80 do
     acc <> <<value>>
   end
@@ -115,6 +128,16 @@ defmodule Cartouche.Solana.Transaction do
   defp encode_compact_u16_acc(value, acc) do
     encode_compact_u16_acc(value >>> 7, acc <> <<(value &&& 0x7F) ||| 0x80>>)
   end
+
+  api(:decode_compact_u16, "Decode a Solana compact-u16 prefix.",
+    params: [
+      binary: [kind: :value, description: "Binary beginning with a compact-u16 value."]
+    ],
+    returns: %{
+      type: :tuple,
+      description: "`{value, rest}` with the decoded non-negative integer and remaining bytes."
+    }
+  )
 
   @doc """
   Decode a compact-u16 from the beginning of a binary.
@@ -135,6 +158,8 @@ defmodule Cartouche.Solana.Transaction do
     decode_compact_u16_acc(binary, 0, 0)
   end
 
+  @spec decode_compact_u16_acc(binary(), non_neg_integer(), non_neg_integer()) ::
+          {non_neg_integer(), binary()}
   defp decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) when byte >= 0x80 do
     decode_compact_u16_acc(rest, acc ||| (byte &&& 0x7F) <<< shift, shift + 7)
   end
@@ -147,6 +172,8 @@ defmodule Cartouche.Solana.Transaction do
           {:ok, non_neg_integer(), binary()} | {:error, :truncated_compact_u16}
   defp safe_decode_compact_u16(binary), do: safe_decode_compact_u16_acc(binary, 0, 0)
 
+  @spec safe_decode_compact_u16_acc(binary(), non_neg_integer(), non_neg_integer()) ::
+          {:ok, non_neg_integer(), binary()} | {:error, :truncated_compact_u16}
   defp safe_decode_compact_u16_acc(<<byte, rest::binary>>, acc, shift) when byte >= 0x80 do
     safe_decode_compact_u16_acc(rest, acc ||| (byte &&& 0x7F) <<< shift, shift + 7)
   end
@@ -160,6 +187,28 @@ defmodule Cartouche.Solana.Transaction do
   # ---------------------------------------------------------------------------
   # Building messages
   # ---------------------------------------------------------------------------
+
+  api(:build_message, "Build a compiled Solana transaction message from high-level instructions.",
+    params: [
+      fee_payer: [
+        kind: :value,
+        description: "32-byte Solana fee-payer public key; encode with Base58 for the address string."
+      ],
+      instructions: [
+        kind: :value,
+        description: "List of `%Cartouche.Solana.Transaction.Instruction{}` values to compile."
+      ],
+      recent_blockhash: [
+        kind: :exchange_data,
+        source: "Cartouche.Solana.RPC.get_latest_blockhash/1",
+        description: "32-byte recent blockhash returned by Solana RPC."
+      ]
+    ],
+    returns: %{
+      type: :solana_message,
+      description: "`%Cartouche.Solana.Transaction.Message{}` with ordered account keys and compiled instructions."
+    }
+  )
 
   @doc """
   Build a compiled message from high-level instructions.
@@ -211,24 +260,33 @@ defmodule Cartouche.Solana.Transaction do
     }
   end
 
+  @spec collect_accounts(<<_::256>>, [Instruction.t()]) :: %{<<_::256>> => {boolean(), boolean()}}
   defp collect_accounts(fee_payer, instructions) do
     # Start with fee payer as writable + signer
     init = %{fee_payer => {true, true}}
     Enum.reduce(instructions, init, &merge_instruction_accounts/2)
   end
 
+  @spec merge_instruction_accounts(Instruction.t(), %{<<_::256>> => {boolean(), boolean()}}) :: %{
+          <<_::256>> => {boolean(), boolean()}
+        }
   defp merge_instruction_accounts(ix, acc) do
     # Program ID is a readonly non-signer
     acc = Map.update(acc, ix.program_id, {false, false}, fn {s, w} -> {s, w} end)
     Enum.reduce(ix.accounts, acc, &merge_account_meta/2)
   end
 
+  @spec merge_account_meta(AccountMeta.t(), %{<<_::256>> => {boolean(), boolean()}}) :: %{
+          <<_::256>> => {boolean(), boolean()}
+        }
   defp merge_account_meta(am, acc) do
     Map.update(acc, am.pubkey, {am.is_signer, am.is_writable}, fn {s, w} ->
       {s or am.is_signer, w or am.is_writable}
     end)
   end
 
+  @spec partition_accounts(%{<<_::256>> => {boolean(), boolean()}}, <<_::256>>) ::
+          {[<<_::256>>], [<<_::256>>], [<<_::256>>], [<<_::256>>]}
   defp partition_accounts(account_map, fee_payer) do
     # Remove fee payer from the map; it's always first in writable_signers
     rest = Map.delete(account_map, fee_payer)
@@ -250,6 +308,16 @@ defmodule Cartouche.Solana.Transaction do
   # ---------------------------------------------------------------------------
   # Serialization
   # ---------------------------------------------------------------------------
+
+  api(:serialize_message, "Serialize a Solana message to the bytes that signers sign.",
+    params: [
+      msg: [
+        kind: :value,
+        description: "`%Cartouche.Solana.Transaction.Message{}` to serialize."
+      ]
+    ],
+    returns: %{type: :binary, description: "Canonical Solana message bytes used for Ed25519 signing."}
+  )
 
   @doc """
   Serialize a message to the bytes that get signed.
@@ -281,6 +349,16 @@ defmodule Cartouche.Solana.Transaction do
       ix.data
   end
 
+  api(:serialize, "Serialize a full legacy Solana transaction for RPC submission.",
+    params: [
+      transaction: [
+        kind: :value,
+        description: "`%Cartouche.Solana.Transaction{}` containing signatures and a message."
+      ]
+    ],
+    returns: %{type: :binary, description: "Legacy Solana transaction bytes suitable for RPC submission."}
+  )
+
   @doc """
   Serialize a full transaction (signatures + message) for RPC submission.
   """
@@ -294,6 +372,17 @@ defmodule Cartouche.Solana.Transaction do
   # ---------------------------------------------------------------------------
   # Deserialization
   # ---------------------------------------------------------------------------
+
+  api(:deserialize, "Deserialize legacy Solana transaction bytes.",
+    params: [
+      binary: [kind: :value, description: "Binary legacy Solana transaction payload."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.Solana.Transaction{}}` on complete well-formed input, or `{:error, reason}` for malformed input."
+    }
+  )
 
   @doc """
   Deserialize a legacy transaction from binary.
@@ -320,6 +409,17 @@ defmodule Cartouche.Solana.Transaction do
       _ -> {:error, :invalid_transaction}
     end
   end
+
+  api(:deserialize_message, "Deserialize a Solana transaction message prefix.",
+    params: [
+      binary: [kind: :value, description: "Binary beginning with a legacy Solana message."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %Cartouche.Solana.Transaction.Message{}, rest}` when a message parses, or `{:error, reason}` for malformed input."
+    }
+  )
 
   @doc """
   Deserialize a message from binary.
@@ -362,6 +462,8 @@ defmodule Cartouche.Solana.Transaction do
 
   def deserialize_message(_), do: {:error, :invalid_message_header}
 
+  @spec read_signatures(binary(), non_neg_integer(), [<<_::512>>]) ::
+          {:ok, [<<_::512>>], binary()} | {:error, :insufficient_signature_data}
   defp read_signatures(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_signatures(<<sig::binary-64, rest::binary>>, n, acc) when n > 0 do
@@ -370,6 +472,8 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_signatures(_, _, _), do: {:error, :insufficient_signature_data}
 
+  @spec read_pubkeys(binary(), non_neg_integer(), [<<_::256>>]) ::
+          {:ok, [<<_::256>>], binary()} | {:error, :insufficient_pubkey_data}
   defp read_pubkeys(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_pubkeys(<<key::binary-32, rest::binary>>, n, acc) when n > 0 do
@@ -378,6 +482,8 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_pubkeys(_, _, _), do: {:error, :insufficient_pubkey_data}
 
+  @spec read_instructions(binary(), non_neg_integer(), [CompiledInstruction.t()]) ::
+          {:ok, [CompiledInstruction.t()], binary()} | {:error, :insufficient_instruction_data}
   defp read_instructions(rest, 0, acc), do: {:ok, Enum.reverse(acc), rest}
 
   defp read_instructions(<<program_id_index, rest::binary>>, n, acc) when n > 0 do
@@ -412,6 +518,23 @@ defmodule Cartouche.Solana.Transaction do
   # Signing
   # ---------------------------------------------------------------------------
 
+  api(:sign, "Sign a Solana message with ordered Ed25519 seeds.",
+    params: [
+      message: [
+        kind: :value,
+        description: "`%Cartouche.Solana.Transaction.Message{}` to serialize and sign."
+      ],
+      seeds: [
+        kind: :value,
+        description: "Ordered list of 32-byte Ed25519 seeds matching the required signer account positions."
+      ]
+    ],
+    returns: %{
+      type: :solana_transaction,
+      description: "`%Cartouche.Solana.Transaction{}` with one 64-byte signature per supplied seed."
+    }
+  )
+
   @doc """
   Sign a message with one or more seeds and produce a full transaction.
 
@@ -429,6 +552,24 @@ defmodule Cartouche.Solana.Transaction do
 
     %__MODULE__{signatures: signatures, message: message}
   end
+
+  api(:sign_partial, "Partially sign a Solana message by signer account index.",
+    params: [
+      message: [
+        kind: :value,
+        description: "`%Cartouche.Solana.Transaction.Message{}` to serialize and sign."
+      ],
+      signers: [
+        kind: :value,
+        description: "Map of zero-based signer account index to 32-byte Ed25519 seed."
+      ]
+    ],
+    returns: %{
+      type: :solana_transaction,
+      description:
+        "`%Cartouche.Solana.Transaction{}` with required signer slots filled by signatures where provided and zero-filled placeholder signatures elsewhere; an empty signer map returns the unsigned transaction message with every required signature slot set to `<<0::512>>`."
+    }
+  )
 
   @doc """
   Partially sign a message, filling only the specified signer positions.
@@ -470,6 +611,24 @@ defmodule Cartouche.Solana.Transaction do
 
     %__MODULE__{signatures: signatures, message: message}
   end
+
+  api(:add_signature, "Add or replace a signature at a signer position in a Solana transaction.",
+    params: [
+      transaction: [
+        kind: :value,
+        description: "`%Cartouche.Solana.Transaction{}` to update."
+      ],
+      index: [
+        kind: :value,
+        description: "Zero-based signature slot index matching the signer account position."
+      ],
+      signature: [kind: :value, description: "64-byte Ed25519 signature."]
+    ],
+    returns: %{
+      type: :solana_transaction,
+      description: "Updated `%Cartouche.Solana.Transaction{}` with the signature stored at the requested index."
+    }
+  )
 
   @doc """
   Add a signature to a transaction at a specific signer position.

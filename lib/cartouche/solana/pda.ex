@@ -15,6 +15,8 @@ defmodule Cartouche.Solana.PDA do
       true
   """
 
+  use Descripex, namespace: "/solana/pda"
+
   import Bitwise
 
   # Ed25519 field prime: 2^255 - 19
@@ -27,6 +29,20 @@ defmodule Cartouche.Solana.PDA do
   @euler_exp div(@p - 1, 2)
 
   @pda_marker "ProgramDerivedAddress"
+
+  api(:find_program_address, "Find a Solana program-derived address from seeds and a program id.",
+    params: [
+      seeds: [kind: :value, description: "List of binary seeds used for PDA derivation."],
+      program_id: [
+        kind: :value,
+        description: "32-byte Solana program id; base58 program-id strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, {address, bump_seed}}` with a 32-byte PDA and bump seed, or `{:error, :no_valid_pda}`."
+    }
+  )
 
   @doc """
   Find a program-derived address from seeds and a program ID.
@@ -56,6 +72,20 @@ defmodule Cartouche.Solana.PDA do
     end
   end
 
+  api(:find_program_address!, "Find a Solana program-derived address from seeds and raise if no bump is valid.",
+    params: [
+      seeds: [kind: :value, description: "List of binary seeds used for PDA derivation."],
+      program_id: [
+        kind: :value,
+        description: "32-byte Solana program id; base58 program-id strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :solana_pda,
+      description: "`{address, bump_seed}` with a 32-byte program-derived address and bump seed."
+    }
+  )
+
   @doc """
   Like `find_program_address/2`, but raises on failure.
 
@@ -75,6 +105,23 @@ defmodule Cartouche.Solana.PDA do
         raise "could not find PDA (all 256 bumps produced on-curve addresses)"
     end
   end
+
+  api(:create_program_address, "Create a single Solana program address candidate from seeds and a program id.",
+    params: [
+      seeds: [
+        kind: :value,
+        description: "List of binary seeds, including any bump seed supplied by the caller."
+      ],
+      program_id: [
+        kind: :value,
+        description: "32-byte Solana program id; base58 program-id strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, address}` with a 32-byte off-curve PDA, or `{:error, :on_curve}` for invalid candidates."
+    }
+  )
 
   @doc """
   Create a program address from seeds (including bump) and program ID.
@@ -105,6 +152,19 @@ defmodule Cartouche.Solana.PDA do
       {:ok, candidate}
     end
   end
+
+  api(:on_curve?, "Check whether 32 bytes represent an on-curve Ed25519 public key.",
+    params: [
+      pub_key: [
+        kind: :value,
+        description: "32-byte candidate Solana public key; base58 address strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :boolean,
+      description: "`true` when the bytes decompress to an Ed25519 curve point; otherwise `false`."
+    }
+  )
 
   @doc """
   Check if 32 bytes represent a valid Ed25519 public key (on the curve).

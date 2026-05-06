@@ -18,7 +18,16 @@ defmodule Cartouche.Solana.Keys do
       "4zvwRjXUKGfvwnParsHAS3HuSVzV5cA4McphgmoCtajS"
   """
 
+  use Descripex, namespace: "/solana/keys"
+
   @type keypair :: {pub_key :: <<_::256>>, seed :: <<_::256>>}
+
+  api(:generate_keypair, "Generate a fresh Solana Ed25519 keypair.",
+    returns: %{
+      type: :solana_keypair,
+      description: "`{pub_key, seed}` where both values are 32-byte binaries."
+    }
+  )
 
   @doc """
   Generate a new random Ed25519 keypair.
@@ -37,6 +46,16 @@ defmodule Cartouche.Solana.Keys do
     {pub, seed}
   end
 
+  api(:from_seed, "Derive a Solana Ed25519 keypair from a 32-byte seed.",
+    params: [
+      seed: [kind: :value, description: "32-byte Ed25519 seed/private key material."]
+    ],
+    returns: %{
+      type: :solana_keypair,
+      description: "`{pub_key, seed}` where the public key is deterministically derived from the seed."
+    }
+  )
+
   @doc """
   Derive a keypair from a 32-byte Ed25519 seed.
 
@@ -54,6 +73,19 @@ defmodule Cartouche.Solana.Keys do
     {pub, ^seed} = :crypto.generate_key(:eddsa, :ed25519, seed)
     {pub, seed}
   end
+
+  api(:from_keypair_bytes, "Import and validate Solana keypair bytes in `seed ++ pubkey` format.",
+    params: [
+      keypair_bytes: [
+        kind: :value,
+        description: "64-byte Solana keypair file payload: 32-byte seed followed by 32-byte public key."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, {pub_key, seed}}` when the public key matches the seed, or `{:error, :pubkey_mismatch}`."
+    }
+  )
 
   @doc """
   Import a keypair from the 64-byte Solana format (seed ++ pubkey).
@@ -78,6 +110,20 @@ defmodule Cartouche.Solana.Keys do
       {:error, :pubkey_mismatch}
     end
   end
+
+  api(:from_json, "Import and validate a Solana JSON keypair file payload.",
+    params: [
+      json_string: [
+        kind: :value,
+        description: "JSON array string containing 64 decimal byte values in Solana keypair-file order."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, {pub_key, seed}}` for a valid keypair JSON payload, or `{:error, reason}` for invalid JSON, length, or pubkey mismatch."
+    }
+  )
 
   @doc """
   Import a keypair from a Solana JSON keypair file.
@@ -104,6 +150,16 @@ defmodule Cartouche.Solana.Keys do
       {:error, _} = err -> err
     end
   end
+
+  api(:to_address, "Encode a 32-byte Solana public key as a base58 address string.",
+    params: [
+      pub_key: [
+        kind: :value,
+        description: "32-byte Solana public key to encode as a base58 address string."
+      ]
+    ],
+    returns: %{type: :string, description: "Base58 Solana address string for the public key."}
+  )
 
   @doc """
   Get the Base58-encoded Solana address from a 32-byte public key.

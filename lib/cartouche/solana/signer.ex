@@ -24,11 +24,38 @@ defmodule Cartouche.Solana.Signer do
       # Get the signer's public key:
       pub_key = Cartouche.Solana.Signer.address(MySolSigner)
   """
+  use Descripex, namespace: "/solana/signer"
   use GenServer
 
   alias Cartouche.Solana.Signer.Default
 
   require Logger
+
+  api(:child_spec, "Build the supervisor child specification for a Solana signer process.",
+    params: [
+      init_arg: [
+        kind: :value,
+        description: "Initialization argument passed by a supervisor when starting Cartouche.Solana.Signer."
+      ]
+    ],
+    returns: %{
+      type: :supervisor_child_spec,
+      description: "Supervisor child spec map that starts Cartouche.Solana.Signer."
+    }
+  )
+
+  api(:start_link, "Start a Solana signer process backed by the provided Ed25519 signing MFA.",
+    params: [
+      opts: [
+        kind: :value,
+        description: "Keyword list containing `:mfa` as `{module, function, args}` and `:name` as the GenServer name."
+      ]
+    ],
+    returns: %{
+      type: :genserver_on_start,
+      description: "`{:ok, pid}` when the signer starts, or the standard GenServer start error tuple."
+    }
+  )
 
   @doc """
   Starts a new Solana signer process.
@@ -41,10 +68,22 @@ defmodule Cartouche.Solana.Signer do
     GenServer.start_link(__MODULE__, %{mfa: mfa, name: name}, name: name)
   end
 
+  @doc false
   @impl true
   def init(state) do
     {:ok, state}
   end
+
+  api(:sign, "Sign raw Solana message bytes with a running signer process.",
+    params: [
+      message: [kind: :value, description: "Raw message bytes to sign."],
+      name: [kind: :value, default: Default, description: "Signer GenServer name or pid."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, signature}` with a 64-byte Ed25519 signature, or `{:error, reason}` from the signing backend."
+    }
+  )
 
   @doc """
   Sign raw message bytes. Returns a 64-byte Ed25519 signature.
@@ -61,6 +100,17 @@ defmodule Cartouche.Solana.Signer do
     GenServer.call(name, {:sign, message})
   end
 
+  api(:address, "Get the Solana public key controlled by a signer process.",
+    params: [
+      name: [kind: :value, default: Default, description: "Signer GenServer name or pid."]
+    ],
+    returns: %{
+      type: :solana_pubkey,
+      description:
+        "32-byte Solana public key; encode with `Cartouche.Solana.Keys.to_address/1` for the base58 address string."
+    }
+  )
+
   @doc """
   Get the 32-byte public key (Solana address) for this signer.
 
@@ -75,6 +125,21 @@ defmodule Cartouche.Solana.Signer do
   def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
+
+  api(:verify, "Verify an Ed25519 signature against raw Solana message bytes and a public key.",
+    params: [
+      message: [kind: :value, description: "Raw message bytes that were signed."],
+      signature: [kind: :value, description: "64-byte Ed25519 signature."],
+      pub_key: [
+        kind: :value,
+        description: "32-byte Solana public key; base58 address strings should be decoded before calling."
+      ]
+    ],
+    returns: %{
+      type: :boolean,
+      description: "`true` when the signature verifies for the message and public key; otherwise `false`."
+    }
+  )
 
   @doc """
   Verify an Ed25519 signature. Standalone function, no GenServer needed.
@@ -94,6 +159,7 @@ defmodule Cartouche.Solana.Signer do
 
   # --- GenServer callbacks ---
 
+  @doc false
   @impl true
   def handle_call({:sign, message}, _from, %{mfa: mfa} = state) do
     {:reply, sign_direct(message, mfa), state}

@@ -15,10 +15,35 @@ defmodule Cartouche.Solana.ATA do
       true
   """
 
+  use Descripex, namespace: "/solana/ata"
+
   alias Cartouche.Solana.PDA
   alias Cartouche.Solana.Programs
   alias Cartouche.Solana.Transaction.AccountMeta
   alias Cartouche.Solana.Transaction.Instruction
+
+  api(:find_address, "Derive the associated token account PDA for a wallet and mint.",
+    params: [
+      wallet: [
+        kind: :value,
+        description: "32-byte wallet public key; base58 address strings should be decoded before calling."
+      ],
+      mint: [
+        kind: :value,
+        description: "32-byte mint public key; base58 mint address strings should be decoded before calling."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options, including `:token_program` to override the SPL Token Program pubkey."
+      ]
+    ],
+    returns: %{
+      type: :associated_token_account_address,
+      description: "`{ata_address, bump_seed}` with the 32-byte ATA PDA and its bump seed."
+    },
+    composes_with: [:create, :create_idempotent]
+  )
 
   @doc """
   Derive the associated token account address for a wallet + mint.
@@ -39,6 +64,33 @@ defmodule Cartouche.Solana.ATA do
     )
   end
 
+  api(:create, "Build an Associated Token Account create instruction that fails if the ATA already exists.",
+    params: [
+      payer: [
+        kind: :value,
+        description: "32-byte payer public key; this account signs and funds ATA creation."
+      ],
+      wallet: [
+        kind: :value,
+        description: "32-byte owner wallet public key for the associated token account."
+      ],
+      mint: [
+        kind: :value,
+        description: "32-byte token mint public key."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options, including `:token_program` to override the SPL Token Program pubkey."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "%Cartouche.Solana.Transaction.Instruction{} targeting the Associated Token Account Program."
+    },
+    composes_with: [:find_address]
+  )
+
   @doc """
   Build an instruction to create an ATA. Fails if it already exists.
 
@@ -49,6 +101,33 @@ defmodule Cartouche.Solana.ATA do
   def create(<<payer::binary-32>>, <<wallet::binary-32>>, <<mint::binary-32>>, opts \\ []) do
     build_create_instruction(payer, wallet, mint, <<0>>, opts)
   end
+
+  api(:create_idempotent, "Build an idempotent Associated Token Account create instruction.",
+    params: [
+      payer: [
+        kind: :value,
+        description: "32-byte payer public key; this account signs and funds ATA creation."
+      ],
+      wallet: [
+        kind: :value,
+        description: "32-byte owner wallet public key for the associated token account."
+      ],
+      mint: [
+        kind: :value,
+        description: "32-byte token mint public key."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options, including `:token_program` to override the SPL Token Program pubkey."
+      ]
+    ],
+    returns: %{
+      type: :solana_instruction,
+      description: "%Cartouche.Solana.Transaction.Instruction{} targeting the Associated Token Account Program."
+    },
+    composes_with: [:find_address]
+  )
 
   @doc """
   Build an instruction to create an ATA, succeeding even if it already exists.
