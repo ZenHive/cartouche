@@ -161,6 +161,19 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     assert contents =~ "def deployed_bytecode"
   end
 
+  defp public_defs(contents) do
+    ~r/^\s{2}def\s+([a-z_][a-zA-Z0-9_!?]*)(?:\(|\b)/m
+    |> Regex.scan(contents, capture: :all_but_first)
+    |> List.flatten()
+    |> Enum.uniq()
+  end
+
+  defp annotation_stanza(contents, name) do
+    pattern = ~r/@doc (?:\"[^\"]+\"|false)\n\s+@spec #{name}\([\s\S]*?\n\s+def #{name}(?:\(|\b)/
+
+    Regex.run(pattern, contents)
+  end
+
   describe "blank_bytecode?/1 predicate" do
     test "literal \"0x\" bytecode emits no exec_vm_* and no bytecode/0", %{tmp: tmp} do
       refute_bytecode_emission(generate(tmp, "BlankZeroX", "0x"))
@@ -195,6 +208,24 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert contents =~ "def encode_ping"
       assert contents =~ "def call_ping"
       assert contents =~ "def execute_ping"
+    end
+
+    test "generated public functions include ABI-derived docs and specs", %{tmp: tmp} do
+      contents = generate(tmp, "DocumentedRpc", "0x6080604052348015")
+
+      for name <- public_defs(contents) do
+        assert annotation_stanza(contents, name)
+      end
+
+      assert contents =~ ~S|@doc "Encodes ABI calldata for `encode_ping/ping(uint256)`."|
+      assert contents =~ "@spec encode_ping(non_neg_integer()) :: binary()"
+      assert contents =~ "@spec ping_selector() :: ABI.FunctionSelector.t()"
+      assert contents =~ "@spec decode_ping_call(binary()) :: [non_neg_integer()]"
+      assert contents =~ "@spec call_ping(<<_::160>>, non_neg_integer(), Keyword.t()) ::"
+      assert contents =~ "@spec exec_vm_ping(non_neg_integer(), Keyword.t()) ::"
+      assert contents =~ "@spec bytecode() :: binary()"
+      assert contents =~ "@spec deployed_bytecode() :: binary()"
+      assert contents =~ "@spec abi() :: [map()]"
     end
   end
 
