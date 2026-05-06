@@ -710,8 +710,9 @@ defmodule Cartouche.Solana.RPC do
   @doc """
   Get all token accounts owned by a wallet.
 
-  Requires exactly one filter: `:mint` (specific token) or `:program_id`
-  (all tokens under a program).
+  Accepts `:mint` (specific token) or `:program_id` (all tokens under a
+  program). If both are present, `:mint` takes precedence. Raises
+  `ArgumentError` if neither is provided.
 
   Uses `jsonParsed` encoding by default for structured token account data.
 
