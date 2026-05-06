@@ -197,7 +197,10 @@ defmodule Cartouche.Solana.RPC do
 
   api(:get_balance, "Get the SOL balance for an account.",
     params: [
-      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes)."],
+      pubkey: [
+        kind: :value,
+        description: "Raw 32-byte Solana public key binary (`<<_::256>>`); Base58-encoded internally."
+      ],
       opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
     ],
     opts: [
@@ -230,7 +233,10 @@ defmodule Cartouche.Solana.RPC do
 
   api(:get_account_info, "Get account info for a Solana account.",
     params: [
-      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes)."],
+      pubkey: [
+        kind: :value,
+        description: "Raw 32-byte Solana public key binary (`<<_::256>>`); Base58-encoded internally."
+      ],
       opts: [
         kind: :value,
         default: [],
@@ -278,7 +284,10 @@ defmodule Cartouche.Solana.RPC do
 
   api(:get_multiple_accounts, "Get account info for multiple Solana accounts.",
     params: [
-      pubkeys: [kind: :value, description: "List of Base58-encoded Solana public keys (32 bytes each), max 100."],
+      pubkeys: [
+        kind: :value,
+        description: "List of raw 32-byte Solana public key binaries (`<<_::256>>`); Base58-encoded internally, max 100."
+      ],
       opts: [
         kind: :value,
         default: [],
@@ -459,8 +468,8 @@ defmodule Cartouche.Solana.RPC do
       ],
       encoding: [
         kind: :value,
-        default: :json,
-        description: "Transaction response encoding: `:json`, `:json_parsed`, `:base64`, or `:base58`."
+        description:
+          "Transaction response encoding override: `:json_parsed`, `:base64`, `:\"base64+zstd\"`, `:base58`, or string."
       ]
     ],
     returns: %{
@@ -601,7 +610,11 @@ defmodule Cartouche.Solana.RPC do
 
   api(:get_token_account_balance, "Get the SPL token balance for a token account.",
     params: [
-      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) for the SPL token account."],
+      pubkey: [
+        kind: :value,
+        description:
+          "Raw 32-byte Solana public key binary (`<<_::256>>`) for the SPL token account; Base58-encoded internally."
+      ],
       opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
     ],
     opts: [
@@ -653,11 +666,15 @@ defmodule Cartouche.Solana.RPC do
 
   api(:get_token_accounts_by_owner, "Get SPL token accounts owned by a wallet.",
     params: [
-      owner: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) for the owning wallet."],
+      owner: [
+        kind: :value,
+        description:
+          "Raw 32-byte Solana public key binary (`<<_::256>>`) for the owning wallet; Base58-encoded internally."
+      ],
       filter: [
         kind: :value,
         description:
-          "Keyword list with exactly one filter: `:mint` or `:program_id`, each a Base58-encoded Solana public key (32 bytes)."
+          "Keyword list with `:mint` or `:program_id`, each a raw 32-byte Solana public key binary (`<<_::256>>`) that is Base58-encoded internally. If both are provided, `:mint` takes precedence."
       ],
       opts: [
         kind: :value,
@@ -684,8 +701,11 @@ defmodule Cartouche.Solana.RPC do
         description:
           "List of maps with keys `:pubkey` (base58 account address) and `:account` (deserialized account info map)."
       },
-      error: %{type: :term, description: "RPC transport, node, decode error, or `ArgumentError` for missing filters."}
-    }
+      error: %{type: :term, description: "RPC transport, node, or decode error."}
+    },
+    errors: [
+      {ArgumentError, "Raised when neither `:mint` nor `:program_id` is present in the filter."}
+    ]
   )
 
   @doc """
@@ -743,7 +763,8 @@ defmodule Cartouche.Solana.RPC do
       addresses: [
         kind: :value,
         default: [],
-        description: "List of Base58-encoded Solana public keys (32 bytes) for accounts that transactions lock."
+        description:
+          "List of raw 32-byte Solana public key binaries (`<<_::256>>`) for accounts that transactions lock; Base58-encoded internally."
       ],
       opts: [kind: :value, default: [], description: "Keyword options for RPC client configuration."]
     ],
@@ -788,9 +809,9 @@ defmodule Cartouche.Solana.RPC do
       opts: [kind: :value, default: [], description: "Keyword options for RPC client configuration."]
     ],
     returns: %{
-      type: :ok_error_tuple,
+      type: :ok_or_error,
       ok: %{type: :atom, description: "`:ok` when the node reports healthy."},
-      error: %{type: :term, description: "RPC transport, node, or decode error when unhealthy or unreachable."}
+      error: %{type: :error_tuple, description: "`{:error, term()}` when unhealthy, unreachable, or decoding fails."}
     }
   )
 
@@ -935,8 +956,7 @@ defmodule Cartouche.Solana.RPC do
       ],
       sig_verify: [kind: :value, default: false, description: "Boolean flag to verify signatures during simulation."],
       replace_recent_blockhash: [
-        kind: :exchange_data,
-        source: "Cartouche.Solana.RPC.get_latest_blockhash/1",
+        kind: :value,
         default: false,
         description: "Boolean flag allowing the node to replace the transaction's recent blockhash for simulation."
       ]
@@ -994,7 +1014,11 @@ defmodule Cartouche.Solana.RPC do
 
   api(:request_airdrop, "Request a devnet/testnet SOL airdrop.",
     params: [
-      pubkey: [kind: :value, description: "Base58-encoded Solana public key (32 bytes) receiving the airdrop."],
+      pubkey: [
+        kind: :value,
+        description:
+          "Raw 32-byte Solana public key binary (`<<_::256>>`) receiving the airdrop; Base58-encoded internally."
+      ],
       lamports: [kind: :value, description: "Amount in lamports (1 SOL = 1_000_000_000 lamports)."],
       opts: [kind: :value, default: [], description: "Keyword options for commitment and RPC client configuration."]
     ],
