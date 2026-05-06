@@ -65,7 +65,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # The contract name isn't obvious from the output-json file, thus we look either by
   # trying to find it in the metadata settings or AST [below]
-  @spec get_contract_name_by_metadata(any()) :: any()
   defp get_contract_name_by_metadata(abi) do
     metadata =
       case get_in(abi, ["metadata"]) do
@@ -95,7 +94,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Search the AST for the module name from the output-json
-  @spec get_contract_name_by_ast(any()) :: any()
   defp get_contract_name_by_ast(abi) do
     %{"sourceUnit" => _, "absolutePath" => absolute_path} = abi["ast"]
 
@@ -120,13 +118,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # signture) at the end of the function name. The first one doesn't have the prefix,
   # but we could make this more complex to rename all of them if there are any dupes;
   # it would just require two passes.
-  @spec rename_dups(any()) :: any()
   defp rename_dups(abis) do
     {abis, _} = Enum.reduce(abis, {[], []}, &accumulate_named_abi/2)
     Enum.reverse(abis)
   end
 
-  @spec accumulate_named_abi(any(), any()) :: any()
   defp accumulate_named_abi(abi, {acc, seen}) do
     fn_sel =
       try do
@@ -163,7 +159,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec maybe_rename_dup_fn(any(), any(), any(), any(), any()) :: any()
   defp maybe_rename_dup_fn(abi, name, lower_name, abi_sig, seen) do
     if Enum.member?(Enum.map(seen, fn {n, _} -> n end), lower_name) do
       Map.put(abi, "fn_name", "#{name}_#{abi_sig}")
@@ -173,7 +168,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Function to take the abi from the output-json and output function defs (e.g. encode and execute)
-  @spec get_encode_calls(any(), any()) :: any()
   defp get_encode_calls(full_abi, has_bytecode) do
     abi_items = full_abi["abi"] || []
     renamed_abis = rename_dups(abi_items)
@@ -208,7 +202,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     fns ++ Enum.reverse(decoders, Enum.reverse(events, Enum.reverse(errors)))
   end
 
-  @spec merge_encode_call_result(any(), any()) :: any()
   defp merge_encode_call_result({acc_fns, acc_decoders, acc_events, acc_errors}, result) do
     case result do
       {functions, generic_call_decoder, nil, nil} ->
@@ -228,7 +221,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # Parses the ABI spec and generates the functions (encode and execute) if we can parse
   # the ABI spec. We've recently updated our ABI parsing library that this doesn't fail
   # nearly as often as it used to (e.g. it can handle tuples)
-  @spec get_encode_call(any(), any(), any()) :: any()
   defp get_encode_call(abi, has_bytecode, has_errors) do
     fn_selector =
       try do
@@ -253,7 +245,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Generate the encode and execute functions. This is ... complex (read: hacky)
-  @spec encode_function_call(any(), any(), any(), any()) :: any()
   defp encode_function_call(selector, fn_name, has_bytecode, has_errors) do
     names = function_names(fn_name)
     argument_types = derive_argument_types(selector)
@@ -280,7 +271,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec function_names(any()) :: any()
   defp function_names(fn_name) do
     underscored = Macro.underscore(fn_name)
 
@@ -302,7 +292,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     }
   end
 
-  @spec derive_argument_types(any()) :: any()
   defp derive_argument_types(%{function_type: t}) when t in [:fallback, :receive] do
     [%{type: :bytes, name: "data"}]
   end
@@ -311,7 +300,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # We are returning 4 values and will do a double unzip here so we can return
   # them from one function but get 4 separate lists.
-  @spec build_argument_specs(any()) :: any()
   defp build_argument_specs(argument_types) do
     {args, vals} =
       argument_types
@@ -323,7 +311,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     {execute_arguments, encode_arguments, execute_values, encode_values}
   end
 
-  @spec build_argument_spec(any(), any()) :: any()
   defp build_argument_spec(argument_type, index) do
     if Map.has_key?(argument_type, :name) do
       name = arg_name(argument_type, index)
@@ -339,7 +326,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec arg_name(any(), any()) :: any()
   defp arg_name(argument_type, index) do
     case Map.get(argument_type, :name) do
       x when is_nil(x) or x == "" -> "var#{index}"
@@ -347,11 +333,9 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec tuple_field_names(any()) :: any()
   defp tuple_field_names({:tuple, tuple_types}), do: Enum.map(tuple_types, &Map.get(&1, :name))
   defp tuple_field_names(_), do: [nil]
 
-  @spec struct_argument?(any()) :: any()
   defp struct_argument?(names) do
     not Enum.member?(names, nil) and not Enum.member?(names, "")
   end
@@ -362,7 +346,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   #
   # HERE BE DRAGONS 🐉🌊🌊🌊🌊🌊🐉
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec build_struct_argument_spec(any(), any()) :: any()
   defp build_struct_argument_spec(name, names) do
     name_var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
     encode_unused_name_var = Macro.var(String.to_atom("_" <> Macro.underscore(name)), __MODULE__)
@@ -390,14 +373,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec build_simple_argument_spec(any()) :: any()
   defp build_simple_argument_spec(name) do
     var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
     {{var, var}, {var, var}}
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec name_value_pair(any()) :: any()
   defp name_value_pair(el) do
     el_atom = String.to_atom(Macro.underscore(el))
     el_var = Macro.var(el_atom, __MODULE__)
@@ -408,7 +389,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec unused_name_value_pair(any()) :: any()
   defp unused_name_value_pair(el) do
     el_atom = String.to_atom(Macro.underscore(el))
     el_atom_unused = String.to_atom("_" <> Macro.underscore(el))
@@ -420,7 +400,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
-  @spec positional_value(any()) :: any()
   defp positional_value(el) do
     el_atom = String.to_atom(Macro.underscore(el))
     el_var = Macro.var(el_atom, __MODULE__)
@@ -460,13 +439,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     }
   end
 
-  @spec abort?(any(), any(), any()) :: any()
   defp abort?(execute_arguments, selector, has_bytecode) do
     Enum.member?(execute_arguments, nil) or
       (selector.function_type == :constructor and not has_bytecode)
   end
 
-  @spec build_function_quotes(any()) :: any()
   defp build_function_quotes(ctx) do
     %{
       encode_fn: build_encode_fn(ctx),
@@ -488,7 +465,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     }
   end
 
-  @spec build_encode_fn(any()) :: any()
   defp build_encode_fn(%{selector: %{function_type: :constructor}} = ctx) do
     %{names: names, encode_arguments: encode_arguments, encode_values: encode_values, sig: sig} = ctx
 
@@ -529,7 +505,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_prepare_fn(any()) :: any()
   defp build_prepare_fn(%{selector: %{function_type: :constructor}} = ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -558,7 +533,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_build_trx_fn(any()) :: any()
   defp build_build_trx_fn(ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -572,7 +546,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_call_fn(any()) :: any()
   defp build_call_fn(ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -586,7 +559,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_estimate_gas_fn(any()) :: any()
   defp build_estimate_gas_fn(ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -600,7 +572,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_execute_fn(any()) :: any()
   defp build_execute_fn(%{selector: %{function_type: :constructor}} = ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -629,7 +600,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_exec_vm_fn(any()) :: any()
   defp build_exec_vm_fn(ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -761,7 +731,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_exec_vm_raw_fn(any()) :: any()
   defp build_exec_vm_raw_fn(ctx) do
     %{names: names, execute_arguments: execute_arguments, execute_values: execute_values} = ctx
 
@@ -776,7 +745,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_selector_fn(any()) :: any()
   defp build_selector_fn(%{names: names, selector: selector}) do
     quote do
       def unquote(names.selector)() do
@@ -785,7 +753,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_event_selector_fn(any()) :: any()
   defp build_event_selector_fn(%{names: names, selector: selector}) do
     quote do
       def unquote(names.event_selector)() do
@@ -794,7 +761,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_decode_event_fn(any()) :: any()
   defp build_decode_event_fn(%{names: names, sig: sig}) do
     quote do
       def unquote(names.decode_event)(topics, data) when is_list(topics) do
@@ -804,7 +770,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_decode_call_fn(any()) :: any()
   defp build_decode_call_fn(%{names: names, sig: sig}) do
     quote do
       def unquote(names.decode_call)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> calldata) do
@@ -814,7 +779,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_decode_error_fn(any()) :: any()
   defp build_decode_error_fn(%{names: names, sig: sig}) do
     quote do
       def unquote(names.decode_error)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> error) do
@@ -824,7 +788,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_decode_call_fn(any()) :: any()
   defp build_generic_decode_call_fn(%{names: names, sig: sig}) do
     quote do
       def decode_call(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = calldata) do
@@ -834,7 +797,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_error_fn(any()) :: any()
   defp build_generic_error_fn(%{names: names, sig: sig}) do
     quote do
       def decode_error(<<unquote_splicing(sig.abi_enc_signature_list)>> <> _ = error) do
@@ -844,7 +806,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_generic_event_fn(any()) :: any()
   defp build_generic_event_fn(%{names: names, sig: sig}) do
     quote do
       def decode_event([<<unquote_splicing(sig.signature_list)>> | _] = topics, data) do
@@ -853,7 +814,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec select_emitted_fns(any(), any(), any()) :: any()
   defp select_emitted_fns(%{function_type: :error}, _has_bytecode, fns) do
     {[fns.selector_fn, fns.encode_fn, fns.decode_error_fn], nil, nil, fns.generic_error_fn}
   end
@@ -896,7 +856,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # Generate the bytecode function
   # Note: I wanted to use ~h[] syntax, but generating that was being weird.
-  @spec get_bytecode(any()) :: any()
   defp get_bytecode(abi) do
     bytecode = get_in(abi, ["bytecode", "object"]) || get_in(abi, ["bin"])
 
@@ -912,7 +871,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Generate the deployed bytecode function
-  @spec get_deployed_bytecode(any()) :: any()
   defp get_deployed_bytecode(abi) do
     deployed_bytecode =
       get_in(abi, ["deployedBytecode", "object"]) || get_in(abi, ["bin-runtime"])
@@ -932,7 +890,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # bytecode. Foundry emits "0x" for interfaces with no on-chain bytecode
   # (e.g. Hardhat's IConsole), and `is_nil` alone wouldn't catch those —
   # leaving callers to compile-encode <<>> as if it were real code.
-  @spec blank_bytecode?(any()) :: any()
   defp blank_bytecode?(nil), do: true
 
   defp blank_bytecode?(s) when is_binary(s) do
@@ -948,7 +905,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   # The crux of it. Builds the entire module with function declarations, etc
   # based on the output-json "abi" of a given Solidity contract.
-  @spec build_module(any(), any(), any()) :: any()
   defp build_module(prefix, out, abi_map) do
     contract_name = get_contract_name_by_metadata(abi_map) || get_contract_name_by_ast(abi_map)
     if is_nil(contract_name), do: raise("did not find contract name")
@@ -1024,7 +980,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # form a valid function-name shape, but the formatted output then trips
   # Credo's ParenthesesOnZeroArityDefs. Strip empty parens from `def`/`defp`
   # lines as a post-process — text-level only, def-line-anchored.
-  @spec strip_zero_arity_def_parens(any()) :: any()
   defp strip_zero_arity_def_parens(source) do
     Regex.replace(~r/^(\s*defp?\s+[a-z_][a-zA-Z0-9_!?]*)\(\)/m, source, "\\1")
   end
@@ -1042,12 +997,10 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # Task 50 will replace `term()` placeholders with ABI-derived Elixir types and
   # emit the max-line-length pragma conditionally when bytestring topic-0 hashes
   # overflow 120 chars after `mix format`.
-  @spec annotate_internal_defs(any()) :: any()
   defp annotate_internal_defs({:defmodule, dm_meta, [name, [do: do_block]]}) do
     {:defmodule, dm_meta, [name, [do: annotate_block(do_block)]]}
   end
 
-  @spec annotate_block(any()) :: any()
   defp annotate_block({:__block__, b_meta, stmts}) do
     {new_stmts, _seen} = Enum.flat_map_reduce(stmts, MapSet.new(), &annotate_stmt/2)
     {:__block__, b_meta, new_stmts}
@@ -1062,7 +1015,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec annotate_stmt(any(), any()) :: any()
   defp annotate_stmt({kind, _, [head, _body]} = def_ast, seen) when kind in [:def, :defp] do
     case extract_name_arity(head) do
       nil ->
@@ -1082,13 +1034,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   defp annotate_stmt(other, seen), do: {[other], seen}
 
-  @spec extract_name_arity(any()) :: any()
   defp extract_name_arity({:when, _, [inner, _guard]}), do: extract_name_arity(inner)
   defp extract_name_arity({name, _, args}) when is_atom(name) and is_list(args), do: {name, length(args)}
   defp extract_name_arity({name, _, _ctx}) when is_atom(name), do: {name, 0}
   defp extract_name_arity(_), do: nil
 
-  @spec build_annotations(any(), any(), any()) :: any()
   defp build_annotations(kind, name, arity) do
     spec_args = List.duplicate({:term, [], []}, arity)
     spec_call = {name, [], spec_args}
@@ -1105,7 +1055,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # Gets the output-json of all included Solidity files to auto-generate.
-  @spec get_json_out(any()) :: any()
   defp get_json_out(patterns) do
     patterns
     |> Enum.map(fn pattern -> Path.wildcard(pattern) end)
@@ -1138,7 +1087,6 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   @doc false
-  @spec run(any()) :: any()
   def run(args) do
     case OptionParser.parse(args, strict: [prefix: :string, out: :string]) do
       {opts, [_ | _] = patterns, []} ->
@@ -1158,4 +1106,57 @@ defmodule Mix.Tasks.Cartouche.Gen do
         raise "usage: mix cartouche.gen --prefix [prefix] --out [out=lib/] [patterns]"
     end
   end
+
+  @spec get_contract_name_by_metadata(any()) :: any()
+  @spec get_contract_name_by_ast(any()) :: any()
+  @spec rename_dups(any()) :: any()
+  @spec accumulate_named_abi(any(), any()) :: any()
+  @spec maybe_rename_dup_fn(any(), any(), any(), any(), any()) :: any()
+  @spec get_encode_calls(any(), any()) :: any()
+  @spec merge_encode_call_result(any(), any()) :: any()
+  @spec get_encode_call(any(), any(), any()) :: any()
+  @spec encode_function_call(any(), any(), any(), any()) :: any()
+  @spec function_names(any()) :: any()
+  @spec derive_argument_types(any()) :: any()
+  @spec build_argument_specs(any()) :: any()
+  @spec build_argument_spec(any(), any()) :: any()
+  @spec arg_name(any(), any()) :: any()
+  @spec tuple_field_names(any()) :: any()
+  @spec struct_argument?(any()) :: any()
+  @spec build_struct_argument_spec(any(), any()) :: any()
+  @spec build_simple_argument_spec(any()) :: any()
+  @spec name_value_pair(any()) :: any()
+  @spec unused_name_value_pair(any()) :: any()
+  @spec positional_value(any()) :: any()
+  @spec abort?(any(), any(), any()) :: any()
+  @spec build_function_quotes(any()) :: any()
+  @spec build_encode_fn(any()) :: any()
+  @spec build_prepare_fn(any()) :: any()
+  @spec build_build_trx_fn(any()) :: any()
+  @spec build_call_fn(any()) :: any()
+  @spec build_estimate_gas_fn(any()) :: any()
+  @spec build_execute_fn(any()) :: any()
+  @spec build_exec_vm_fn(any()) :: any()
+  @spec build_exec_vm_raw_fn(any()) :: any()
+  @spec build_selector_fn(any()) :: any()
+  @spec build_event_selector_fn(any()) :: any()
+  @spec build_decode_event_fn(any()) :: any()
+  @spec build_decode_call_fn(any()) :: any()
+  @spec build_decode_error_fn(any()) :: any()
+  @spec build_generic_decode_call_fn(any()) :: any()
+  @spec build_generic_error_fn(any()) :: any()
+  @spec build_generic_event_fn(any()) :: any()
+  @spec select_emitted_fns(any(), any(), any()) :: any()
+  @spec get_bytecode(any()) :: any()
+  @spec get_deployed_bytecode(any()) :: any()
+  @spec blank_bytecode?(any()) :: any()
+  @spec build_module(any(), any(), any()) :: any()
+  @spec strip_zero_arity_def_parens(any()) :: any()
+  @spec annotate_internal_defs(any()) :: any()
+  @spec annotate_block(any()) :: any()
+  @spec annotate_stmt(any(), any()) :: any()
+  @spec extract_name_arity(any()) :: any()
+  @spec build_annotations(any(), any(), any()) :: any()
+  @spec get_json_out(any()) :: any()
+  @spec run(any()) :: any()
 end

@@ -59,7 +59,6 @@ defmodule Cartouche.Sleuth do
     query_internal(bytecode, query_val, selector, false, opts)
   end
 
-  @spec query_internal(any(), any(), any(), any(), any()) :: any()
   defp query_internal(bytecode, query, selector, annotated, opts) when is_binary(bytecode) and is_list(opts) do
     {sleuth_address, opts} = Keyword.pop(opts, :sleuth_address, @sleuth_address)
     {decode_binaries, rpc_opts} = Keyword.pop(opts, :decode_binaries, true)
@@ -106,7 +105,6 @@ defmodule Cartouche.Sleuth do
     end
   end
 
-  @spec try_decode_bytes(any()) :: any()
   defp try_decode_bytes(bytes) do
     [decoded] = ABI.decode("(bytes)", bytes)
     {:ok, decoded}
@@ -115,7 +113,6 @@ defmodule Cartouche.Sleuth do
       {:error, "error decoding bytes: #{inspect(e)}"}
   end
 
-  @spec try_decode(any(), any(), any()) :: any()
   defp try_decode(query_res, selector, decode_structs) do
     if decode_structs, do: preintern_decode_struct_atoms(selector.returns)
 
@@ -178,7 +175,6 @@ defmodule Cartouche.Sleuth do
   # so we have to take the unordered map, and re-order the values by
   # referencing the ordering of the named_types.
   #
-  @spec postprocess(any(), any(), any()) :: any()
   defp postprocess(results, named_types, opts) when is_map(results) and is_list(named_types) do
     results_values =
       Enum.map(named_types, fn %{name: name} ->
@@ -263,7 +259,6 @@ defmodule Cartouche.Sleuth do
     end
   end
 
-  @spec try_apply(any(), any(), any()) :: any()
   defp try_apply(mod, fun, args) do
     apply(mod, fun, args)
   rescue
@@ -272,21 +267,27 @@ defmodule Cartouche.Sleuth do
               __STACKTRACE__
   end
 
-  @spec with_indexed_name(any()) :: any()
   defp with_indexed_name({{name, it}, i}), do: {fallback_name(name, i), it}
 
-  @spec fallback_name(any(), any()) :: any()
   defp fallback_name(name, i) when is_nil(name) or name == "", do: "var#{i}"
   defp fallback_name(name, _i), do: name
 
-  @spec to_named_pair(any()) :: any()
   defp to_named_pair({name, v}), do: {name_keyword(name), v}
 
-  @spec name_keyword(any()) :: any()
   defp name_keyword(name) when is_nil(name) or name == "", do: :__unnamed__
   defp name_keyword(name), do: String.to_atom(Macro.underscore(name))
 
-  @spec obvious_results(any(), any()) :: any()
   defp obvious_results(processed_results, true), do: Enum.map(processed_results, &to_named_pair/1)
   defp obvious_results(processed_results, false), do: Enum.map(processed_results, fn {_, v} -> v end)
+
+  @spec query_internal(any(), any(), any(), any(), any()) :: any()
+  @spec try_decode_bytes(any()) :: any()
+  @spec try_decode(any(), any(), any()) :: any()
+  @spec postprocess(any(), any(), any()) :: any()
+  @spec try_apply(any(), any(), any()) :: any()
+  @spec with_indexed_name(any()) :: any()
+  @spec fallback_name(any(), any()) :: any()
+  @spec to_named_pair(any()) :: any()
+  @spec name_keyword(any()) :: any()
+  @spec obvious_results(any(), any()) :: any()
 end
