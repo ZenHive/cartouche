@@ -116,7 +116,19 @@ defmodule Cartouche.VM do
     Pre-computes the program-counter-keyed `op_map` from the assembled
     bytecode so subsequent steps can resolve operations in O(1).
     """
-    @spec init_from(Cartouche.VM.code(), Cartouche.VM.ffis()) :: t()
+    @spec init_from(Cartouche.VM.code(), Cartouche.VM.ffis()) :: %__MODULE__{
+            code: Cartouche.VM.code(),
+            code_encoded: binary(),
+            op_map: op_map(),
+            pc: 0,
+            halted: false,
+            stack: [],
+            memory: <<>>,
+            tstorage: %{},
+            reverted: false,
+            return_data: <<>>,
+            ffis: Cartouche.VM.ffis()
+          }
     def init_from(code, ffis) do
       code_encoded = Assembly.assemble(code)
 
