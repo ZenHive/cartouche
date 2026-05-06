@@ -156,6 +156,111 @@ defmodule SleuthTest do
     end
   end
 
+  describe "Phase B — query_by/3 cold-atom rejection" do
+    test "rejects a :fun whose derived encode_<fun> atom does not exist" do
+      # The atom `:encode_phase_b_cold_fun_unique_<n>` must not exist in the
+      # BEAM. After the swap, `String.to_existing_atom/1` raises
+      # `ArgumentError`, which `query_by/3` catches and reraises as the same
+      # RuntimeError shape `try_apply/3` produces for "function does not
+      # exist on module" — keeping the public-facing error uniform.
+      suffix = System.unique_integer([:positive])
+      cold_fun_name = "phase_b_cold_fun_unique_#{suffix}"
+      cold_fun = String.to_atom(cold_fun_name)
+      derived_encoder = "encode_" <> cold_fun_name
+
+      refute existing_atom?(derived_encoder)
+
+      assert_raise RuntimeError,
+                   ~r/Sleuth module does not define required "#{derived_encoder}\/0" function/,
+                   fn -> Sleuth.query_by(BlockNumber, cold_fun, []) end
+
+      # Critical: the swap must NOT have minted the cold derived atom.
+      refute existing_atom?(derived_encoder)
+    end
+
+    test "rejects a :fun whose derived <fun>_selector atom does not exist" do
+      # Force the encode_ atom to exist (so the first lookup succeeds), then
+      # leave the _selector atom cold so we hit the second derivation.
+      suffix = System.unique_integer([:positive])
+      cold_fun_name = "phase_b_selector_cold_#{suffix}"
+      cold_fun = String.to_atom(cold_fun_name)
+      _ = String.to_atom("encode_" <> cold_fun_name)
+      derived_selector = cold_fun_name <> "_selector"
+
+      refute existing_atom?(derived_selector)
+
+      # The encoder lookup hits `try_apply` first (function not defined on
+      # BlockNumber even though atom exists), so it raises with the
+      # try_apply message. The point of this test is the same: no atom
+      # gets minted by the lookup itself.
+      assert_raise RuntimeError, fn -> Sleuth.query_by(BlockNumber, cold_fun, []) end
+      refute existing_atom?(derived_selector)
+    end
+
+    test "hot-atom path remains unchanged: known :fun resolves and decodes" do
+      assert {:ok, 2} ==
+               Sleuth.query_by(BlockNumber, :query_three, [])
+    end
+  end
+
+  describe "Phase B — name_keyword/1 cold-atom rejection via query_v2" do
+    test "query_v2/4 with named_returns: true rejects cold runtime return-field name" do
+      # The selector field name -> snake_cased atom that has never been
+      # minted anywhere must trigger the INE-17-style structured error
+      # (not raise ArgumentError to the caller, not silently mint).
+      suffix = System.unique_integer([:positive])
+      cold_field_name = "coldNamedReturnField#{suffix}"
+      cold_field_atom_name = Macro.underscore(cold_field_name)
+
+      refute existing_atom?(cold_field_atom_name)
+
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}],
+        returns: [%{name: cold_field_name, type: {:uint, 256}}]
+      }
+
+      set_sleuth_result(ABI.TypeEncoder.encode([7], selector))
+
+      assert {:error, error} =
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 selector,
+                 client: StaticEthCallClient,
+                 named_returns: true,
+                 # decode_structs: false isolates the named_returns path
+                 # from the existing INE-17 decode_structs preintern.
+                 decode_structs: false
+               )
+
+      assert error =~ "pre-existing return-field atom"
+      assert error =~ cold_field_atom_name
+      refute existing_atom?(cold_field_atom_name)
+    end
+
+    test "query_v2/4 with named_returns: true accepts hot return-field name" do
+      # Pre-intern the field atom so the symmetric happy-path works.
+      _ = String.to_atom("hot_named_return_field")
+
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}],
+        returns: [%{name: "hotNamedReturnField", type: {:uint, 256}}]
+      }
+
+      set_sleuth_result(ABI.TypeEncoder.encode([42], selector))
+
+      assert {:ok, [hot_named_return_field: 42]} =
+               Sleuth.query_v2(
+                 BlockNumber.bytecode(),
+                 BlockNumber.encode_query(),
+                 selector,
+                 client: StaticEthCallClient,
+                 named_returns: true,
+                 decode_structs: false
+               )
+    end
+  end
+
   describe "generated Sleuth call shape" do
     test "build_trx_query/3 returns an eth_call struct instead of a partial V2 transaction" do
       call = Cartouche.Contract.Sleuth.build_trx_query(<<1::160>>, <<2, 3>>, <<4, 5>>)

@@ -125,11 +125,24 @@ defmodule Cartouche.Sleuth do
   def query_by(mod, fun, opts) when is_atom(mod) and is_atom(fun) and is_list(opts) do
     bytecode = try_apply(mod, :bytecode, [])
     # `fun` is a developer-supplied atom (already in the atom table); the derived
-    # function names are bounded by the contract module's compile-time API surface.
-    query_val = try_apply(mod, String.to_atom("encode_" <> to_string(fun)), [])
-    selector = try_apply(mod, String.to_atom(to_string(fun) <> "_selector"), [])
+    # function names must already exist as atoms because the generated contract
+    # module compiled them. `String.to_existing_atom/1` keeps an attacker-supplied
+    # `fun` from filling the atom table (BEAM cap ~1M, never GC'd) — cold names
+    # surface as the same RuntimeError shape that `try_apply/3` raises so callers
+    # see a uniform "function does not exist" failure.
+    query_val = try_apply(mod, existing_function_atom("encode_" <> to_string(fun), 0), [])
+    selector = try_apply(mod, existing_function_atom(to_string(fun) <> "_selector", 0), [])
 
     query_internal(bytecode, query_val, selector, false, opts)
+  end
+
+  @spec existing_function_atom(String.t(), non_neg_integer()) :: atom()
+  defp existing_function_atom(name, arity) do
+    String.to_existing_atom(name)
+  rescue
+    ArgumentError ->
+      reraise "Sleuth module does not define required \"#{name}/#{arity}\" function",
+              __STACKTRACE__
   end
 
   defp query_internal(bytecode, query, selector, annotated, opts) when is_binary(bytecode) and is_list(opts) do
@@ -204,7 +217,7 @@ defmodule Cartouche.Sleuth do
     with {:ok, query_res_bytes} <-
            Sleuth.call_query(sleuth_address, bytecode, query, rpc_opts),
          {:ok, query_res} <- try_decode_bytes(query_res_bytes),
-         {:ok, res} <- try_decode(query_res, selector, decode_structs) do
+         {:ok, res} <- try_decode(query_res, selector, decode_structs, named_returns) do
       {:ok,
        postprocess(res, selector.returns,
          annotated: annotated,
@@ -223,8 +236,14 @@ defmodule Cartouche.Sleuth do
       {:error, "error decoding bytes: #{inspect(e)}"}
   end
 
-  defp try_decode(query_res, selector, decode_structs) do
+  defp try_decode(query_res, selector, decode_structs, named_returns \\ false) do
     if decode_structs, do: preintern_decode_struct_atoms(selector.returns)
+    # `named_returns: true` flows through `name_keyword/1`, which uses
+    # `String.to_existing_atom/1`; preintern the top-level return-field
+    # atoms here so cold names surface as the existing INE-17
+    # `{:error, "error decoding: ..."}` shape rather than crashing
+    # postprocess with `ArgumentError`.
+    if named_returns, do: preintern_named_return_atoms(selector.returns)
 
     {:ok,
      ABI.decode(
@@ -240,6 +259,20 @@ defmodule Cartouche.Sleuth do
   @spec preintern_decode_struct_atoms(term()) :: :ok
   defp preintern_decode_struct_atoms(types) when is_list(types), do: Enum.each(types, &preintern_type_atoms/1)
   defp preintern_decode_struct_atoms(_), do: :ok
+
+  # `named_returns: true` only atomizes the *top-level* return field names
+  # (via `name_keyword/1`); nested struct fields are not. Narrower than
+  # `preintern_decode_struct_atoms/1` to avoid rejecting selectors that
+  # decode_structs=false would have left as plain maps.
+  @spec preintern_named_return_atoms(term()) :: :ok
+  defp preintern_named_return_atoms(returns) when is_list(returns) do
+    Enum.each(returns, fn
+      %{name: name} -> preintern_name_atom(name)
+      _ -> :ok
+    end)
+  end
+
+  defp preintern_named_return_atoms(_), do: :ok
 
   @spec preintern_type_atoms(term()) :: :ok
   defp preintern_type_atoms(%{name: name, type: type}) do
@@ -385,7 +418,21 @@ defmodule Cartouche.Sleuth do
   defp to_named_pair({name, v}), do: {name_keyword(name), v}
 
   defp name_keyword(name) when is_nil(name) or name == "", do: :__unnamed__
-  defp name_keyword(name), do: String.to_atom(Macro.underscore(name))
+  # `String.to_existing_atom/1` keeps attacker-supplied selector field
+  # names from filling the BEAM atom table. `query_v2/4` preinterns the
+  # top-level return-field atoms via `preintern_named_return_atoms/1`
+  # before reaching here, so any name we see has already been validated;
+  # the rescue is a defense-in-depth against future call paths that
+  # might bypass the preintern step.
+  defp name_keyword(name) do
+    String.to_existing_atom(Macro.underscore(name))
+  rescue
+    ArgumentError ->
+      reraise ArgumentError,
+              "decode_structs requires pre-existing return-field atom #{inspect(Macro.underscore(name))}; " <>
+                "load a generated contract module or pass named_returns: false for dynamic selectors",
+              __STACKTRACE__
+  end
 
   defp obvious_results(processed_results, true), do: Enum.map(processed_results, &to_named_pair/1)
   defp obvious_results(processed_results, false), do: Enum.map(processed_results, fn {_, v} -> v end)

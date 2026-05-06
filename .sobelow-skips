@@ -1,10 +1,7 @@
 
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:129,1830CC5
 Config.HTTPS: HTTPS Not Enabled,config/prod.exs:0,2B5C077
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1065,4AA86BD
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:921,4FF9ECC
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:388,5B44CA9
 Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1104,7741337
 Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1103,786FDEB
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:722,7BF32EB
-DOS.StringToAtom: Unsafe `String.to_atom`,lib/cartouche/sleuth.ex:130,7EE1296
