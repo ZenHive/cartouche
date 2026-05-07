@@ -775,6 +775,148 @@ defmodule SleuthTest do
     end
   end
 
+  # ---------------------------------------------------------------------------
+  # Phase B+C — preintern edge cases (INE-43 / Task 48)
+  # ---------------------------------------------------------------------------
+  #
+  # These tests cover atom-hardening paths introduced in Phase B+C that are not
+  # exercised by the Phase A/B blocks above: fixed-size arrays, non-list returns
+  # fall-throughs, empty/nil name pass-throughs, and error-message formatting.
+
+  describe "Phase C — preintern_type_atoms fixed-size array cold-atom rejection" do
+    test "query_v2/4 rejects cold atom inside a fixed-size array element type" do
+      # {:array, type, size} -- the _size variant -- wraps a named tuple type.
+      # preintern_type_atoms/1 must recurse into fixed-size arrays the same way
+      # it recurses into dynamic arrays.
+      suffix = System.unique_integer([:positive])
+      cold_field = "coldFixedArrayField#{suffix}"
+      cold_atom = Macro.underscore(cold_field)
+
+      refute existing_atom?(cold_atom)
+
+      # Nested: outer return is a fixed-size array of a named tuple
+      selector = %ABI.FunctionSelector{
+        returns: [
+          %{
+            name: "items",
+            type: {:array, {:tuple, [%{name: cold_field, type: {:uint, 256}}]}, 2}
+          }
+        ]
+      }
+
+      # decode_structs: true triggers preintern_decode_struct_atoms -> preintern_type_atoms
+      assert {:error, error} =
+               query_static(<<>>, selector.returns, decode_structs: true)
+
+      assert error =~ "pre-existing return-field atom"
+      assert error =~ cold_atom
+      # Critical: the cold atom must NOT have been minted by the lookup
+      refute existing_atom?(cold_atom)
+    end
+  end
+
+  describe "Phase C — preintern_named_return_atoms non-list fall-through" do
+    test "query_v2/4 with non-list returns and named_returns: true surfaces a decode error, not crash" do
+      # preintern_named_return_atoms/1 has a fall-through clause for non-list
+      # returns (e.g. nil). When `named_returns: true`, the preintern step
+      # silently passes, then `try_decode/4` fails when ABI.decode gets a
+      # nil types list — the overall call must return {:error, ...}, not raise.
+      selector = %ABI.FunctionSelector{returns: nil}
+      set_sleuth_result(<<>>)
+
+      result =
+        Sleuth.query_v2(
+          BlockNumber.bytecode(),
+          BlockNumber.encode_query(),
+          selector,
+          client: StaticEthCallClient,
+          named_returns: true,
+          decode_structs: false
+        )
+
+      assert {:error, _} = result
+    end
+  end
+
+  describe "Phase C — preintern_name_atom empty/nil pass-through" do
+    test "query_v2/4 decode_structs: true tolerates a return field with empty string name" do
+      # preintern_name_atom/1 has a guard `when name != ""` —
+      # empty string passes through without atom lookup.
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}],
+        returns: [%{name: "", type: {:uint, 256}}]
+      }
+
+      assert {:ok, [7]} =
+               query_static(
+                 ABI.TypeEncoder.encode([7], %ABI.FunctionSelector{types: selector.returns}),
+                 selector.returns,
+                 decode_structs: true
+               )
+    end
+
+    test "query_v2/4 decode_structs: true tolerates a return field with nil name" do
+      # preintern_name_atom/1 has a catch-all clause for non-binary names.
+      selector = %ABI.FunctionSelector{
+        types: [%{type: {:uint, 256}}],
+        returns: [%{name: nil, type: {:uint, 256}}]
+      }
+
+      assert {:ok, [7]} =
+               query_static(
+                 ABI.TypeEncoder.encode([7], %ABI.FunctionSelector{types: selector.returns}),
+                 selector.returns,
+                 decode_structs: true
+               )
+    end
+  end
+
+  describe "Phase C — existing_function_atom/2 error message formatting" do
+    test "error message for cold encoder atom includes the /0 arity suffix" do
+      # existing_function_atom/2 formats `"#{name}/#{arity}"` in its reraise
+      # message. The arity for all derived encoder/selector atoms is 0.
+      suffix = System.unique_integer([:positive])
+      cold_fun_name = "phase_c_arity_cold_#{suffix}"
+      cold_fun = String.to_atom(cold_fun_name)
+      derived_encoder = "encode_" <> cold_fun_name
+
+      refute existing_atom?(derived_encoder)
+
+      assert_raise RuntimeError,
+                   ~r/does not define required "#{derived_encoder}\/0"/,
+                   fn -> Sleuth.query_by(BlockNumber, cold_fun, []) end
+    end
+  end
+
+  describe "Phase C — query_by/3 arity-0 default via query_by/1" do
+    test "query_by/1 single-arg form resolves :query and returns correct value" do
+      # Exercises the `def query_by(mod)` head that defaults fun to :query.
+      # After Phase B's existing_function_atom swap, this must still work
+      # because :encode_query and :query_selector were interned at compile time.
+      assert {:ok, %{"blockNumber" => 2}} == Sleuth.query_by(BlockNumber)
+    end
+  end
+
+  describe "Phase C — existing_atom/1 helper behaviour" do
+    test "query_by/3 does not create new atoms when rejecting cold function names" do
+      # Regression: verify no atom-table growth across two cold lookups
+      # with different suffixes (each generates a unique cold name).
+      suffix_a = System.unique_integer([:positive])
+      suffix_b = System.unique_integer([:positive])
+      cold_a = "phase_c_regression_a_#{suffix_a}"
+      cold_b = "phase_c_regression_b_#{suffix_b}"
+
+      refute existing_atom?("encode_" <> cold_a)
+      refute existing_atom?("encode_" <> cold_b)
+
+      assert_raise RuntimeError, fn -> Sleuth.query_by(BlockNumber, String.to_atom(cold_a), []) end
+      assert_raise RuntimeError, fn -> Sleuth.query_by(BlockNumber, String.to_atom(cold_b), []) end
+
+      refute existing_atom?("encode_" <> cold_a)
+      refute existing_atom?("encode_" <> cold_b)
+    end
+  end
+
   defp query_static(query_result, returns, opts \\ []) do
     set_sleuth_result(query_result)
     selector = %ABI.FunctionSelector{returns: returns}
