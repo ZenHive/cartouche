@@ -1129,6 +1129,57 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  describe "Cartouche.Transaction.encode/1" do
+    test "delegates V1 structs to V1.encode/1 (untyped legacy RLP)" do
+      transaction = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+
+      encoded = Transaction.encode(transaction)
+
+      assert encoded == V1.encode(transaction)
+      assert <<first, _::binary>> = encoded
+      assert first >= 0x80
+    end
+
+    test "delegates V2 structs to V2.encode/1 with the 0x02 envelope byte" do
+      transaction = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], :goerli)
+
+      encoded = Transaction.encode(transaction)
+
+      assert encoded == V2.encode(transaction)
+      assert <<0x02, _::binary>> = encoded
+    end
+
+    test "delegates V3 structs to V3.encode/1 with the 0x03 envelope byte" do
+      transaction = v3_transaction()
+
+      encoded = Transaction.encode(transaction)
+
+      assert encoded == V3.encode(transaction)
+      assert <<0x03, _::binary>> = encoded
+    end
+
+    test "delegates V4 structs to V4.encode/1 with the 0x04 envelope byte" do
+      transaction = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+
+      encoded = Transaction.encode(transaction)
+
+      assert encoded == V4.encode(transaction)
+      assert <<0x04, _::binary>> = encoded
+    end
+
+    test "round-trips decode(encode(tx)) for every supported version" do
+      v1 = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      v2 = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], :goerli)
+      v3 = v3_transaction()
+      v4 = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+
+      assert {:ok, ^v1} = v1 |> Transaction.encode() |> Transaction.decode()
+      assert {:ok, ^v2} = v2 |> Transaction.encode() |> Transaction.decode()
+      assert {:ok, ^v3} = v3 |> Transaction.encode() |> Transaction.decode()
+      assert {:ok, ^v4} = v4 |> Transaction.encode() |> Transaction.decode()
+    end
+  end
+
   describe "V1 (Task 53 — r/s/v unification + decode→recover_signer round-trip)" do
     test "round-trips signed transactions" do
       signer_proc = Signer.start_signer()

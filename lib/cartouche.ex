@@ -138,12 +138,7 @@ defmodule Cartouche do
   @doc "Return Level 3 function detail for a module by full atom, Descripex short name, or Cartouche alias."
   @spec describe(module() | atom(), atom()) :: map() | nil
   def describe(mod_or_short, func_name) do
-    module = normalize_descripex_module(mod_or_short)
-
-    case Descripex.Describe.describe(@descripex_modules, module, func_name) do
-      nil -> transaction_dispatch_detail(module, func_name)
-      detail -> detail
-    end
+    Descripex.Describe.describe(@descripex_modules, normalize_descripex_module(mod_or_short), func_name)
   end
 
   @doc false
@@ -191,33 +186,4 @@ defmodule Cartouche do
   end
 
   defp normalize_descripex_summary(summary), do: summary
-
-  @spec transaction_dispatch_detail(module() | atom(), atom()) :: map() | nil
-  defp transaction_dispatch_detail(Cartouche.Transaction, :encode) do
-    %{
-      name: :encode,
-      arity: 1,
-      defaults: 0,
-      description: "Encode a concrete transaction struct using the matching versioned transaction module.",
-      spec: nil,
-      params: %{
-        transaction: %{
-          kind: :value,
-          description:
-            "%Cartouche.Transaction.V1{} or %Cartouche.Transaction.V2{}; use the versioned module for concrete encoding."
-        }
-      },
-      opts: nil,
-      returns: %{
-        type: :transaction_binary,
-        description:
-          "RLP-encoded legacy binary for %Cartouche.Transaction.V1{} or `0x02`-prefixed typed RLP binary for %Cartouche.Transaction.V2{}."
-      },
-      returns_example: nil,
-      errors: nil,
-      composes_with: [:transaction_v1, :transaction_v2]
-    }
-  end
-
-  defp transaction_dispatch_detail(_, _), do: nil
 end

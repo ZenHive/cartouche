@@ -126,7 +126,7 @@ defmodule Cartouche.DescripexValidationTest do
       assert Enum.any?(Cartouche.describe(:transaction_v2), &match?(%{name: :encode}, &1))
     end
 
-    test "exposes transaction encode guidance without adding a runtime dispatcher" do
+    test "exposes top-level transaction encode dispatcher metadata" do
       detail = Cartouche.describe(:transaction, :encode)
 
       assert %{
@@ -135,10 +135,10 @@ defmodule Cartouche.DescripexValidationTest do
                description: description
              } = detail
 
-      assert description =~ "matching versioned transaction module"
+      assert description =~ "dispatching on struct"
     end
 
-    test "exposes transaction encode guidance for module input" do
+    test "exposes top-level transaction encode dispatcher metadata for module input" do
       detail = Cartouche.describe(Cartouche.Transaction, :encode)
 
       assert %{
@@ -147,7 +147,7 @@ defmodule Cartouche.DescripexValidationTest do
                description: description
              } = detail
 
-      assert description =~ "matching versioned transaction module"
+      assert description =~ "dispatching on struct"
     end
 
     test "keeps top-level transaction decode and build metadata aligned" do
