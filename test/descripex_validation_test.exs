@@ -45,6 +45,51 @@ defmodule Cartouche.DescripexValidationTest do
       end
     end
 
+    test "every @doc hints: block is attached to the correctly-named function (no api() misattachment)" do
+      # Descripex 0.6's `api()` macro physically binds `@doc hints:` to the next def
+      # (deps/descripex/lib/descripex.ex:64, 89-93, 433-441). A stray `api()` block above
+      # an unrelated function silently leaks hints meant for a different function — the
+      # description-presence pass above still passes because the leaked hints are non-empty.
+      #
+      # This pass cross-checks `Code.fetch_docs/1` hints against `Module.__api__/1` (descripex's
+      # canonical declaration introspection). Every function carrying `meta[:hints]` MUST have a
+      # matching `__api__(name)` entry whose `hints` map equals the function's `meta[:hints]`.
+      # If a function has hints but its name isn't declared via `api(...)`, the block is misattached.
+      for module <- Cartouche.__descripex_modules__(),
+          Code.ensure_loaded?(module),
+          function_exported?(module, :__api__, 0) do
+        {:docs_v1, _, _, _, _, _, docs} = Code.fetch_docs(module)
+        api_entries_by_name = Map.new(module.__api__(), &{&1.name, &1.hints})
+
+        for {{:function, name, arity}, _line, _sigs, doc, meta} <- docs,
+            doc != :hidden,
+            is_map(meta[:hints]) do
+          api_hints = Map.get(api_entries_by_name, name)
+
+          assert api_hints, """
+          #{inspect(module)}.#{name}/#{arity} has @doc hints metadata but no api(:#{name}, ...) declaration exists in __api__/0.
+
+          This indicates an api(...) block was placed above the wrong def. Descripex physically attaches
+          `@doc hints:` to the next def regardless of name, so a misplaced api() block leaks hints onto
+          an unrelated function. Move the api() block immediately above its matching def, or hide the
+          unrelated function with `@doc false`.
+          """
+
+          assert meta.hints == api_hints, """
+          #{inspect(module)}.#{name}/#{arity} hints differ from its api(:#{name}, ...) declaration.
+
+          Function meta[:hints]: #{inspect(meta.hints)}
+          __api__(:#{name}).hints: #{inspect(api_hints)}
+
+          The two should be identical — descripex's propagate_hints_to_all_arities injects declaration
+          hints into every arity's doc entry. Drift here means the @doc hints: attribute was consumed
+          by a different def before propagation could inject the canonical hints, which is the
+          fingerprint of a misattached api() block.
+          """
+        end
+      end
+    end
+
     test "returns a list (initially empty until Phase 12 annotation tasks register modules)" do
       assert is_list(Cartouche.__descripex_modules__())
     end
