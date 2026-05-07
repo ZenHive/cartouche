@@ -9,3 +9,8 @@ Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.g
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1459,689604F
 Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1498,6BB8A71
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:1329,712CD77
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1466,1F5003D
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1504,2359653
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:875,4EF0DFB
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1505,598622F
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:1336,5A018E5
