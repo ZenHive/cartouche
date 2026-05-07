@@ -22,7 +22,7 @@ defmodule Cartouche.Sleuth do
     opts: [
       sleuth_address: [
         kind: :value,
-        default: @sleuth_address,
+        default: "0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2",
         description: "20-byte address of the Sleuth helper contract."
       ],
       decode_binaries: [
@@ -56,7 +56,7 @@ defmodule Cartouche.Sleuth do
     opts: [
       sleuth_address: [
         kind: :value,
-        default: @sleuth_address,
+        default: "0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2",
         description: "20-byte address of the Sleuth helper contract."
       ],
       decode_binaries: [
@@ -190,7 +190,7 @@ defmodule Cartouche.Sleuth do
       named_returns: [kind: :value, default: false, description: "Whether named ABI returns are emitted as named pairs."],
       sleuth_address: [
         kind: :value,
-        default: @sleuth_address,
+        default: "0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2",
         description: "20-byte address of the Sleuth helper contract."
       ]
     ],
