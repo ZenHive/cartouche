@@ -542,9 +542,22 @@ defmodule Cartouche.Solana.Transaction do
 
   Seeds must be ordered to match the signer positions in the message's
   account keys (i.e., the first `num_required_signatures` accounts).
+
+  Raises `ArgumentError` if `length(seeds) != message.header.num_required_signatures`.
+  Solana's runtime rejects transactions whose `signatures` array length doesn't
+  match `num_required_signatures`, so emitting a mismatched count would surface
+  only as an opaque submission failure downstream — guard at the boundary.
   """
   @spec sign(Message.t(), [<<_::256>>]) :: t()
   def sign(%Message{} = message, seeds) when is_list(seeds) do
+    expected = message.header.num_required_signatures
+    supplied = length(seeds)
+
+    if supplied != expected do
+      raise ArgumentError,
+            "signer count mismatch: supplied #{supplied} seed(s) but message.header.num_required_signatures is #{expected}"
+    end
+
     msg_bytes = serialize_message(message)
 
     signatures =
@@ -650,9 +663,22 @@ defmodule Cartouche.Solana.Transaction do
       msg_bytes = Transaction.serialize_message(partial.message)
       sponsor_sig = :crypto.sign(:eddsa, :none, msg_bytes, [sponsor_seed, :ed25519])
       full_trx = Transaction.add_signature(partial, 0, sponsor_sig)
+
+  Raises `ArgumentError` if `index` is out of bounds for `transaction.signatures`
+  (i.e., `index < 0` or `index >= length(transaction.signatures)`). `List.replace_at/3`
+  silently returns the list unchanged on out-of-bounds indices, which would mask a
+  partially-signed transaction as successfully signed in sponsored-transaction flows
+  — guard at the boundary.
   """
   @spec add_signature(t(), non_neg_integer(), <<_::512>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, index, <<signature::binary-64>>) when is_integer(index) and index >= 0 do
+  def add_signature(%__MODULE__{} = transaction, index, <<signature::binary-64>>) when is_integer(index) do
+    sig_count = length(transaction.signatures)
+
+    if index < 0 or index >= sig_count do
+      raise ArgumentError,
+            "invalid signature slot: index #{index} is out of bounds for transaction.signatures (length #{sig_count})"
+    end
+
     signatures = List.replace_at(transaction.signatures, index, signature)
     %{transaction | signatures: signatures}
   end
