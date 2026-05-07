@@ -28,6 +28,7 @@ defmodule Cartouche.VM do
           :pc_out_of_bounds
           | :value_overflow
           | :stack_underflow
+          | :stack_overflow
           | :signed_integer_out_of_bounds
           | :out_of_memory
           | :invalid_operation

@@ -5,7 +5,9 @@ defmodule Cartouche.Solana.TransactionTest do
   alias Cartouche.Solana.SystemProgram
   alias Cartouche.Solana.Transaction
   alias Cartouche.Solana.Transaction.AccountMeta
+  alias Cartouche.Solana.Transaction.Header
   alias Cartouche.Solana.Transaction.Instruction
+  alias Cartouche.Solana.Transaction.Message
 
   doctest Transaction
 
@@ -351,8 +353,8 @@ defmodule Cartouche.Solana.TransactionTest do
 
   describe "serialize_message/1 — account-key shape enforcement" do
     test "raises on under-32-byte account key" do
-      msg = %Transaction.Message{
-        header: %Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 1,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -366,8 +368,8 @@ defmodule Cartouche.Solana.TransactionTest do
     end
 
     test "raises on over-32-byte account key" do
-      msg = %Transaction.Message{
-        header: %Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 1,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -381,8 +383,8 @@ defmodule Cartouche.Solana.TransactionTest do
     end
 
     test "raises when one of several account keys is malformed" do
-      msg = %Transaction.Message{
-        header: %Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 1,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -396,8 +398,8 @@ defmodule Cartouche.Solana.TransactionTest do
     end
 
     test "accepts well-formed 32-byte account keys" do
-      msg = %Transaction.Message{
-        header: %Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 1,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -415,8 +417,8 @@ defmodule Cartouche.Solana.TransactionTest do
 
   describe "serialize/1 — signature shape enforcement" do
     setup do
-      msg = %Transaction.Message{
-        header: %Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 1,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0
@@ -587,8 +589,8 @@ defmodule Cartouche.Solana.TransactionTest do
 
   describe "sign_partial/2 — zero-signer boundary (Task 57)" do
     test "returns empty signatures list when num_required_signatures == 0" do
-      msg = %Cartouche.Solana.Transaction.Message{
-        header: %Cartouche.Solana.Transaction.Header{
+      msg = %Message{
+        header: %Header{
           num_required_signatures: 0,
           num_readonly_signed_accounts: 0,
           num_readonly_unsigned_accounts: 0

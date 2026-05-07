@@ -343,6 +343,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec arg_name(map(), non_neg_integer()) :: String.t()
   defp arg_name(argument_type, index) do
     case Map.get(argument_type, :name) do
       nil -> "var#{index}"
@@ -364,6 +365,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
   #
   # HERE BE DRAGONS 🐉🌊🌊🌊🌊🌊🐉
   # sobelow_skip ["DOS.StringToAtom"]
+  @spec build_struct_argument_spec(String.t(), [String.t()]) ::
+          {{Macro.t(), Macro.t()}, {Macro.t(), Macro.t()}}
   defp build_struct_argument_spec(name, names) do
     underscored = Macro.underscore(name)
     name_var = Macro.var(String.to_atom(underscored), __MODULE__)
@@ -408,6 +411,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
+  @spec unused_name_value_pair(String.t()) :: Macro.t()
   defp unused_name_value_pair(el) do
     underscored = Macro.underscore(el)
     el_atom = String.to_atom(underscored)
