@@ -758,13 +758,13 @@ defmodule Cartouche.Hex do
     "0x" <> address_enc = encode_big_hex(address)
     hash = Cartouche.Hash.keccak(String.downcase(address_enc))
 
-    lower = ~c"0123456789abcdef"
-    upper = ~c"0123456789ABCDEF"
+    lower = {?0, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?a, ?b, ?c, ?d, ?e, ?f}
+    upper = {?0, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?A, ?B, ?C, ?D, ?E, ?F}
 
     res =
       for {nibble, hash_val} <- Enum.zip(nibbles(address), nibbles(hash)), into: [] do
         casing = if hash_val >= 8, do: upper, else: lower
-        Enum.at(casing, nibble)
+        elem(casing, nibble)
       end
 
     "0x" <> to_string(res)

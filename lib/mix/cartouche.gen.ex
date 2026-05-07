@@ -343,9 +343,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
+  @spec arg_name(map(), non_neg_integer()) :: String.t()
   defp arg_name(argument_type, index) do
     case Map.get(argument_type, :name) do
-      x when is_nil(x) or x == "" -> "var#{index}"
+      nil -> "var#{index}"
+      "" -> "var#{index}"
       els -> String.trim_leading(els, "_")
     end
   end
@@ -363,9 +365,12 @@ defmodule Mix.Tasks.Cartouche.Gen do
   #
   # HERE BE DRAGONS 🐉🌊🌊🌊🌊🌊🐉
   # sobelow_skip ["DOS.StringToAtom"]
+  @spec build_struct_argument_spec(String.t(), [String.t()]) ::
+          {{Macro.t(), Macro.t()}, {Macro.t(), Macro.t()}}
   defp build_struct_argument_spec(name, names) do
-    name_var = Macro.var(String.to_atom(Macro.underscore(name)), __MODULE__)
-    encode_unused_name_var = Macro.var(String.to_atom("_" <> Macro.underscore(name)), __MODULE__)
+    underscored = Macro.underscore(name)
+    name_var = Macro.var(String.to_atom(underscored), __MODULE__)
+    encode_unused_name_var = Macro.var(String.to_atom("_" <> underscored), __MODULE__)
 
     encode_els = Enum.map(names, &name_value_pair/1)
     execute_els_unused = Enum.map(names, &unused_name_value_pair/1)
@@ -406,9 +411,11 @@ defmodule Mix.Tasks.Cartouche.Gen do
   end
 
   # sobelow_skip ["DOS.StringToAtom"]
+  @spec unused_name_value_pair(String.t()) :: Macro.t()
   defp unused_name_value_pair(el) do
-    el_atom = String.to_atom(Macro.underscore(el))
-    el_atom_unused = String.to_atom("_" <> Macro.underscore(el))
+    underscored = Macro.underscore(el)
+    el_atom = String.to_atom(underscored)
+    el_atom_unused = String.to_atom("_" <> underscored)
     el_var_unused = Macro.var(el_atom_unused, __MODULE__)
 
     quote do

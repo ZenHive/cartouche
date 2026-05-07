@@ -125,8 +125,8 @@ defmodule Cartouche.MixProject do
       {:doctor, "~> 0.21", only: [:dev, :test], runtime: false},
       {:meck, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:ex_ast, "~> 0.8", only: [:dev, :test], runtime: false},
-      {:reach, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:ex_ast, "~> 0.11", only: [:dev, :test], runtime: false},
+      {:reach, "~> 2.2", only: [:dev, :test], runtime: false},
       {:rename, "~> 0.1.0", only: :dev},
       {:tidewave, "~> 0.5", only: :dev},
       {:bandit, "~> 1.10", only: :dev}
