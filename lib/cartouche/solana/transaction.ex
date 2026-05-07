@@ -327,6 +327,14 @@ defmodule Cartouche.Solana.Transaction do
   """
   @spec serialize_message(Message.t()) :: binary()
   def serialize_message(%Message{} = msg) do
+    # Preserve the pre-iodata raise-on-malformed contract that the original
+    # `Enum.reduce(..., fn <<key::binary-32>>, acc -> acc <> key end)` enforced:
+    # a non-32-byte account key must fail at this boundary, not silently flatten
+    # into the wire format (where the compact-u16 length prefix would lie about
+    # how many keys are present and downstream parsers would consume the
+    # blockhash / instruction bytes as "remainder of the account-key region").
+    Enum.each(msg.account_keys, fn <<_::binary-32>> -> :ok end)
+
     header_bytes =
       <<msg.header.num_required_signatures, msg.header.num_readonly_signed_accounts,
         msg.header.num_readonly_unsigned_accounts>>
@@ -367,6 +375,13 @@ defmodule Cartouche.Solana.Transaction do
   """
   @spec serialize(t()) :: binary()
   def serialize(%__MODULE__{signatures: sigs, message: msg}) do
+    # Same raise-on-malformed contract as `serialize_message/1` above:
+    # the original `Enum.reduce(sigs, <<>>, fn <<sig::binary-64>>, acc -> ... end)`
+    # rejected non-64-byte signatures via FunctionClauseError. Preserve that
+    # boundary so a malformed sig fails here instead of silently producing a
+    # malformed transaction whose compact-u16 length prefix lies.
+    Enum.each(sigs, fn <<_::binary-64>> -> :ok end)
+
     IO.iodata_to_binary([
       encode_compact_u16(length(sigs)),
       sigs,

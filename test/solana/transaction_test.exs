@@ -336,6 +336,128 @@ defmodule Cartouche.Solana.TransactionTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Serialize-side malformed-input hardening
+  # ---------------------------------------------------------------------------
+  #
+  # The wire format prefixes account-key and signature lists with compact-u16
+  # counts. If a caller hands `serialize_message/1` or `serialize/1` a
+  # `%Message{}` / `%Transaction{}` whose `account_keys` or `signatures` list
+  # contains an entry that isn't exactly 32 / 64 bytes, the prefix lies and
+  # downstream RPC parsers consume bytes from the next region (blockhash,
+  # instructions) as remainder of the malformed key/sig — silent corruption.
+  #
+  # Both functions raise `FunctionClauseError` at the boundary so the failure
+  # surfaces at the source instead of as an opaque RPC rejection later.
+
+  describe "serialize_message/1 — account-key shape enforcement" do
+    test "raises on under-32-byte account key" do
+      msg = %Transaction.Message{
+        header: %Transaction.Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<0::248>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      assert_raise FunctionClauseError, fn -> Transaction.serialize_message(msg) end
+    end
+
+    test "raises on over-32-byte account key" do
+      msg = %Transaction.Message{
+        header: %Transaction.Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<0::264>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      assert_raise FunctionClauseError, fn -> Transaction.serialize_message(msg) end
+    end
+
+    test "raises when one of several account keys is malformed" do
+      msg = %Transaction.Message{
+        header: %Transaction.Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>, <<2::248>>, <<3::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      assert_raise FunctionClauseError, fn -> Transaction.serialize_message(msg) end
+    end
+
+    test "accepts well-formed 32-byte account keys" do
+      msg = %Transaction.Message{
+        header: %Transaction.Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>, <<2::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      bytes = Transaction.serialize_message(msg)
+      assert is_binary(bytes)
+      assert {:ok, _, <<>>} = Transaction.deserialize_message(bytes)
+    end
+  end
+
+  describe "serialize/1 — signature shape enforcement" do
+    setup do
+      msg = %Transaction.Message{
+        header: %Transaction.Header{
+          num_required_signatures: 1,
+          num_readonly_signed_accounts: 0,
+          num_readonly_unsigned_accounts: 0
+        },
+        account_keys: [<<1::256>>],
+        recent_blockhash: <<0::256>>,
+        instructions: []
+      }
+
+      {:ok, msg: msg}
+    end
+
+    test "raises on under-64-byte signature", %{msg: msg} do
+      txn = %Transaction{signatures: [<<0::504>>], message: msg}
+      assert_raise FunctionClauseError, fn -> Transaction.serialize(txn) end
+    end
+
+    test "raises on over-64-byte signature", %{msg: msg} do
+      txn = %Transaction{signatures: [<<0::520>>], message: msg}
+      assert_raise FunctionClauseError, fn -> Transaction.serialize(txn) end
+    end
+
+    test "raises when one of several signatures is malformed", %{msg: msg} do
+      txn = %Transaction{
+        signatures: [<<1::512>>, <<2::504>>, <<3::512>>],
+        message: msg
+      }
+
+      assert_raise FunctionClauseError, fn -> Transaction.serialize(txn) end
+    end
+
+    test "accepts well-formed 64-byte signatures", %{msg: msg} do
+      txn = %Transaction{signatures: [<<1::512>>], message: msg}
+      bytes = Transaction.serialize(txn)
+      assert is_binary(bytes)
+      assert {:ok, decoded} = Transaction.deserialize(bytes)
+      assert decoded.signatures == [<<1::512>>]
+    end
+  end
+
+  # ---------------------------------------------------------------------------
   # Signing and verification
   # ---------------------------------------------------------------------------
 
