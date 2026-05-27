@@ -6,7 +6,7 @@ vision = "Cartouche is an attributed fork of hayesgm/signet under ZenHive owners
 [phases.0]
 name = "Ship 0.1.0 + pre/post-release hardening"
 order = 0
-status = "done"
+status = "pending"
 
 [phases.1]
 name = "Spec corrections (immediate onchain wins)"

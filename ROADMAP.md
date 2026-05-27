@@ -127,7 +127,54 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 ## Phase 0: Ship `0.1.0`
 
 <!-- TASKS:BEGIN phase=0 -->
-> 46 tasks. See [CHANGELOG.md](CHANGELOG.md#phase-0-ship-0-1-0-pre-post-release-hardening).
+| Task | Status | Notes |
+|------|--------|-------|
+| Task 1 | ✅ | 🎁 **release_010** · Reset mix.exs version 1.6.1 → 0.1.0-dev [D:1/B:3/U:7 → Eff:5.0?] 🎯 |
+| Task 2 | ✅ | 🎁 **release_010** · Full mix test.json --quiet pass on the ported code [D:3/B:5/U:7 → Eff:2.0?] 🎯 |
+| Task 3 | ✅ | 🎁 **release_010** · mix dialyzer.json --quiet — inventory remaining invalid_contract warnings, confirm they match the pre-rename audit [D:2/B:3/U:6 → Eff:2.25?] 🎯 |
+| Task 4 | ✅ | 🎁 **release_010** · mix docs clean build with cartouche branding intact [D:2/B:3/U:5 → Eff:2.0?] 🎯 |
+| Task 5 | ✅ | 🎁 **release_010** · Update README.md installation section — replace the 'not recommended yet' placeholder with real install instructions [D:1/B:3/U:7 → Eff:5.0?] 🎯 |
+| Task 6 | ✅ | 🎁 **release_010** · Tag 0.1.0, publish to hex [D:1/B:5/U:8 → Eff:6.5?] 🎯 |
+| Task 36 | ✅ | 🎁 **release_010** · Silence ex_doc 'documentation references type X but the module is hidden' warnings surfaced by mix docs [D:2/B:2/U:4 → Eff:1.5?] 🚀 |
+| Task 37 | ✅ | 🎁 **release_010** · Publish cut — version bump, CHANGELOG release section, mix.exs :package polish, README install activation [D:1/B:3/U:5 → Eff:4.0?] 🎯 |
+| Task 40 | ✅ | 🎁 **generator_hardening** · Generator (lib/mix/cartouche.gen.ex) credo cleanup [D:5/B:2/U:3 → Eff:0.5?] ⚠️ |
+| Task 38 | ✅ | 🎁 **release_010** · Delete Cartouche.Util grab-bag — redistribute helpers into focused modules, drop @deprecated aliases [D:3/B:3/U:5 → Eff:1.33?] 📋 |
+| Task 51 | ✅ | 🎁 **correctness_010** · Cartouche.Trace.t().trace_address typed singular but runtime is a list [D:1/B:5/U:7 → Eff:6.0?] 🎯 |
+| Task 52 | ✅ | 🎁 **correctness_010** · Cartouche.TraceCall.t().trace typed singular but runtime is a list [D:1/B:5/U:7 → Eff:6.0?] 🎯 |
+| Task 53 | ✅ | 🎁 **correctness_010** · V1.t() Schrödinger r/s/v + latent decode → recover_signer crash [D:4/B:7/U:6 → Eff:1.62?] 🚀 |
+| Task 56 | ✅ | 🎁 **correctness_010** · Harden Cartouche.Solana.Transaction.deserialize/1 crash paths [D:2/B:6/U:6 → Eff:3.0?] 🎯 |
+| Task 41 `[CX]` | ✅ | 🎁 **generator_hardening** · Generator bytecode-flag separation — init vs deployed [D:3/B:2/U:3 → Eff:0.83?] ⚠️ |
+| Task 42 | ✅ | 🎁 **generator_hardening** · Generator decode_error/1 template — drop dead if true ... else ... end branch [D:1/B:1/U:2 → Eff:1.5?] 🚀 |
+| Task 44 `[CSR]` | ✅ | 🎁 **generator_hardening** · Generator coverage push — raise Mix.Tasks.Cartouche.Gen to ≥80% before Tasks 41 + 42 [D:3/B:4/U:6 → Eff:1.67?] 🚀 |
+| Task 47 | ✅ | 🎁 **generator_hardening** · Exclude generated Cartouche.Contract.IConsole from coverage measurement [D:1/B:1/U:3 → Eff:2.0?] 🎯 |
+| Task 49 | ⛔ | 🎁 **phase4_typed** · Resolve Cartouche.Transaction.V2.encode/1 spec duplication — superseded by Task 54 [D:1/B:1/U:1 → Eff:1.0?] 📋 |
+| Task 54 `[CSR]` | ✅ | 🎁 **generator_hardening** · Extract Cartouche.Transaction.Call — collapse the V2-as-eth-call-shape lie [D:6/B:5/U:5 → Eff:0.83?] ⚠️ |
+| Task 50 `[CX]` | ✅ | 🎁 **generator_hardening** · Generator emits @doc/@spec on generated bindings — drop .doctor.exs ignore_paths [D:3/B:2/U:3 → Eff:0.83?] ⚠️ |
+| Task 48 `[CSR]` | ✅ | 🎁 **sleuth_hardening** · Harden Cartouche.Sleuth atom-table risks [D:5/B:4/U:5 → Eff:0.9?] ⚠️ |
+| Task 55 | ✅ | 🎁 **trace_hardening** · Harden Cartouche.Trace.deserialize/1 against missing/nil traceAddress [D:1/B:2/U:3 → Eff:2.5?] 🎯 |
+| Task 43 | ✅ | 🎁 **coverage_pushes** · Pre-credo coverage push for cleanup-target modules [D:3/B:5/U:7 → Eff:2.0?] 🎯 |
+| Task 57 | ✅ | 🎁 **solana_hardening** · Fix Cartouche.Solana.Transaction.sign_partial/2 zero-signer boundary [D:1/B:3/U:3 → Eff:3.0?] 🎯 |
+| Task 58 `[CX]` | ✅ | 🎁 **rpc_correctness** · Strengthen Cartouche.Filter expired-filter test — assert recovery-branch fingerprint [D:1/B:2/U:2 → Eff:2.0?] 🎯 |
+| Task 59 `[CSR]` | ✅ | 🎁 **generator_hardening** · Reach 1.8 → 2.2 bump + hygiene pass [D:1/B:2/U:1 → Eff:1.5?] 🚀 |
+| Task 60 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC.get_block_by_number/2 integer path crashes on real nodes [D:1/B:3/U:4 → Eff:3.5?] 🎯 |
+| Task 61 | ✅ | 🎁 **rpc_correctness** · Mainnet archive integration test suite — read-only RPC sweep [D:3/B:6/U:7 → Eff:2.17?] 🎯 |
+| Task 62 | ✅ | 🎁 **rpc_correctness** · v2 traces — integration anchors for trace_transaction, trace_call, trace_callMany, debug_traceCall [D:5/B:5/U:5 → Eff:1.0?] 📋 |
+| Task 63 | ✅ | 🎁 **block_fork_fields** · Cartouche.Block — add base_fee_per_gas (London+) [D:1/B:3/U:5 → Eff:4.0?] 🎯 |
+| Task 64 | ✅ | 🎁 **block_fork_fields** · Cartouche.Block — add withdrawals_root and withdrawals (Shanghai+) [D:2/B:3/U:5 → Eff:2.0?] 🎯 |
+| Task 65 | ✅ | 🎁 **block_fork_fields** · Cartouche.Block — add Cancun fields (parent_beacon_block_root, blob_gas_used, excess_blob_gas, mix_hash) [D:2/B:3/U:5 → Eff:2.0?] 🎯 |
+| Task 66 `[CSR]` | ✅ | 🎁 **rpc_correctness** · Cartouche.Block.transactions — implement include_transaction_details: true [D:5/B:4/U:5 → Eff:0.9?] ⚠️ |
+| Task 99 | ⬜ | 🎁 **rpc_correctness** · Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization [D:3/B:2/U:2 → Eff:0.67?] ⚠️ |
+| Task 67 | ✅ | 🎁 **rpc_correctness** · Cartouche.Receipt — add EIP-4844 blob fields (blob_gas_used, blob_gas_price) [D:2/B:3/U:4 → Eff:1.75?] 🚀 |
+| Task 68 | ⛔ | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add EIP-7702 opcodes to the closed whitelist (AUTH, AUTHCALL) — closed obsolete [D:1/B:1/U:1 → Eff:1.0?] 📋 |
+| Task 69 | ⬜ | 🎁 **bug_triage** · Audit RPC-level requirements bubbling up from defi-skills mining [D:2/B:5/U:4 → Eff:2.25?] 🎯 |
+| Task 70 `[CX]` | 🔶 | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist [D:1/B:2/U:3 → Eff:2.5?] 🎯 |
+| Task 73 | ✅ | 🎁 **kms_followups** · KMS signer Goth-path test mocking — clear critical-tier ≥95% gate on both KMS signers [D:3/B:2/U:3 → Eff:0.83?] ⚠️ |
+| Task 75 `[CX]` | ✅ | 🎁 **tooling_quality** · Backfill @spec on every defp to enable .credo.exs {Specs, [include_defp: true]} portfolio-wide [D:7/B:5/U:5 → Eff:0.71?] ⚠️ |
+| Task 76 | ⬜ | 🎁 **tooling_quality** · Restore dialyzer to CI — separate workflow on a larger runner [D:3/B:2/U:3 → Eff:0.83?] ⚠️ |
+| Task 74 | ✅ | 🎁 **wei_units** · Cartouche.Wei.to_wei/1 — add :eth denomination with Decimal support [D:3/B:3/U:3 → Eff:1.0?] 📋 |
+| Task 77 `[CSR]` | ✅ | 🎁 **coverage_pushes** · Cartouche.Solana.RPC coverage push — pre-existing untested option/filter/encoding paths [D:2/B:3/U:4 → Eff:1.75?] 🚀 |
+| Task 91 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.sign/2 — reject signer-count mismatch against message.header.num_required_signatures [D:1/B:3/U:3 → Eff:3.0?] 🎯 |
+| Task 92 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.add_signature/3 — guard index against length(transaction.signatures) before List.replace_at/3 [D:1/B:3/U:3 → Eff:3.0?] 🎯 |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.

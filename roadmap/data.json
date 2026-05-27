@@ -7,7 +7,7 @@
     "0": {
       "name": "Ship 0.1.0 + pre/post-release hardening",
       "order": 0,
-      "status": "done"
+      "status": "pending"
     },
     "1": {
       "name": "Spec corrections (immediate onchain wins)",
