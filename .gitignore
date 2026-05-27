@@ -38,8 +38,12 @@ cartouche-*.tar
 # macOS Finder metadata
 .DS_Store
 
-# Claude Code per-session runtime state (lock files, local settings)
-/.claude/
+# Claude Code per-session runtime state and personal settings.
+# `.claude/settings.json` (project scope) IS committed so collaborators
+# inherit the plugin / marketplace setup — see ~/.claude/setup-guide.md § Plugins.
+/.claude/settings.local.json
+/.claude/scheduled_tasks.lock
+/.claude/hookify.*.local.md
 
 # claude plugin remember
 /.remember/

@@ -2,20 +2,29 @@
 
 @~/.claude/includes/across-instances.md
 @~/.claude/includes/critical-rules.md
+@~/.claude/includes/worktree-workflow.md
 
 @~/.claude/includes/task-prioritization.md
 @~/.claude/includes/task-writing.md
+@~/.claude/includes/rmap.md
 @~/.claude/includes/workflow-philosophy.md
-@~/.claude/includes/web-command.md
 @~/.claude/includes/code-style.md
 @~/.claude/includes/development-philosophy.md
 @~/.claude/includes/development-commands.md
-@~/.claude/includes/elixir-setup.md
 @~/.claude/includes/ex-unit-json.md
 @~/.claude/includes/dialyzer-json.md
-@~/.claude/includes/reach.md
-@~/.claude/includes/agent-economy.md
+
+@~/.claude/includes/delegation.md
+@~/.claude/includes/onchain-workspace.md
+
 @~/.claude/includes/upstream-pr-workflow.md
+
+<!--
+elixir-setup, web-command, agent-economy, reach are auto-loading skills
+(elixir:elixir-setup, elixir:web-command, elixir:agent-economy, elixir:reach).
+Don't @-import them — see setup-guide.md § "Skills vs Includes".
+-->
+
 
 
 forked from https://github.com/hayesgm/signet
