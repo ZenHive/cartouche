@@ -31,12 +31,18 @@ defmodule Cartouche.MixProject do
       # :app_tree). Tidewave/bandit's dev-only HTTP stack (plug, finch, mint,
       # gun, cowlib, etc.) is not in lib/'s call graph and bloats the PLT.
       #
-      # plt_ignore_apps still strips the GCP cluster (google_api_cloud_kms +
-      # google_gax + goth + tesla + jose) on top of :apps_direct — these are
-      # direct/optional runtime deps for the CloudKMS signer (~600 modules).
-      # Trade-off: dialyzer won't type-check Cartouche.Signer.CloudKMS calls
-      # into GoogleApi.* / Goth — acceptable since CloudKMS is an optional
-      # signer with a narrow call surface (Goth.Token + GoogleApi.CloudKMS.*).
+      # plt_ignore_apps strips two clusters on top of :apps_direct:
+      #   1. GCP cluster (google_api_cloud_kms + google_gax + goth + tesla +
+      #      jose) — direct/optional runtime deps for the CloudKMS signer
+      #      (~600 modules). Trade-off: dialyzer won't type-check
+      #      Cartouche.Signer.CloudKMS calls into GoogleApi.* / Goth —
+      #      acceptable since CloudKMS is an optional signer with a narrow
+      #      call surface (Goth.Token + GoogleApi.CloudKMS.*).
+      #   2. Dev-only direct deps (bandit, tidewave) — pulled in via the
+      #      `tidewave` mix alias, never called from lib/. Including them
+      #      means every Tidewave or Bandit minor bump invalidates the
+      #      cartouche PLT, dragging incremental rebuilds back into the
+      #      20+ minute range.
       dialyzer: [
         plt_add_deps: :apps_direct,
         plt_local_path: "priv/plts",
@@ -47,7 +53,9 @@ defmodule Cartouche.MixProject do
           :google_gax,
           :goth,
           :tesla,
-          :jose
+          :jose,
+          :bandit,
+          :tidewave
         ]
       ],
       test_coverage: [ignore_modules: [Cartouche.Contract.IConsole]],
@@ -90,18 +98,22 @@ defmodule Cartouche.MixProject do
       # zenhive/dev override: bumped from upstream's ~> 0.31.1 so :reach (needs
       # makeup_elixir ~> 1.0) can resolve. Never cherry-picked into PR branches
       # (they fork from `main` and keep upstream's pin).
-      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
-      {:jason, "~> 1.4.1"},
-      {:decimal, "~> 2.0"},
-      {:finch, "~> 0.21"},
+      {:ex_doc, "~> 0.40.1", only: :dev, runtime: false},
+      {:jason, "~> 1.4.5"},
+      # Pin tightened to ~> 2.4.0; decimal 3.0 is a major bump — evaluate
+      # separately (Cartouche uses Decimal for token amount math; semantics
+      # changes around precision/rounding could ripple through Solana/EVM
+      # value handling).
+      {:decimal, "~> 2.4.0"},
+      {:finch, "~> 0.22"},
       {:google_api_cloud_kms, "~> 0.43.0", optional: true},
-      {:ex_sha3, "~> 0.1.4"},
+      {:ex_sha3, "~> 0.1.5"},
       {:curvy, "~> 0.3.1"},
-      {:goth, "~> 1.4.3", optional: true},
+      {:goth, "~> 1.4.5", optional: true},
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
-      {:descripex, "~> 0.6"},
+      {:descripex, "~> 0.6.0"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
@@ -109,8 +121,8 @@ defmodule Cartouche.MixProject do
       # `override: true` dropped at publish time — no transitive dep
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
-      {:hieroglyph, "~> 1.4"},
-      {:junit_formatter, "~> 3.3", only: [:test]}
+      {:hieroglyph, "~> 1.4.0"},
+      {:junit_formatter, "~> 3.4.0", only: [:test]}
     ] ++ zenhive_dev_deps()
   end
 
@@ -118,20 +130,22 @@ defmodule Cartouche.MixProject do
   # PR branches fork from `main` so these never appear in any upstream diff.
   defp zenhive_dev_deps do
     [
-      {:styler, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:ex_unit_json, "~> 0.4", only: [:dev, :test], runtime: false},
-      {:dialyzer_json, "~> 0.2", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
-      {:doctor, "~> 0.21", only: [:dev, :test], runtime: false},
-      {:meck, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:ex_dna, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:ex_ast, "~> 0.11", only: [:dev, :test], runtime: false},
-      {:reach, "~> 2.2", only: [:dev, :test], runtime: false},
-      {:rename, "~> 0.1.0", only: :dev},
-      {:tidewave, "~> 0.5", only: :dev},
-      {:bandit, "~> 1.10", only: :dev}
+      {:styler, "~> 1.11.0", only: [:dev, :test], runtime: false},
+      {:ex_unit_json, "~> 0.4.3", only: [:dev, :test], runtime: false},
+      {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
+      # Pinned to ~> 0.22.0; doctor 0.23 requires decimal ~> 3.1, blocked by
+      # our decimal ~> 2.4.0 pin (token-amount math semantics — see :decimal
+      # comment above). Bump together when decimal 3 is audited.
+      {:doctor, "~> 0.22.0", only: [:dev, :test], runtime: false},
+      {:meck, "~> 1.1.1", only: [:dev, :test], runtime: false},
+      {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
+      {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
+      {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
+      {:tidewave, "~> 0.5.6", only: :dev},
+      {:bandit, "~> 1.11.0", only: :dev}
       # :boxart intentionally omitted — conflicts with upstream ex_doc 0.31.1
       # (needs makeup_elixir ~> 1.0, ex_doc pulls ~> 0.14). Terminal --graph
       # rendering is optional; text/json output still works for all reach.* tasks.
