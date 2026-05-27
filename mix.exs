@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -47,7 +47,12 @@ defmodule Cartouche.MixProject do
         plt_add_deps: :apps_direct,
         plt_local_path: "priv/plts",
         plt_core_path: "priv/plts",
-        plt_add_apps: [:mix, :ex_unit],
+        # :mint added so dialyzer can resolve `Mint.Types.status/0` /
+        # `Mint.Types.headers/0` referenced from `deps/finch/lib/finch/response.ex`.
+        # Finch 0.22 surfaces those as transitive types — `:apps_direct` skips
+        # transitives, so without this entry dialyzer reports 3 `unknown_type`
+        # warnings on finch's response struct.
+        plt_add_apps: [:mix, :ex_unit, :mint],
         plt_ignore_apps: [
           :google_api_cloud_kms,
           :google_gax,
@@ -100,11 +105,13 @@ defmodule Cartouche.MixProject do
       # (they fork from `main` and keep upstream's pin).
       {:ex_doc, "~> 0.40.1", only: :dev, runtime: false},
       {:jason, "~> 1.4.5"},
-      # Pin tightened to ~> 2.4.0; decimal 3.0 is a major bump — evaluate
-      # separately (Cartouche uses Decimal for token amount math; semantics
-      # changes around precision/rounding could ripple through Solana/EVM
-      # value handling).
-      {:decimal, "~> 2.4.0"},
+      # Bumped to ~> 3.1 (2026-05-08). Decimal 3.0 tightens IEEE 754 decimal128
+      # bounds (precision 28 → 34, exponent capped at ±6_144, CVE-2026-32686
+      # DoS-bounded parsing) and fixes `to_integer("0.0")` infinite loop. No
+      # changes to rounding modes, comparison, or normalization semantics —
+      # safe for wei/fee token math (uint256 max ~78 digits << 6_178 string
+      # cap). See https://github.com/ericmj/decimal/blob/main/CHANGELOG.md.
+      {:decimal, "~> 3.1"},
       {:finch, "~> 0.22"},
       {:google_api_cloud_kms, "~> 0.43.0", optional: true},
       {:ex_sha3, "~> 0.1.5"},
@@ -136,10 +143,7 @@ defmodule Cartouche.MixProject do
       {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
-      # Pinned to ~> 0.22.0; doctor 0.23 requires decimal ~> 3.1, blocked by
-      # our decimal ~> 2.4.0 pin (token-amount math semantics — see :decimal
-      # comment above). Bump together when decimal 3 is audited.
-      {:doctor, "~> 0.22.0", only: [:dev, :test], runtime: false},
+      {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
       {:meck, "~> 1.1.1", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
