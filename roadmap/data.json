@@ -1,0 +1,1759 @@
+{
+  "schema_version": 2,
+  "project": "cartouche",
+  "default_branch": "development",
+  "vision": "Cartouche is an attributed fork of hayesgm/signet under ZenHive ownership. Active development happens here. Upstream PRs to hayesgm/signet are opened on-demand when a fix is clean, self-contained, and independently useful — no SLA either direction.",
+  "phases": {
+    "0": {
+      "name": "Ship 0.1.0 + pre/post-release hardening",
+      "order": 0,
+      "status": "done"
+    },
+    "1": {
+      "name": "Spec corrections (immediate onchain wins)",
+      "order": 1,
+      "status": "done"
+    },
+    "10": {
+      "name": "Upstream PR candidates (to hayesgm/signet)",
+      "order": 10,
+      "status": "pending"
+    },
+    "11": {
+      "name": "hieroglyph 1.0.0 → 1.4.0 adoption advisory",
+      "order": 11,
+      "status": "done"
+    },
+    "12": {
+      "name": "Agent-economy descripex adoption",
+      "order": 12,
+      "status": "done"
+    },
+    "2": {
+      "name": "Cartouche.RPC.send_rpc/3 error-shape spec",
+      "order": 2,
+      "status": "done"
+    },
+    "3": {
+      "name": "Cartouche.Trace + Cartouche.TraceCall deserialize specs",
+      "order": 3,
+      "status": "done"
+    },
+    "4": {
+      "name": "Cartouche.Typed internal-function specs",
+      "order": 4,
+      "status": "pending"
+    },
+    "5": {
+      "name": "VM / Erc20.Call none() cascade investigation",
+      "order": 5,
+      "status": "done"
+    },
+    "6": {
+      "name": "Cartouche.VM.Context.init_from/2 spec",
+      "order": 6,
+      "status": "done"
+    },
+    "7": {
+      "name": "Dependency freshness",
+      "order": 7,
+      "status": "done"
+    },
+    "8": {
+      "name": "Cartouche.Transaction.V2.encode/1 duplication",
+      "order": 8,
+      "status": "done"
+    },
+    "9": {
+      "name": "New transaction types + raw decode",
+      "order": 9,
+      "status": "done"
+    }
+  },
+  "bundles": {
+    "block_fork_fields": {
+      "phase": 0,
+      "order": 8,
+      "description": "Phase 0.5 Cartouche.Block decoder — Ethereum hard-fork fields (London/Shanghai/Cancun)"
+    },
+    "bug_triage": {
+      "phase": 0,
+      "order": 13,
+      "description": "Phase 0.5 cross-repo bug triage (defi-skills mining bubble-up)"
+    },
+    "correctness_010": {
+      "phase": 0,
+      "order": 1,
+      "description": "Phase 0.4 pre-release correctness fixes — bugs caught by static analysis but not exercised by tests"
+    },
+    "coverage_pushes": {
+      "phase": 0,
+      "order": 5,
+      "description": "Phase 0.5 pre-mutation coverage pushes (Typed, VM, KMS, RPC)"
+    },
+    "eip_opcode_followups": {
+      "phase": 0,
+      "order": 9,
+      "description": "Phase 0.5 DebugTrace opcode whitelist follow-ups (CLZ Osaka, 7702 closeout)"
+    },
+    "generator_hardening": {
+      "phase": 0,
+      "order": 2,
+      "description": "Phase 0.5 generator hardening pass (lib/mix/cartouche.gen.ex + emitted bindings)"
+    },
+    "kms_followups": {
+      "phase": 0,
+      "order": 12,
+      "description": "Phase 0.5 KMS signer test-mocking follow-ups"
+    },
+    "phase10_upstream": {
+      "phase": 10,
+      "order": 0,
+      "description": "Phase 10 upstream PR candidates — on-demand backports to hayesgm/signet"
+    },
+    "phase11_hieroglyph": {
+      "phase": 11,
+      "order": 0,
+      "description": "Phase 11 hieroglyph 1.0.0 → 1.4.0 adoption audits (decode_structs, bug-fix windfall, optional APIs)"
+    },
+    "phase12_descripex": {
+      "phase": 12,
+      "order": 0,
+      "description": "Phase 12 descripex adoption — annotation sweep, manifest wiring, discovery API"
+    },
+    "phase1_specs": {
+      "phase": 1,
+      "order": 0,
+      "description": "Phase 1 surgical spec corrections (RecoveryBit, Wei, Signer.sign_direct, Hex)"
+    },
+    "phase2_rpc": {
+      "phase": 2,
+      "order": 0,
+      "description": "Phase 2 RPC error-shape widening"
+    },
+    "phase3_trace": {
+      "phase": 3,
+      "order": 0,
+      "description": "Phase 3 Trace + TraceCall deserialize spec widening"
+    },
+    "phase4_typed": {
+      "phase": 4,
+      "order": 0,
+      "description": "Phase 4 Cartouche.Typed internal-function spec rewrites and follow-ups"
+    },
+    "phase5_cascade": {
+      "phase": 5,
+      "order": 0,
+      "description": "Phase 5 VM/Erc20.Call none() cascade investigation (closed — resolved by coverage push)"
+    },
+    "phase6_vm_init": {
+      "phase": 6,
+      "order": 0,
+      "description": "Phase 6 Cartouche.VM.Context.init_from/2 spec narrowing"
+    },
+    "phase7_deps": {
+      "phase": 7,
+      "order": 0,
+      "description": "Phase 7 dependency freshness (KMS, ex_doc, finch, lockfile refresh)"
+    },
+    "phase8_dedup": {
+      "phase": 8,
+      "order": 0,
+      "description": "Phase 8 Cartouche.Transaction.V2.encode/1 deduplication"
+    },
+    "phase9_tx": {
+      "phase": 9,
+      "order": 0,
+      "description": "Phase 9 new transaction types + raw decode (EIP-4844, EIP-7702, V1/V2/V3/V4 dispatcher)"
+    },
+    "release_010": {
+      "phase": 0,
+      "order": 0,
+      "description": "Phase 0 release-lifecycle work — 0.1.0 cut, docs/package polish, post-release follow-ups"
+    },
+    "rpc_correctness": {
+      "phase": 0,
+      "order": 7,
+      "description": "Phase 0.5 RPC correctness (block-tag normalization, integration suite, decoder gaps)"
+    },
+    "sleuth_hardening": {
+      "phase": 0,
+      "order": 3,
+      "description": "Phase 0.5 Cartouche.Sleuth atom-table hardening"
+    },
+    "solana_hardening": {
+      "phase": 0,
+      "order": 4,
+      "description": "Phase 0.5 Solana stack hardening (Transaction, Signer, signer-count + bounds guards)"
+    },
+    "tooling_quality": {
+      "phase": 0,
+      "order": 10,
+      "description": "Phase 0.5 tooling and quality gates (spec backfill, dialyzer-in-CI restoration)"
+    },
+    "trace_hardening": {
+      "phase": 0,
+      "order": 6,
+      "description": "Phase 0.5 Trace deserialize hardening (missing/nil traceAddress)"
+    },
+    "wei_units": {
+      "phase": 0,
+      "order": 11,
+      "description": "Phase 0.5 Wei denomination enhancements"
+    }
+  },
+  "milestones": {},
+  "task": [
+    {
+      "id": 1,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Reset mix.exs version 1.6.1 → 0.1.0-dev",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 7
+      },
+      "eff": 5.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-24",
+      "cross_repo": []
+    },
+    {
+      "id": 2,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Full mix test.json --quiet pass on the ported code",
+      "scores": {
+        "d": 3,
+        "b": 5,
+        "u": 7
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "665 passed / 0 failed on 2026-04-24. Also cleared two stale test warnings (test/support/vm_test_helpers.ex:11 missed by C1 pin sweep, test/solana/pda_test.exs:137 underscored-then-used var).",
+      "cross_repo": []
+    },
+    {
+      "id": 3,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "mix dialyzer.json --quiet — inventory remaining invalid_contract warnings, confirm they match the pre-rename audit",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 6
+      },
+      "eff": 2.25,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-04-24: 11/11 invalid_contract accounted for; total 1,626 matches the post-abi-fix benchmark. Phase 1.4 scope narrows to from_hex/1 only.",
+      "cross_repo": []
+    },
+    {
+      "id": 4,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "mix docs clean build with cartouche branding intact",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-24; doc/index.html, doc/llms.txt, doc/Cartouche.epub all build; llms.txt header reads Cartouche v0.1.0-dev; 54 Cartouche.* entries in api-reference.html; only signet/hayesgm hits in doc/ are the README attribution links. Pre-existing ex_doc type-ref warnings split out as Task 36.",
+      "cross_repo": []
+    },
+    {
+      "id": 5,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Update README.md installation section — replace the 'not recommended yet' placeholder with real install instructions",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 7
+      },
+      "eff": 5.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-25 as part of Task 37 prep. Status block + install snippet activated.",
+      "cross_repo": []
+    },
+    {
+      "id": 6,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Tag 0.1.0, publish to hex",
+      "scores": {
+        "d": 1,
+        "b": 5,
+        "u": 8
+      },
+      "eff": 6.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-30. cartouche 0.1.0 live on hex.pm — first active release under the cartouche namespace. Phase 0 fully closed. Onchain @dialyzer {:no_match} strip on Onchain.Hex / ABI / ERC / ENS / Multicall callers becomes load-bearing now.",
+      "cross_repo": []
+    },
+    {
+      "id": 36,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Silence ex_doc 'documentation references type X but the module is hidden' warnings surfaced by mix docs",
+      "scores": {
+        "d": 2,
+        "b": 2,
+        "u": 4
+      },
+      "eff": 1.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-25. Replaced @moduledoc false with descriptive @moduledoc on the six referenced submodules (Cartouche.VM.Input, Cartouche.VM.Context, Cartouche.VM.ExecutionResult, Cartouche.Trace.Action, Cartouche.Receipt.Log, Cartouche.DebugTrace.StructLog). mix docs now emits zero warnings; 665/665 tests still green.",
+      "cross_repo": []
+    },
+    {
+      "id": 37,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Publish cut — version bump, CHANGELOG release section, mix.exs :package polish, README install activation",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 4.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-25. mix.exs version → 0.1.0; CHANGELOG [Unreleased] moved under [0.1.0] — 2026-04-25; :package updated (maintainers: ['ZenHive'], dropped test/support from :files, added CHANGELOG*, added CHANGELOG.md to docs[:extras], added Changelog link); README Status + Installation activated.",
+      "cross_repo": []
+    },
+    {
+      "id": 40,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Generator (lib/mix/cartouche.gen.ex) credo cleanup",
+      "scores": {
+        "d": 5,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-26 — bundled with the IConsole bytecode-predicate fix per the touched-files credo rule. (1) L153 rename_dups/1 nesting → accumulate_named_abi/2 + dedup_named_abi/5 + maybe_rename_dup_fn/5. (2) L170 get_encode_calls/2 cyclomatic → merge_encode_call_result/2. (3) L247 encode_function_call/3 cyclomatic → ~16 build_*_fn/1 helpers + select_emitted_fns/3 + argument-spec helpers. (4) L337 nesting → resolved by #3. Also landed strip_zero_arity_def_parens/1 post-process to drop the ~382 ParenthesesOnZeroArityDefs flags from generated output. 6 String.to_atom/1 callsites carry sobelow_skip annotations (build-time codegen). 656/656 tests green; 0 credo issues on touched files.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 38,
+      "phase": 0,
+      "bundle": "release_010",
+      "status": "done",
+      "title": "Delete Cartouche.Util grab-bag — redistribute helpers into focused modules, drop @deprecated aliases",
+      "scores": {
+        "d": 3,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 1.33,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-25. Created Cartouche.Address, Cartouche.Chain, Cartouche.Wei, Cartouche.HTTP, and promoted Cartouche.RecoveryBit. Absorbed decode_hex_input!/1, encode_bytes/2, pad/2, nibbles/1, checksum_address/1 into Cartouche.Hex. Deleted 7 @deprecated decode/encode aliases + keccak/1 defdelegate. nil_map/2 inlined as module-local private in Cartouche.Trace / Cartouche.Trace.Action. Also landed the Phase 1.1 :no_return atom → no_return() fix on RecoveryBit during the promotion. 651 tests green; grep Cartouche.Util returns zero hits outside history.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 51,
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "done",
+      "title": "Cartouche.Trace.t().trace_address typed singular but runtime is a list",
+      "scores": {
+        "d": 1,
+        "b": 5,
+        "u": 7
+      },
+      "eff": 6.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-26. Spec narrowed to [<<_::160>> | integer()] at lib/cartouche/trace.ex:184. Added focused ExUnit describe block in test/trace_test.exs covering the mixed-element union, empty-list boundary, and deserialize_many/1 round-trip. Bundled with Task 52. Dialyzer drops trace.ex:412 invalid_contract; suite green.",
+      "cross_repo": []
+    },
+    {
+      "id": 52,
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "done",
+      "title": "Cartouche.TraceCall.t().trace typed singular but runtime is a list",
+      "scores": {
+        "d": 1,
+        "b": 5,
+        "u": 7
+      },
+      "eff": 6.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-26. Spec narrowed to [Cartouche.Trace.t()] at lib/cartouche/trace_call.ex:20. Added focused ExUnit describe block in test/trace_call_test.exs covering the empty-trace-list boundary and deserialize_many/1 round-trip. Bundled with Task 51. Dialyzer drops trace_call.ex:124 invalid_contract.",
+      "cross_repo": []
+    },
+    {
+      "id": 53,
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "done",
+      "title": "V1.t() Schrödinger r/s/v + latent decode → recover_signer crash",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 1.63,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-28. Option B implemented (integers throughout, single source of truth). add_signature/2 (lib/cartouche/transaction.ex:170) now decodes incoming binary r/s via :binary.decode_unsigned/1 so they match the spec and V1.new/7 / V1.decode/1 storage. get_signature/1 second clause (transaction.ex:196) rebuilds the signature with integer big-endian 256-bit segments — byte-equivalent to the prior 32-byte binary form. add_signature(...) |> encode() now produces canonical RLP for r/s (leading zeros stripped). Doctest updated; tests added in test/transaction_test.exs: malformed-RLP fallback for decode/1, full build_signed_trx → encode → decode → recover_signer round-trip (proves latent ArgumentError fixed), empty-sig RLP boundary, adversarial 33-byte r/s RLP fixture — decode/1 now guards byte_size(r) <= 32 and byte_size(s) <= 32. V1 coverage 93.33% → 100%; dialyzer drops transaction.ex:169 invalid_contract; 748/748 tests green.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 56,
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "done",
+      "title": "Harden Cartouche.Solana.Transaction.deserialize/1 crash paths",
+      "scores": {
+        "d": 2,
+        "b": 6,
+        "u": 6
+      },
+      "eff": 3.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-27. Added private safe_decode_compact_u16/1 returning {:ok, val, rest} | {:error, :truncated_compact_u16} (public decode_compact_u16/1 tuple contract preserved); swapped internal callsites in deserialize/1 and deserialize_message/1. Rewrote read_instructions/3 with `with` + read_size_prefixed/2 helper; added an insufficient_instruction_data fallback. Added a deserialize_message(_), do: {:error, :invalid_message_header} fallback for sub-3-byte headers. New ExUnit describe block covers 9 malformed-input cases. Coverage 95.56% → 98.97% on Cartouche.Solana.Transaction; full suite green; dialyzer clean on touched file.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 41,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Generator bytecode-flag separation — init vs deployed",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #46",
+      "implemented": "Done 2026-05-06 (INE-36 / PR #46, delegated to Cursor). Mix.Tasks.Cartouche.Gen.build_module/3 now derives has_deployed_bytecode = not Enum.empty?(deployed_bytecode_decl) alongside the existing has_bytecode; both flags thread through get_encode_calls/3, get_encode_call/4, and encode_function_call/5. :pure's exec_vm_* only emits when deployed bytecode is present; constructor abort?/3 continues to gate on init has_bytecode. Two asymmetric regression tests in test/mix/cartouche_gen_test.exs cover both shapes. .sobelow-skips regenerated for line shifts. Harness green; CodeRabbit + Copilot reviewed clean.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 42,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Generator decode_error/1 template — drop dead if true ... else ... end branch",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 2
+      },
+      "eff": 1.5,
+      "markers": [],
+      "depends_on": [],
+      "shipped_in": "PR #8",
+      "implemented": "Done 2026-05-04. Collapsed lib/mix/cartouche.gen.ex:186-197 from the dead-branch fallback to def decode_error(_), do: :not_found (matches the decode_call/1 / decode_event/2 shape immediately above). Regenerated lib/cartouche/contract/{i_console,sleuth}.ex. Bundled with INE-10 / PR #8 because the regenerated bindings were needed to drop the dead-branch warnings blocking the CI harness's mix dialyzer step. Closes Task 42.",
+      "cross_repo": []
+    },
+    {
+      "id": 44,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Generator coverage push — raise Mix.Tasks.Cartouche.Gen to ≥80% before Tasks 41 + 42",
+      "scores": {
+        "d": 3,
+        "b": 4,
+        "u": 6
+      },
+      "eff": 1.67,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Done 2026-05-05 (INE-20). Added focused synthetic ABI generator coverage without regenerating IConsole/Sleuth or mutating lib/mix/cartouche.gen.ex. The fixture drives constructor, fallback/receive, event, error, tuple-arg, unnamed-arg, ABI-only, AST-name, invalid-shape, and asymmetric-bytecode paths through the public Mix task. Mix.Tasks.Cartouche.Gen now clears the standard ≥80% gate, unblocking Tasks 41 / 42 / 50.",
+      "cross_repo": []
+    },
+    {
+      "id": 47,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Exclude generated Cartouche.Contract.IConsole from coverage measurement",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 3
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-05-02. Added mix.exs test_coverage: [ignore_modules: [Cartouche.Contract.IConsole]] to exclude the generated IConsole binding from headline coverage while leaving other modules unchanged.",
+      "cross_repo": []
+    },
+    {
+      "id": 49,
+      "phase": 0,
+      "bundle": "phase4_typed",
+      "status": "superseded",
+      "title": "Resolve Cartouche.Transaction.V2.encode/1 spec duplication — superseded by Task 54",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Folded into Task 54. The narrow V2.encode/1 spec union targeted here is obsoleted by the structural Cartouche.Transaction.Call extraction. Closing as duplicate of Task 54.",
+      "cross_repo": []
+    },
+    {
+      "id": 54,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Extract Cartouche.Transaction.Call — collapse the V2-as-eth-call-shape lie",
+      "scores": {
+        "d": 6,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 0.83,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #8",
+      "implemented": "Done 2026-05-04 (PR #8 / INE-10). New Cartouche.Transaction.Call struct emitted by Cartouche.Contract.Sleuth.build_trx_query/3; RPC dispatch widened to V1.t() | V2.t() | Call.t(). Sleuth dialyzer cascade collapses. The fix was structural — eth_call params are not transactions; the prior %V2{} masquerade was the abstraction lie. Replaces Task 49.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 50,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Generator emits @doc/@spec on generated bindings — drop .doctor.exs ignore_paths",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #51",
+      "implemented": "Done 2026-05-06 (INE-37 / PR #51, delegated to Cursor). Mix.Tasks.Cartouche.Gen now attaches @doc + @spec to every public def it emits (encode_*, decode_*, *_selector, call_*, estimate_gas_*, call_log_*, exec_vm_*, fallback/receive variants). Doc strings derive from FunctionSelector signatures; specs derive via ABI-type → Elixir-type mapping; exec_vm_* returns track unwrapped behaviour; decode_*_call/1 inputs typed binary(). .doctor.exs ignore_paths removed; mix doctor clean. Generator test suite extended with annotation_stanza/2 regex binding @doc NAME → @spec NAME → def NAME. CI green; CodeRabbit + Copilot + Codex GitHub bot findings all addressed.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 48,
+      "phase": 0,
+      "bundle": "sleuth_hardening",
+      "status": "done",
+      "title": "Harden Cartouche.Sleuth atom-table risks",
+      "scores": {
+        "d": 5,
+        "b": 4,
+        "u": 5
+      },
+      "eff": 0.9,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #53",
+      "implemented": "Done 2026-05-06 (INE-43 / PR #53, delegated to Cursor). Phase A landed the ≥95% Cartouche.Sleuth coverage push; Phase B swapped the remaining runtime mints to String.to_existing_atom/1; a merge-resolution commit reconciled with development after PR #54 / INE-42 landed. query_by/3's encode_<fun> and <fun>_selector derivations now route through existing_function_atom/2, raising RuntimeError on cold function names. try_decode/4 gained named_returns boolean parameter and ArgumentError rescue surfacing INE-17-shape {:error, \"error decoding: ...\"} envelope. .sobelow-skips regenerated — all three lib/cartouche/sleuth.ex fingerprints dropped. Local dialyzer post-merge confirmed zero warnings.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 55,
+      "phase": 0,
+      "bundle": "trace_hardening",
+      "status": "done",
+      "title": "Harden Cartouche.Trace.deserialize/1 against missing/nil traceAddress",
+      "scores": {
+        "d": 1,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 2.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-29. Replaced Enum.map(params[\"traceAddress\"], &decode_address_or_number/1) at lib/cartouche/trace.ex:423 with a private decode_trace_address/1 helper (is_list/1 clause maps; fallback raises ArgumentError, \"missing traceAddress in trace_transaction result element\") so missing/nil traceAddress now fails loudly at the boundary instead of crashing Protocol.UndefinedError. Task 51 audit confirmed traceAddress is mandatory on the wire — the right contract is loud-reject, not soft || []. New describe block in test/trace_test.exs pins both missing-key and explicit-nil shapes via assert_raise ArgumentError, ~r/missing traceAddress/. Coverage stays 100%; full suite green (778/778); dialyzer clean.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 43,
+      "phase": 0,
+      "bundle": "coverage_pushes",
+      "status": "done",
+      "title": "Pre-credo coverage push for cleanup-target modules",
+      "scores": {
+        "d": 3,
+        "b": 5,
+        "u": 7
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-26. Raised test coverage on the six modules slated for credo-strict cleanup so the refactor session can rename / restructure / silence flags safely. New blocks landed across test/assembly_test.exs, test/receipt_test.exs, test/open_chain_test.exs, test/transaction_test.exs, test/sleuth_test.exs, test/solana/signer_test.exs. Bundled bug fix in lib/cartouche/open_chain.ex:200 — Enum.join over list of tuples replaced with Enum.map_join (was crashing Protocol.UndefinedError instead of returning {:error, \"Multiple matching signatures: ...\"}). Test asserts corrected return shape per \"NEVER HIDE TEST FAILURES\" rule.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 57,
+      "phase": 0,
+      "bundle": "solana_hardening",
+      "status": "done",
+      "title": "Fix Cartouche.Solana.Transaction.sign_partial/2 zero-signer boundary",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 3
+      },
+      "eff": 3.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-27 (bundled with Task 56). Appended //1 step to the range at lib/cartouche/solana/transaction.ex:415 — 0..(num_signers - 1)//1 yields [] when num_signers == 0 and is behaviour-preserving for num_signers >= 1. New ExUnit describe asserts signatures == [] for a synthetic 0-signer message.",
+      "cross_repo": []
+    },
+    {
+      "id": 58,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Strengthen Cartouche.Filter expired-filter test — assert recovery-branch fingerprint",
+      "scores": {
+        "d": 1,
+        "b": 2,
+        "u": 2
+      },
+      "eff": 2.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #16",
+      "implemented": "Done 2026-05-05 (PR #16 / INE-15). Test now asserts Process.get(:expired_seen) == true and Process.get(:new_filter_count) >= 2 after the receive asserts, pinning the recovery branch by fingerprint.",
+      "cross_repo": []
+    },
+    {
+      "id": 59,
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Reach 1.8 → 2.2 bump + hygiene pass",
+      "scores": {
+        "d": 1,
+        "b": 2,
+        "u": 1
+      },
+      "eff": 1.5,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #59",
+      "implemented": "Done 2026-05-07 (INE-47 / PR #59, delegated to Cursor; bot-finding follow-ups landed locally on development post-merge as 5668c0e). Cursor bumped reach 1.8 → 2.2 directly. Touched five lib/cartouche/** modules: hex.ex checksum loop swap, sleuth.ex count→length + guard-to-pattern-match splits, solana/pda.ex iodata, solana/transaction.ex serialize via IO.iodata_to_binary with raise-on-malformed validators, vm.ex count→length + :stack_overflow added to vm_error type union. New 122-LOC test pass in test/solana/transaction_test.exs covers serialize round-trips and raise-on-malformed contract. Local post-merge bookkeeping resolved CI format failure, three @specs in lib/mix/cartouche.gen.ex, :stack_overflow in vm_error. .sobelow-skips regenerated post-merge on main.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 60,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Cartouche.RPC.get_block_by_number/2 integer path crashes on real nodes",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 3.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-28. Public Cartouche.Hex.encode_quantity/1 + a private normalize_block_param/1 helper in Cartouche.RPC applied at all 10 block-tag-forwarding callsites. Wire-format integration test via CaptureClient test double in test/rpc_test.exs.",
+      "cross_repo": []
+    },
+    {
+      "id": 61,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Mainnet archive integration test suite — read-only RPC sweep",
+      "scores": {
+        "d": 3,
+        "b": 6,
+        "u": 7
+      },
+      "eff": 2.17,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-30. test/rpc_integration_test.exs (20 tests, async: true, @moduletag :integration) + Cartouche.Test.Live helper at test/support/live.ex. Per-call client: Finch + ethereum_node opts (CCXT-style local-object pattern). Opt-in via mix integration or mix test --include integration. mix.exs adds integration alias and integration: :test in preferred_envs. Surfaced two real Task-60-class bugs the mock client masked — get_block_by_hash/2 missing fullTransactionObjects, and to_call_params/2 for V1 encoding empty calldata as \"0x0\" instead of \"0x\". Both fixed. Decoder gaps tracked as Tasks 62–68.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 62,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "v2 traces — integration anchors for trace_transaction, trace_call, trace_callMany, debug_traceCall",
+      "scores": {
+        "d": 5,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-05-06. New describe block in test/rpc_integration_test.exs adds eight anchors covering all three Cartouche.Trace.Action.deserialize/1 clauses. CREATE anchor at block 18M, pre-Cancun CHI-token SELFDESTRUCT anchor at block 11.5M. trace_call + debug_traceCall reuse WETH9 totalSupply() invariant; trace_call_many adds balanceOf(address(0)). Probe ran cleanly — no decoder bugs surfaced. Tests pin only deterministic fields so the suite survives client variance.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 63,
+      "phase": 0,
+      "bundle": "block_fork_fields",
+      "status": "done",
+      "title": "Cartouche.Block — add base_fee_per_gas (London+)",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 4.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-30 (Block decoder bundle 63+64+65). base_fee_per_gas field decoded from params['baseFeePerGas'] via Hex.decode_hex_number!/1; pre-London blocks deserialize with nil. Integration test at test/rpc_integration_test.exs strengthens from refute Map.has_key? → assert b.base_fee_per_gas > 0 against the post-London 15M anchor.",
+      "cross_repo": []
+    },
+    {
+      "id": 64,
+      "phase": 0,
+      "bundle": "block_fork_fields",
+      "status": "done",
+      "title": "Cartouche.Block — add withdrawals_root and withdrawals (Shanghai+)",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-30 (Block decoder bundle 63+64+65). New nested Cartouche.Block.Withdrawal submodule with index/validator_index/address/amount fields and own deserialize/1 + doctest. Block.deserialize/1 decodes withdrawalsRoot (32-byte hash) and withdrawals (list of %Withdrawal{} via per-element Withdrawal.deserialize/1). Integration test at the post-Shanghai 18M anchor pins shape.",
+      "cross_repo": []
+    },
+    {
+      "id": 65,
+      "phase": 0,
+      "bundle": "block_fork_fields",
+      "status": "done",
+      "title": "Cartouche.Block — add Cancun fields (parent_beacon_block_root, blob_gas_used, excess_blob_gas, mix_hash)",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 2.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-30 (Block decoder bundle 63+64+65). All four fields decoded; parent_beacon_block_root via decode_word!/1, blob fields via decode_hex_number!/1. mix_hash decodes whenever present (pre-Merge PoW mix hash; post-Merge PREVRANDAO per EIP-4399). Integration test at the post-Cancun 20M anchor asserts byte sizes.",
+      "cross_repo": []
+    },
+    {
+      "id": 66,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Cartouche.Block.transactions — implement include_transaction_details: true",
+      "scores": {
+        "d": 5,
+        "b": 4,
+        "u": 5
+      },
+      "eff": 0.9,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #55",
+      "implemented": "Done 2026-05-07 (PR #55 / INE-44, delegated to Cursor; bot-finding follow-ups landed locally on development as 13f5e50). Cartouche.Block.deserialize/1 now dispatches per-element on params['transactions']: hash strings (validated via Hex.decode_word!/1 at the wire boundary) preserve the wire String.t() shape; full-detail JSON maps dispatch by 'type' to V1/V2/V3/V4.from_json/1, with '0x1' (EIP-2930) raising a specific 'not yet supported' error. New Cartouche.Transaction.JsonField cross-module helper module documents the shared decoders. Discovered follow-up: Task 99 tracks proper EIP-2930 (type 0x1) from_json/1 support.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 99,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 2
+      },
+      "eff": 0.67,
+      "markers": [],
+      "depends_on": [],
+      "body": "Surfaced during PR #55 / INE-44 close-out (Codex GitHub bot finding). EIP-2930 (Berlin, 2021) introduced the access-list transaction type; mainnet-active for ~5 years. Cartouche.Block.deserialize/1 currently raises ArgumentError with a 'not yet supported' message when it encounters params['type'] == '0x1' — correct as a temporary stance but means any block containing an EIP-2930 tx crashes the deserializer. The matching raw-bytes envelope dispatcher in Cartouche.Transaction.decode/1 returns {:error, :unknown_envelope_type} for the <<0x01, _::binary>> pattern — same gap on the raw side.\n\nImplement: introduce Cartouche.Transaction.V_2930 module mirroring V2's structural shape minus max_fee_per_gas/max_priority_fee_per_gas (EIP-2930 is pre-EIP-1559, single gas_price field with access list); wire from_json/1 into the Cartouche.Block dispatch table; replace decode/1's <<0x01, _>> error tuple with V_2930.decode/1. Add integration anchor against a known type-1 mainnet block.\n\nPre-mutation gate: Cartouche.Transaction is critical-tier (≥95%); confirm coverage before mutating. Both bot-finding pinning tests flip from assert_raise / assert {:error, :unknown_envelope_type} to positive shape assertions when this lands.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 67,
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Cartouche.Receipt — add EIP-4844 blob fields (blob_gas_used, blob_gas_price)",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 1.75,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done under [Unreleased]. Cartouche.Receipt now carries nil-tolerant EIP-4844 blob gas fields, decoded from blobGasUsed / blobGasPrice when present. Unit coverage pins populated, zero, and absent shapes; integration coverage adds a type-3 mainnet blob receipt anchor at block 19,449,343 and strengthens the type-2 anchor to assert nil blob fields.",
+      "cross_repo": []
+    },
+    {
+      "id": 68,
+      "phase": 0,
+      "bundle": "eip_opcode_followups",
+      "status": "superseded",
+      "title": "Cartouche.DebugTrace.StructLog — add EIP-7702 opcodes to the closed whitelist (AUTH, AUTHCALL) — closed obsolete",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Closed 2026-05-01 — both technical premises wrong. AUTH (0xf6) and AUTHCALL (0xf7) were EIP-3074 opcodes (withdrawn, never reached any client). EIP-7702 was authored as 3074's replacement, swapping the new-opcode design for delegation indicators that modify existing CALL family — geth's enable7702 adjusts gas only, no opcode slots. Pectra activated 2025-05-07; current closed whitelist covers all live mainnet opcodes. The forward-compat gap is CLZ (0x1e, EIP-7939) for Fusaka — filed separately as Task 70.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 69,
+      "phase": 0,
+      "bundle": "bug_triage",
+      "status": "pending",
+      "title": "Audit RPC-level requirements bubbling up from defi-skills mining",
+      "scores": {
+        "d": 2,
+        "b": 5,
+        "u": 4
+      },
+      "eff": 2.25,
+      "markers": [],
+      "depends_on": [],
+      "body": "Depends on the four sibling-repo defi-skills:intent-to-transaction mining tasks completing first (planted in hieroglyph, onchain, onchain_aave, onchain_evm ROADMAPs on 2026-04-30). After those tasks publish their 'Proposed additions from defi-skills mining' sections, scan them for any RPC-level requirements that bubble down to cartouche — e.g. eth_call edge cases (revert-data shape, gas-stipend behavior), eth_estimateGas semantics on reverts, log-filter quirks, fee-history math, eth_getCode for proxy detection. Add any surfaced needs as new Phase 0.5 / Phase 2 tasks here. If nothing surfaces after all four upstream tasks close, mark this complete as 'no action needed.' Read-only triage exercise — no cartouche code edits in this task itself.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 70,
+      "phase": 0,
+      "bundle": "eip_opcode_followups",
+      "status": "blocked",
+      "title": "Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist",
+      "scores": {
+        "d": 1,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 2.5,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "body": "CLZ ('count leading zeros') is in go-ethereum master's newOsakaInstructionSet() per EIP-7607 Osaka composition, with EIP-7939 defining the opcode at slot 0x1e. Once Osaka activates, any eth_debug_traceCall against an Osaka tx that uses CLZ will raise ArgumentError in the closed whitelist.\n\nPre-add gate: confirm the mnemonic emitted in struct-logs matches 'CLZ' exactly against an Osaka testnet trace (geth's opCodeToString in core/vm/opcodes.go master is the source of truth); add the atom to @single_opcodes in lib/cartouche/debug_trace.ex and a regression test that round-trips the new mnemonic.\n\nWatch list for Amsterdam (post-Osaka): SLOTNUM (0x4b, EIP-7843) — currently Draft, file separately when EIP leaves Draft and Amsterdam composition firms up.\n\nReplaces the abandoned Task 68 (which conflated EIP-3074's withdrawn AUTH/AUTHCALL with EIP-7702). Discovered during Codex consultation 2026-05-01.\n",
+      "blocked_reason": "Blocked on Fusaka/Osaka mainnet activation (no firm date as of 2026-05-01).",
+      "cross_repo": []
+    },
+    {
+      "id": 73,
+      "phase": 0,
+      "bundle": "kms_followups",
+      "status": "done",
+      "title": "KMS signer Goth-path test mocking — clear critical-tier ≥95% gate on both KMS signers",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-05-04. Added :meck 1.1.x test infrastructure for Goth.fetch!/1 and credential-path get_address/6 + sign/7 coverage on both Ethereum and Solana KMS signers. The 2-arg client(cred) branch now drops out of both modules' uncovered line lists.",
+      "cross_repo": []
+    },
+    {
+      "id": 75,
+      "phase": 0,
+      "bundle": "tooling_quality",
+      "status": "done",
+      "title": "Backfill @spec on every defp to enable .credo.exs {Specs, [include_defp: true]} portfolio-wide",
+      "scores": {
+        "d": 7,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 0.71,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #52",
+      "implemented": "Done 2026-05-06 (INE-41 / PR #52, delegated to Cursor). lib/cartouche/**/*.ex and test/support/**/*.ex defps carry @spec per the 'Marking Internal API Surface' mandate; .credo.exs {Credo.Check.Readability.Specs, [include_defp: true]} enabled with :files scoped to lib/cartouche/ (excluding the auto-generated lib/cartouche/contract/). Local review caught 2 dialyzer regressions Cursor's VM couldn't have run (Tesla.Env.client/0 referenced in PR-introduced client/1 specs but Tesla is in :plt_ignore_apps) — replaced with term() + TODO markers on both Cartouche.Signer.CloudKMS and Cartouche.Solana.Signer.CloudKMS. CodeRabbit follow-up landed three real spec/contract mismatches. 16 pre-existing dialyzer warnings on lib/mix/cartouche.gen.ex documented as out-of-scope.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 76,
+      "phase": 0,
+      "bundle": "tooling_quality",
+      "status": "pending",
+      "title": "Restore dialyzer to CI — separate workflow on a larger runner",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [],
+      "depends_on": [],
+      "body": "Dialyzer was removed from the PR harness 2026-05-04 because the deps PLT exceeds the 16 GB ubuntu-latest budget — even after :plt_ignore_apps trimmed the GCP cluster, run 25319850405 OOM'd at 12:52:25 while adding 621 modules to the deps PLT. Local mix dialyzer.json works fine against a warm priv/plts/ cache.\n\nUpstream investigation 2026-05-04 ruled out dep-side slimming as a path: googleapis/elixir-google-api ships zero dialyzer config in its own CI; package authors don't dialyze the GCP cluster either. :plt_ignore_apps IS the canonical pattern there — no further upstream lever exists.\n\nRestoration shape (pick one when justified):\n(a) separate workflow .github/workflows/dialyzer.yml triggered only on push-to-development (not PR) using runs-on: ubuntu-latest-large (32 GB) — keeps PR CI fast/cheap, dialyzer signal arrives at merge time.\n(b) trim more aggressively by adding :hieroglyph, :descripex, :finch, :mint, :hpax, :inets, :xmerl to :plt_ignore_apps and broaden .dialyzer_ignore.exs to suppress the resulting unknown_function cascade — reduces dialyzer's value materially.\n(c) scheduled nightly via cron on the same larger runner — slowest feedback loop but lowest cost.\n\nDon't pursue until one of these triggers fires: external contributor PRs (need pre-merge signal), a critical-tier refactor that benefits from dialyzer-in-CI evidence, or a generator regression class that local-only dialyzer missed. Task 50 closure does NOT change the calculus.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 74,
+      "phase": 0,
+      "bundle": "wei_units",
+      "status": "done",
+      "title": "Cartouche.Wei.to_wei/1 — add :eth denomination with Decimal support",
+      "scores": {
+        "d": 3,
+        "b": 3,
+        "u": 3
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "shipped_in": "PR #14",
+      "implemented": "Done 2026-05-04 (PR #14).",
+      "cross_repo": []
+    },
+    {
+      "id": 77,
+      "phase": 0,
+      "bundle": "coverage_pushes",
+      "status": "done",
+      "title": "Cartouche.Solana.RPC coverage push — pre-existing untested option/filter/encoding paths",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 1.75,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #38",
+      "implemented": "Done 2026-05-06 (PR #38 / INE-27).",
+      "cross_repo": []
+    },
+    {
+      "id": 91,
+      "phase": 0,
+      "bundle": "solana_hardening",
+      "status": "done",
+      "title": "Cartouche.Solana.Transaction.sign/2 — reject signer-count mismatch against message.header.num_required_signatures",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 3
+      },
+      "eff": 3.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #60",
+      "implemented": "Done 2026-05-07 (INE-48 / PR #60, delegated to Cursor; bundled with Task 92). sign/2 now validates length(seeds) == message.header.num_required_signatures at function entry and raises ArgumentError with both counts named on mismatch. Module's existing {:error, _} contract is for parse errors; raising ArgumentError for caller error matches idiomatic Elixir. Regression describe block in test/solana/transaction_test.exs covers undersupplied, oversupplied, and exact-match happy path. Cartouche.Solana.Transaction coverage stayed at 100%.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 92,
+      "phase": 0,
+      "bundle": "solana_hardening",
+      "status": "done",
+      "title": "Cartouche.Solana.Transaction.add_signature/3 — guard index against length(transaction.signatures) before List.replace_at/3",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 3
+      },
+      "eff": 3.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #60",
+      "implemented": "Done 2026-05-07 (INE-48 / PR #60, delegated to Cursor; bundled with Task 91). add_signature/3 now guards 0 ≤ index < length(transaction.signatures); index >= 0 moved from the head guard into the body so negative indices raise ArgumentError instead of FunctionClauseError. Regression tests cover off-by-one, negative, far-OOB, plus an in-range regression.",
+      "cross_repo": []
+    },
+    {
+      "id": 39,
+      "phase": 1,
+      "bundle": "phase1_specs",
+      "status": "done",
+      "title": "RecoveryBit doctest chain-id portability cleanup",
+      "scores": {
+        "d": 2,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 0.5,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #4",
+      "implemented": "Done 2026-05-04 (PR #4 / INE-7). Chain-id-dependent doctests rewritten as chain-agnostic; EIP-155 behaviour moved to focused ExUnit assertions in test/recovery_bit_test.exs.",
+      "cross_repo": []
+    },
+    {
+      "id": "7+8+9",
+      "phase": 1,
+      "bundle": "phase1_specs",
+      "status": "done",
+      "title": "Phase 1.1–1.3 surgical spec fixes (RecoveryBit no_return, Signer.sign_direct mfa, Wei.to_wei non_neg)",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 6
+      },
+      "eff": 4.5,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-29. Phase 1.1 landed under Task 38 (Cartouche.RecoveryBit promotion). Phase 1.3 landed 2026-04-26 — mfa() BIF replaced with {module(), atom(), [any()]} on both Cartouche.Signer.sign_direct/4 and Cartouche.Signer.start_link/1. Phase 1.2 closeout 2026-04-29 — Cartouche.Wei.to_wei/1 spec narrowed to non_neg_integer(), with amount >= 0 guards on all three clauses. New describe block in test/wei_test.exs covers the zero boundary on all three clauses, the large-value identity round-trip, the :gwei multiplier, and the negative-input rejection. Cartouche.Wei coverage stays at 100%; full suite green (778/778); dialyzer clean on wei.ex.\n",
+      "cross_repo": []
+    },
+    {
+      "id": "10+11+12+13",
+      "phase": 1,
+      "bundle": "phase1_specs",
+      "status": "done",
+      "title": "Phase 1.4 Hex spec audit + from_hex/1 fix + doctest coverage",
+      "scores": {
+        "d": 2,
+        "b": 7,
+        "u": 9
+      },
+      "eff": 4.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-04-28. Spec corrections shipped under commit 8d4bc18 (drive-by during the doctor/credo cleanup, 2026-04-26) — five specs corrected, :error → :invalid_hex on the four public callers and the private helper; t() -> String.t() → t() -> t() on from_hex!/1. Closeout commit 2026-04-28 grounds the corrections with (a) the missing :invalid_hex doctest on from_hex/1, (b) the missing raise-path doctest on from_hex!/1, (c) ExUnit describe 'spec boundaries (Phase 1.4)' in test/hex_test.exs pinning the four return shapes, and (d) a small deep_encode_binaries/1 coverage push raising Cartouche.Hex 94.29% → 100%. Dialyzer: 0 hex.ex warnings, total invalid_contract count 8.\n",
+      "cross_repo": []
+    },
+    {
+      "id": "14+15+35",
+      "phase": 2,
+      "bundle": "phase2_rpc",
+      "status": "done",
+      "title": "Phase 2 RPC error-shape widening",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Done under [Unreleased]. Cartouche.RPC.send_rpc/3 now exposes explicit rpc_error, invalid_params_error, and send_rpc_error types covering JSON-RPC envelopes, revert metadata, transport strings/responses, decode failures, and the bare :invalid_hex decode path. Cartouche.Solana.RPC.send_rpc/3 now exposes matching transport/error types for its broad runtime contract. Both transports convert Jason.EncodeError and Protocol.UndefinedError from outbound request encoding into {:error, {:invalid_params, reason}} instead of raising, with doctests demonstrating the new contract and ExUnit coverage for representative non-encodable inputs. Closes INE-25.\n",
+      "cross_repo": []
+    },
+    {
+      "id": "16+17+18",
+      "phase": 3,
+      "bundle": "phase3_trace",
+      "status": "done",
+      "title": "Phase 3 Trace + TraceCall deserialize specs + tests",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 4
+      },
+      "eff": 1.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #17",
+      "implemented": "Done 2026-05-04 (PR #17 / INE-14). Cartouche.Trace.@type t (incl. nested Action) and Cartouche.TraceCall.@type t widened to admit nil on optional fields; action serialization now nil-safe. Grounding ExUnit assertions land in test/trace_test.exs and test/trace_call_test.exs. Dialyzer drops trace.ex:408 and trace_call.ex:124 invalid_contract.",
+      "cross_repo": []
+    },
+    {
+      "id": "19+20",
+      "phase": 4,
+      "bundle": "phase4_typed",
+      "status": "done",
+      "title": "Phase 4 Typed internal-function specs — rewrite + visibility judgment",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #50",
+      "implemented": "Done 2026-05-06 (INE-39 / PR #50). encode_value_map/3 @spec rewritten binary() → bitstring() to match dialyzer's success typing for the into: <<>> for-comprehension. find_type/2 left untouched — its committed spec was already {String.t(), Type.t()} matching the impl. Both functions stay defp. Copilot raised a low-confidence concern that loosening to bitstring() masks the byte-alignment invariant hash_struct/3 requires — filed as Task 98 follow-up. Closes ROADMAP Tasks 19+20 / Phase 4.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 98,
+      "phase": 4,
+      "bundle": "phase4_typed",
+      "status": "pending",
+      "title": "Phase 4 follow-up — tighten Cartouche.Typed.encode_value_map/3 impl so dialyzer infers binary(), restore stricter @spec",
+      "scores": {
+        "d": 2,
+        "b": 2,
+        "u": 2
+      },
+      "eff": 1.0,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "body": "Filed 2026-05-06 from PR #50 review (Copilot low-confidence finding). Loosening the spec to bitstring() in INE-39 silenced dialyzer cheaply but masks the byte-alignment invariant hash_struct/3's <> operator requires (type_hash <> encode_data would crash at runtime on a non-byte-aligned bitstring). Every actual branch in Type.encode_data_value/2 returns 32-byte aligned binary, so the impl IS byte-aligned in practice — but the spec no longer pins it against future drift.\n\nTighten the for {field, type} <- fields, into: <<>> comprehension (e.g. annotate the body as ::binary or wrap each branch through IO.iodata_to_binary/1) so dialyzer can prove binary(), then restore @spec encode_value_map/3 :: binary(). Pinning tests in test/typed_test.exs from Task 45 cover the contract. Touched-file scope; no callsite changes.\n",
+      "cross_repo": []
+    },
+    {
+      "id": 45,
+      "phase": 4,
+      "bundle": "coverage_pushes",
+      "status": "done",
+      "title": "Cartouche.Typed coverage push — exercise encode_value_map/3 and find_type/2 with representative inputs",
+      "scores": {
+        "d": 2,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 1.25,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Done 2026-05-05 (INE-21). Focused ExUnit assertions in test/typed_test.exs pin the current private-helper evidence without touching lib/cartouche/typed.ex: encode_value_map/3 reaches bitstring-producing primitive and nested custom-type branches through hash_struct/3; the sibling serialize_value_map/3 map-return branch is pinned through serialize/1; find_type/2 now covers the {name, %Typed.Type{}} match shape plus both no-match and multi-match raises, and the atom-keyed deserialize/1 delegating clause. Cartouche.Typed coverage is 100%; Tasks 19+20 are unblocked.\n",
+      "cross_repo": []
+    },
+    {
+      "id": "21+22",
+      "phase": 5,
+      "bundle": "phase5_cascade",
+      "status": "done",
+      "title": "Phase 5 none() cascade investigation + targeted fix or local suppression",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "shipped_in": "PR #54",
+      "implemented": "Done 2026-05-06 (INE-21 / Task 46 was the actual resolver; INE-42 / PR #54 surfaced this finding by attempting suppressions that proved unnecessary). The four dialyzer invalid_contract warnings (Cartouche.VM.exec/3, exec_call/3, Cartouche.Erc20.exec_trx/3, transfer/4) no longer reproduce as of 5918e5a. PR #54 was merged for the spec narrowing (independently valuable — mirrors Cartouche.RPC.execute_trx/3's contract); the four dead @dialyzer annotations + their cascade-root comment blocks were removed in the post-merge bookkeeping commit on development.",
+      "cross_repo": []
+    },
+    {
+      "id": 23,
+      "phase": 6,
+      "bundle": "phase6_vm_init",
+      "status": "done",
+      "title": "Align Cartouche.VM.Context.@type t with dialyzer's inferred struct shape, or relax init_from/2 to return struct()",
+      "scores": {
+        "d": 2,
+        "b": 1,
+        "u": 3
+      },
+      "eff": 1.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #40",
+      "implemented": "Done 2026-05-06 (PR #40 / INE-29, delivered by Cursor). Option B (relax init_from/2) — @spec init_from/2 narrowed to a concrete %__MODULE__{...} struct literal whose fields match the function's actual initial-state construction. Cartouche.VM.Context.@type t/0 left broad on purpose — it describes mutated runtime contexts. Surgical, single-file change in lib/cartouche/vm.ex.",
+      "cross_repo": []
+    },
+    {
+      "id": 46,
+      "phase": 6,
+      "bundle": "phase6_vm_init",
+      "status": "done",
+      "title": "VM + Erc20.Call coverage push — gate Phases 5 and 6",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.25,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Done 2026-05-05. Focused ExUnit coverage now exercises Cartouche.VM.Context.init_from/2 happy and empty-code paths, FFI lookup success/error, context stack/show rendering, Cartouche.Erc20.Call balance_of/3 and transfer/4 default and explicit option paths, and Cartouche.VM.InvalidVm raise/rescue message preservation. Tasks 21+22 and 23 are unblocked.",
+      "cross_repo": []
+    },
+    {
+      "id": "24+25",
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "done",
+      "title": "Phase 7.1 google_api_cloud_kms 0.38.1 → 0.43.0",
+      "scores": {
+        "d": 3,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 1.17,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-05-02. Audit (hex tarball diff): breaking change at 0.40.0 — get_public_key / asymmetric_sign collapsed to arity 4 (single name resource path). Both KMS signer modules updated to construct name internally via defp key_version_name/5; public API of Cartouche.{Signer,Solana.Signer}.CloudKMS preserved. PublicKey / AsymmetricSignResponse / Connection / Goth path unchanged across 5 minors. Pre-mutation coverage push: Eth 69→88%, Solana 69→90%.",
+      "cross_repo": []
+    },
+    {
+      "id": 26,
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "done",
+      "title": "Conditional feature-surface pass — expose HMAC / attestation / new auth methods if Task 24 flagged anything relevant",
+      "scores": {
+        "d": 5,
+        "b": 4,
+        "u": 4
+      },
+      "eff": 0.8,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-05-02. Closed as superseded — EC_SIGN_ED25519 already shipped via Cartouche.Solana.Signer.CloudKMS in earlier work; no HMAC / attestation / new auth surfaces in 0.39 → 0.43 worth promoting to Cartouche-level helpers per the 24+25 audit.",
+      "cross_repo": []
+    },
+    {
+      "id": "27+28",
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "done",
+      "title": "Phase 7.3 finch 0.19 → 0.21 — audit + conditional adoption",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 1.75,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-05-06. Audit verdict: no code-level adoption opportunities. Every 0.20 + 0.21 enhancement targets streaming, pool config, telemetry, or TLS — domains cartouche doesn't exercise. %Finch.Response{} and %Finch.Error{reason:} shapes unchanged across 0.19 → 0.21. Cartouche silently benefits from the HTTP/1 idle-pool fix (#292) and HTTP/2 server-push crash guard (#333). mix.exs pin tightened ~> 0.19 → ~> 0.21; lockfile no-op. Existing test/http_test.exs covers the unchanged response/error shapes.",
+      "cross_repo": []
+    },
+    {
+      "id": 71,
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "done",
+      "title": "junit_formatter 3.3.1 → 3.4.0 — loosen pin + lock refresh",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-05-02. Pin loosened ~> 3.3.1 → ~> 3.3; mix deps.update resolved 3.4.0; full suite green.",
+      "cross_repo": []
+    },
+    {
+      "id": 72,
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "done",
+      "title": "bandit 1.10.4 → 1.11.0 — lock refresh",
+      "scores": {
+        "d": 1,
+        "b": 1,
+        "u": 1
+      },
+      "eff": 1.0,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "2026-05-02. Lock-only refresh — pin ~> 1.10 already permitted 1.11.0; mix deps.update bandit resolved. Actual 1.11.0 boot deferred to next user-Tidewave-restart; lock + dialyzer + test suite verified clean.",
+      "cross_repo": []
+    },
+    {
+      "id": "29+30",
+      "phase": 8,
+      "bundle": "phase8_dedup",
+      "status": "done",
+      "title": "Phase 8 V2 encode dedup — verify doctest coverage + extract helper",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #49",
+      "implemented": "2026-05-06. Shipped via PR #49 (cursor/v2-encode-dedup-fcdb). Extracted defp unsigned_rlp_list/1; both encode clauses now share the prefix list. Widened t() signature fields (signature_y_parity/signature_r/signature_s) to allow nil for the unsigned path. Added unsigned + bare-address doctests for byte-exact equivalence. CodeRabbit follow-up landed in the same merge: normalize_access_list/1 widened to accept bare-address entries. Focused ExUnit assertions added for the three access-list shapes.",
+      "cross_repo": []
+    },
+    {
+      "id": 31,
+      "phase": 9,
+      "bundle": "phase9_tx",
+      "status": "done",
+      "title": "EIP-4844 blob transactions (Cartouche.Transaction.V3) — encode, sign, RLP round-trip, max_fee_per_blob_gas + blob_versioned_hashes fields",
+      "scores": {
+        "d": 6,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.17,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "2026-05-05. V3 typed transaction envelope added for post-Dencun blob transactions. Covers canonical signed bytes, signing preimage, sender recovery, transaction hash, malformed inputs, and a mainnet blob transaction vector.",
+      "cross_repo": []
+    },
+    {
+      "id": 32,
+      "phase": 9,
+      "bundle": "phase9_tx",
+      "status": "done",
+      "title": "EIP-7702 authorization-list transactions (Cartouche.Transaction.V4) — authorization_list field, tx type 0x04",
+      "scores": {
+        "d": 5,
+        "b": 5,
+        "u": 6
+      },
+      "eff": 1.1,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Done 2026-05-05. Cartouche.Transaction.V4 supports EIP-7702 encode/decode/sign/hash for set-code transactions, including authorization tuple signing/recovery via the 0x05 || rlp([chain_id, address, nonce]) digest. Unit coverage pins round-trips, empty and multi-entry authorization lists, malformed input rejection, outer signature recovery, and authorization authority recovery. Mainnet vector coverage decodes a real post-Pectra type-4 transaction and verifies the raw tx hash plus outer and authorization signatures.",
+      "cross_repo": []
+    },
+    {
+      "id": 33,
+      "phase": 9,
+      "bundle": "phase9_tx",
+      "status": "done",
+      "title": "Raw transaction decode — inverse of Cartouche.Transaction.Vn.encode/1 across V1/V2/V3/V4",
+      "scores": {
+        "d": 4,
+        "b": 4,
+        "u": 6
+      },
+      "eff": 1.25,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #41",
+      "implemented": "2026-05-06. Shipped via INE-30 / PR #41. Cartouche.Transaction.decode/1 dispatcher routes by EIP-2718 envelope byte to V1/V2/V3/V4.decode/1; legacy V1 falls through when the first byte is ≥ 0x80 (RLP list prefix). Strict round-trip with encode covers V1/V2/V3/V4 happy paths, malformed envelopes, and :empty_transaction. Out of scope: EIP-4844 versioned-hash 0x01 byte enforcement → Task 90.",
+      "cross_repo": []
+    },
+    {
+      "id": 90,
+      "phase": 9,
+      "bundle": "phase9_tx",
+      "status": "done",
+      "title": "Cartouche.Transaction.V3.decode/1 — enforce EIP-4844 versioned-hash 0x01 version byte on decode_blob_versioned_hashes/1",
+      "scores": {
+        "d": 1,
+        "b": 2,
+        "u": 2
+      },
+      "eff": 2.0,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #61",
+      "implemented": "2026-05-07. Shipped via INE-50 / PR #61 (Cursor cloud-agent). defp decode_blob_versioned_hashes/1 predicate tightened from length-only to is_binary(hash) and byte_size(hash) == 32 and binary_part(hash, 0, 1) == <<0x01>>; error contract {:error, 'invalid v3 transaction'} unchanged. Regression test in test/cartouche/transaction/v3_test.exs asserts a 32-byte hash with leading byte 0x00 rejects. Coverage held at 98.73%.",
+      "cross_repo": []
+    },
+    {
+      "id": 34,
+      "phase": 10,
+      "bundle": "phase10_upstream",
+      "status": "blocked",
+      "title": "ABI.decode/2 specced no_return() in poanetwork/ex_abi",
+      "scores": {
+        "d": 3,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 1.67,
+      "markers": [],
+      "depends_on": [],
+      "body": "External package — ABI.decode/2 specced no_return() in poanetwork/ex_abi. Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this.",
+      "blocked_reason": "Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this.",
+      "cross_repo": []
+    },
+    {
+      "id": 100,
+      "phase": 11,
+      "bundle": "phase11_hieroglyph",
+      "status": "done",
+      "title": "Audit two decode_structs: true paths against 1.4.0 atom-existence requirement",
+      "scores": {
+        "d": 5,
+        "b": 7,
+        "u": 5
+      },
+      "eff": 1.2,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "lib/mix/cartouche.gen.ex:607-610 fixed — generated exec_vm_* wrappers now call a private preintern_return_atoms!/1 helper before ABI.decode(..., decode_structs: true), recursively covering tuple and array return types. lib/cartouche/sleuth.ex:91-128 fixed — query_v2/4 accepts runtime selectors and defaults decode_structs: true; try_decode/3 now pre-interns the bounded selector return-field atoms before decode. Regression coverage uses Code.loaded?/1 and a dynamically unique field name to prove raw Hieroglyph decode raises while the Cartouche boundary succeeds.",
+      "cross_repo": []
+    },
+    {
+      "id": 101,
+      "phase": 11,
+      "bundle": "phase11_hieroglyph",
+      "status": "done",
+      "title": "Bug-fix audit: re-test cartouche flows against silently-fixed hieroglyph behaviors",
+      "scores": {
+        "d": 2,
+        "b": 5,
+        "u": 3
+      },
+      "eff": 2.0,
+      "markers": [
+        "csr"
+      ],
+      "depends_on": [],
+      "implemented": "Cartouche flows audited against silently-fixed hieroglyph behaviors from 1.0.0–1.2.0: indexed reference-type event params (Cartouche.Filter), :string decode NUL truncation, encode_int/2 overflow guard for small int types, dynamic?/1 crash on T[0]. No production miscompilation/truncation found.",
+      "cross_repo": []
+    },
+    {
+      "id": 102,
+      "phase": 11,
+      "bundle": "phase11_hieroglyph",
+      "status": "done",
+      "title": "Optional: adopt new hieroglyph public APIs where they simplify cartouche",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 2
+      },
+      "eff": 1.25,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "implemented": "ABI.method_id/1 (1.1.0) adopted in lib/mix/cartouche.gen.ex for duplicate-function selector suffixes and generated selector pattern bytes. ABI.decode_error/2 (1.2.0) adopted in lib/cartouche/rpc.ex for selector-prefixed revert payload decoding. ABI.encode_packed/2 (1.2.0) — no adoption opportunity found. function type encode/decode (1.3.0) — niche, deferred.",
+      "cross_repo": []
+    },
+    {
+      "id": 82,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Bootstrap descripex — direct dep + Cartouche discoverable wrapper + validation infra",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 6
+      },
+      "eff": 2.25,
+      "markers": [],
+      "depends_on": [],
+      "implemented": "Done 2026-05-05. :descripex promoted to direct dep (no mix.lock change — already pinned at 0.6.0 transitively via hieroglyph 1.4). lib/cartouche.ex extended with use Descripex.Discoverable, modules: @descripex_modules and @descripex_modules []; @moduledoc now documents the Cartouche.describe/0,1,2 discovery API. New test/descripex_validation_test.exs walks Cartouche.__descripex_modules__/0, iterates Code.fetch_docs/1 entries, and flunk/1s with the offending Module.fn/arity when meta[:hints] is missing on a non-@doc false public function. Tasks 83-89 unblocked.",
+      "cross_repo": []
+    },
+    {
+      "id": 83,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Cartouche.Signer + Cartouche.Keys",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 2.0,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #39",
+      "implemented": "Done 2026-05-06 via INE-28 / PR #39. use Descripex, namespace: '/ethereum/signer' and /ethereum/keys registered; both modules added to Cartouche.@descripex_modules; api() blocks placed before each existing @doc so prose survives in slot 4 and hints land in slot 5. Two doc-correctness items resolved in revision round (moduledoc :rpc examples → :signer/:sign_direct; sign_direct/4 chain_id_or_name tightened to 'chain id integer or configured chain atom').",
+      "cross_repo": []
+    },
+    {
+      "id": 84,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Cartouche.RPC + response decoders bundle",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 7
+      },
+      "eff": 1.5,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #44",
+      "implemented": "Done 2026-05-06 via INE-31 / PR #44. use Descripex registered across all 7 modules with namespaces under /ethereum/: rpc, block (+ block/withdrawal), receipt (+ receipt/log), fee_history, debug_trace (+ debug_trace/struct_log), trace (+ trace/action), trace_call. All 11 module entries (7 primary + 4 nested struct modules) added to Cartouche.@descripex_modules. Three review rounds resolved before merge: round 1 fixed fee_history/1 to call normalize_block_param/1 on :newest_block; round 2 corrected swapped TraceCall doc verbs; round 1 stripped two TagTODO credo:disable suppressions added to lib/cartouche/block.ex:99 and lib/cartouche/solana/transaction.ex:931.",
+      "cross_repo": []
+    },
+    {
+      "id": 85,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Cartouche.Transaction (incl. nested V1/V2 modules)",
+      "scores": {
+        "d": 3,
+        "b": 4,
+        "u": 6
+      },
+      "eff": 1.67,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #42",
+      "implemented": "Done 2026-05-06 via INE-32 / PR #42. use Descripex registered with three namespaces — /ethereum/transaction (top-level), /ethereum/transaction/v1, /ethereum/transaction/v2 — and 21 public defs annotated; all three module entries added to Cartouche.@descripex_modules. V2's new/9 and new/12 arities each get their own api() block; both packed add_signature/2 and expanded add_signature/4 forms get separate annotations. Top-level Cartouche.Transaction advertises decode/1 plus a synthetic transaction_dispatch_detail/2 for :encode guidance. Three review rounds resolved; five Phase 12 follow-ups filed as Tasks 93-97.",
+      "cross_repo": []
+    },
+    {
+      "id": 86,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Cartouche.Solana.RPC",
+      "scores": {
+        "d": 3,
+        "b": 4,
+        "u": 6
+      },
+      "eff": 1.67,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #43",
+      "implemented": "Done 2026-05-06 via INE-33 / PR #43. use Descripex, namespace: '/solana/rpc' registered; 19 api() blocks placed above each existing @doc; Cartouche.Solana.RPC added to Cartouche.@descripex_modules. Three review rounds resolved standardizing pubkey descriptions on raw 32-byte binary form, fixing send_rpc/3 return metadata, replace_recent_blockhash boolean, get_health return shape, and four :exchange_data → :value standardizations matching the get_signature_statuses precedent.",
+      "cross_repo": []
+    },
+    {
+      "id": 87,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Solana stack — Solana.Signer + Solana.Transaction + instruction/account helpers",
+      "scores": {
+        "d": 4,
+        "b": 4,
+        "u": 5
+      },
+      "eff": 1.13,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #45",
+      "implemented": "Done 2026-05-06 via INE-34 / PR #45. use Descripex registered with namespaces under /solana/ across all 9 modules — signer, transaction, keys, pda, ata, programs, system_program, token_program, token. Explicit @descripex_aliases map registers :solana_signer/:solana_transaction so Solana short names resolve without colliding with Ethereum naming. lib/cartouche.ex now declares use Descripex, namespace: '/cartouche' and registers api() blocks for describe/0,1,2; __descripex_modules__/0 gets @doc false per the __foo__/N reserved-for-metadata convention. Two revision rounds resolved before merge. Two pre-existing correctness gaps filed as Tasks 91 + 92.",
+      "cross_repo": []
+    },
+    {
+      "id": 88,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate Ethereum utilities — Hex + Erc20 + Sleuth + primitive bundle",
+      "scores": {
+        "d": 4,
+        "b": 4,
+        "u": 5
+      },
+      "eff": 1.13,
+      "markers": [
+        "parallel",
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #47",
+      "implemented": "Done 2026-05-06 via INE-35 / PR #47. use Descripex registered with namespaces under /ethereum/ across the high-traffic utilities (hex, erc20, sleuth) and the primitive co-domain (hash, address, wei, chain, recovery_bit), plus a sibling /base58 for Cartouche.Base58. The 9 spec modules expanded to 11 during review when Codex GitHub bot's P2 push-back surfaced that Cartouche.Erc20.CallData and Cartouche.Erc20.Call had received use Descripex annotations but were never registered in @descripex_modules. Three revision rounds resolved metadata-correctness items from the bot ensemble. .sobelow-skips regenerated for line shifts.",
+      "cross_repo": []
+    },
+    {
+      "id": 89,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Wire mix descripex.manifest + document Cartouche.describe() in README",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 5
+      },
+      "eff": 2.0,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #62",
+      "implemented": "Done 2026-05-07 via INE-49 / PR #62 (delegated to Cursor). mix manifest alias added to mix.exs (descripex.manifest --pretty --output api_manifest.json --app cartouche). New Cartouche.Manifest module wraps Descripex.Manifest.build(Cartouche.__descripex_modules__()) for runtime consumers. api_manifest.json gitignored. README ## API discovery section documents three-level Cartouche.describe/0,1,2 progressive disclosure plus static-vs-runtime split. Path A scope amendment surgically resolved a self-flagged + Codex-GH-bot-flagged P2 blocker — Jason rejects raw 20-byte binary in JSON-encoded annotation metadata: default: @sleuth_address → default: '0xFd946Bf25C47A1Bff567B28bA78a961bf78FF9d2' at three api(...) opts blocks in lib/cartouche/sleuth.ex. CI Harness 54s green; CodeRabbit re-reviewed; mergeable=CLEAN. New test/manifest_test.exs asserts shape. Phase 12 fully closed.",
+      "cross_repo": []
+    },
+    {
+      "id": 93,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Add real Cartouche.Transaction.encode/1 dispatcher mirroring decode/1",
+      "scores": {
+        "d": 2,
+        "b": 6,
+        "u": 5
+      },
+      "eff": 2.75,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #56",
+      "implemented": "Done 2026-05-07 via INE-46 / PR #56. Top-level struct-dispatched Cartouche.Transaction.encode/1 mirrors decode/1 — each clause delegates to the matching versioned leaf encoder (V1/V2/V3/V4), all of which already emit the EIP-2718 envelope byte where applicable, so the dispatcher is a pure pattern-match-and-delegate. Synthetic transaction_dispatch_detail/2 helper removed from Cartouche.describe/2 — :encode now resolves to real metadata. Round-trip decode(encode(tx)) == {:ok, tx} covers V1/V2/V3/V4 through the dispatcher.",
+      "cross_repo": []
+    },
+    {
+      "id": 94,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Fix top-level decode/1 api(:decode) return metadata at lib/cartouche/transaction.ex:1180",
+      "scores": {
+        "d": 2,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 3.25,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #57",
+      "implemented": "Done 2026-05-07 via INE-45 / PR #57 (delegated to Cursor; bundled with Tasks 95+96+97). api(:decode, ..., returns: ...) block now enumerates all 7 dispatcher outcomes — {:ok, V1.t() | V2.t() | V3.t() | V4.t()} (four happy paths via EIP-2718 envelope routing), {:error, :empty_transaction}, {:error, :unknown_envelope_type}, and the delegated {:error, String.t()} from V1/V2/V3/V4.decode/1 for malformed bodies. Metadata-only.",
+      "cross_repo": []
+    },
+    {
+      "id": 95,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Annotate the new public discovery helpers (Cartouche.describe/0,1,2, Cartouche.__descripex_modules__/0) with api()",
+      "scores": {
+        "d": 2,
+        "b": 5,
+        "u": 5
+      },
+      "eff": 2.5,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #57",
+      "implemented": "Done 2026-05-07 via INE-45 / PR #57 (delegated to Cursor; bundled with Tasks 94+96+97). Cartouche itself registered in @descripex_modules with :cartouche alias; the existing api(:describe, ...) block covers describe/0,1,2 via descripex's propagate_hints_to_all_arities; get_contract_address/1 annotated. __descripex_modules__/0 stays @doc false per the __foo__/N reserved-for-metadata convention. Cartouche.describe(:cartouche) returns Level-2 listings.",
+      "cross_repo": []
+    },
+    {
+      "id": 96,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Realign V1 value api() annotation with published contract at lib/cartouche/transaction.ex:74",
+      "scores": {
+        "d": 1,
+        "b": 3,
+        "u": 2
+      },
+      "eff": 2.5,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #57",
+      "implemented": "Done 2026-05-07 via INE-45 / PR #57 (delegated to Cursor; bundled with Tasks 94+95+97). V1 value description aligned with @spec and the {2, :wei} doctest example — drops off-spec :eth from the unit list (V1's to_wei/1 accepts integer of wei, or {amount, :wei | :gwei} only). Metadata-only.",
+      "cross_repo": []
+    },
+    {
+      "id": 97,
+      "phase": 12,
+      "bundle": "phase12_descripex",
+      "status": "done",
+      "title": "Strengthen test/descripex_validation_test.exs to catch wrong physical hint attachment",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 3
+      },
+      "eff": 1.5,
+      "markers": [
+        "cx"
+      ],
+      "depends_on": [],
+      "shipped_in": "PR #57",
+      "implemented": "Done 2026-05-07 via INE-45 / PR #57 (delegated to Cursor; bundled with Tasks 94+95+96). New misattachment-detection pass cross-checks Code.fetch_docs/1 meta[:hints] against Module.__api__/0 declarations. Post-merge bookkeeping refined the pass per Codex P2 + CodeRabbit nit on PR #57: Map.new(&{name, hints}) collapse swapped for Enum.group_by(& &1.name, & &1.hints) list-membership (multi-decl-safe for V2.new/V2.add_signature overload pairs that share name+arity), plus an explicit {:error, reason} flunk branch on Code.fetch_docs/1.",
+      "cross_repo": []
+    }
+  ]
+}
