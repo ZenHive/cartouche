@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- Phase anchors for ROADMAP.md cross-references — rmap renders `CHANGELOG.md#phase-N-...` links from collapsed (status="done") phase summaries; these anchors land the click at the top of the changelog so the link isn't dead. -->
+<a id="phase-1-spec-corrections-immediate-onchain-wins"></a>
+<a id="phase-2-cartouche-rpc-send-rpc-3-error-shape-spec"></a>
+<a id="phase-3-cartouche-trace-cartouche-tracecall-deserialize-specs"></a>
+<a id="phase-5-vm-erc20-call-none-cascade-investigation"></a>
+<a id="phase-6-cartouche-vm-context-init-from-2-spec"></a>
+<a id="phase-7-dependency-freshness"></a>
+<a id="phase-8-cartouche-transaction-v2-encode-1-duplication"></a>
+<a id="phase-9-new-transaction-types-raw-decode"></a>
+<a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
+<a id="phase-12-agent-economy-descripex-adoption"></a>
+
 ## [Unreleased]
 
 ### Added
