@@ -1,31 +1,37 @@
 # Cartouche (ZenHive fork)
 
-@~/.claude/includes/across-instances.md
 @~/.claude/includes/critical-rules.md
-@~/.claude/includes/worktree-workflow.md
-
-@~/.claude/includes/task-prioritization.md
-@~/.claude/includes/task-writing.md
-@~/.claude/includes/rmap.md
-@~/.claude/includes/workflow-philosophy.md
-@~/.claude/includes/code-style.md
-@~/.claude/includes/development-philosophy.md
-@~/.claude/includes/development-commands.md
-@~/.claude/includes/ex-unit-json.md
-@~/.claude/includes/dialyzer-json.md
-
-@~/.claude/includes/delegation.md
-@~/.claude/includes/onchain-workspace.md
-
-@~/.claude/includes/upstream-pr-workflow.md
 
 <!--
-elixir-setup, web-command, agent-economy, reach are auto-loading skills
-(elixir:elixir-setup, elixir:web-command, elixir:agent-economy, elixir:reach).
-Don't @-import them — see setup-guide.md § "Skills vs Includes".
+Selective-load (Opus 4.8 — see setup-guide.md § "Skills vs Includes"):
+the eager floor is critical-rules only.
+
+Delegation is via the harness engine (harness-driver skill — skill-on-demand,
+no @-import). The legacy Linear + Codex/Cursor stack is intentionally not loaded.
+
+Everything else is skill-on-demand — Opus self-invokes when the situation
+fires, and the hard parts are hook-enforced independently:
+  worktree-workflow      → elixir:git-worktrees
+  task-prioritization    → elixir:roadmap-planning
+  task-writing           → task-driver:task-writing
+  rmap                   → task-driver:rmap
+  workflow-philosophy    → dev-lifecycle:workflow-philosophy
+  code-style             → elixir:code-style
+  development-philosophy → elixir:development-philosophy
+  development-commands   → elixir:development-commands
+  ex-unit-json           → elixir:ex-unit-json
+  dialyzer-json          → elixir:dialyzer-json
+  upstream-pr-workflow   → elixir:upstream-pr-workflow
+  elixir-setup           → elixir:elixir-setup
+  web-command / agent-economy / reach → elixir:*
+
+Note: AGENTS.md is generated from this file (sync-agents-md.sh inlines the
+@-imports) and is Cursor's only context — cloud agents have no skill system.
+The Elixir convention set that used to reach Cursor via AGENTS.md now reaches
+it through the CI harness (.github/workflows/harness.yml) + plan-shaped issue
+specs instead. Re-add a specific @-import here if a cloud-agent PR surface
+degrades for lack of an inlined convention.
 -->
-
-
 
 forked from https://github.com/hayesgm/signet
 
