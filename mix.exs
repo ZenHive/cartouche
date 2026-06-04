@@ -120,7 +120,7 @@ defmodule Cartouche.MixProject do
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
-      {:descripex, "~> 0.6.0"},
+      {:descripex, "~> 0.7.0"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
@@ -138,13 +138,13 @@ defmodule Cartouche.MixProject do
   defp zenhive_dev_deps do
     [
       {:styler, "~> 1.11.0", only: [:dev, :test], runtime: false},
-      {:ex_unit_json, "~> 0.4.3", only: [:dev, :test], runtime: false},
+      {:ex_unit_json, "~> 0.5.0", only: [:dev, :test], runtime: false},
       {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
-      {:meck, "~> 1.1.1", only: [:dev, :test], runtime: false},
+      {:meck, "~> 1.2.0", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
