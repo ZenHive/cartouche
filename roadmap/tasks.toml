@@ -695,10 +695,11 @@ shipped_in = "PR #52"
 id = 76
 phase = 0
 bundle = "tooling_quality"
-status = "pending"
+status = "done"
 title = "Restore dialyzer to the standard PR harness — the OOM premise was the Assembly bomb, now fixed"
 scores = { d = 3, b = 2, u = 3 }
 scored_at = "2026-06-05"
+implemented = "Cold `mix dialyzer` (PLT build + analysis, MIX_ENV=dev, priv/plts removed) measured 2026-06-05 on host: peak RSS 1,054,408,704 B ≈ 1.0 GB, 26.0s real, 0 warnings (11 skipped via .dialyzer_ignore.exs), exit 0 — ~15x under the 16 GB ubuntu-latest budget. Restored dialyzer to .github/workflows/harness.yml as a normal step (MIX_ENV=dev, with a priv/plts cache); reverted the 2026-05-04 carve-out comments in harness.yml top + body. No larger runner / separate workflow / extra :plt_ignore_apps trim needed — the size premise was the Assembly tuple_set bomb (Task 103), not dep count. Real ubuntu-latest verification runs on the push-to-development that ships this. NOTE: the CLAUDE.md 'never delegate dialyzer to cloud agents' rule still needs one cloud-agent (Cursor/Codex VM) cold PLT build observed under budget before it lifts — CI green on GitHub's runner is necessary but the cloud-VM memory ceiling differs; keep that rule hard until a cloud build is actually seen completing."
 body = """
 PREMISE FALSIFIED 2026-06-05 by the Task 103 Assembly fix. The original framing of this task — "the deps PLT exceeds the 16 GB ubuntu-latest budget; run 25319850405 OOM'd while adding 621 modules; needs a larger runner" — attributed the 2026-05-04 CI OOM to dep-set SIZE. It was not size. It was Cartouche.Assembly.compile/1's 7-arity tuple_set product exploding dialyzer's success-typing fixpoint on OTP 29 — the same ~30 GB bomb Task 103 diagnosed and fixed. Collapsing the seven heads to one is_tuple/1 clause cut a downstream cold PLT build 27.6 GB -> 1.02 GB; cartouche's own local dialyzer now peaks ~3.49 GB. The 621-module dep PLT was never the problem.
 

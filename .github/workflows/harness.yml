@@ -3,12 +3,13 @@
 # credo / doctor / sobelow / test+cover evidence as PR checks, instead of needing
 # a local reviewer to fetch the branch and run the suite.
 #
-# **cartouche-specific carve-out:** dialyzer is run locally only — cartouche's
-# deps PLT (post-`:plt_ignore_apps` trim) exceeds the 16 GB free-runner budget
-# during construction. This is NOT a generic "dialyzer doesn't fit in CI"
-# claim — most Elixir repos fit comfortably. See the comment below the
-# coverage step for the cartouche-specific rationale, and ROADMAP Task 76
-# for the restoration paths.
+# Dialyzer runs in the harness (restored 2026-06-05, ROADMAP Task 76). The
+# 2026-05-04 carve-out blamed an OOM on the 621-module deps PLT size; that was
+# wrong. The real cause was `Cartouche.Assembly.compile/1`'s 7-arity tuple_set
+# exploding dialyzer's success-typing fixpoint (the ~30 GB bomb fixed under
+# Task 103). A clean cold `mix dialyzer` (PLT build + analysis) now peaks at
+# ~1.0 GB / ~26s locally — ~15x under the 16 GB `ubuntu-latest` budget. See the
+# dialyzer step below the coverage gate.
 #
 # No untrusted-input interpolation — only matrix, runner, beam outputs, hashFiles.
 
@@ -119,24 +120,22 @@ jobs:
       - name: Tests + coverage gate (>=85%)
         run: mix test.json --cover --cover-threshold 85 --summary-only --exclude integration
 
-      # ── cartouche-specific dialyzer carve-out ────────────────────────────
-      # Dialyzer is intentionally NOT run here for THIS repo. Cartouche's
-      # dep tree includes a heavy generated-API cluster (`google_api_cloud_kms`
-      # ~600 generated REST API modules + `goth` + `google_gax` + `tesla` +
-      # `jose`); even after `:plt_ignore_apps` in mix.exs trims that cluster,
-      # the remaining ~621-module deps PLT OOMs the 16 GB `ubuntu-latest`
-      # runner during call-graph + type-signature analysis (run 25319850405,
-      # `runner has received a shutdown signal` at 12:52:25).
-      #
-      # This is a last-resort decision for cartouche specifically — not a
-      # blanket "drop dialyzer in CI" recommendation. Default posture for new
-      # Elixir repos is to KEEP dialyzer in the harness; remove it only if
-      # the same OOM signature shows up in CI for that specific repo. First
-      # try `:plt_ignore_apps` to trim heavy generated-API deps; only if that
-      # doesn't fit either should the dialyzer step be dropped.
-      #
-      # Local dev still runs `mix dialyzer.json` against a warm PLT
-      # (`priv/plts/`). ROADMAP Task 76 captures restoration paths
-      # (separate workflow on a larger runner / nightly cron / more
-      # aggressive PLT trim) for if/when cartouche outgrows local-only signal.
+      # ── Dialyzer (restored 2026-06-05, Task 76) ──────────────────────────
+      # Runs in MIX_ENV=dev: dialyxir builds the `…_deps-dev.plt` PLT and the
+      # repo's `dialyzer.json`/`dialyzer` preferred env is :dev. `mix dialyzer`
+      # exits non-zero on any warning, so this gates. `priv/plts/` is pinned
+      # outside `_build/` (see mix.exs dialyzer config) precisely so it caches
+      # here — cold build is ~1.0 GB / ~26s, cached is seconds.
+      - name: Cache dialyzer PLT (priv/plts)
+        uses: actions/cache@v4
+        with:
+          path: priv/plts
+          key: plt-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            plt-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
+
+      - name: Dialyzer (cold ~1.0 GB peak / ~26s — Task 76)
+        env:
+          MIX_ENV: dev
+        run: mix dialyzer
       # ─────────────────────────────────────────────────────────────────────
