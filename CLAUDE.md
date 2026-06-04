@@ -43,6 +43,8 @@ When our PostToolUse hooks flag issues on files you touched (credo, format, dial
 
 **Cartouche is too big for the cloud-agent VMs to run `mix dialyzer` reliably — Cursor / Codex VMs OOM-crash mid-PLT-build.** Do NOT create Linear issues whose acceptance criteria require running `mix dialyzer` / `mix dialyzer.json` on the cloud agent's side.
 
+> ⚠️ **Premise pending re-verification (2026-06-05).** The Task 103 Assembly fix proved the OOM was `Cartouche.Assembly.compile/1`'s 7-arity `tuple_set` explosion, NOT dep-set size — downstream cold PLT build dropped 27.6 GB → 1.02 GB, cartouche's local dialyzer now peaks ~3.49 GB. This rule may already be obsolete. Keep treating it as hard until ONE cloud-agent / CI cold PLT build is measured at the new floor (Task 76); the moment that build completes under budget, lift this rule. Don't lift on the downstream onchain number alone.
+
 This blocks `[CSR]` (Cursor) and `[CX]` (Codex) delegation for any task whose primary work product is "fix N dialyzer warnings" or "narrow `@spec` so dialyzer infers X."
 
 **How to apply:**
@@ -56,10 +58,10 @@ This blocks `[CSR]` (Cursor) and `[CX]` (Codex) delegation for any task whose pr
 **Affected open ROADMAP tasks** (do NOT promote these to Linear):
 
 - Tasks 21+22 — Phase 5 `none()` cascade — *already deployed as INE-42, but acceptance criteria deliberately scope to `mix dialyzer.json` snapshots that will be re-verified locally; the agent is annotating only.* Future similar tasks: keep local.
-- Task 76 — Restore dialyzer to CI on a larger runner — meta-task about CI infrastructure; itself stays local until resolved (its resolution is what would unlock cloud-agent dialyzer in the first place).
+- Task 76 — Restore dialyzer to the standard PR harness (re-scoped 2026-06-05; the "larger runner" framing was the falsified size premise) — meta-task about CI infrastructure; itself stays local until resolved (its resolution is what would unlock cloud-agent dialyzer in the first place).
 - Task 98 — Tighten `Cartouche.Typed.encode_value_map/3` impl so dialyzer infers `binary()` — pure dialyzer-narrowing work; stays local.
 
-**When this lifts:** Task 76 (dialyzer-on-larger-runner CI) lands AND we verify a cloud-agent VM completes a full PLT build. Until both are true, treat this rule as hard.
+**When this lifts:** Task 76 (restore dialyzer to standard PR CI) lands AND we verify a cloud-agent VM completes a full PLT build. Until both are true, treat this rule as hard.
 
 ## Sobelow workflow
 

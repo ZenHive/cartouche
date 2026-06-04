@@ -170,7 +170,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 70 `[CX]` | 🔶 | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist [D:1/B:2/U:3 → Eff:2.5] 🎯 ⛔ Blocked on Fusaka/Osaka mainnet activation (no firm date as of 2026-05-01). |
 | Task 73 | ✅ | 🎁 **kms_followups** · KMS signer Goth-path test mocking — clear critical-tier ≥95% gate on both KMS signers [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
 | Task 75 `[CX]` | ✅ | 🎁 **tooling_quality** · Backfill @spec on every defp to enable .credo.exs {Specs, [include_defp: true]} portfolio-wide [D:7/B:5/U:5 → Eff:0.71] ⚠️ |
-| Task 76 | ⬜ | 🎁 **tooling_quality** · Restore dialyzer to CI — separate workflow on a larger runner [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
+| Task 76 | ⬜ | 🎁 **tooling_quality** · Restore dialyzer to the standard PR harness — the OOM premise was the Assembly bomb, now fixed [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
 | Task 74 | ✅ | 🎁 **wei_units** · Cartouche.Wei.to_wei/1 — add :eth denomination with Decimal support [D:3/B:3/U:3 → Eff:1.0] 📋 |
 | Task 77 `[CSR]` | ✅ | 🎁 **coverage_pushes** · Cartouche.Solana.RPC coverage push — pre-existing untested option/filter/encoding paths [D:2/B:3/U:4 → Eff:1.75] 🚀 |
 | Task 91 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.sign/2 — reject signer-count mismatch against message.header.num_required_signatures [D:1/B:3/U:3 → Eff:3.0] 🎯 |
