@@ -62,7 +62,13 @@ defmodule Cartouche.WeiTest do
     end
 
     test "float eth is rejected without silent coercion" do
-      assert_raise FunctionClauseError, fn -> Wei.to_wei({1.5, :eth}) end
+      # dynamic/1 erases the static type (Elixir 1.20+): the float tuple is an
+      # intentional out-of-contract input, and the contract is enforced at
+      # runtime via FunctionClauseError, not by the compile-time type checker.
+      assert_raise FunctionClauseError, fn -> Wei.to_wei(dynamic({1.5, :eth})) end
     end
   end
+
+  @spec dynamic(term()) :: term()
+  defp dynamic(value), do: value
 end
