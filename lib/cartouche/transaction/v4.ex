@@ -223,8 +223,7 @@ defmodule Cartouche.Transaction.V4 do
   """
   @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
   def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
-      when is_nil(v) or is_nil(r) or is_nil(s),
-      do: {:error, "transaction missing signature"}
+      when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
 
   def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
     {:ok, r <> s <> <<y_parity_integer(v)>>}
