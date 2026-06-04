@@ -167,7 +167,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 67 | ✅ | 🎁 **rpc_correctness** · Cartouche.Receipt — add EIP-4844 blob fields (blob_gas_used, blob_gas_price) [D:2/B:3/U:4 → Eff:1.75] 🚀 |
 | Task 68 | ⛔ | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add EIP-7702 opcodes to the closed whitelist (AUTH, AUTHCALL) — closed obsolete [D:1/B:1/U:1 → Eff:1.0] 📋 |
 | Task 69 | ⬜ | 🎁 **bug_triage** · Audit RPC-level requirements bubbling up from defi-skills mining [D:2/B:5/U:4 → Eff:2.25] 🎯 |
-| Task 70 `[CX]` | 🔶 | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist [D:1/B:2/U:3 → Eff:2.5] 🎯 |
+| Task 70 `[CX]` | 🔶 | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist [D:1/B:2/U:3 → Eff:2.5] 🎯 ⛔ Blocked on Fusaka/Osaka mainnet activation (no firm date as of 2026-05-01). |
 | Task 73 | ✅ | 🎁 **kms_followups** · KMS signer Goth-path test mocking — clear critical-tier ≥95% gate on both KMS signers [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
 | Task 75 `[CX]` | ✅ | 🎁 **tooling_quality** · Backfill @spec on every defp to enable .credo.exs {Specs, [include_defp: true]} portfolio-wide [D:7/B:5/U:5 → Eff:0.71] ⚠️ |
 | Task 76 | ⬜ | 🎁 **tooling_quality** · Restore dialyzer to CI — separate workflow on a larger runner [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
@@ -175,6 +175,9 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 77 `[CSR]` | ✅ | 🎁 **coverage_pushes** · Cartouche.Solana.RPC coverage push — pre-existing untested option/filter/encoding paths [D:2/B:3/U:4 → Eff:1.75] 🚀 |
 | Task 91 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.sign/2 — reject signer-count mismatch against message.header.num_required_signatures [D:1/B:3/U:3 → Eff:3.0] 🎯 |
 | Task 92 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.add_signature/3 — guard index against length(transaction.signatures) before List.replace_at/3 [D:1/B:3/U:3 → Eff:3.0] 🎯 |
+| Task 103 | ✅ | 🎁 **generator_hardening** · Fix the ~30 GB downstream dialyzer bomb — collapse Assembly.compile/1's 7-arity tuple_set (NOT IConsole) [D:4/B:7/U:6 → Eff:1.62] 🚀 |
+| Task 105 | ⬜ | 🎁 **generator_hardening** · Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb) [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
+| Task 104 | ⬜ | 🎁 **signer_backends** · Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing [D:4/B:6/U:6 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
@@ -422,7 +425,7 @@ Before opening any PR to `hayesgm/signet`:
 <!-- TASKS:BEGIN phase=10 -->
 | Task | Status | Notes |
 |------|--------|-------|
-| Task 34 | 🔶 | 🎁 **phase10_upstream** · ABI.decode/2 specced no_return() in poanetwork/ex_abi [D:3/B:5/U:5 → Eff:1.67] 🚀 |
+| Task 34 | 🔶 | 🎁 **phase10_upstream** · ABI.decode/2 specced no_return() in poanetwork/ex_abi [D:3/B:5/U:5 → Eff:1.67] 🚀 ⛔ Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this. |
 <!-- TASKS:END -->
 
 ---

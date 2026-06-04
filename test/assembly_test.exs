@@ -81,6 +81,15 @@ defmodule Cartouche.AssemblyTest do
                ]
     end
 
+    test "1-operand opcode" do
+      assert Assembly.compile({:iszero, 5}) == [{:push, 1, <<5>>}, :iszero]
+    end
+
+    test "2-operand opcode" do
+      assert Assembly.compile({:mstore, 1, 2}) ==
+               [{:push, 1, <<2>>}, {:push, 1, <<1>>}, :mstore]
+    end
+
     test "no-operand opcode is returned as-is" do
       assert Assembly.compile(:address) == :address
     end
@@ -98,6 +107,13 @@ defmodule Cartouche.AssemblyTest do
     test "unknown tuple raises InvalidAssembly" do
       assert_raise InvalidAssembly, ~r/invalid or unknown assembly/, fn ->
         Assembly.compile({:not_an_opcode, 1, 2})
+      end
+    end
+
+    test "known opcode with wrong operand count raises InvalidAssembly" do
+      # :add takes 2 operands, not 1.
+      assert_raise InvalidAssembly, ~r/invalid or unknown assembly/, fn ->
+        Assembly.compile({:add, 1})
       end
     end
   end

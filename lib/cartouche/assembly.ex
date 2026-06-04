@@ -1,14 +1,28 @@
 defmodule Cartouche.Assembly do
   @moduledoc ~S"""
-  A for-fun assembler of EVM assembly code from a simple
-  lisp-like language used to construct Quark scripts.
+  A small EVM assembler and disassembler with a lisp-like front-end.
 
-  This is really for fun and testing, so mostly feel free
-  to ignore.
+  You describe a script as a tree of operations — nested opcode tuples,
+  integers, and binaries — and the module lowers it to EVM bytecode:
+
+      compile/1   tree of operations  ->  flat list of opcodes
+      assemble/1  flat list of opcodes  ->  bytecode binary
+      build/1     tree of operations  ->  bytecode binary   (compile |> assemble)
+      disassemble/1                       bytecode binary  ->  list of opcodes
+
+  `compile/1` handles operand ordering (operands are emitted so they land on
+  the stack in source order), `{:if, …}` branching with unique `jumpi`/
+  `jump_dest` labels, and `{:push, …}` synthesis for binaries/integers.
+
+  This is not a toy: `Cartouche.VM` assembles its EVM scaffolding through
+  `assemble/1`, and the assembler builds the small scripts cartouche injects
+  during simulation (e.g. the `eth_estimateGas` guard that reverts when
+  `tx.origin` is zero). It is also genuinely handy for hand-writing and
+  inspecting short scripts in tests.
 
   ## Usage
 
-  You can build EVM assembly, via:
+  Build EVM bytecode from a tree of operations:
 
   ```elixir
   Cartouche.Assembly.build([
@@ -16,16 +30,8 @@ defmodule Cartouche.Assembly do
   ])
   ```
 
-  That results in the EVM compiled script `0x603760006000a1`.
-
-  If you view that here https://ethervm.io/decompile you see
-  that it decompiles to:
-
-  ```c
-  log(memory[0x00:0x00], [0x37]);
-  ```
-
-  via the assembly:
+  produces `0x603760006000a1`, which [decompiles](https://ethervm.io/decompile)
+  to `log(memory[0x00:0x00], [0x37])`, i.e. the assembly:
 
   ```asm
   0000    60  PUSH1 0x37
@@ -34,8 +40,8 @@ defmodule Cartouche.Assembly do
   0006    A1  LOG1
   ```
 
-  Overall, scripts can get more complex, e.g. we use a script
-  to revert if `tx.origin` is zero (e.g. during an `eth_estimateGas`).
+  Scripts can branch — e.g. revert if `tx.origin` is zero (as during an
+  `eth_estimateGas`):
 
   ```elixir
   Cartouche.Assembly.build([
@@ -43,9 +49,6 @@ defmodule Cartouche.Assembly do
     {:if, :origin, {:revert, 28, 4}, {:return, 0, 0}}
   ])
   ```
-
-  There's no real goal for this assembler. Just a fun experiment and
-  useful in testing.
   """
 
   use Cartouche.Hex
@@ -147,24 +150,11 @@ defmodule Cartouche.Assembly do
     selfdestruct: {<<0xFF>>, 1, 0}
   }
 
-  @opcodes_with_operand_count fn x ->
-    @opcodes
-    |> Enum.filter(fn {_opcode, {_, ins, _outs}} -> ins == x end)
-    |> Enum.map(fn {opcode, _} -> opcode end)
-  end
-
   @opcodes_by_code Map.new(@opcodes, fn {opcode, {code, _, _}} -> {code, opcode} end)
 
   @opcodes_codes Enum.map(@opcodes, fn {_, {code, _, _}} -> code end)
 
-  @no_operands @opcodes_with_operand_count.(0)
-  @one_operand @opcodes_with_operand_count.(1)
-  @two_operands @opcodes_with_operand_count.(2)
-  @three_operands @opcodes_with_operand_count.(3)
-  @four_operands @opcodes_with_operand_count.(4)
-  @five_operands @opcodes_with_operand_count.(5)
-  @six_operands @opcodes_with_operand_count.(6)
-  @seven_operands @opcodes_with_operand_count.(7)
+  @no_operands for {opcode, {_code, 0, _outs}} <- @opcodes, do: opcode
 
   @opcode_keys Map.keys(@opcodes)
   # not sure how to otherwise figure this out
@@ -185,44 +175,39 @@ defmodule Cartouche.Assembly do
     defexception message: "invalid opcode"
   end
 
-  @spec compile(term()) :: [term()] | atom()
-  def compile({opcode, a}) when opcode in @one_operand do
-    List.flatten([compile(a), opcode])
-  end
+  @doc """
+  Compiles a lisp-like assembly tree into a flat list of low-level opcodes
+  (which `assemble/1` then turns into bytecode).
 
-  def compile({opcode, a, b}) when opcode in @two_operands do
-    List.flatten([compile(b), compile(a), opcode])
-  end
+  Accepts any of:
 
-  def compile({opcode, a, b, c}) when opcode in @three_operands do
-    List.flatten([compile(c), compile(b), compile(a), opcode])
-  end
+    * a **list** of operations — each is compiled and the results concatenated;
+    * an **operand-bearing opcode tuple** `{opcode, arg1, …, argN}` — every
+      argument is compiled and emitted in reverse order (so operands land on the
+      stack in source order), followed by the opcode. `N` must equal the
+      opcode's declared operand count in `@opcodes`;
+    * an `{:if, cond, non_zero, zero}` tuple — compiled to a `jumpi`/`jump_dest`
+      branch with a unique label;
+    * a **binary** of ≤ 32 bytes — emitted as `{:push, byte_size, bytes}`;
+    * a non-negative **integer** — encoded big-endian via
+      `:binary.encode_unsigned/1`, then pushed;
+    * a **no-operand opcode** atom (e.g. `:add`, `:stop`) or `:self_code_sz` —
+      returned unchanged (the one scalar-return case).
 
-  def compile({opcode, a, b, c, d}) when opcode in @four_operands do
-    List.flatten([compile(d), compile(c), compile(b), compile(a), opcode])
-  end
+  Raises `InvalidAssembly` on an unknown or wrong-arity opcode tuple, a binary
+  larger than 32 bytes, or any other unrecognized term.
 
-  def compile({opcode, a, b, c, d, e}) when opcode in @five_operands do
-    List.flatten([compile(e), compile(d), compile(c), compile(b), compile(a), opcode])
-  end
+  ## Examples
 
-  def compile({opcode, a, b, c, d, e, f}) when opcode in @six_operands do
-    List.flatten([compile(f), compile(e), compile(d), compile(c), compile(b), compile(a), opcode])
-  end
-
-  def compile({opcode, a, b, c, d, e, f, g}) when opcode in @seven_operands do
-    List.flatten([
-      compile(g),
-      compile(f),
-      compile(e),
-      compile(d),
-      compile(c),
-      compile(b),
-      compile(a),
-      opcode
-    ])
-  end
-
+      iex> use Cartouche.Hex
+      ...> [
+      ...>   {:mstore, 0, ~h[0x11223344]},
+      ...>   {:revert, 4, 28}
+      ...> ]
+      ...> |> Cartouche.Assembly.compile()
+      [{:push, 4, ~h[0x11223344]}, {:push, 1, <<0>>}, :mstore, {:push, 1, <<28>>}, {:push, 1, <<0x04>>}, :revert]
+  """
+  @spec compile(term()) :: [opcode()] | opcode()
   def compile({:if, cond, non_zero, zero}) do
     i = :erlang.unique_integer()
 
@@ -236,6 +221,33 @@ defmodule Cartouche.Assembly do
     ])
   end
 
+  # Every operand-bearing opcode shares one shape: `{opcode, arg1, ..., argN}` where N
+  # is the opcode's operand count, looked up in `@opcodes` and validated in the body.
+  #
+  # This MUST stay a single `is_tuple/1` clause. The earlier form — seven fixed-arity
+  # heads (`{op,a}` … `{op,a,b,c,d,e,f,g}`) each guarded `opcode in @n_operands` — built
+  # a 7-shape tuple_set product with large atom-unions in slot 0. Under `compile/1`'s
+  # self-recursion, Dialyzer's success-typing fixpoint over that product exploded to
+  # ~30 GB peak RSS on OTP 29, OOM-ing every downstream repo's PLT build (see Task 103;
+  # collapsing to this one clause cut a downstream cold PLT build 27.6 GB -> 1.02 GB).
+  #
+  # Operands compile in reverse so they land on the stack in source order.
+  def compile(op) when is_tuple(op) and tuple_size(op) >= 2 do
+    [opcode | args] = Tuple.to_list(op)
+
+    case Map.fetch(@opcodes, opcode) do
+      {:ok, {_code, arity, _outs}} when length(args) == arity ->
+        args
+        |> Enum.reverse()
+        |> Enum.map(&compile/1)
+        |> Kernel.++([opcode])
+        |> List.flatten()
+
+      _ ->
+        raise InvalidAssembly, message: "invalid or unknown assembly: #{inspect(op)}"
+    end
+  end
+
   def compile(b) when is_binary(b) do
     if byte_size(b) <= 32 do
       [{:push, byte_size(b), b}]
@@ -245,11 +257,7 @@ defmodule Cartouche.Assembly do
   end
 
   def compile(x) when is_integer(x) do
-    if false && x == 0 do
-      compile(<<>>)
-    else
-      compile(:binary.encode_unsigned(x))
-    end
+    compile(:binary.encode_unsigned(x))
   end
 
   def compile(opcode) when opcode in @no_operands, do: opcode
@@ -259,19 +267,6 @@ defmodule Cartouche.Assembly do
   def compile(els) when not is_list(els),
     do: raise(InvalidAssembly, message: "invalid or unknown assembly: #{inspect(els)}")
 
-  @doc """
-  Compiles operations into assembly, which can then be compiled.
-
-  ## Examples
-
-      iex> use Cartouche.Hex
-      ...> [
-      ...>   {:mstore, 0, ~h[0x11223344]},
-      ...>   {:revert, 4, 28}
-      ...> ]
-      ...> |> Cartouche.Assembly.compile()
-      [{:push, 4, ~h[0x11223344]}, {:push, 1, <<0>>}, :mstore, {:push, 1, <<28>>}, {:push, 1, <<0x04>>}, :revert]
-  """
   def compile(operations) when is_list(operations) do
     Enum.flat_map(operations, &compile/1)
   end

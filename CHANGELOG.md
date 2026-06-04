@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- `Cartouche.Assembly.compile/1` — collapse the seven fixed-arity operand heads (`opcode in @one_operand` … `@seven_operands`) into a single `is_tuple/1` clause that reads each opcode's operand count from `@opcodes` and validates arity against it. Behavior-preserving: operand ordering (reverse-compile so args land on the stack in source order), arity validation, and raise-on-unknown/wrong-arity are all unchanged — confirmed by new `test/assembly_test.exs` cases for 1- and 2-operand opcodes plus a wrong-arity (`{:add, 1}`) raise. Also drops a dead `if false && x == 0` branch in the integer clause. Motivated by keeping Dialyzer's success-typing fixpoint from expanding the 7-shape tuple product under `compile/1` self-recursion — that `tuple_set` product was a ~30 GB downstream-dialyzer memory bomb on OTP 29. Measured downstream (onchain, `plt_add_deps: :apps_direct`, cold PLT build, peak RSS via `/usr/bin/time -l`): **27.6 GB → 1.02 GB** (~27×), full IConsole left untouched (it was never the cause — see Task 103).
+
 ## [0.2.1] — 2026-06-04
 
 ### Added

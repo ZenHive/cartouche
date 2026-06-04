@@ -176,6 +176,11 @@
       "order": 7,
       "description": "Phase 0.5 RPC correctness (block-tag normalization, integration suite, decoder gaps)"
     },
+    "signer_backends": {
+      "phase": 0,
+      "order": 14,
+      "description": "Pluggable signer-backend behaviour + multi-provider signing (AWS/Azure/Vault KMS, MPC, EIP-712 venues)"
+    },
     "sleuth_hardening": {
       "phase": 0,
       "order": 3,
@@ -216,6 +221,7 @@
         "u": 7
       },
       "eff": 5.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -234,6 +240,7 @@
         "u": 7
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -252,6 +259,7 @@
         "u": 6
       },
       "eff": 2.25,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -270,6 +278,7 @@
         "u": 5
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -288,6 +297,7 @@
         "u": 7
       },
       "eff": 5.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -306,6 +316,7 @@
         "u": 8
       },
       "eff": 6.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -324,6 +335,7 @@
         "u": 4
       },
       "eff": 1.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -342,6 +354,7 @@
         "u": 5
       },
       "eff": 4.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -360,6 +373,7 @@
         "u": 3
       },
       "eff": 0.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -378,6 +392,7 @@
         "u": 5
       },
       "eff": 1.33,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -396,6 +411,7 @@
         "u": 7
       },
       "eff": 6.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -414,6 +430,7 @@
         "u": 7
       },
       "eff": 6.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -432,6 +449,7 @@
         "u": 6
       },
       "eff": 1.63,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -450,6 +468,7 @@
         "u": 6
       },
       "eff": 3.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -468,6 +487,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -489,6 +509,7 @@
         "u": 2
       },
       "eff": 1.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #8",
@@ -508,6 +529,7 @@
         "u": 6
       },
       "eff": 1.67,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -528,6 +550,7 @@
         "u": 3
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -546,6 +569,7 @@
         "u": 1
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -564,6 +588,7 @@
         "u": 5
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -585,6 +610,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -606,6 +632,7 @@
         "u": 5
       },
       "eff": 0.9,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -627,6 +654,7 @@
         "u": 3
       },
       "eff": 2.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -645,6 +673,7 @@
         "u": 7
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -663,6 +692,7 @@
         "u": 3
       },
       "eff": 3.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -681,6 +711,7 @@
         "u": 2
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -702,6 +733,7 @@
         "u": 1
       },
       "eff": 1.5,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -723,6 +755,7 @@
         "u": 4
       },
       "eff": 3.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -741,6 +774,7 @@
         "u": 7
       },
       "eff": 2.17,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -759,6 +793,7 @@
         "u": 5
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -777,6 +812,7 @@
         "u": 5
       },
       "eff": 4.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -795,6 +831,7 @@
         "u": 5
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -813,6 +850,7 @@
         "u": 5
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -831,6 +869,7 @@
         "u": 5
       },
       "eff": 0.9,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -852,6 +891,7 @@
         "u": 2
       },
       "eff": 0.67,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "body": "Surfaced during PR #55 / INE-44 close-out (Codex GitHub bot finding). EIP-2930 (Berlin, 2021) introduced the access-list transaction type; mainnet-active for ~5 years. Cartouche.Block.deserialize/1 currently raises ArgumentError with a 'not yet supported' message when it encounters params['type'] == '0x1' — correct as a temporary stance but means any block containing an EIP-2930 tx crashes the deserializer. The matching raw-bytes envelope dispatcher in Cartouche.Transaction.decode/1 returns {:error, :unknown_envelope_type} for the <<0x01, _::binary>> pattern — same gap on the raw side.\n\nImplement: introduce Cartouche.Transaction.V_2930 module mirroring V2's structural shape minus max_fee_per_gas/max_priority_fee_per_gas (EIP-2930 is pre-EIP-1559, single gas_price field with access list); wire from_json/1 into the Cartouche.Block dispatch table; replace decode/1's <<0x01, _>> error tuple with V_2930.decode/1. Add integration anchor against a known type-1 mainnet block.\n\nPre-mutation gate: Cartouche.Transaction is critical-tier (≥95%); confirm coverage before mutating. Both bot-finding pinning tests flip from assert_raise / assert {:error, :unknown_envelope_type} to positive shape assertions when this lands.\n",
@@ -870,6 +910,7 @@
         "u": 4
       },
       "eff": 1.75,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -888,6 +929,7 @@
         "u": 1
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -906,6 +948,7 @@
         "u": 4
       },
       "eff": 2.25,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "body": "Depends on the four sibling-repo defi-skills:intent-to-transaction mining tasks completing first (planted in hieroglyph, onchain, onchain_aave, onchain_evm ROADMAPs on 2026-04-30). After those tasks publish their 'Proposed additions from defi-skills mining' sections, scan them for any RPC-level requirements that bubble down to cartouche — e.g. eth_call edge cases (revert-data shape, gas-stipend behavior), eth_estimateGas semantics on reverts, log-filter quirks, fee-history math, eth_getCode for proxy detection. Add any surfaced needs as new Phase 0.5 / Phase 2 tasks here. If nothing surfaces after all four upstream tasks close, mark this complete as 'no action needed.' Read-only triage exercise — no cartouche code edits in this task itself.\n",
@@ -924,6 +967,7 @@
         "u": 3
       },
       "eff": 2.5,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -945,6 +989,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -963,6 +1008,7 @@
         "u": 5
       },
       "eff": 0.71,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -984,6 +1030,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "body": "Dialyzer was removed from the PR harness 2026-05-04 because the deps PLT exceeds the 16 GB ubuntu-latest budget — even after :plt_ignore_apps trimmed the GCP cluster, run 25319850405 OOM'd at 12:52:25 while adding 621 modules to the deps PLT. Local mix dialyzer.json works fine against a warm priv/plts/ cache.\n\nUpstream investigation 2026-05-04 ruled out dep-side slimming as a path: googleapis/elixir-google-api ships zero dialyzer config in its own CI; package authors don't dialyze the GCP cluster either. :plt_ignore_apps IS the canonical pattern there — no further upstream lever exists.\n\nRestoration shape (pick one when justified):\n(a) separate workflow .github/workflows/dialyzer.yml triggered only on push-to-development (not PR) using runs-on: ubuntu-latest-large (32 GB) — keeps PR CI fast/cheap, dialyzer signal arrives at merge time.\n(b) trim more aggressively by adding :hieroglyph, :descripex, :finch, :mint, :hpax, :inets, :xmerl to :plt_ignore_apps and broaden .dialyzer_ignore.exs to suppress the resulting unknown_function cascade — reduces dialyzer's value materially.\n(c) scheduled nightly via cron on the same larger runner — slowest feedback loop but lowest cost.\n\nDon't pursue until one of these triggers fires: external contributor PRs (need pre-merge signal), a critical-tier refactor that benefits from dialyzer-in-CI evidence, or a generator regression class that local-only dialyzer missed. Task 50 closure does NOT change the calculus.\n",
@@ -1002,6 +1049,7 @@
         "u": 3
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #14",
@@ -1021,6 +1069,7 @@
         "u": 4
       },
       "eff": 1.75,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1042,6 +1091,7 @@
         "u": 3
       },
       "eff": 3.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1063,6 +1113,7 @@
         "u": 3
       },
       "eff": 3.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1084,6 +1135,7 @@
         "u": 1
       },
       "eff": 0.5,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1105,6 +1157,7 @@
         "u": 6
       },
       "eff": 4.5,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1123,6 +1176,7 @@
         "u": 9
       },
       "eff": 4.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1141,6 +1195,7 @@
         "u": 7
       },
       "eff": 1.75,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1161,6 +1216,7 @@
         "u": 4
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1182,6 +1238,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1203,6 +1260,7 @@
         "u": 2
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1223,6 +1281,7 @@
         "u": 3
       },
       "eff": 1.25,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1243,6 +1302,7 @@
         "u": 1
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #54",
@@ -1262,6 +1322,7 @@
         "u": 3
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1283,6 +1344,7 @@
         "u": 5
       },
       "eff": 1.25,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1303,6 +1365,7 @@
         "u": 4
       },
       "eff": 1.17,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1321,6 +1384,7 @@
         "u": 4
       },
       "eff": 0.8,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1339,6 +1403,7 @@
         "u": 4
       },
       "eff": 1.75,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1357,6 +1422,7 @@
         "u": 1
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1375,6 +1441,7 @@
         "u": 1
       },
       "eff": 1.0,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1393,6 +1460,7 @@
         "u": 3
       },
       "eff": 0.83,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1414,6 +1482,7 @@
         "u": 7
       },
       "eff": 1.17,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1434,6 +1503,7 @@
         "u": 6
       },
       "eff": 1.1,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1454,6 +1524,7 @@
         "u": 6
       },
       "eff": 1.25,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1475,6 +1546,7 @@
         "u": 2
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1496,6 +1568,7 @@
         "u": 5
       },
       "eff": 1.67,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "body": "External package — ABI.decode/2 specced no_return() in poanetwork/ex_abi. Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this.",
@@ -1515,6 +1588,7 @@
         "u": 5
       },
       "eff": 1.2,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1535,6 +1609,7 @@
         "u": 3
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [
         "csr"
       ],
@@ -1555,6 +1630,7 @@
         "u": 2
       },
       "eff": 1.25,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1575,6 +1651,7 @@
         "u": 6
       },
       "eff": 2.25,
+      "dep_layer": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1593,6 +1670,7 @@
         "u": 5
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1615,6 +1693,7 @@
         "u": 7
       },
       "eff": 1.5,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1637,6 +1716,7 @@
         "u": 6
       },
       "eff": 1.67,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1659,6 +1739,7 @@
         "u": 6
       },
       "eff": 1.67,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1681,6 +1762,7 @@
         "u": 5
       },
       "eff": 1.13,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1703,6 +1785,7 @@
         "u": 5
       },
       "eff": 1.13,
+      "dep_layer": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1725,6 +1808,7 @@
         "u": 5
       },
       "eff": 2.0,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1746,6 +1830,7 @@
         "u": 5
       },
       "eff": 2.75,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1767,6 +1852,7 @@
         "u": 6
       },
       "eff": 3.25,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1788,6 +1874,7 @@
         "u": 5
       },
       "eff": 2.5,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1809,6 +1896,7 @@
         "u": 2
       },
       "eff": 2.5,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1830,6 +1918,7 @@
         "u": 3
       },
       "eff": 1.5,
+      "dep_layer": 0,
       "markers": [
         "cx"
       ],
@@ -1837,6 +1926,101 @@
       "shipped_in": "PR #57",
       "scored_at": "2026-05-27",
       "implemented": "Done 2026-05-07 via INE-45 / PR #57 (delegated to Cursor; bundled with Tasks 94+95+96). New misattachment-detection pass cross-checks Code.fetch_docs/1 meta[:hints] against Module.__api__/0 declarations. Post-merge bookkeeping refined the pass per Codex P2 + CodeRabbit nit on PR #57: Map.new(&{name, hints}) collapse swapped for Enum.group_by(& &1.name, & &1.hints) list-membership (multi-decl-safe for V2.new/V2.add_signature overload pairs that share name+arity), plus an explicit {:error, reason} flunk branch on Code.fetch_docs/1.",
+      "cross_repo": []
+    },
+    {
+      "id": "103",
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "done",
+      "title": "Fix the ~30 GB downstream dialyzer bomb — collapse Assembly.compile/1's 7-arity tuple_set (NOT IConsole)",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 1.63,
+      "dep_layer": 0,
+      "markers": [],
+      "depends_on": [],
+      "acceptance_criteria": [
+        "A downstream `mix dialyzer` over a cartouche-dependent app no longer spikes to ~30 GB — documented peak ceiling < 4 GB, measured before/after with /usr/bin/time -l. ACHIEVED: onchain cold PLT build 27.6 GB -> 1.02 GB.",
+        "`Cartouche.Assembly.compile/1` behavior preserved — operand ordering, arity validation, raise-on-unknown/wrong-arity all unchanged; new assembly_test.exs cases for 1-/2-operand opcodes + wrong-arity raise.",
+        "Cartouche's full suite stays green and coverage gates hold; no dead-branch / dialyzer warnings on the touched file.",
+        "Before/after dialyzer peak-RSS numbers recorded in CHANGELOG + the implemented field."
+      ],
+      "out_of_scope": [
+        "No onchain-side changes — onchain Task 75 already shipped its serialization stopgap.",
+        "IConsole surface-slimming — turned out to be ~250 MB, not the bomb; split to follow-up Task 105.",
+        "Not touching the IConsole ABI / console.sol version."
+      ],
+      "body": "ORIGINAL PREMISE (FALSIFIED): this task was opened blaming `Cartouche.Contract.IConsole` (the 4,577-fn generated Hardhat console.sol binding) as the ~30 GB downstream dialyzer memory bomb, on the theory that its 2.0 MB beam / combinatorial typed `log` overload surface dominated dialyzer's success-typing peak. That premise was WRONG and is corrected below — left in the record so future sessions don't re-chase it.\n\nACTUAL ROOT CAUSE (diagnosed 2026-06-04 via isolated A/B + onchain end-to-end measurement): `Cartouche.Assembly.compile/1`. The function had seven fixed-arity tuple heads — `{op,a}`, `{op,a,b}`, … `{op,a,b,c,d,e,f,g}` — each guarded `opcode in @n_operands` (a large atom-union in tuple slot 0). Together those form a 7-shape `tuple_set` product type with big atom-unions; under `compile/1`'s self-recursion, dialyzer's success-typing fixpoint over that product explodes to ~30 GB peak RSS on OTP 29. NOT IConsole, NOT List.flatten, NOT the polymorphic return — the tuple_set product itself.\n\nDISPROOF OF THE IConsole PREMISE:\n- PLT *stored bytes* and PLT-*build peak RSS* are decoupled. IConsole was #1 in stored type-surface bytes (5.9 MB, 21% of the .plt file) but only ~1% of peak RSS during build.\n- The Assembly fix was measured with the FULL, un-slimmed IConsole still present: onchain cold PLT build dropped 27.6 GB -> 1.02 GB. Slimming IConsole on top (the abandoned data-table prototype) bought only a further ~250 MB (1.02 -> 0.77 GB). So IConsole was never the bomb.\n- Isolated A/B on Assembly alone: 31.1 GB -> 1.54 GB.\n\nTHE FIX (shipped on `development`): collapse the seven fixed-arity heads into ONE generic `def compile(op) when is_tuple(op) and tuple_size(op) >= 2` clause that reads the opcode's operand count from `@opcodes` via `Map.fetch/2` and validates arity in the body (`length(args) == arity`), instead of per-arity heads + atom-union guards. Eliminates the tuple_set. Behavior-preserving: operands still reverse-compile so they land on the stack in source order; unknown opcode / wrong arity still raises `InvalidAssembly`. Also dropped a dead `if false && x == 0` branch in the integer clause. Replaced the `@opcodes_with_operand_count` lambda with an inline comprehension for `@no_operands` (the other arity attrs were unused after the collapse).\n\nMEASUREMENTS (onchain, `plt_add_deps: :apps_direct`, path-dep to this checkout, cold PLT build, /usr/bin/time -l peak RSS):\n- Before (7-arity tuple_set): 27.6 GB, minutes of wall.\n- After (generic is_tuple/1 clause): 1.02 GB, 14.9 s. ~27x memory cut.\n- Cached-PLT analysis phase after the fix: 0.54 GB / 1.1 s.\n",
+      "created_at": "2026-06-04",
+      "scored_at": "2026-06-04",
+      "implemented": "Done 2026-06-04 on `development` (direct commit). Root cause was NOT IConsole (original premise falsified) but `Cartouche.Assembly.compile/1`'s 7-arity tuple_set product type, which blew dialyzer's success-typing fixpoint to ~30 GB under self-recursion on OTP 29. Fix: collapse the seven fixed-arity heads into one `is_tuple/1` clause with body-level arity validation against `@opcodes`. onchain downstream cold PLT build 27.6 GB -> 1.02 GB (~27x); isolated Assembly A/B 31.1 -> 1.54 GB. Behavior preserved (operand order, arity check, raise-on-invalid); 3 new assembly_test.exs cases; full suite green. IConsole-slimming split to Task 105 (only ~250 MB, optional).",
+      "cross_repo": []
+    },
+    {
+      "id": "105",
+      "phase": 0,
+      "bundle": "generator_hardening",
+      "status": "pending",
+      "title": "Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb)",
+      "scores": {
+        "d": 3,
+        "b": 2,
+        "u": 3
+      },
+      "eff": 0.83,
+      "dep_layer": 0,
+      "markers": [],
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Generated IConsole emits a minimal decode-oriented surface (e.g. `decode_call/1` + per-overload decode it dispatches to), dropping the call/prepare/estimate_gas/execute/build_trx/encode families that have no consumer.",
+        "`Cartouche.VM` console-log decoding still works unchanged; full suite green.",
+        "Downstream dialyzer peak-RSS delta recorded (expected ~250 MB on top of the Task 103 Assembly fix — confirm it is genuinely additive and worth the generator complexity)."
+      ],
+      "out_of_scope": [
+        "The Assembly tuple_set fix — that was the real bomb and shipped under Task 103.",
+        "Not touching the IConsole ABI / console.sol version."
+      ],
+      "body": "Spun out of Task 103 after the ~30 GB bomb was correctly attributed to `Cartouche.Assembly.compile/1` (not IConsole). IConsole's combinatorial generated surface (4,577 fns across call/prepare/estimate_gas/execute/build_trx/encode/decode/log families for 381 ABI entries) is still the single largest contributor to PLT *stored bytes* (~5.9 MB, ~21% of the .plt file) and contributes ~250 MB to downstream dialyzer peak RSS — real but second-order versus the 27 GB Assembly win.\n\nA data-table decode prototype (preserved on branch `task-103-slim-iconsole`, commit `fbe6dcc`, worktree `~/_DATA/worktrees/cartouche/103`) collapsed IConsole to a selector->FunctionSelector map + one generic `decode_call/1`, preserving the VM-facing contract. It was set aside because it was built on the falsified \"IConsole is the bomb\" premise; revisit ONLY if the ~250 MB / smaller PLT file is independently worth the generator's new whole-contract data-table emission mode. The only real consumer is `Cartouche.VM.decode_call/1`; downstream onchain `lib/`+`test/` reference IConsole zero times.\n\nLow priority: the headline memory problem is already solved by Task 103.\n",
+      "created_at": "2026-06-04",
+      "scored_at": "2026-06-04",
+      "cross_repo": []
+    },
+    {
+      "id": "104",
+      "phase": 0,
+      "bundle": "signer_backends",
+      "status": "pending",
+      "title": "Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing",
+      "scores": {
+        "d": 4,
+        "b": 6,
+        "u": 6
+      },
+      "eff": 1.5,
+      "dep_layer": 0,
+      "markers": [],
+      "depends_on": [],
+      "acceptance_criteria": [
+        "A `Cartouche.Signer.Backend` behaviour exists with documented `@callback get_address/...` and `@callback sign/...`; the existing implicit MFA contract is now compile-checked.",
+        "`Cartouche.Signer.Curvy` and `Cartouche.Signer.CloudKMS` declare `@behaviour Cartouche.Signer.Backend` + `@impl true`, compile clean (warnings-as-errors), all existing doctests/tests green.",
+        "The sign contract is a PURE DIGEST/PAYLOAD signer: the backend signs exactly the bytes it is handed (secp256k1 backends expect the 32-byte digest; ed25519 backends expect the raw message). Message hashing moves OUT of the backend into the caller (`Cartouche.Signer` / a helper), so plain Eth-tx signing, EIP-712 typed-data, and Solana all reuse one backend set with no per-venue backend change. `find_recid` is fed the same digest the backend signed.",
+        "Both signer modules are at critical-tier >=95% coverage BEFORE mutating (raise first if below); full suite green; dialyzer run LOCALLY (per CLAUDE.md KMS-dialyzer-stays-local rule) shows no new warnings on touched files.",
+        "Config decision is recorded and proven by a test: either (a) keep `:priv_key`/`:cloud_kms` shorthands AND accept an explicit `{BackendModule, config}` form (non-breaking), or (b) clean break to module-form-only. A test asserts the chosen config path still starts a working signer end-to-end.",
+        "CHANGELOG + `implemented` field document the contract and the config decision."
+      ],
+      "out_of_scope": [
+        "New backend implementations (AWS KMS secp256k1, Azure Key Vault P-256K/ES256K, HashiCorp Vault Transit ed25519 + Kaleido ethsign plugin for secp256k1, MPC/custody Turnkey/Fireblocks/Dfns) — each is a separate follow-up task once the behaviour lands.",
+        "EIP-712 / Hyperliquid 'phantom agent' and other Axis-B venue message builders — orthogonal (a message builder on top of `Cartouche.Typed`, not a signer backend); separate task.",
+        "Req/Goth-based dep-light rewrite of the GCP CloudKMS backend (dropping google_api_cloud_kms + google_gax) — separate task; the behaviour just makes it a drop-in second impl later.",
+        "Solana signer-family refactor is IN scope only if the Eth/Solana parallel structures would otherwise diverge; splitting Solana onto the behaviour can be a fast-follow if it balloons this task."
+      ],
+      "body": "Investigation thread (this session): the existing MFA dispatch in Cartouche.Application (`signer_mfa/1` / `solana_signer_mfa/1`) + `Cartouche.Signer`'s `apply(mod, :get_address, args)` / `apply(mod, :sign, [message | args])` is ALREADY a de-facto signer API — every backend exposes `get_address` + `sign`, called blindly. This task formalizes that implicit contract into a real `@behaviour` (compile-time `@impl` checks, docs, discoverability) and makes adding backends not require a new clause in the per-type dispatch.\n\nTWO ORTHOGONAL AXES surfaced and must stay separated:\n- Axis A (THIS task) — key custody / signer backend: WHERE the key lives, WHO computes the secp256k1/ed25519 signature. Local Curvy, GCP/AWS/Azure KMS, Vault, MPC all collapse to the same two callbacks. The only variance is auth, request shape, signature encoding (DER vs raw), and prehash-vs-raw.\n- Axis B (separate tasks) — signing TARGET / message format: Ethereum tx, EIP-712 typed data, Hyperliquid phantom-agent action hash, Solana tx. These are message builders on top of Cartouche.Typed (lib/cartouche/typed.ex, already present), NOT signer backends.\n\nTHE ONE DESIGN DECISION THAT MATTERS (the payoff): make the backend a pure digest/payload signer. Today CloudKMS/Curvy keccak the message INTERNALLY — wrong for EIP-712/Hyperliquid where the caller already computed the typed-data hash. If the behaviour signs exactly the bytes handed to it (secp256k1 -> 32-byte digest; ed25519 -> raw message) and the caller owns hashing, then ONE backend set covers plain Eth tx + EIP-712 + Hyperliquid + Solana with zero per-venue backend touches. Bake hashing into the backend and every new venue forces a backend change.\n\nCURVE-SUPPORT CONSTRAINT (verified this session via web research; sources in transcript): only GCP Cloud KMS signs BOTH curves natively (secp256k1 EC_SIGN_SECP256K1_SHA256 + ed25519 EC_SIGN_ED25519, Apr 2024). AWS KMS and Azure Key Vault do secp256k1 but NOT ed25519. HashiCorp Vault Transit does ed25519 natively but NOT secp256k1 (needs Kaleido vault-plugin-secrets-ethsign). MPC/custody (Turnkey/Fireblocks/Dfns/Fordefi) cover both but are higher-level/async. Implication: a multi-provider story is NOT 'swap Google for X' — it's pick-a-provider-per-curve. The behaviour must NOT assume one backend covers both chains.\n\nIMPLEMENTATION GOTCHA to bake into the contract from the start (so backend tasks inherit it): AWS/Azure return DER-encoded ECDSA needing low-s canonicalization (EIP-2 malleability — the classic 'dark side of the elliptic curve' bug). The contract / a shared helper should normalize to low-s so each new secp256k1 backend does not re-solve it.\n\nOPEN FORKS for the design phase (do not pre-decide here): (1) config back-compat — keep :priv_key/:cloud_kms shorthands + add module form, vs clean break to module-form-only; (2) Eth-only vs Eth+Solana scope; (3) which provider proves the extension point first — recommended AWS KMS (largest install base, smallest delta from GCP shape, forces DER/low-s handling into the contract early).\n\nTouch points: lib/cartouche/signer.ex (sign_direct hashing, GenServer handle_call), lib/cartouche/signer/{curvy,cloud_kms}.ex, lib/cartouche/application.ex (signer_mfa dispatch / config parsing), and the Solana parallels if in scope. CloudKMS work => dialyzer verification stays LOCAL (cartouche PLT OOMs on cloud VMs — see CLAUDE.md). Critical-tier (signing) => >=95% coverage gate before mutating.\n",
+      "created_at": "2026-06-04",
+      "scored_at": "2026-06-04",
       "cross_repo": []
     }
   ]
