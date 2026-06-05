@@ -163,7 +163,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 64 | ✅ | 🎁 **block_fork_fields** · Cartouche.Block — add withdrawals_root and withdrawals (Shanghai+) [D:2/B:3/U:5 → Eff:2.0] 🎯 |
 | Task 65 | ✅ | 🎁 **block_fork_fields** · Cartouche.Block — add Cancun fields (parent_beacon_block_root, blob_gas_used, excess_blob_gas, mix_hash) [D:2/B:3/U:5 → Eff:2.0] 🎯 |
 | Task 66 `[CSR]` | ✅ | 🎁 **rpc_correctness** · Cartouche.Block.transactions — implement include_transaction_details: true [D:5/B:4/U:5 → Eff:0.9] ⚠️ |
-| Task 99 | ⬜ | 🎁 **rpc_correctness** · Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization [D:3/B:2/U:2 → Eff:0.67] ⚠️ |
+| Task 99 | ✅ | 🎁 **rpc_correctness** · Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization [D:3/B:2/U:2 → Eff:0.67] ⚠️ |
 | Task 67 | ✅ | 🎁 **rpc_correctness** · Cartouche.Receipt — add EIP-4844 blob fields (blob_gas_used, blob_gas_price) [D:2/B:3/U:4 → Eff:1.75] 🚀 |
 | Task 68 | ⛔ | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add EIP-7702 opcodes to the closed whitelist (AUTH, AUTHCALL) — closed obsolete [D:1/B:1/U:1 → Eff:1.0] 📋 |
 | Task 69 | ⬜ | 🎁 **bug_triage** · Audit RPC-level requirements bubbling up from defi-skills mining [D:2/B:5/U:4 → Eff:2.25] 🎯 |

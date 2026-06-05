@@ -601,11 +601,10 @@ shipped_in = "PR #55"
 id = 99
 phase = 0
 bundle = "rpc_correctness"
-status = "pending"
-assignee = "codex"
+status = "done"
 title = "Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization"
 scores = { d = 3, b = 2, u = 2 }
-scored_at = "2026-05-27"
+assignee = "codex"
 body = """
 Surfaced during PR #55 / INE-44 close-out (Codex GitHub bot finding). EIP-2930 (Berlin, 2021) introduced the access-list transaction type; mainnet-active for ~5 years. Cartouche.Block.deserialize/1 currently raises ArgumentError with a 'not yet supported' message when it encounters params['type'] == '0x1' — correct as a temporary stance but means any block containing an EIP-2930 tx crashes the deserializer. The matching raw-bytes envelope dispatcher in Cartouche.Transaction.decode/1 returns {:error, :unknown_envelope_type} for the <<0x01, _::binary>> pattern — same gap on the raw side.
 
@@ -613,6 +612,13 @@ Implement: introduce Cartouche.Transaction.V_2930 module mirroring V2's structur
 
 Pre-mutation gate: Cartouche.Transaction is critical-tier (≥95%); confirm coverage before mutating. Both bot-finding pinning tests flip from assert_raise / assert {:error, :unknown_envelope_type} to positive shape assertions when this lands.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1780619746884-0e27d3af, cf9e2d3e1419fce3327551f2256d3e284c92b09f)."
+delivered_by = "codex"
+verified = true
+started_at = "2026-06-05"
+scored_at = "2026-05-27"
+done_at = "2026-06-05"
+shipped_in = "cf9e2d3e1419fce3327551f2256d3e284c92b09f"
 
 [[task]]
 id = 67
