@@ -72,7 +72,7 @@ Local sessions: do **not** execute `[CX]` / `[CSR]` rows unless explicitly redir
 
 **Task 75 (`@spec` on every `defp` + `.credo.exs` `Specs include_defp:true`) shipped 2026-05-06 (INE-41 / PR #52, delegated to Cursor).** Whole-portfolio backfill across `lib/cartouche/**` and `test/support/**`; `.credo.exs` `:files` scoped to `lib/cartouche/` (excluding the auto-generated `lib/cartouche/contract/`). Local review (Cursor's VM lacks the memory budget for cartouche's full-deps PLT) caught 2 dialyzer regressions where PR-introduced specs referenced `Tesla.Env.client/0` — Tesla is in `:plt_ignore_apps` per the harness OOM workaround — fixed both KMS signers to `term()` with TODO markers. CodeRabbit's three findings (`Recover.decode_signature/1` spec realignment, `solana_client.ex` `amount` param shape, `Solana.Transaction.CompiledInstruction` `0..255` byte-range narrowing) landed before merge. Cursor/Codex VMs cannot dialyze cartouche → the no-cloud-dialyzer rule is now project-CLAUDE.md-pinned. See [CHANGELOG `[Unreleased]`](CHANGELOG.md#unreleased).
 
-**Phase 4 closed 2026-05-06 with Tasks 19+20 (INE-39 / PR #50) shipped.** `Cartouche.Typed.encode_value_map/3` `@spec` rewritten `binary()` → `bitstring()` against dialyzer's success typing for the `into: <<>>` for-comprehension; `find_type/2` left untouched after verifying its committed spec already matched the impl (the Linear issue body's claim of `Typed.Type.t()` was stale). Both functions stay `defp`. Copilot's low-confidence concern that loosening the spec to `bitstring()` masks the byte-alignment invariant `hash_struct/3`'s `<>` operator requires was filed as Task 98 follow-up — defensible for an internal `defp` with byte-aligned-in-practice branches, but tightening the impl so dialyzer can prove `binary()` is the durable fix.
+**Phase 4 closed 2026-06-05 with Task 98 shipped.** Tasks 19+20 (INE-39 / PR #50) first rewrote `Cartouche.Typed.encode_value_map/3` from the stale map-shaped spec to Dialyzer's conservative `bitstring()` success typing; Task 98 then tightened the implementation with `IO.iodata_to_binary/1` at each encoded-field branch so Dialyzer can infer the durable `binary()` contract. `find_type/2` was left untouched after verifying its committed spec already matched the impl (the Linear issue body's claim of `Typed.Type.t()` was stale). Both functions stay `defp`.
 
 **INE-17 / Phase 11 decode-struct atom audit corrected 2026-05-05.** Verified the generator emits return-field names as strings inside selector metadata, not compile-time atoms; both live `decode_structs: true` paths now explicitly pre-intern bounded ABI field atoms before calling Hieroglyph 1.4.0's `String.to_existing_atom` decoder. See [CHANGELOG `[Unreleased]`](CHANGELOG.md#unreleased).
 
@@ -294,14 +294,14 @@ Confirmed runtime error shapes (`lib/cartouche/rpc.ex:84–203`, `lib/cartouche/
 
 **Why:** Dialyzer reports `typed.ex:571` (`encode_value_map/3`) and `typed.ex:585` (`find_type/2`) as `invalid_contract`. Both specs completely disagree with the success typing — looks like copy-paste from a sibling function or a stale spec after a refactor.
 
-- `encode_value_map/3`: spec returns a map; impl returns a `bitstring()`.
+- `encode_value_map/3`: original spec returned a map; impl now returns a `binary()`.
 - `find_type/2`: spec returns `Typed.Type.t()`; impl returns a 2-tuple.
 
 <!-- TASKS:BEGIN phase=4 -->
 | Task | Status | Notes |
 |------|--------|-------|
 | Task 19+20 `[CSR]` | ✅ | 🎁 **phase4_typed** · Phase 4 Typed internal-function specs — rewrite + visibility judgment [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
-| Task 98 `[CSR]` | ⬜ | 🎁 **phase4_typed** · Phase 4 follow-up — tighten Cartouche.Typed.encode_value_map/3 impl so dialyzer infers binary(), restore stricter @spec [D:2/B:2/U:2 → Eff:1.0] 📋 |
+| Task 98 `[CSR]` | ✅ | 🎁 **phase4_typed** · Phase 4 follow-up — tighten Cartouche.Typed.encode_value_map/3 impl so dialyzer infers binary(), restore stricter @spec [D:2/B:2/U:2 → Eff:1.0] 📋 |
 | Task 45 `[CSR]` | ✅ | 🎁 **coverage_pushes** · Cartouche.Typed coverage push — exercise encode_value_map/3 and find_type/2 with representative inputs [D:2/B:2/U:3 → Eff:1.25] 📋 |
 <!-- TASKS:END -->
 
