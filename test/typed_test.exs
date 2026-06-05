@@ -10,19 +10,23 @@ defmodule Cartouche.TypedTest do
   doctest Type
 
   describe "encode_value_map/3 return-shape evidence" do
-    test "encode_value_map/3 returns bitstring when encoding primitive fields" do
+    test "encode_value_map/3 returns binary when encoding primitive fields" do
       types = %{"Message" => %Type{fields: [{"count", {:uint, 256}}]}}
 
-      assert <<_::256>> = Typed.hash_struct("Message", %{"count" => 7}, types)
+      assert <<_::256>> = hash = Typed.hash_struct("Message", %{"count" => 7}, types)
+      assert is_binary(hash)
+      assert byte_size(hash) == 32
     end
 
-    test "encode_value_map/3 returns bitstring when encoding custom-type fields" do
+    test "encode_value_map/3 returns binary when encoding custom-type fields" do
       types = %{
         "Envelope" => %Type{fields: [{"message", "Message"}]},
         "Message" => %Type{fields: [{"count", {:uint, 256}}]}
       }
 
-      assert <<_::256>> = Typed.hash_struct("Envelope", %{"message" => %{"count" => 7}}, types)
+      assert <<_::256>> = hash = Typed.hash_struct("Envelope", %{"message" => %{"count" => 7}}, types)
+      assert is_binary(hash)
+      assert byte_size(hash) == 32
     end
 
     test "serialize_value_map/3 returns map when encoding values for JSON" do
