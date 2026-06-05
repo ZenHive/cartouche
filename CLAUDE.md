@@ -40,12 +40,7 @@ forked from https://github.com/hayesgm/signet
 
 ## Delegation roster
 
-Dispatch is via the harness engine (see `harness-workflow.md`). When assigning a dispatchable task to a harness adapter, prefer the external agents — **cursor, codex, grok** — and reserve the **claude/opus** adapter for work that genuinely needs it (harness-surface changes, judgment-heavy review, tasks the cheaper adapters keep bouncing). Opus tokens are precious: spend them last, not by default.
-
-- Assign order by fit: **cursor / codex / grok** first; **opus only if needed.**
-- Mix adapters across a parallel wave for review coverage, but don't reach for opus unless the task's difficulty or harness coupling warrants it.
-
-(This is harness-adapter selection — distinct from the legacy Linear cloud-delegation stack, which we don't run here.)
+Portfolio default — carried by `harness-workflow.md` § "Delegation roster — opus last" (`@`-imported above): assign dispatchable tasks **cursor / codex / grok first, opus only if needed** (opus tokens are precious). Cartouche takes the default; no project override.
 
 ## Hook-flagged issues
 

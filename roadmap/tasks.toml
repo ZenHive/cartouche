@@ -1347,7 +1347,7 @@ scored_at = "2026-06-04"
 id = "106"
 phase = 0
 bundle = "generator_hardening"
-status = "pending"
+status = "in_progress"
 title = "Generator fixture: unlinked-library / immutable bytecode placeholders through blank_bytecode?/hex!"
 scores = { d = 2, b = 3, u = 3 }
 assignee = "codex"
@@ -1357,4 +1357,5 @@ solc/Foundry emit bytecode objects that are present but not valid hex: unlinked 
 Implement a fixture (inline ABI + a bytecode object carrying a __$...$__ placeholder) and assert the generator either (a) treats unlinked bytecode as blank and emits the RPC-only surface, or (b) raises a generator-specific error naming the unlinked library — decide which after checking what hex!/1 does today. This is a real-world edge: any contract that links an external library (common for math/string libs) ships this bytecode shape from Foundry's forge build. Adds a new input-validation branch, not redundant coverage.
 """
 created_at = "2026-06-05"
+started_at = "2026-06-05"
 scored_at = "2026-06-05"

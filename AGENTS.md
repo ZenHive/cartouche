@@ -565,6 +565,7 @@ Conflict / push-rejected retains the branch for repair — never lands red. Witn
 - **Agent does not commit unless asked.** Staged-but-uncommitted is the default handoff between implementer and reviewer sessions (`workflow-philosophy.md` § "Implementer / Reviewer Handoff"). Harness runs commit agent work to `harness/<run-id>` automatically — that is harness's deliverable branch, not the operator's main checkout.
 - **Witness notification is sakshi (read-only).** Landing outcomes notify via configured command sink; the sink grants no merge capability. Human operator reviews blocked/conflict outcomes — harness does not silently force-push past conflicts.
 - **`check_command` is a hint to the reviewer.** Free text (e.g. `"mix precommit.full"`) — the reviewer runs and judges it; harness does not execute it mechanically.
+- **Delegation roster — opus last.** When assigning a dispatchable task to a harness adapter, prefer the external agents — **cursor, codex, grok** — and reserve the **claude/opus** adapter for work that genuinely needs it (harness-surface changes, judgment-heavy review, tasks the cheaper adapters keep bouncing). Opus tokens are precious: spend them last, not by default. Mix adapters across a wave for review coverage, but don't reach for opus unless the task's difficulty or harness coupling warrants it. A repo may override the roster in its own CLAUDE.md.
 
 ### Known Sharp Edges
 
@@ -620,6 +621,10 @@ enforced by the CI harness (.github/workflows/harness.yml).
 -->
 
 forked from https://github.com/hayesgm/signet
+
+## Delegation roster
+
+Portfolio default — carried by `harness-workflow.md` § "Delegation roster — opus last" (`@`-imported above): assign dispatchable tasks **cursor / codex / grok first, opus only if needed** (opus tokens are precious). Cartouche takes the default; no project override.
 
 ## Hook-flagged issues
 
