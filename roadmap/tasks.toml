@@ -602,6 +602,7 @@ id = 99
 phase = 0
 bundle = "rpc_correctness"
 status = "pending"
+assignee = "codex"
 title = "Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization"
 scores = { d = 3, b = 2, u = 2 }
 scored_at = "2026-05-27"
@@ -640,6 +641,7 @@ id = 69
 phase = 0
 bundle = "bug_triage"
 status = "pending"
+assignee = "human"
 title = "Audit RPC-level requirements bubbling up from defi-skills mining"
 scores = { d = 2, b = 5, u = 4 }
 scored_at = "2026-05-27"
@@ -859,6 +861,7 @@ id = 98
 phase = 4
 bundle = "phase4_typed"
 status = "pending"
+assignee = "cursor"
 title = "Phase 4 follow-up — tighten Cartouche.Typed.encode_value_map/3 impl so dialyzer infers binary(), restore stricter @spec"
 scores = { d = 2, b = 2, u = 2 }
 scored_at = "2026-05-27"
@@ -1289,6 +1292,7 @@ id = "105"
 phase = 0
 bundle = "generator_hardening"
 status = "pending"
+assignee = "human"
 title = "Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb)"
 scores = { d = 3, b = 2, u = 3 }
 acceptance_criteria = ["Generated IConsole emits a minimal decode-oriented surface (e.g. `decode_call/1` + per-overload decode it dispatches to), dropping the call/prepare/estimate_gas/execute/build_trx/encode families that have no consumer.", "`Cartouche.VM` console-log decoding still works unchanged; full suite green.", "Downstream dialyzer peak-RSS delta recorded (expected ~250 MB on top of the Task 103 Assembly fix — confirm it is genuinely additive and worth the generator complexity)."]
@@ -1308,6 +1312,7 @@ id = "104"
 phase = 0
 bundle = "signer_backends"
 status = "pending"
+assignee = "human"
 title = "Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing"
 scores = { d = 4, b = 6, u = 6 }
 acceptance_criteria = ["A `Cartouche.Signer.Backend` behaviour exists with documented `@callback get_address/...` and `@callback sign/...`; the existing implicit MFA contract is now compile-checked.", "`Cartouche.Signer.Curvy` and `Cartouche.Signer.CloudKMS` declare `@behaviour Cartouche.Signer.Backend` + `@impl true`, compile clean (warnings-as-errors), all existing doctests/tests green.", "The sign contract is a PURE DIGEST/PAYLOAD signer: the backend signs exactly the bytes it is handed (secp256k1 backends expect the 32-byte digest; ed25519 backends expect the raw message). Message hashing moves OUT of the backend into the caller (`Cartouche.Signer` / a helper), so plain Eth-tx signing, EIP-712 typed-data, and Solana all reuse one backend set with no per-venue backend change. `find_recid` is fed the same digest the backend signed.", "Both signer modules are at critical-tier >=95% coverage BEFORE mutating (raise first if below); full suite green; dialyzer run LOCALLY (per CLAUDE.md KMS-dialyzer-stays-local rule) shows no new warnings on touched files.", "Config decision is recorded and proven by a test: either (a) keep `:priv_key`/`:cloud_kms` shorthands AND accept an explicit `{BackendModule, config}` form (non-breaking), or (b) clean break to module-form-only. A test asserts the chosen config path still starts a working signer end-to-end.", "CHANGELOG + `implemented` field document the contract and the config decision."]

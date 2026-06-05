@@ -894,6 +894,7 @@
       "dep_layer": 0,
       "markers": [],
       "depends_on": [],
+      "assignee": "codex",
       "body": "Surfaced during PR #55 / INE-44 close-out (Codex GitHub bot finding). EIP-2930 (Berlin, 2021) introduced the access-list transaction type; mainnet-active for ~5 years. Cartouche.Block.deserialize/1 currently raises ArgumentError with a 'not yet supported' message when it encounters params['type'] == '0x1' — correct as a temporary stance but means any block containing an EIP-2930 tx crashes the deserializer. The matching raw-bytes envelope dispatcher in Cartouche.Transaction.decode/1 returns {:error, :unknown_envelope_type} for the <<0x01, _::binary>> pattern — same gap on the raw side.\n\nImplement: introduce Cartouche.Transaction.V_2930 module mirroring V2's structural shape minus max_fee_per_gas/max_priority_fee_per_gas (EIP-2930 is pre-EIP-1559, single gas_price field with access list); wire from_json/1 into the Cartouche.Block dispatch table; replace decode/1's <<0x01, _>> error tuple with V_2930.decode/1. Add integration anchor against a known type-1 mainnet block.\n\nPre-mutation gate: Cartouche.Transaction is critical-tier (≥95%); confirm coverage before mutating. Both bot-finding pinning tests flip from assert_raise / assert {:error, :unknown_envelope_type} to positive shape assertions when this lands.\n",
       "scored_at": "2026-05-27",
       "cross_repo": []
@@ -951,6 +952,7 @@
       "dep_layer": 0,
       "markers": [],
       "depends_on": [],
+      "assignee": "human",
       "body": "Depends on the four sibling-repo defi-skills:intent-to-transaction mining tasks completing first (planted in hieroglyph, onchain, onchain_aave, onchain_evm ROADMAPs on 2026-04-30). After those tasks publish their 'Proposed additions from defi-skills mining' sections, scan them for any RPC-level requirements that bubble down to cartouche — e.g. eth_call edge cases (revert-data shape, gas-stipend behavior), eth_estimateGas semantics on reverts, log-filter quirks, fee-history math, eth_getCode for proxy detection. Add any surfaced needs as new Phase 0.5 / Phase 2 tasks here. If nothing surfaces after all four upstream tasks close, mark this complete as 'no action needed.' Read-only triage exercise — no cartouche code edits in this task itself.\n",
       "scored_at": "2026-05-27",
       "cross_repo": []
@@ -1266,6 +1268,7 @@
         "csr"
       ],
       "depends_on": [],
+      "assignee": "cursor",
       "body": "Filed 2026-05-06 from PR #50 review (Copilot low-confidence finding). Loosening the spec to bitstring() in INE-39 silenced dialyzer cheaply but masks the byte-alignment invariant hash_struct/3's <> operator requires (type_hash <> encode_data would crash at runtime on a non-byte-aligned bitstring). Every actual branch in Type.encode_data_value/2 returns 32-byte aligned binary, so the impl IS byte-aligned in practice — but the spec no longer pins it against future drift.\n\nTighten the for {field, type} <- fields, into: <<>> comprehension (e.g. annotate the body as ::binary or wrap each branch through IO.iodata_to_binary/1) so dialyzer can prove binary(), then restore @spec encode_value_map/3 :: binary(). Pinning tests in test/typed_test.exs from Task 45 cover the contract. Touched-file scope; no callsite changes.\n",
       "scored_at": "2026-05-27",
       "cross_repo": []
@@ -1976,6 +1979,7 @@
       "dep_layer": 0,
       "markers": [],
       "depends_on": [],
+      "assignee": "human",
       "acceptance_criteria": [
         "Generated IConsole emits a minimal decode-oriented surface (e.g. `decode_call/1` + per-overload decode it dispatches to), dropping the call/prepare/estimate_gas/execute/build_trx/encode families that have no consumer.",
         "`Cartouche.VM` console-log decoding still works unchanged; full suite green.",
@@ -2005,6 +2009,7 @@
       "dep_layer": 0,
       "markers": [],
       "depends_on": [],
+      "assignee": "human",
       "acceptance_criteria": [
         "A `Cartouche.Signer.Backend` behaviour exists with documented `@callback get_address/...` and `@callback sign/...`; the existing implicit MFA contract is now compile-checked.",
         "`Cartouche.Signer.Curvy` and `Cartouche.Signer.CloudKMS` declare `@behaviour Cartouche.Signer.Backend` + `@impl true`, compile clean (warnings-as-errors), all existing doctests/tests green.",
