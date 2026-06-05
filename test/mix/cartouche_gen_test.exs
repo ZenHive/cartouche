@@ -199,6 +199,38 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     test "whitespace-only bytecode is treated as blank", %{tmp: tmp} do
       refute_bytecode_emission(generate(tmp, "BlankWhitespace", "   "))
     end
+
+    test "unlinked library placeholder bytecode is treated as blank", %{tmp: tmp} do
+      link_marker = "__$0123456789abcdef0123456789abcdef01$__"
+
+      bytecode = %{
+        "object" => "0x60806040#{link_marker}6000",
+        "linkReferences" => %{
+          "src/MathLib.sol" => %{
+            "MathLib" => [%{"length" => 20, "start" => 4}]
+          }
+        }
+      }
+
+      artifact =
+        "UnlinkedLibrary"
+        |> solidity_artifact(pure_function_abi())
+        |> Map.put("bytecode", bytecode)
+        |> Map.put("deployedBytecode", bytecode)
+
+      contents = generate_artifact(tmp, "UnlinkedLibrary", artifact)
+
+      refute_bytecode_emission(contents)
+      assert contents =~ "def encode_ping"
+      assert contents =~ "def call_ping"
+      assert contents =~ "def execute_ping"
+
+      module = generated_module(contents)
+
+      assert function_exported?(module, :encode_ping, 1)
+      refute function_exported?(module, :bytecode, 0)
+      refute function_exported?(module, :deployed_bytecode, 0)
+    end
   end
 
   describe "RPC-side API survives bytecode dropout" do

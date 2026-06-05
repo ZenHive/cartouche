@@ -75,6 +75,8 @@ defmodule Mix.Tasks.Cartouche.Gen do
     decode_error: "Decodes ABI revert data"
   }
 
+  @unlinked_library_marker ~r/_{2}\$[[:xdigit:]]{34}\$_{2}/
+
   defmodule InvalidFileError do
     @moduledoc false
     defexception message: "invalid file error"
@@ -1315,15 +1317,21 @@ defmodule Mix.Tasks.Cartouche.Gen do
   defp blank_bytecode?(nil), do: true
 
   defp blank_bytecode?(s) when is_binary(s) do
-    case String.trim(s) do
-      "" -> true
-      "0x" -> true
-      "0x" <> rest -> String.trim(rest) == ""
-      _ -> false
+    trimmed = String.trim(s)
+
+    cond do
+      trimmed == "" -> true
+      unlinked_library_bytecode?(trimmed) -> true
+      String.starts_with?(trimmed, "0x") -> trimmed |> String.replace_prefix("0x", "") |> String.trim() == ""
+      true -> false
     end
   end
 
   defp blank_bytecode?(_), do: false
+
+  defp unlinked_library_bytecode?(bytecode) do
+    Regex.match?(@unlinked_library_marker, bytecode)
+  end
 
   # The crux of it. Builds the entire module with function declarations, etc
   # based on the output-json "abi" of a given Solidity contract.
