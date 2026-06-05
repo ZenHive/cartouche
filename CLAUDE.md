@@ -1,13 +1,16 @@
 # Cartouche (ZenHive fork)
 
 @~/.claude/includes/critical-rules.md
+@~/.claude/includes/harness-workflow.md
 
 <!--
 Selective-load (Opus 4.8 — see setup-guide.md § "Skills vs Includes"):
-the eager floor is critical-rules only.
+the eager floor is critical-rules + harness-workflow.
 
-Delegation is via the harness engine (harness-driver skill — skill-on-demand,
-no @-import). The legacy Linear + Codex/Cursor stack is intentionally not loaded.
+Delegation is via the harness engine. harness-workflow.md is @-imported as the
+portfolio-wide implement→review→land contract (cartouche is harness-driven);
+the harness-driver skill stays skill-on-demand for the MCP/API surfaces. The
+legacy Linear + Codex/Cursor stack is intentionally not loaded.
 
 Everything else is skill-on-demand — Opus self-invokes when the situation
 fires, and the hard parts are hook-enforced independently:
@@ -26,11 +29,11 @@ fires, and the hard parts are hook-enforced independently:
   web-command / agent-economy / reach → elixir:*
 
 Note: AGENTS.md is generated from this file (sync-agents-md.sh inlines the
-@-imports) and is Cursor's only context — cloud agents have no skill system.
-The Elixir convention set that used to reach Cursor via AGENTS.md now reaches
-it through the CI harness (.github/workflows/harness.yml) + plan-shaped issue
-specs instead. Re-add a specific @-import here if a cloud-agent PR surface
-degrades for lack of an inlined convention.
+@-imports) for any tool that reads the generic AGENTS.md convention but has no
+skill system. We don't run Linear/Codex/Cursor cloud delegation here — harness
+is the only dispatch path — so AGENTS.md has no cloud-agent consumer today;
+it's kept as a low-cost convention surface. The Elixir convention set is also
+enforced by the CI harness (.github/workflows/harness.yml).
 -->
 
 forked from https://github.com/hayesgm/signet
@@ -38,30 +41,6 @@ forked from https://github.com/hayesgm/signet
 ## Hook-flagged issues
 
 When our PostToolUse hooks flag issues on files you touched (credo, format, dialyzer, etc.), fix them in this commit — including pre-existing flags unrelated to your change. See `critical-rules.md` → "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH". Touched-file scope only, not project-wide.
-
-## 🚨 Never delegate dialyzer-scoped tasks to cloud agents
-
-**Cartouche is too big for the cloud-agent VMs to run `mix dialyzer` reliably — Cursor / Codex VMs OOM-crash mid-PLT-build.** Do NOT create Linear issues whose acceptance criteria require running `mix dialyzer` / `mix dialyzer.json` on the cloud agent's side.
-
-> ⚠️ **Premise pending re-verification (2026-06-05).** The Task 103 Assembly fix proved the OOM was `Cartouche.Assembly.compile/1`'s 7-arity `tuple_set` explosion, NOT dep-set size — downstream cold PLT build dropped 27.6 GB → 1.02 GB, cartouche's local dialyzer now peaks ~3.49 GB. This rule may already be obsolete. Keep treating it as hard until ONE cloud-agent / CI cold PLT build is measured at the new floor (Task 76); the moment that build completes under budget, lift this rule. Don't lift on the downstream onchain number alone.
-
-This blocks `[CSR]` (Cursor) and `[CX]` (Codex) delegation for any task whose primary work product is "fix N dialyzer warnings" or "narrow `@spec` so dialyzer infers X."
-
-**How to apply:**
-
-- Dialyzer-scoped ROADMAP tasks (Phase 4 `Cartouche.Typed` impl tightenings, Phase 5 `none()` cascade investigation, Phase 6 `init_from/2` spec work, any "tighten `@spec` so dialyzer narrows" task) → **stay local**. Run `mix dialyzer.json --quiet` against the host's PLT and ship the fix from this Claude Code session.
-- Spec / `@doc false` / `@dialyzer {:no_contracts, …}` annotation work that doesn't *require* dialyzer to verify (i.e. the agent can compile, run `mix test.json`, run `mix credo --strict`, and trust local follow-up to confirm dialyzer impact) → still delegable, but the issue body must explicitly note "dialyzer verification happens locally post-merge — do NOT attempt `mix dialyzer` in the agent harness; PLT build will OOM."
-- Mixed-scope tasks (some dialyzer, some not) → split. The non-dialyzer parts can ship via Linear; the dialyzer parts come back to local.
-
-**Why:** observed empirically across multiple Cursor and Codex Cloud sessions on cartouche — PLT incremental builds for the full cartouche dep set (ExRLP, Curvy, ABI, Jason, Decimal, etc. plus all of cartouche's own modules) consistently exceed the cloud VM's memory budget. The agent reports back with a partial PR or a failed harness run, and the local reviewer ends up rebuilding the PLT and re-running dialyzer anyway. Net negative versus just doing the work locally.
-
-**Affected open ROADMAP tasks** (do NOT promote these to Linear):
-
-- Tasks 21+22 — Phase 5 `none()` cascade — *already deployed as INE-42, but acceptance criteria deliberately scope to `mix dialyzer.json` snapshots that will be re-verified locally; the agent is annotating only.* Future similar tasks: keep local.
-- Task 76 — Restore dialyzer to the standard PR harness (re-scoped 2026-06-05; the "larger runner" framing was the falsified size premise) — meta-task about CI infrastructure; itself stays local until resolved (its resolution is what would unlock cloud-agent dialyzer in the first place).
-- Task 98 — Tighten `Cartouche.Typed.encode_value_map/3` impl so dialyzer infers `binary()` — pure dialyzer-narrowing work; stays local.
-
-**When this lifts:** Task 76 (restore dialyzer to standard PR CI) lands AND we verify a cloud-agent VM completes a full PLT build. Until both are true, treat this rule as hard.
 
 ## Sobelow workflow
 
