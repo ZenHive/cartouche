@@ -10,6 +10,7 @@ defmodule Cartouche.TransactionTest do
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
+  alias Cartouche.Transaction.V_2930
 
   doctest Call
   doctest Transaction
@@ -1110,10 +1111,16 @@ defmodule Cartouche.TransactionTest do
       assert {:ok, ^transaction} = transaction |> V1.encode() |> Transaction.decode()
     end
 
-    test "dispatches typed transactions through V2, V3, and V4" do
+    test "dispatches typed transactions through V_2930, V2, V3, and V4" do
       v2 = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [])
       v3 = v3_transaction()
       v4 = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+
+      assert {:ok, v2930} = Transaction.decode(v2930_raw())
+      assert v2930.__struct__ == V_2930
+      assert v2930.chain_id == 1
+      assert v2930.gas_price == 5_004_995_121
+      assert v2930.destination == ~h[0xc02953f316c5c18808e2d3961424f952788d69f5]
 
       assert {:ok, ^v2} = v2 |> V2.encode() |> Transaction.decode()
       assert {:ok, ^v3} = v3 |> V3.encode() |> Transaction.decode()
@@ -1122,10 +1129,97 @@ defmodule Cartouche.TransactionTest do
 
     test "returns tagged errors for empty bytes and unknown typed envelopes" do
       assert {:error, :empty_transaction} = Transaction.decode(<<>>)
-      assert {:error, :unknown_envelope_type} = Transaction.decode(<<0x01, 0xC0>>)
       assert {:error, :unknown_envelope_type} = Transaction.decode(<<0x05, 0xC0>>)
       assert {:error, :unknown_envelope_type} = Transaction.decode(:not_binary)
       assert {:error, _} = Transaction.decode(<<0x02, 0xFF>>)
+    end
+  end
+
+  describe "V_2930.decode/1" do
+    test "decodes unsigned type-1 payloads with access-list entries" do
+      address = <<2::160>>
+      storage_key = <<3::256>>
+
+      assert {:ok, transaction} =
+               [access_list: [[address, [storage_key]]]]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert transaction.signature_y_parity == nil
+      assert transaction.signature_r == nil
+      assert transaction.signature_s == nil
+      assert transaction.access_list == [{address, [storage_key]}]
+    end
+
+    test "decodes signed type-1 payloads with y parity 1" do
+      assert {:ok, transaction} =
+               [signature_y_parity: <<1>>, signature_r: <<1>>, signature_s: <<2>>]
+               |> v2930_signed_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert transaction.signature_y_parity == true
+      assert transaction.signature_r == <<1::256>>
+      assert transaction.signature_s == <<2::256>>
+    end
+
+    test "rejects malformed type-1 payloads without raising" do
+      assert {:error, "invalid v2930 transaction"} = V_2930.decode(:not_binary)
+      assert {:error, "invalid v2930 transaction"} = V_2930.decode(<<0x01, 0xC1>>)
+
+      assert {:error, "invalid v2930 transaction"} =
+               [<<1>>]
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [chain_id: []]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [data: []]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [access_list: <<>>]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [access_list: [[<<1::160>>]]]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [access_list: [[<<1::160>>, [<<1>>]]]]
+               |> v2930_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [signature_r: []]
+               |> v2930_signed_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [signature_y_parity: <<2>>]
+               |> v2930_signed_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
+
+      assert {:error, "invalid v2930 transaction"} =
+               [signature_y_parity: []]
+               |> v2930_signed_payload()
+               |> v2930_encode()
+               |> V_2930.decode()
     end
   end
 
@@ -1323,6 +1417,34 @@ defmodule Cartouche.TransactionTest do
     )
     |> V4.add_signature(<<1::256, 2::256, 1>>)
   end
+
+  defp v2930_raw do
+    ~h[0x01f86e018085012a522a31830186a094c02953f316c5c18808e2d3961424f952788d69f587470d07cc2d276080c080a0db55cfd6a6b449e82e05bf465b64d679b7e6030dacab412b7867d83cacabe07da07e1452c5ba57f8ab8a34aa6405e44bd6536d6fd1ff0b44d3360f05832d824c39]
+  end
+
+  defp v2930_payload(overrides) do
+    [
+      Keyword.get(overrides, :chain_id, <<1>>),
+      Keyword.get(overrides, :nonce, <<>>),
+      Keyword.get(overrides, :gas_price, <<1>>),
+      Keyword.get(overrides, :gas_limit, <<0x52, 0x08>>),
+      Keyword.get(overrides, :destination, <<1::160>>),
+      Keyword.get(overrides, :amount, <<>>),
+      Keyword.get(overrides, :data, <<>>),
+      Keyword.get(overrides, :access_list, [])
+    ]
+  end
+
+  defp v2930_signed_payload(overrides) do
+    v2930_payload(overrides) ++
+      [
+        Keyword.get(overrides, :signature_y_parity, <<>>),
+        Keyword.get(overrides, :signature_r, <<1>>),
+        Keyword.get(overrides, :signature_s, <<2>>)
+      ]
+  end
+
+  defp v2930_encode(fields), do: <<0x01>> <> ExRLP.encode(fields)
 
   defp v3_transaction do
     V3.new(

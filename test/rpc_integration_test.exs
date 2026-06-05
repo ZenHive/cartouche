@@ -15,6 +15,7 @@ defmodule Cartouche.RPC.IntegrationTest do
 
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V_2930
 
   @moduletag :integration
 
@@ -78,6 +79,11 @@ defmodule Cartouche.RPC.IntegrationTest do
   @type_3_receipt_gas_used 0x2A8E4
   @type_3_receipt_blob_gas_used 0x20_000
   @type_3_receipt_blob_gas_price 0x1
+
+  # Type-1 (EIP-2930 access-list) transaction anchor — block 20,000,000 has
+  # exactly one type-1 transaction at index 0x6d.
+  @type_1_block @post_cancun_block
+  @type_1_gas_price 0x12A522A31
 
   # Type-4 (EIP-7702) trace anchor — delegation tx post-Pectra. Top-level action
   # remains a CALL because EIP-7702 ships no new opcode mnemonics; delegation
@@ -254,6 +260,22 @@ defmodule Cartouche.RPC.IntegrationTest do
       # presence — both shapes must round-trip through `from_json/1`.
       assert Enum.any?(b.transactions, &match?(%V1{}, &1))
       assert Enum.any?(b.transactions, &match?(%V2{}, &1))
+    end
+
+    test "post-Cancun (block 20,000,000) includes the pinned EIP-2930 type-1 transaction" do
+      opts = Keyword.put(live_opts(), :include_transaction_details, true)
+      assert {:ok, b} = Cartouche.RPC.get_block_by_number(@type_1_block, opts)
+
+      assert b.number == @type_1_block
+      assert b.hash == @post_cancun_hash
+
+      type_1_transactions = Enum.filter(b.transactions, &match?(%V_2930{}, &1))
+      assert [tx] = type_1_transactions
+      assert tx.chain_id == 1
+      assert tx.gas_price == @type_1_gas_price
+      assert tx.destination == <<0xC02953F316C5C18808E2D3961424F952788D69F5::160>>
+      assert tx.amount == 19_999_050_487_900_000
+      assert tx.access_list == []
     end
 
     # Hash-only mode — ensures `:include_transaction_details, false` (and

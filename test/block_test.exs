@@ -9,6 +9,7 @@ defmodule Cartouche.BlockTest do
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
+  alias Cartouche.Transaction.V_2930
 
   doctest Block
   doctest Withdrawal
@@ -204,6 +205,26 @@ defmodule Cartouche.BlockTest do
       )
     end
 
+    defp tx_v2930_json(extra \\ %{}) do
+      Map.merge(
+        %{
+          "type" => "0x1",
+          "chainId" => "0x1",
+          "nonce" => "0x0",
+          "gasPrice" => "0x12a522a31",
+          "gas" => "0x186a0",
+          "to" => "0xc02953f316c5c18808e2d3961424f952788d69f5",
+          "value" => "0x470d07cc2d2760",
+          "input" => "0x",
+          "accessList" => [],
+          "yParity" => "0x0",
+          "r" => "0xdb55cfd6a6b449e82e05bf465b64d679b7e6030dacab412b7867d83cacabe07d",
+          "s" => "0x7e1452c5ba57f8ab8a34aa6405e44bd6536d6fd1ff0b44d3360f05832d824c39"
+        },
+        extra
+      )
+    end
+
     defp tx_v3_json(extra \\ %{}) do
       Map.merge(
         %{
@@ -377,6 +398,23 @@ defmodule Cartouche.BlockTest do
       assert storage_key == <<22::256>>
     end
 
+    test "full-detail V_2930 response — decodes EIP-2930 access-list transaction shape" do
+      b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v2930_json()]}))
+
+      assert [tx] = b.transactions
+      assert tx.__struct__ == V_2930
+      assert tx.chain_id == 1
+      assert tx.gas_price == 5_004_995_121
+      assert tx.gas_limit == 100_000
+      assert tx.destination == ~h[0xc02953f316c5c18808e2d3961424f952788d69f5]
+      assert tx.amount == 19_999_050_487_900_000
+      assert tx.data == <<>>
+      assert tx.access_list == []
+      assert tx.signature_y_parity == false
+      assert tx.signature_r == ~h[0xdb55cfd6a6b449e82e05bf465b64d679b7e6030dacab412b7867d83cacabe07d]
+      assert tx.signature_s == ~h[0x7e1452c5ba57f8ab8a34aa6405e44bd6536d6fd1ff0b44d3360f05832d824c39]
+    end
+
     test "full-detail V3 response — decodes EIP-4844 blob transaction shape" do
       b = Block.deserialize(pre_london_params(%{"transactions" => [tx_v3_json()]}))
 
@@ -457,18 +495,13 @@ defmodule Cartouche.BlockTest do
       end
     end
 
-    test "EIP-2930 (type 0x1) raises a specific 'not yet supported' error" do
-      # `0x1` is EIP-2930 (access lists, mainnet since Berlin 2021).
-      # Cartouche doesn't yet have a V_2930 envelope module, so the JSON
-      # path raises a specific message — distinct from the generic
-      # `unsupported envelope type` raised on truly unknown types — to
-      # signal "this is a known-real type we just haven't ported yet."
-      # Tracked as a follow-up roadmap task.
-      json = %{"type" => "0x1", "nonce" => "0x0"}
+    test "full-detail V_2930 contract creation — `destination: nil` preserved" do
+      json = tx_v2930_json(%{"to" => nil})
+      b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))
 
-      assert_raise ArgumentError, ~r/EIP-2930 .* not yet supported/, fn ->
-        Block.deserialize(pre_london_params(%{"transactions" => [json]}))
-      end
+      assert [tx] = b.transactions
+      assert tx.__struct__ == V_2930
+      assert tx.destination == nil
     end
 
     test "truly-unknown envelope type raises the generic message" do

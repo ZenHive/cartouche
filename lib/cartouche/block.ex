@@ -20,6 +20,7 @@ defmodule Cartouche.Block do
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
+  alias Cartouche.Transaction.V_2930
 
   defmodule Withdrawal do
     @moduledoc """
@@ -168,6 +169,7 @@ defmodule Cartouche.Block do
           transactions: [
             String.t()
             | V1.t()
+            | V_2930.t()
             | V2.t()
             | V3.t()
             | V4.t()
@@ -379,6 +381,7 @@ defmodule Cartouche.Block do
   @spec deserialize_transaction(String.t() | map()) ::
           String.t()
           | V1.t()
+          | V_2930.t()
           | V2.t()
           | V3.t()
           | V4.t()
@@ -395,6 +398,9 @@ defmodule Cartouche.Block do
       "0x0" ->
         V1.from_json(params)
 
+      "0x1" ->
+        V_2930.from_json(params)
+
       "0x2" ->
         V2.from_json(params)
 
@@ -403,10 +409,6 @@ defmodule Cartouche.Block do
 
       "0x4" ->
         V4.from_json(params)
-
-      "0x1" ->
-        raise ArgumentError,
-              "EIP-2930 (type 0x1) transactions are not yet supported by Cartouche.Block JSON deserialization"
 
       other ->
         raise ArgumentError,

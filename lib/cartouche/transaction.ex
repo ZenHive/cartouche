@@ -8,6 +8,7 @@ defmodule Cartouche.Transaction do
   alias Cartouche.Signer.Default
   alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
+  alias Cartouche.Transaction.V_2930
 
   defmodule V1 do
     @moduledoc """
@@ -1530,21 +1531,22 @@ defmodule Cartouche.Transaction do
 
   api(
     :decode,
-    "Decode raw Ethereum transaction bytes into the matching transaction struct (V1/V2/V3/V4 by envelope byte).",
+    "Decode raw Ethereum transaction bytes into the matching transaction struct (V1/V_2930/V2/V3/V4 by envelope byte).",
     params: [
       encoded: [kind: :value, description: "Raw RLP/typed-RLP transaction bytes."]
     ],
     returns: %{
       type: :ok_error_tuple,
       description:
-        "Tagged union of seven dispatcher outcomes: " <>
+        "Tagged union of eight dispatcher outcomes: " <>
           "`{:ok, %Cartouche.Transaction.V1{}}` for legacy/EIP-155 RLP bodies (first byte >= 0x80); " <>
+          "`{:ok, %Cartouche.Transaction.V_2930{}}` for `0x01`-prefixed EIP-2930 envelopes; " <>
           "`{:ok, %Cartouche.Transaction.V2{}}` for `0x02`-prefixed EIP-1559 envelopes; " <>
           "`{:ok, %Cartouche.Transaction.V3{}}` for `0x03`-prefixed envelopes; " <>
           "`{:ok, %Cartouche.Transaction.V4{}}` for `0x04`-prefixed envelopes; " <>
           "`{:error, :empty_transaction}` for empty input; " <>
-          "`{:error, :unknown_envelope_type}` for reserved envelope bytes (`< 0x80`, including `0x01`); " <>
-          "`{:error, String.t()}` for malformed bodies delegated from `V1/V2/V3/V4.decode/1`."
+          "`{:error, :unknown_envelope_type}` for reserved envelope bytes (`< 0x80` except supported typed envelopes); " <>
+          "`{:error, String.t()}` for malformed bodies delegated from `V1/V_2930/V2/V3/V4.decode/1`."
     }
   )
 
@@ -1553,6 +1555,7 @@ defmodule Cartouche.Transaction do
 
   Dispatches typed envelopes by their first byte:
 
+    * `0x01` - `Cartouche.Transaction.V_2930`
     * `0x02` - `Cartouche.Transaction.V2`
     * `0x03` - `Cartouche.Transaction.V3`
     * `0x04` - `Cartouche.Transaction.V4`
@@ -1560,7 +1563,7 @@ defmodule Cartouche.Transaction do
   Legacy transactions are untyped RLP and are decoded as
   `Cartouche.Transaction.V1` when the first byte is an RLP prefix (`>= 0x80`).
   Empty input returns `{:error, :empty_transaction}`. Unknown typed envelopes
-  (`< 0x80`, including `0x01`) return `{:error, :unknown_envelope_type}`.
+  (`< 0x80` except supported typed envelopes) return `{:error, :unknown_envelope_type}`.
 
   ## Examples
 
@@ -1573,13 +1576,13 @@ defmodule Cartouche.Transaction do
       {:error, :empty_transaction}
   """
   @spec decode(binary()) ::
-          {:ok, V1.t() | V2.t() | V3.t() | V4.t()}
+          {:ok, V1.t() | V_2930.t() | V2.t() | V3.t() | V4.t()}
           | {:error, String.t() | :empty_transaction | :unknown_envelope_type}
   def decode(<<>>), do: {:error, :empty_transaction}
+  def decode(<<0x01, _::binary>> = encoded), do: V_2930.decode(encoded)
   def decode(<<0x02, _::binary>> = encoded), do: V2.decode(encoded)
   def decode(<<0x03, _::binary>> = encoded), do: V3.decode(encoded)
   def decode(<<0x04, _::binary>> = encoded), do: V4.decode(encoded)
-  def decode(<<0x01, _::binary>>), do: {:error, :unknown_envelope_type}
   def decode(<<type, _::binary>>) when type < 0x80, do: {:error, :unknown_envelope_type}
   def decode(encoded) when is_binary(encoded), do: V1.decode(encoded)
   def decode(_), do: {:error, :unknown_envelope_type}
