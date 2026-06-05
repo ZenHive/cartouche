@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Generator function-name dedup (`dedup_named_abi/5` in `lib/mix/cartouche.gen.ex`) now keys collision detection on `Macro.underscore/1` instead of `String.downcase/1`. The generated identifiers are built from `Macro.underscore(name)` (`function_names/1`), but the dedup keyed on `String.downcase(name)` — a divergent normalization. A contract exposing both `getValue` and `get_value` downcases them differently (`"getvalue"` vs `"get_value"`) yet underscores both to `"get_value"`, so neither the exact-dup skip nor the rename fired and the second function emitted a silently-shadowed `encode_get_value/1` clause (plus shadowed `decode_get_value_call`, `get_value_selector`, …) — `encode_get_value` always produced `getValue`'s calldata. `Macro.underscore` subsumes the prior downcase (it lowercases) and additionally folds camelCase/snake_case collisions. New behavioral regression test (`describe "underscore-collision dedup"`): generates `[getValue(uint256), get_value(uint256)]`, compiles the module, and asserts two distinct `encode_get_value*` functions emit distinct calldata — pre-fix they collapse to one. (ROADMAP Task 106 filed for the related unlinked-library/immutable-placeholder bytecode edge.)
+
 ### Tooling
 
 - Restored dialyzer to the PR harness (`.github/workflows/harness.yml`), reverting the 2026-05-04 carve-out (ROADMAP Task 76). The carve-out attributed an `ubuntu-latest` OOM (run 25319850405) to the 621-module deps PLT *size* and deferred dialyzer to "a larger runner / nightly cron." That diagnosis was wrong: the OOM was `Cartouche.Assembly.compile/1`'s 7-arity `tuple_set` exploding dialyzer's success-typing fixpoint (the ~30 GB bomb fixed in 0.2.2 / Task 103). A clean cold `mix dialyzer` (PLT build + analysis) now peaks at **~1.0 GB / ~26s** — ~15× under the 16 GB budget — with zero warnings. The step runs in `MIX_ENV=dev` and caches `priv/plts/` (pinned outside `_build/` for exactly this). No larger runner, separate workflow, or extra `:plt_ignore_apps` trim needed. Closes ROADMAP Task 76.

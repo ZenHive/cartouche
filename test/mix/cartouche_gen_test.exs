@@ -458,6 +458,50 @@ defmodule Mix.Tasks.Cartouche.GenTest do
     end
   end
 
+  describe "underscore-collision dedup" do
+    # getValue + get_value have different selectors and downcase differently
+    # ("getvalue" vs "get_value"), but both Macro.underscore to "get_value".
+    # The dedup must key on Macro.underscore/1 (what the generated identifiers
+    # use), or the second function emits a shadowed encode_get_value/1 clause
+    # that is silently unreachable.
+    defp colliding_abi do
+      for name <- ["getValue", "get_value"] do
+        %{
+          "type" => "function",
+          "name" => name,
+          "inputs" => [%{"name" => "x", "type" => "uint256", "internalType" => "uint256"}],
+          "outputs" => [%{"name" => "", "type" => "uint256", "internalType" => "uint256"}],
+          "stateMutability" => "pure"
+        }
+      end
+    end
+
+    test "names colliding only under Macro.underscore are renamed, not shadowed", %{tmp: tmp} do
+      contents = generate_abi_file(tmp, "Collision", colliding_abi())
+
+      # First keeps the clean identifier; the second is suffixed with its
+      # 4-byte signature rather than colliding on encode_get_value/1.
+      assert contents =~ "def encode_get_value("
+      assert contents =~ "def encode_get_value_"
+
+      module = generated_module(contents)
+
+      encoders =
+        for {name, 1} <- module.__info__(:functions),
+            String.starts_with?(Atom.to_string(name), "encode_get_value"),
+            do: name
+
+      # Two distinct encoders survive — pre-fix the shadowed clause collapses
+      # these into a single encode_get_value/1.
+      assert length(encoders) == 2
+
+      # Behavioral proof: each encoder emits its own selector, so neither is
+      # an unreachable duplicate of the other.
+      calldatas = Enum.map(encoders, &apply(module, &1, [1]))
+      assert calldatas == Enum.uniq(calldatas)
+    end
+  end
+
   describe "error paths" do
     test "invalid JSON shape raises a generator-specific file error", %{tmp: tmp} do
       path = Path.join(tmp, "Invalid.json")

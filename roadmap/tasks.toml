@@ -1342,3 +1342,19 @@ Touch points: lib/cartouche/signer.ex (sign_direct hashing, GenServer handle_cal
 """
 created_at = "2026-06-04"
 scored_at = "2026-06-04"
+
+[[task]]
+id = "106"
+phase = 0
+bundle = "generator_hardening"
+status = "pending"
+title = "Generator fixture: unlinked-library / immutable bytecode placeholders through blank_bytecode?/hex!"
+scores = { d = 2, b = 3, u = 3 }
+assignee = "codex"
+body = """
+solc/Foundry emit bytecode objects that are present but not valid hex: unlinked library references appear as __$<34-hex-keccak>$__ placeholders, and immutable references leave 0-filled gaps recorded in a separate map. Current generator input handling (blank_bytecode?/1 and hex!/1 in lib/mix/cartouche.gen.ex) is tested against absent / "0x" / whitespace-only bytecode, but not against malformed-but-present bytecode containing __$...$__ link markers. hex! on such a string would raise mid-generation rather than degrading to the no-bytecode (RPC-only) path or surfacing an actionable error.
+
+Implement a fixture (inline ABI + a bytecode object carrying a __$...$__ placeholder) and assert the generator either (a) treats unlinked bytecode as blank and emits the RPC-only surface, or (b) raises a generator-specific error naming the unlinked library — decide which after checking what hex!/1 does today. This is a real-world edge: any contract that links an external library (common for math/string libs) ships this bytecode shape from Foundry's forge build. Adds a new input-validation branch, not redundant coverage.
+"""
+created_at = "2026-06-05"
+scored_at = "2026-06-05"

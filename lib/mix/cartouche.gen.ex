@@ -162,22 +162,28 @@ defmodule Mix.Tasks.Cartouche.Gen do
   @spec dedup_named_abi(map(), String.t(), ABI.FunctionSelector.t(), [map()], [{String.t(), String.t()}]) ::
           {[map()], [{String.t(), String.t()}]}
   defp dedup_named_abi(abi, name, fn_sel, acc, seen) do
-    lower_name = String.downcase(name)
+    # Key collision detection on Macro.underscore/1 — the exact normalization the
+    # generated identifiers use (see function_names/1). String.downcase/1 misses
+    # camelCase/snake_case pairs like getValue + get_value: they have different
+    # selectors and downcase differently ("getvalue" vs "get_value"), so neither
+    # the skip nor the rename below would fire, yet both underscore to "get_value"
+    # and emit a shadowed encode_get_value/N clause.
+    underscored_name = Macro.underscore(name)
 
     abi_enc_signature = ABI.method_id(fn_sel)
     "0x" <> abi_sig = Cartouche.Hex.encode_hex(abi_enc_signature)
-    seen_tuple = {lower_name, abi_sig}
+    seen_tuple = {underscored_name, abi_sig}
 
     if Enum.member?(seen, seen_tuple) do
       {acc, seen}
     else
-      abi_new = maybe_rename_dup_fn(abi, name, lower_name, abi_sig, seen)
-      {[abi_new | acc], [{lower_name, abi_sig} | seen]}
+      abi_new = maybe_rename_dup_fn(abi, name, underscored_name, abi_sig, seen)
+      {[abi_new | acc], [{underscored_name, abi_sig} | seen]}
     end
   end
 
-  defp maybe_rename_dup_fn(abi, name, lower_name, abi_sig, seen) do
-    if Enum.member?(Enum.map(seen, fn {n, _} -> n end), lower_name) do
+  defp maybe_rename_dup_fn(abi, name, underscored_name, abi_sig, seen) do
+    if Enum.member?(Enum.map(seen, fn {n, _} -> n end), underscored_name) do
       Map.put(abi, "fn_name", "#{name}_#{abi_sig}")
     else
       abi

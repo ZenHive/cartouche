@@ -38,6 +38,15 @@ enforced by the CI harness (.github/workflows/harness.yml).
 
 forked from https://github.com/hayesgm/signet
 
+## Delegation roster
+
+Dispatch is via the harness engine (see `harness-workflow.md`). When assigning a dispatchable task to a harness adapter, prefer the external agents — **cursor, codex, grok** — and reserve the **claude/opus** adapter for work that genuinely needs it (harness-surface changes, judgment-heavy review, tasks the cheaper adapters keep bouncing). Opus tokens are precious: spend them last, not by default.
+
+- Assign order by fit: **cursor / codex / grok** first; **opus only if needed.**
+- Mix adapters across a parallel wave for review coverage, but don't reach for opus unless the task's difficulty or harness coupling warrants it.
+
+(This is harness-adapter selection — distinct from the legacy Linear cloud-delegation stack, which we don't run here.)
+
 ## Hook-flagged issues
 
 When our PostToolUse hooks flag issues on files you touched (credo, format, dialyzer, etc.), fix them in this commit — including pre-existing flags unrelated to your change. See `critical-rules.md` → "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH". Touched-file scope only, not project-wide.
