@@ -505,10 +505,8 @@ defmodule Cartouche.BlockTest do
     end
 
     test "truly-unknown envelope type raises the generic message" do
-      # Distinct from the EIP-2930 (0x1) "not yet supported" case: a type
-      # byte we don't recognize at all should raise the generic message
-      # so the operator can tell "we know about this but haven't shipped
-      # support" apart from "we have no idea what this is."
+      # Distinct from supported typed envelopes (0x0–0x4): a type byte we
+      # don't recognize at all should raise the generic message.
       json = %{"type" => "0x99", "nonce" => "0x0"}
 
       assert_raise ArgumentError, ~r/unsupported transaction envelope type/, fn ->

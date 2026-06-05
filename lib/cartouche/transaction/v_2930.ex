@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Readability.ModuleNames
 defmodule Cartouche.Transaction.V_2930 do
   @moduledoc ~S"""
   Represents a type-1 EIP-2930 access-list transaction.
