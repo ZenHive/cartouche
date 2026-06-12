@@ -14,7 +14,12 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
-## [Unreleased]
+## [0.3.0] — 2026-06-12
+
+### Changed
+
+- Dependency constraint bumps: `descripex ~> 0.7.0` → `~> 0.9.1` and `hieroglyph ~> 1.4.0` → `~> 1.5`. hieroglyph 1.5.0 is the current hex line. descripex 0.8/0.9 fill JSON Schema from `@spec`/declared `type:` — additive for consumers — but the floor is pinned to **0.9.1, not 0.9.0**: 0.9.0's runtime enrichment raised a `CaseClauseError` (in its `json_spec` dep) on the `%{non_neg_integer() => <<_::256>>}` spec of `Solana.Transaction.sign_partial/2`, crashing `Cartouche.describe/0` and `__api__/1`; descripex 0.9.1 fixes it. No Cartouche code changes, only the floor moves. Minor bump (not 0.2.3) because the public dependency floor changed.
+- Dependency updates within existing constraints (carried from the 0.2.3 refresh): direct dev/test tooling `credo` 1.7.18 → 1.7.19, `dialyzer_json` 0.2.0 → 0.2.1; transitive `mint` 1.8.0 → 1.9.0, `thousand_island` 1.4.3 → 1.5.0. `bandit` stays at 1.11.1 — 1.12.0 is outside the intentional `~> 1.11.0` dev-only pin (PLT-stability constraint). `tesla` held at 1.18.2 (not bumped to 1.20.0): 1.20.0's `Tesla.Middleware.Compression` now mandates a `:max_body_size` option that `google_api_cloud_kms`'s middleware stack does not pass, raising `fetch_max_body_size!` and breaking all 14 CloudKMS signer tests. Pinned in `mix.lock` until the GCP cluster passes the option upstream.
 
 ### Fixed
 
@@ -23,13 +28,6 @@ All notable changes to this project will be documented in this file.
 ### Tooling
 
 - Restored dialyzer to the PR harness (`.github/workflows/harness.yml`), reverting the 2026-05-04 carve-out (ROADMAP Task 76). The carve-out attributed an `ubuntu-latest` OOM (run 25319850405) to the 621-module deps PLT *size* and deferred dialyzer to "a larger runner / nightly cron." That diagnosis was wrong: the OOM was `Cartouche.Assembly.compile/1`'s 7-arity `tuple_set` exploding dialyzer's success-typing fixpoint (the ~30 GB bomb fixed in 0.2.2 / Task 103). A clean cold `mix dialyzer` (PLT build + analysis) now peaks at **~1.0 GB / ~26s** — ~15× under the 16 GB budget — with zero warnings. The step runs in `MIX_ENV=dev` and caches `priv/plts/` (pinned outside `_build/` for exactly this). No larger runner, separate workflow, or extra `:plt_ignore_apps` trim needed. Closes ROADMAP Task 76.
-
-## [0.3.0] — 2026-06-12
-
-### Changed
-
-- Dependency constraint bumps: `descripex ~> 0.7.0` → `~> 0.9.1` and `hieroglyph ~> 1.4.0` → `~> 1.5`. hieroglyph 1.5.0 is the current hex line. descripex 0.8/0.9 fill JSON Schema from `@spec`/declared `type:` — additive for consumers — but the floor is pinned to **0.9.1, not 0.9.0**: 0.9.0's runtime enrichment raised a `CaseClauseError` (in its `json_spec` dep) on the `%{non_neg_integer() => <<_::256>>}` spec of `Solana.Transaction.sign_partial/2`, crashing `Cartouche.describe/0` and `__api__/1`; descripex 0.9.1 fixes it. No Cartouche code changes, only the floor moves. Minor bump (not 0.2.3) because the public dependency floor changed.
-- Dependency updates within existing constraints (carried from the 0.2.3 refresh): direct dev/test tooling `credo` 1.7.18 → 1.7.19, `dialyzer_json` 0.2.0 → 0.2.1; transitive `mint` 1.8.0 → 1.9.0, `thousand_island` 1.4.3 → 1.5.0. `bandit` stays at 1.11.1 — 1.12.0 is outside the intentional `~> 1.11.0` dev-only pin (PLT-stability constraint). `tesla` held at 1.18.2 (not bumped to 1.20.0): 1.20.0's `Tesla.Middleware.Compression` now mandates a `:max_body_size` option that `google_api_cloud_kms`'s middleware stack does not pass, raising `fetch_max_body_size!` and breaking all 14 CloudKMS signer tests. Pinned in `mix.lock` until the GCP cluster passes the option upstream.
 
 ## [0.2.2] — 2026-06-05
 
