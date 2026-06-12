@@ -1261,7 +1261,7 @@
       "id": 98,
       "phase": 4,
       "bundle": "phase4_typed",
-      "status": "pending",
+      "status": "done",
       "title": "Phase 4 follow-up — tighten Cartouche.Typed.encode_value_map/3 impl so dialyzer infers binary(), restore stricter @spec",
       "scores": {
         "d": 2,
@@ -1275,8 +1275,13 @@
       ],
       "depends_on": [],
       "assignee": "cursor",
+      "shipped_in": "d38e45546ab01b9532d8d987932f7d558dcffbac",
       "body": "Filed 2026-05-06 from PR #50 review (Copilot low-confidence finding). Loosening the spec to bitstring() in INE-39 silenced dialyzer cheaply but masks the byte-alignment invariant hash_struct/3's <> operator requires (type_hash <> encode_data would crash at runtime on a non-byte-aligned bitstring). Every actual branch in Type.encode_data_value/2 returns 32-byte aligned binary, so the impl IS byte-aligned in practice — but the spec no longer pins it against future drift.\n\nTighten the for {field, type} <- fields, into: <<>> comprehension (e.g. annotate the body as ::binary or wrap each branch through IO.iodata_to_binary/1) so dialyzer can prove binary(), then restore @spec encode_value_map/3 :: binary(). Pinning tests in test/typed_test.exs from Task 45 cover the contract. Touched-file scope; no callsite changes.\n",
+      "done_at": "2026-06-05",
       "scored_at": "2026-05-27",
+      "implemented": "Landed by cursor via merge-train; reviewer-approved (run run-1780625783608-6894cf7b, d38e45546ab01b9532d8d987932f7d558dcffbac).",
+      "delivered_by": "cursor",
+      "verified": true,
       "cross_repo": []
     },
     {
@@ -2039,7 +2044,7 @@
       "id": "106",
       "phase": 0,
       "bundle": "generator_hardening",
-      "status": "in_progress",
+      "status": "done",
       "title": "Generator fixture: unlinked-library / immutable bytecode placeholders through blank_bytecode?/hex!",
       "scores": {
         "d": 2,
@@ -2051,10 +2056,15 @@
       "markers": [],
       "depends_on": [],
       "assignee": "codex",
+      "shipped_in": "6560ddf0bad94b4a42c3c393bf0add922138cc3c",
       "body": "solc/Foundry emit bytecode objects that are present but not valid hex: unlinked library references appear as __$<34-hex-keccak>$__ placeholders, and immutable references leave 0-filled gaps recorded in a separate map. Current generator input handling (blank_bytecode?/1 and hex!/1 in lib/mix/cartouche.gen.ex) is tested against absent / \"0x\" / whitespace-only bytecode, but not against malformed-but-present bytecode containing __$...$__ link markers. hex! on such a string would raise mid-generation rather than degrading to the no-bytecode (RPC-only) path or surfacing an actionable error.\n\nImplement a fixture (inline ABI + a bytecode object carrying a __$...$__ placeholder) and assert the generator either (a) treats unlinked bytecode as blank and emits the RPC-only surface, or (b) raises a generator-specific error naming the unlinked library — decide which after checking what hex!/1 does today. This is a real-world edge: any contract that links an external library (common for math/string libs) ships this bytecode shape from Foundry's forge build. Adds a new input-validation branch, not redundant coverage.\n",
       "created_at": "2026-06-05",
       "started_at": "2026-06-05",
+      "done_at": "2026-06-05",
       "scored_at": "2026-06-05",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1780622112906-daea67bc, 6560ddf0bad94b4a42c3c393bf0add922138cc3c).",
+      "delivered_by": "codex",
+      "verified": true,
       "cross_repo": []
     }
   ]

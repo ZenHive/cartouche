@@ -2,10 +2,12 @@
 
 @~/.claude/includes/critical-rules.md
 @~/.claude/includes/harness-workflow.md
+@~/.claude/includes/onchain-workspace.md
 
 <!--
 Selective-load (Opus 4.8 — see setup-guide.md § "Skills vs Includes"):
-the eager floor is critical-rules + harness-workflow.
+the eager floor is critical-rules + harness-workflow + onchain-workspace
+(harness workspace add-on — 7-repo roster + dependency shape).
 
 Delegation is via the harness engine. harness-workflow.md is @-imported as the
 portfolio-wide implement→review→land contract (cartouche is harness-driven);

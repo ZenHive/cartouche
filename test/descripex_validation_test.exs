@@ -79,16 +79,29 @@ defmodule Cartouche.DescripexValidationTest do
               unrelated function with `@doc false`.
               """
 
-              assert meta.hints in api_hints_list, """
+              # Compare modulo descripex's runtime spec-enrichment: since descripex
+              # 0.8/0.9, `__api__/0` fills `params/opts.<name>.schema` (and returns.schema)
+              # from `@spec` at runtime, but the compile-time BEAM doc chunk
+              # (`meta[:hints]`) is NOT enriched — a module can't read its own specs at
+              # `__before_compile__`. So a param with a spec-derived schema legitimately
+              # diverges between the two surfaces; that is enrichment, not misattachment.
+              # Strip the injected `:schema` from both sides so this test keeps detecting
+              # genuine api()-misattachment (its purpose) without false-positiving on the
+              # asymmetry. Tracked in descripex roadmap Task 24 (reconcile or document).
+              meta_hints = drop_runtime_schema(meta.hints)
+              api_hints_list_normalized = Enum.map(api_hints_list, &drop_runtime_schema/1)
+
+              assert meta_hints in api_hints_list_normalized, """
               #{inspect(module)}.#{name}/#{arity} hints don't match any api(:#{name}, ...) declaration.
 
-              Function meta[:hints]: #{inspect(meta.hints)}
-              __api__/0 hints for :#{name} (#{length(api_hints_list)} declaration(s)): #{inspect(api_hints_list)}
+              Function meta[:hints] (schema-normalized): #{inspect(meta_hints)}
+              __api__/0 hints for :#{name} (#{length(api_hints_list)} declaration(s), schema-normalized): #{inspect(api_hints_list_normalized)}
 
-              Function-level hints must equal one of the declared api(:#{name}, ...) hints — descripex's
-              propagate_hints_to_all_arities injects the last-declared hints onto every arity. Drift here
-              means the @doc hints: attribute was consumed by a different def before propagation could
-              inject the canonical hints, the fingerprint of a misattached api() block.
+              Function-level hints must equal one of the declared api(:#{name}, ...) hints (ignoring descripex's
+              runtime-injected spec `schema` keys) — descripex's propagate_hints_to_all_arities injects the
+              last-declared hints onto every arity. Drift here means the @doc hints: attribute was consumed by
+              a different def before propagation could inject the canonical hints, the fingerprint of a
+              misattached api() block.
               """
             end
 
@@ -231,6 +244,29 @@ defmodule Cartouche.DescripexValidationTest do
              } = Cartouche.describe(:solana_rpc, :get_balance)
 
       assert description == "Get the SOL balance for an account."
+    end
+  end
+
+  # Strip descripex's runtime-injected `:schema` keys (params/opts/returns) so a
+  # hints map from the compile-time doc chunk compares equal to the runtime-enriched
+  # `__api__/0` form. See descripex roadmap Task 24.
+  defp drop_runtime_schema(hints) when is_map(hints) do
+    hints
+    |> drop_section_schema(:params)
+    |> drop_section_schema(:opts)
+    |> update_in_existing(:returns, &Map.delete(&1, :schema))
+  end
+
+  defp drop_section_schema(hints, section) do
+    update_in_existing(hints, section, fn entries ->
+      Map.new(entries, fn {name, detail} -> {name, Map.delete(detail, :schema)} end)
+    end)
+  end
+
+  defp update_in_existing(map, key, fun) do
+    case map do
+      %{^key => value} -> Map.put(map, key, fun.(value))
+      _ -> map
     end
   end
 

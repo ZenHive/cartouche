@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.2.2",
+      version: "0.3.0",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -120,7 +120,11 @@ defmodule Cartouche.MixProject do
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
-      {:descripex, "~> 0.7.0"},
+      # Floor is 0.9.1, not 0.9.0: 0.9.0's runtime @spec→JSON-Schema enrichment
+      # crashed (CaseClauseError in json_spec) on the `%{non_neg_integer() =>
+      # <<_::256>>}` spec of Solana.Transaction.sign_partial/2, taking down
+      # Cartouche.describe/0 and __api__/1. Fixed in descripex 0.9.1.
+      {:descripex, "~> 0.9.1"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
@@ -128,7 +132,7 @@ defmodule Cartouche.MixProject do
       # `override: true` dropped at publish time — no transitive dep
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
-      {:hieroglyph, "~> 1.4.0"},
+      {:hieroglyph, "~> 1.5"},
       {:junit_formatter, "~> 3.4.0", only: [:test]}
     ] ++ zenhive_dev_deps()
   end
