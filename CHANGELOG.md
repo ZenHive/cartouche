@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [Unreleased]
+
+### Changed
+
+- Dependency refresh — bumped all outdated deps to their current hex lines. Constraint bumps in `mix.exs`: `descripex ~> 0.9.1` → `~> 0.11` (0.9.1 → 0.11.0; the 0.9.1 floor rationale still holds, the new floor clears it), `tidewave ~> 0.5.6` → `~> 0.6` (0.5.6 → 0.6.0, dev-only), `bandit ~> 1.11.0` → `~> 1.12` (1.11.1 → 1.12.0, dev-only). The 0.3.0-era bandit pin at `~> 1.11.0` was a PLT-stability hedge against an OOM since root-caused and fixed (Tasks 103/76); a clean cold `mix dialyzer` stays at 0 warnings on 1.12.0, so the pin is lifted. In-constraint updates: `finch` 0.22.0 → 0.23.0, `reach` 2.7.1 → 2.7.5, `ex_dna` 1.5.2 → 1.5.3, plus transitive `sourceror` 1.12.0 → 1.12.2. `tesla` stays pinned at 1.18.2 in `mix.lock` (1.20.0's mandatory `Tesla.Middleware.Compression` `:max_body_size` still breaks the CloudKMS signer stack — see 0.3.0). Full offline suite (1094 tests) and dialyzer (0 warnings) green after the bump.
+
 ## [0.3.0] — 2026-06-12
 
 ### Changed

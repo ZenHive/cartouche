@@ -124,7 +124,7 @@ defmodule Cartouche.MixProject do
       # crashed (CaseClauseError in json_spec) on the `%{non_neg_integer() =>
       # <<_::256>>}` spec of Solana.Transaction.sign_partial/2, taking down
       # Cartouche.describe/0 and __api__/1. Fixed in descripex 0.9.1.
-      {:descripex, "~> 0.9.1"},
+      {:descripex, "~> 0.11"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
@@ -152,8 +152,8 @@ defmodule Cartouche.MixProject do
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
-      {:tidewave, "~> 0.5.6", only: :dev},
-      {:bandit, "~> 1.11.0", only: :dev}
+      {:tidewave, "~> 0.6", only: :dev},
+      {:bandit, "~> 1.12", only: :dev}
       # :boxart intentionally omitted — conflicts with upstream ex_doc 0.31.1
       # (needs makeup_elixir ~> 1.0, ex_doc pulls ~> 0.14). Terminal --graph
       # rendering is optional; text/json output still works for all reach.* tasks.
