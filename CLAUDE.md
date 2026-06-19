@@ -16,17 +16,17 @@ legacy Linear + Codex/Cursor stack is intentionally not loaded.
 
 Everything else is skill-on-demand — Opus self-invokes when the situation
 fires, and the hard parts are hook-enforced independently:
-  worktree-workflow      → elixir:git-worktrees
-  task-prioritization    → elixir:roadmap-planning
-  task-writing           → task-driver:task-writing
-  rmap                   → task-driver:rmap
-  workflow-philosophy    → dev-lifecycle:workflow-philosophy
+  worktree-workflow      → workflow:git-worktrees
+  task-prioritization    → tasks:roadmap-planning
+  task-writing           → tasks:task-writing
+  rmap                   → tasks:rmap
+  workflow-philosophy    → workflow:workflow-philosophy
   code-style             → elixir:code-style
   development-philosophy → elixir:development-philosophy
   development-commands   → elixir:development-commands
   ex-unit-json           → elixir:ex-unit-json
   dialyzer-json          → elixir:dialyzer-json
-  upstream-pr-workflow   → elixir:upstream-pr-workflow
+  upstream-pr-workflow   → workflow:upstream-pr-workflow
   elixir-setup           → elixir:elixir-setup
   web-command / agent-economy / reach → elixir:*
 
