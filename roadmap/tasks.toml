@@ -1426,3 +1426,67 @@ created_at = "2026-06-24"
 scored_at = "2026-06-24"
 done_at = "2026-06-24"
 shipped_in = "fecda03e520b507c8c7778435110cef2747471d3"
+
+[[task]]
+id = "109"
+phase = 0
+bundle = "tooling_quality"
+status = "pending"
+title = "Dedup cross-variant transaction helpers (plain functions, not macros)"
+scores = { d = 2, b = 4, u = 5 }
+acceptance_criteria = ["No duplicated `defp maybe_to_wei` or `defp chain_id_value` remains across the transaction-variant modules — all call a single shared function", "Existing encode/decode round-trip doctests and tests pass unchanged (behavior byte-identical)", "Touched modules stay at >=95% line coverage", "safe_rlp_decode/1 either unified (if bodies identical) or explicitly left with a one-line reason"]
+out_of_scope = ["The EIP-2718 envelope-shape `use` macro — that is Task 111's spike", "RPC wrapper changes — Task 110", "Any change to RLP field ordering or struct shapes"]
+files_to_modify = ["lib/cartouche/transaction/v3.ex", "lib/cartouche/transaction/v4.ex", "lib/cartouche/transaction/v_2930.ex", "lib/cartouche/transaction.ex"]
+touches = ["lib/cartouche/wei.ex", "lib/cartouche/chain.ex"]
+body = """
+maybe_to_wei/1 and chain_id_value/1 are defined verbatim in both lib/cartouche/transaction/v3.ex and v4.ex (and have inline equivalents in lib/cartouche/transaction.ex). Extract them to shared plain functions — NOT macros; a macro here would be the wrong tool — so there is one source of truth for the nil-tolerant wei conversion and the chain-id resolution. maybe_to_wei belongs alongside Cartouche.Wei (it already wraps Wei.to_wei/1); chain_id_value belongs with Cartouche.Chain (it resolves nil -> Cartouche.Application.chain_id() and otherwise Cartouche.Chain.parse_id/1). Every transaction-variant module calls the shared function instead of its private copy. If the safe_rlp_decode/1 bodies across v_2930/v3/v4/transaction.ex are byte-identical, fold them too; if they differ per variant, leave them and note why.
+
+This is the clean low-risk first step; it also unblocks the Typed-envelope macro spike (Task 111), which should call these shared helpers rather than re-inject them.
+
+Pre-mutation gate: Cartouche.Transaction* is critical-tier (signing-adjacent, >=95% coverage). Confirm/raise coverage on the touched modules BEFORE refactoring.
+"""
+created_at = "2026-06-24"
+scored_at = "2026-06-24"
+
+[[task]]
+id = "110"
+phase = 0
+bundle = "tooling_quality"
+status = "pending"
+title = "defrpc macro — generate uniform JSON-RPC wrappers + @spec + @doc + Descripex api() from one declaration"
+scores = { d = 5, b = 6, u = 5 }
+acceptance_criteria = ["`defrpc` macro defined with a @moduledoc/@doc explaining the declaration shape", "Each generated wrapper emits an equivalent @spec, @doc, and Descripex api() block — Cartouche.describe output for converted methods is unchanged", "The uniform subset in Cartouche.RPC and Cartouche.Solana.RPC is converted; compiled behavior is byte-identical (existing doctests + tests pass unchanged)", "Irregular wrappers (guards, struct dispatch, multi-clause) are left hand-written and listed in the PR description", "Both RPC modules stay at >=95% line coverage"]
+out_of_scope = ["Transaction-variant modules (Tasks 109/111)", "Changing send_rpc/3 itself or the decode option semantics", "Converting irregular/guarded wrappers into the macro"]
+files_to_modify = ["lib/cartouche/rpc.ex", "lib/cartouche/solana/rpc.ex"]
+body = """
+Cartouche.RPC (~2250 LOC) and Cartouche.Solana.RPC (~1170 LOC) repeat one wrapper shape ~50 times: a hand-written Descripex `api(...)` annotation, a `@doc`, a `@spec`, and a thin body that hex-encodes arguments, optionally normalizes a block selector, and calls `send_rpc(method, params, decode: <type>)`. The account-at-block trio — get_balance / get_code / get_transaction_count — is byte-for-byte identical except for the RPC method string and the decode type. Keeping the four artifacts (body, spec, doc, api metadata) in sync by hand is the cost this removes.
+
+Introduce a `defrpc` macro that generates all four from a single declaration. The macro MUST emit the Descripex `api()` block, not replace or bypass it — agent introspection (Cartouche.describe/*, __descripex_modules__/0) must see identical metadata for converted methods. Apply `defrpc` only to the genuinely uniform subset of wrappers in both RPC modules. Leave the irregular methods hand-written — those with binary/address guards, struct dispatch (send_trx, to_call_params, simulate/send_transaction), or multi-clause normalization. A defrpc that tries to swallow the irregular ones would grow more knobs than the duplication it removes.
+
+Keep the macro thin and readable — these wrappers are read often, and macro-generated bodies obscure stack traces; the mitigation is a dumb, declarative macro, not a clever one. Precedent: exth_rpc / ethers-style libs generate RPC wrappers, so this is not novel complexity.
+
+Pre-mutation gate: both RPC modules are critical-tier (signing-adjacent transport, >=95% coverage). Confirm/raise coverage before converting.
+"""
+created_at = "2026-06-24"
+scored_at = "2026-06-24"
+
+[[task]]
+id = "111"
+phase = 0
+bundle = "tooling_quality"
+status = "pending"
+title = "Spike: evaluate a Cartouche.Transaction.Typed envelope macro across V_2930/V3/V4"
+scores = { d = 2, b = 3, u = 3 }
+depends_on = [109]
+acceptance_criteria = ["Written recommendation (implement | reject) with the LOC-saved-vs-indirection-cost math, recorded in `implemented`", "Prototype exists against V3 + V4 (branch or inline) demonstrating the measurement", "If implemented: V_2930/V3/V4 use the macro, behavior byte-identical, coverage >=95%; if rejected: the reasoning is durable enough to prevent re-proposal"]
+out_of_scope = ["Re-implementing the wei/chain-id helpers — Task 109 owns those; the macro calls them", "RPC wrappers (Task 110)", "Touching legacy V1/V2 (non-typed, no 0x envelope byte)"]
+files_to_modify = ["lib/cartouche/transaction/v3.ex", "lib/cartouche/transaction/v4.ex", "lib/cartouche/transaction/v_2930.ex"]
+body = """
+SPIKE (bounded investigation + prototype, deliver a recommendation). V_2930, V3, and V4 share an EIP-2718 envelope shape: encode = `<<@tx_type>> <> ExRLP.encode(rlp_payload)`, `hash/1` (keccak of the encoded bytes), the binary-form `add_signature/2`, and `safe_rlp_decode/1`. Evaluate whether a `use Cartouche.Transaction.Typed, type: 0xNN` macro that injects those shared envelope methods nets more than it costs — the per-variant field sets and RLP payload ordering vary a lot, so the FIXED part being factored out may be small.
+
+Prototype the macro against V3 and V4 only. Measure LOC actually removed vs the indirection and stack-trace cost added. Deliver a clear implement-or-reject recommendation recorded in the task's `implemented` field. If implement: land it across V_2930/V3/V4. If reject: document the LOC/indirection math that killed it so a future session does not re-propose it.
+
+The macro must CALL the shared maybe_to_wei/chain_id_value helpers from Task 109, never re-inject them. Critical-tier (signing) — keep coverage >=95% on any code that actually lands.
+"""
+created_at = "2026-06-24"
+scored_at = "2026-06-24"
