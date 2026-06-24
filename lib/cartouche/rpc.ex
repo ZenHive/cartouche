@@ -15,8 +15,6 @@ defmodule Cartouche.RPC do
 
   require Logger
 
-  @spec ethereum_node() :: String.t()
-  defp ethereum_node, do: Cartouche.Application.ethereum_node()
   @default_timeout Application.compile_env(:cartouche, :timeout, 30_000)
 
   @default_gas_price nil
@@ -247,7 +245,7 @@ defmodule Cartouche.RPC do
     errors = Keyword.get(opts, :errors, nil)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     verbose = Keyword.get(opts, :verbose, false)
-    url = Keyword.get(opts, :ethereum_node, ethereum_node())
+    url = Keyword.get(opts, :ethereum_node, Cartouche.Application.ethereum_node())
     id = Keyword.get_lazy(opts, :id, fn -> System.unique_integer([:positive]) end)
     body = get_body(method, params, id)
 
@@ -302,6 +300,10 @@ defmodule Cartouche.RPC do
   defp decode_result(f, result, method, verbose) when is_function(f) do
     {:ok, f.(result)}
   rescue
+    # `f` is a caller-supplied decode function; it may raise any exception, so
+    # the catch-all is correct here — every failure must surface as an
+    # `{:error, _}` with the response logged, never crash the RPC call.
+    # reach:disable-next-line bare_rescue
     e -> log_decode_error(e, method, result, verbose)
   end
 

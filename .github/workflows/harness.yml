@@ -73,6 +73,15 @@ jobs:
       - name: Credo (strict, excluding TODO/FIXME design tags)
         run: mix credo --strict --ignore TagTODO,TagFIXME
 
+      # ExDNA + Reach mirror the `mix ci` / `mix precommit.full` alias gate
+      # (mix.exs). Both deps were previously fetched but never invoked anywhere;
+      # wiring them here keeps CI and the local/harness-reviewer gate in sync.
+      - name: ExDNA (zero clone budget)
+        run: mix ex_dna --max-clones 0
+
+      - name: Reach (architecture + cross-function smells)
+        run: mix reach.check --arch --smells
+
       - name: Doctor (--raise overrides .doctor.exs raise=false to gate CI)
         run: mix doctor --raise
 

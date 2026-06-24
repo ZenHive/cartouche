@@ -44,6 +44,14 @@ forked from https://github.com/hayesgm/signet
 
 Portfolio default — carried by `harness-workflow.md` § "Delegation roster — opus last" (`@`-imported above): assign dispatchable tasks **cursor / codex / grok first, opus only if needed** (opus tokens are precious). Cartouche takes the default; no project override.
 
+## Toolchain & check commands
+
+Self-contained so it survives into `AGENTS.md` on regen — cross-family reviewers (codex / cursor / grok) read `AGENTS.md`, not the Claude skill set.
+
+- **Canonical gate:** `mix precommit.full` (and its alias `mix ci`) — the comprehensive pass the harness reviewer's `check_command` runs. Fast local loop: `mix precommit` (skips the cold-PLT dialyzer + full coverage). Both are defined in `mix.exs` aliases and pinned to `MIX_ENV=test` via `def cli`.
+- `mix precommit.full` runs, in order: `compile --warnings-as-errors`, `format --check-formatted`, `credo --strict` (ignoring TODO/FIXME tags; ExSlop plugin enabled in `.credo.exs`), `doctor --raise`, `ex_dna --max-clones 0` (zero-clone budget), `reach.check --arch --smells` (policy in `.reach.exs`), `sobelow --config`, `test.json --cover --cover-threshold 85 --exclude integration`, `dialyzer`. CI (`.github/workflows/harness.yml`) mirrors these as separate steps (keeping its own `MIX_ENV=dev` dialyzer with the cached `priv/plts` PLT and the `.sobelow-skips` drift check).
+- **`mix test.json` (`ex_unit_json`) and `mix dialyzer.json` (`dialyzer_json`) emit JSON by design — this is NOT a build failure.** Parse the JSON for real failures; never flag the envelope itself. Plain `mix dialyzer` is the authoritative dialyzer check when the JSON encoder can't serialize a warning shape (it's what the gate and CI run).
+
 ## Hook-flagged issues
 
 When our PostToolUse hooks flag issues on files you touched (credo, format, dialyzer, etc.), fix them in this commit — including pre-existing flags unrelated to your change. See `critical-rules.md` → "FIX HOOK-FLAGGED ISSUES ON FILES YOU TOUCH". Touched-file scope only, not project-wide.

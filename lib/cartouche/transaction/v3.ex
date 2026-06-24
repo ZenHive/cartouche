@@ -30,6 +30,7 @@ defmodule Cartouche.Transaction.V3 do
 
   alias Cartouche.Signer.Default
   alias Cartouche.Transaction.JsonField
+  alias Cartouche.Transaction.Signature
 
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
 
@@ -149,35 +150,8 @@ defmodule Cartouche.Transaction.V3 do
   def decode(_), do: {:error, "invalid v3 transaction"}
 
   @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
-  defp decode_fields([
-         chain_id,
-         nonce,
-         max_priority_fee_per_gas,
-         max_fee_per_gas,
-         gas_limit,
-         destination,
-         amount,
-         data,
-         access_list,
-         max_fee_per_blob_gas,
-         blob_versioned_hashes
-       ]) do
-    decode_payload(
-      [
-        chain_id,
-        nonce,
-        max_priority_fee_per_gas,
-        max_fee_per_gas,
-        gas_limit,
-        destination,
-        amount,
-        data,
-        access_list,
-        max_fee_per_blob_gas,
-        blob_versioned_hashes
-      ],
-      {nil, nil, nil}
-    )
+  defp decode_fields([_, _, _, _, _, _, _, _, _, _, _] = fields) do
+    decode_payload(fields, {nil, nil, nil})
   end
 
   defp decode_fields([
@@ -243,9 +217,7 @@ defmodule Cartouche.Transaction.V3 do
   Adds explicit signature fields to a transaction.
   """
   @spec add_signature(t(), boolean(), <<_::256>>, <<_::256>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, v, <<_::256>> = r, <<_::256>> = s) when is_boolean(v) do
-    %{transaction | signature_y_parity: v, signature_r: r, signature_s: s}
-  end
+  def add_signature(%__MODULE__{} = transaction, v, r, s), do: Signature.add(transaction, v, r, s)
 
   @doc """
   Adds a signature to a transaction from a packed binary (`r <> s <> v`).
@@ -259,13 +231,7 @@ defmodule Cartouche.Transaction.V3 do
   Recovers a signature from a transaction, if it has been signed.
   """
   @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
-  def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
-      when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
-
-  def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
-    v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
-    {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
-  end
+  def get_signature(%__MODULE__{} = transaction), do: Signature.get(transaction)
 
   @doc """
   Recovers the signer from a signed V3 transaction.
@@ -433,7 +399,10 @@ defmodule Cartouche.Transaction.V3 do
       _ -> {:error, "invalid v3 transaction"}
     end
   rescue
-    _ -> {:error, "invalid v3 transaction"}
+    # `:binary.decode_unsigned/1` and `byte_size/1` raise ArgumentError on the
+    # non-binary terms a malformed RLP payload can yield; helpers return
+    # `{:error, …}` rather than raising.
+    ArgumentError -> {:error, "invalid v3 transaction"}
   end
 
   defp decode_payload(_, _), do: {:error, "invalid v3 transaction"}
@@ -493,7 +462,7 @@ defmodule Cartouche.Transaction.V3 do
       _ -> {:error, "invalid v3 transaction"}
     end
   rescue
-    _ -> {:error, "invalid v3 transaction"}
+    ArgumentError -> {:error, "invalid v3 transaction"}
   end
 
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
@@ -504,7 +473,9 @@ defmodule Cartouche.Transaction.V3 do
   defp safe_rlp_decode(trx_enc) do
     {:ok, ExRLP.decode(trx_enc)}
   rescue
-    _ -> {:error, "invalid v3 transaction"}
+    # ExRLP raises DecodeError on most malformed input, but leaks a MatchError
+    # on truncated length-prefixed binaries (an internal `<<_::size>> = tail`).
+    _e in [ExRLP.DecodeError, MatchError] -> {:error, "invalid v3 transaction"}
   end
 
   @spec y_parity(binary()) :: boolean()

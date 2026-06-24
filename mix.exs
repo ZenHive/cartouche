@@ -57,8 +57,23 @@ defmodule Cartouche.MixProject do
   end
 
   # ZenHive dev-branch only: preferred envs for our tooling.
+  #
+  # ci / precommit / precommit.full pin :test so every step (compile, credo,
+  # test.json, dialyzer) runs in one consistent env — dialyzer then builds a
+  # `priv/plts/*_deps-test.plt`. CI (harness.yml) keeps its own MIX_ENV=dev
+  # dialyzer step with the cached dev PLT; the alias is for local + the harness
+  # reviewer's `check_command`, where a single-env run is simpler.
   def cli do
-    [preferred_envs: ["test.json": :test, "dialyzer.json": :dev, integration: :test]]
+    [
+      preferred_envs: [
+        "test.json": :test,
+        "dialyzer.json": :dev,
+        integration: :test,
+        ci: :test,
+        precommit: :test,
+        "precommit.full": :test
+      ]
+    ]
   end
 
   defp package do
@@ -144,6 +159,7 @@ defmodule Cartouche.MixProject do
       {:meck, "~> 1.2.0", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
       {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
+      {:ex_slop, "~> 0.4", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.6", only: :dev},
       {:bandit, "~> 1.12", only: :dev}
@@ -161,7 +177,32 @@ defmodule Cartouche.MixProject do
         "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4013) end)'"
       ],
       integration: ["test.json --only integration"],
-      manifest: ["descripex.manifest --pretty --output api_manifest.json --app cartouche"]
+      manifest: ["descripex.manifest --pretty --output api_manifest.json --app cartouche"],
+      # Fast local pre-commit loop — skips the cold-PLT dialyzer and full coverage
+      # pass so it stays sub-minute on incremental edits.
+      precommit: [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "credo --strict --ignore Credo.Check.Design.TagTODO,Credo.Check.Design.TagFIXME",
+        "ex_dna --max-clones 0",
+        "test.json --exclude integration"
+      ],
+      # Comprehensive gate — this is the harness reviewer's `check_command` and
+      # the `mix ci` target. Mirrors .github/workflows/harness.yml (the tuned CI
+      # is still ground truth; harness.yml keeps its own dev-PLT dialyzer step and
+      # the sobelow `--mark-skip-all` drift check, which is CI-only bookkeeping).
+      "precommit.full": [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "credo --strict --ignore Credo.Check.Design.TagTODO,Credo.Check.Design.TagFIXME",
+        "doctor --raise",
+        "ex_dna --max-clones 0",
+        "reach.check --arch --smells",
+        "sobelow --config",
+        "test.json --cover --cover-threshold 85 --summary-only --exclude integration",
+        "dialyzer"
+      ],
+      ci: ["precommit.full"]
     ]
   end
 end

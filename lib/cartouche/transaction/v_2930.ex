@@ -43,13 +43,7 @@ defmodule Cartouche.Transaction.V_2930 do
   Decodes an EIP-2930 typed RLP transaction.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
-  def decode(<<@tx_type, trx_enc::binary>>) do
-    with {:ok, fields} <- safe_rlp_decode(trx_enc) do
-      decode_fields(fields)
-    end
-  end
-
-  def decode(_), do: {:error, @invalid}
+  def decode(input), do: Cartouche.Transaction.TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
 
   @doc ~S"""
   Decodes an EIP-2930 (type 1) transaction object from block JSON-RPC.
@@ -72,8 +66,8 @@ defmodule Cartouche.Transaction.V_2930 do
   end
 
   @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
-  defp decode_fields([chain_id, nonce, gas_price, gas_limit, destination, amount, data, access_list]) do
-    decode_payload([chain_id, nonce, gas_price, gas_limit, destination, amount, data, access_list], {nil, nil, nil})
+  defp decode_fields([_, _, _, _, _, _, _, _] = fields) do
+    decode_payload(fields, {nil, nil, nil})
   end
 
   defp decode_fields([
@@ -132,7 +126,10 @@ defmodule Cartouche.Transaction.V_2930 do
       _ -> {:error, @invalid}
     end
   rescue
-    _ -> {:error, @invalid}
+    # `:binary.decode_unsigned/1` and `byte_size/1` raise ArgumentError on the
+    # non-binary terms a malformed RLP payload can yield; helpers return
+    # `{:error, …}` rather than raising.
+    ArgumentError -> {:error, @invalid}
   end
 
   defp decode_payload(_, _), do: {:error, @invalid}
@@ -179,17 +176,10 @@ defmodule Cartouche.Transaction.V_2930 do
       _ -> {:error, @invalid}
     end
   rescue
-    _ -> {:error, @invalid}
+    ArgumentError -> {:error, @invalid}
   end
 
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
   defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
   defp reverse_ok({:error, _} = error), do: error
-
-  @spec safe_rlp_decode(binary()) :: {:ok, term()} | {:error, String.t()}
-  defp safe_rlp_decode(trx_enc) do
-    {:ok, ExRLP.decode(trx_enc)}
-  rescue
-    _ -> {:error, @invalid}
-  end
 end

@@ -168,31 +168,26 @@ defmodule Cartouche.Solana.RPC do
 
   @spec commitment_config(keyword()) :: map()
   defp commitment_config(opts) do
-    config = %{}
-
     config =
       if c = Keyword.get(opts, :commitment),
-        do: Map.put(config, "commitment", to_string(c)),
-        else: config
+        do: %{"commitment" => to_string(c)},
+        else: %{}
 
-    config =
-      if s = Keyword.get(opts, :min_context_slot),
-        do: Map.put(config, "minContextSlot", s),
-        else: config
-
-    config
+    if s = Keyword.get(opts, :min_context_slot),
+      do: Map.put(config, "minContextSlot", s),
+      else: config
   end
 
   @spec account_config(keyword()) :: map()
   defp account_config(opts) do
-    config = commitment_config(opts)
-
-    config =
+    encoding =
       if e = Keyword.get(opts, :encoding),
-        do: Map.put(config, "encoding", encoding_string(e)),
-        else: Map.put(config, "encoding", "base64")
+        do: encoding_string(e),
+        else: "base64"
 
-    config
+    opts
+    |> commitment_config()
+    |> Map.put("encoding", encoding)
   end
 
   @spec encoding_string(atom() | binary()) :: String.t()
@@ -1142,27 +1137,47 @@ defmodule Cartouche.Solana.RPC do
     if System.monotonic_time(:millisecond) > deadline do
       {:error, :timeout}
     else
-      case get_signature_statuses([signature], opts) do
-        {:ok, [nil]} ->
-          Process.sleep(interval)
-          poll_signature(signature, target, interval, deadline, opts)
-
-        {:ok, [%{err: err}]} when not is_nil(err) ->
-          {:error, {:transaction_error, err}}
-
-        {:ok, [%{confirmation_status: status}]} when status == target or status == :finalized ->
-          {:ok, signature}
-
-        {:ok, [%{confirmation_status: :confirmed}]} when target == :processed ->
-          {:ok, signature}
-
-        {:ok, _} ->
-          Process.sleep(interval)
-          poll_signature(signature, target, interval, deadline, opts)
-
-        {:error, _} = err ->
-          err
-      end
+      check_status(signature, target, interval, deadline, opts)
     end
   end
+
+  @spec check_status(String.t(), atom(), pos_integer(), integer(), keyword()) ::
+          {:ok, String.t()} | {:error, term()}
+  defp check_status(signature, target, interval, deadline, opts) do
+    case get_signature_statuses([signature], opts) do
+      {:ok, [nil]} ->
+        retry(signature, target, interval, deadline, opts)
+
+      {:ok, [%{err: err}]} when not is_nil(err) ->
+        {:error, {:transaction_error, err}}
+
+      {:ok, [%{confirmation_status: status}]} ->
+        if status_satisfies?(status, target),
+          do: {:ok, signature},
+          else: retry(signature, target, interval, deadline, opts)
+
+      {:ok, _} ->
+        retry(signature, target, interval, deadline, opts)
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
+  @spec retry(String.t(), atom(), pos_integer(), integer(), keyword()) ::
+          {:ok, String.t()} | {:error, term()}
+  defp retry(signature, target, interval, deadline, opts) do
+    Process.sleep(interval)
+    poll_signature(signature, target, interval, deadline, opts)
+  end
+
+  # Solana confirmation levels are ordered processed < confirmed < finalized;
+  # a target is satisfied by an equal-or-stronger observed status. The clauses
+  # mirror the original guards exactly: an exact match, `finalized` as terminal
+  # for any target, and `confirmed` satisfying a `processed` target.
+  @spec status_satisfies?(atom(), atom()) :: boolean()
+  defp status_satisfies?(status, status), do: true
+  defp status_satisfies?(:finalized, _target), do: true
+  defp status_satisfies?(:confirmed, :processed), do: true
+  defp status_satisfies?(_status, _target), do: false
 end

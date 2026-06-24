@@ -235,7 +235,10 @@ defmodule Cartouche.Sleuth do
     [decoded] = ABI.decode("(bytes)", bytes)
     {:ok, decoded}
   rescue
-    e ->
+    # `ABI.decode/2` raises on malformed wire bytes and the `[decoded] =`
+    # match raises `MatchError` when the outer tuple arity differs; both
+    # become an `{:error, _}` rather than crashing the query.
+    e in [ArgumentError, MatchError, FunctionClauseError, RuntimeError, KeyError, Protocol.UndefinedError] ->
       {:error, "error decoding bytes: #{inspect(e)}"}
   end
 
@@ -257,7 +260,9 @@ defmodule Cartouche.Sleuth do
        decode_structs: decode_structs
      )}
   rescue
-    e ->
+    # `ABI.decode/3` raises on selector/return mismatches and malformed bytes;
+    # surface as an `{:error, _}` for the caller instead of crashing.
+    e in [ArgumentError, MatchError, FunctionClauseError, RuntimeError, KeyError, Protocol.UndefinedError] ->
       {:error, "error decoding: #{inspect(e)}"}
   end
 
@@ -414,7 +419,10 @@ defmodule Cartouche.Sleuth do
   defp try_apply(mod, fun, args) do
     apply(mod, fun, args)
   rescue
-    _ ->
+    # Only an undefined/unexported function is reframed as the "does not define
+    # required …" error; any other exception raised *inside* an existing
+    # generated function propagates unchanged so real bugs aren't masked.
+    UndefinedFunctionError ->
       reraise "Sleuth module #{mod} does not define required \"#{fun}/#{length(args)}\" function",
               __STACKTRACE__
   end

@@ -166,13 +166,7 @@ defmodule Cartouche.Transaction.V4 do
   Decode an RLP-encoded EIP-7702 transaction.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
-  def decode(<<@tx_type, trx_enc::binary>>) do
-    with {:ok, fields} <- safe_rlp_decode(trx_enc) do
-      decode_fields(fields)
-    end
-  end
-
-  def decode(_), do: {:error, @invalid}
+  def decode(input), do: Cartouche.Transaction.TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
 
   @doc """
   Signs the outer EIP-7702 transaction.
@@ -359,33 +353,19 @@ defmodule Cartouche.Transaction.V4 do
   end
 
   @spec encoded_fields(tx_input()) :: list()
-  defp encoded_fields(%__MODULE__{
-         chain_id: chain_id,
-         nonce: nonce,
-         max_priority_fee_per_gas: max_priority_fee_per_gas,
-         max_fee_per_gas: max_fee_per_gas,
-         gas_limit: gas_limit,
-         destination: destination,
-         amount: amount,
-         data: data,
-         access_list: access_list,
-         authorization_list: authorization_list,
-         signature_y_parity: signature_y_parity,
-         signature_r: signature_r,
-         signature_s: signature_s
-       }) do
+  defp encoded_fields(%__MODULE__{} = tx) do
     [
-      chain_id,
-      nonce,
-      max_priority_fee_per_gas,
-      max_fee_per_gas,
-      gas_limit,
-      destination,
-      amount,
-      data,
-      encode_access_list(access_list),
-      encode_authorization_list(authorization_list)
-    ] ++ encode_signature_fields(signature_y_parity, signature_r, signature_s)
+      tx.chain_id,
+      tx.nonce,
+      tx.max_priority_fee_per_gas,
+      tx.max_fee_per_gas,
+      tx.gas_limit,
+      tx.destination,
+      tx.amount,
+      tx.data,
+      encode_access_list(tx.access_list),
+      encode_authorization_list(tx.authorization_list)
+    ] ++ encode_signature_fields(tx.signature_y_parity, tx.signature_r, tx.signature_s)
   end
 
   @spec encode_access_list([{<<_::160>>, [<<_::256>>]}] | nil) :: list()
@@ -420,33 +400,8 @@ defmodule Cartouche.Transaction.V4 do
   end
 
   @spec decode_fields(list()) :: {:ok, t()} | {:error, String.t()}
-  defp decode_fields([
-         chain_id,
-         nonce,
-         max_priority_fee_per_gas,
-         max_fee_per_gas,
-         gas_limit,
-         destination,
-         amount,
-         data,
-         access_list,
-         authorization_list
-       ]) do
-    decode_transaction_fields(
-      [
-        chain_id,
-        nonce,
-        max_priority_fee_per_gas,
-        max_fee_per_gas,
-        gas_limit,
-        destination,
-        amount,
-        data,
-        access_list,
-        authorization_list
-      ],
-      {nil, nil, nil}
-    )
+  defp decode_fields([_, _, _, _, _, _, _, _, _, _] = fields) do
+    decode_transaction_fields(fields, {nil, nil, nil})
   end
 
   defp decode_fields([
@@ -640,13 +595,6 @@ defmodule Cartouche.Transaction.V4 do
   @spec parse_chain_id(atom() | integer() | nil) :: integer()
   defp parse_chain_id(nil), do: Cartouche.Application.chain_id()
   defp parse_chain_id(chain_id), do: Cartouche.Chain.parse_id(chain_id)
-
-  @spec safe_rlp_decode(binary()) :: {:ok, term()} | {:error, String.t()}
-  defp safe_rlp_decode(bytes) do
-    {:ok, ExRLP.decode(bytes)}
-  rescue
-    _ -> {:error, @invalid}
-  end
 
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
   defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}

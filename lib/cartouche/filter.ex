@@ -86,11 +86,11 @@ defmodule Cartouche.Filter do
   @spec start_link(Keyword.t()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     name = Keyword.get(opts, :name, __MODULE__)
-    address = Keyword.get(opts, :address, nil)
+    address = Keyword.get(opts, :address)
     topics = Keyword.get(opts, :topics, [])
     events = Keyword.get(opts, :events, [])
     rpc_opts = Keyword.get(opts, :rpc_opts, [])
-    extra_data = Keyword.get(opts, :extra_data, nil)
+    extra_data = Keyword.get(opts, :extra_data)
     check_delay = Keyword.get(opts, :check_delay, @check_delay)
 
     decoders =

@@ -6,6 +6,7 @@ defmodule Cartouche.Transaction do
   use Descripex, namespace: "/ethereum/transaction"
 
   alias Cartouche.Signer.Default
+  alias Cartouche.Transaction.Signature
   alias Cartouche.Transaction.V3
   alias Cartouche.Transaction.V4
   alias Cartouche.Transaction.V_2930
@@ -220,7 +221,9 @@ defmodule Cartouche.Transaction do
          s: :binary.decode_unsigned(s)
        }}
     rescue
-      _ -> {:error, "invalid legacy transaction"}
+      # `:binary.decode_unsigned/1` raises ArgumentError on the non-binary
+      # terms a malformed RLP body can yield.
+      ArgumentError -> {:error, "invalid legacy transaction"}
     end
 
     defp decode_fields(_), do: {:error, "invalid legacy transaction"}
@@ -229,7 +232,9 @@ defmodule Cartouche.Transaction do
     defp safe_rlp_decode(trx_enc) do
       {:ok, ExRLP.decode(trx_enc)}
     rescue
-      _ -> {:error, "invalid legacy transaction"}
+      # ExRLP raises DecodeError on most malformed input, but leaks a MatchError
+      # on truncated length-prefixed binaries (an internal `<<_::size>> = tail`).
+      _e in [ExRLP.DecodeError, MatchError] -> {:error, "invalid legacy transaction"}
     end
 
     api(:add_signature, "Attach an Ethereum signature to a legacy transaction.",
@@ -926,31 +931,8 @@ defmodule Cartouche.Transaction do
     def decode(_), do: {:error, "invalid v2 transaction"}
 
     @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
-    defp decode_fields([
-           chain_id,
-           nonce,
-           max_priority_fee_per_gas,
-           max_fee_per_gas,
-           gas_limit,
-           destination,
-           amount,
-           data,
-           access_list
-         ]) do
-      decode_payload(
-        [
-          chain_id,
-          nonce,
-          max_priority_fee_per_gas,
-          max_fee_per_gas,
-          gas_limit,
-          destination,
-          amount,
-          data,
-          access_list
-        ],
-        {nil, nil, nil}
-      )
+    defp decode_fields([_, _, _, _, _, _, _, _, _] = fields) do
+      decode_payload(fields, {nil, nil, nil})
     end
 
     defp decode_fields([
@@ -1029,7 +1011,9 @@ defmodule Cartouche.Transaction do
          }}
       end
     rescue
-      _ -> {:error, "invalid v2 transaction"}
+      # `:binary.decode_unsigned/1` raises ArgumentError on the non-binary
+      # terms a malformed RLP payload can yield.
+      ArgumentError -> {:error, "invalid v2 transaction"}
     end
 
     defp decode_payload(_, _), do: {:error, "invalid v2 transaction"}
@@ -1041,7 +1025,11 @@ defmodule Cartouche.Transaction do
          {pad_address(address), Enum.map(storage, &pad_word/1)}
        end)}
     rescue
-      _ -> {:error, "invalid v2 transaction"}
+      # A malformed access list raises when an entry isn't a 2-element list
+      # (FunctionClauseError), `storage` isn't enumerable
+      # (Protocol.UndefinedError), or a word/address fails its size guard.
+      _e in [MatchError, FunctionClauseError, Protocol.UndefinedError, ArgumentError] ->
+        {:error, "invalid v2 transaction"}
     end
 
     defp decode_access_list(_), do: {:error, "invalid v2 transaction"}
@@ -1062,7 +1050,8 @@ defmodule Cartouche.Transaction do
         _ -> {:error, "invalid v2 transaction"}
       end
     rescue
-      _ -> {:error, "invalid v2 transaction"}
+      # `:binary.decode_unsigned/1` raises ArgumentError on a non-binary y-parity.
+      ArgumentError -> {:error, "invalid v2 transaction"}
     end
 
     @spec pad_address(binary()) :: <<_::160>>
@@ -1075,7 +1064,9 @@ defmodule Cartouche.Transaction do
     defp safe_rlp_decode(trx_enc) do
       {:ok, ExRLP.decode(trx_enc)}
     rescue
-      _ -> {:error, "invalid v2 transaction"}
+      # ExRLP raises DecodeError on most malformed input, but leaks a MatchError
+      # on truncated length-prefixed binaries (an internal `<<_::size>> = tail`).
+      _e in [ExRLP.DecodeError, MatchError] -> {:error, "invalid v2 transaction"}
     end
 
     api(:add_signature, "Attach an Ethereum signature to an EIP-1559 transaction.",
@@ -1185,9 +1176,7 @@ defmodule Cartouche.Transaction do
         }
     """
     @spec add_signature(t(), boolean(), <<_::256>>, <<_::256>>) :: t()
-    def add_signature(%__MODULE__{} = transaction, v, <<_::256>> = r, <<_::256>> = s) when is_boolean(v) do
-      %{transaction | signature_y_parity: v, signature_r: r, signature_s: s}
-    end
+    def add_signature(%__MODULE__{} = transaction, v, r, s), do: Signature.add(transaction, v, r, s)
 
     api(:add_signature, "Attach a packed Ethereum signature to an EIP-1559 transaction.",
       params: [
@@ -1241,13 +1230,7 @@ defmodule Cartouche.Transaction do
         {:error, "transaction missing signature"}
     """
     @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
-    def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
-        when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
-
-    def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
-      v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
-      {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
-    end
+    def get_signature(%__MODULE__{} = transaction), do: Signature.get(transaction)
 
     api(:recover_signer, "Recover the signer address from a signed EIP-1559 transaction.",
       params: [
@@ -1868,8 +1851,8 @@ defmodule Cartouche.Transaction do
         ) :: {:ok, V1.t()} | {:error, String.t()}
   def build_signed_trx(address, nonce, call_data, gas_price, gas_limit, value, opts \\ []) do
     signer = Keyword.get(opts, :signer, Default)
-    chain_id = Keyword.get(opts, :chain_id, nil)
-    callback = Keyword.get(opts, :callback, nil)
+    chain_id = Keyword.get(opts, :chain_id)
+    callback = Keyword.get(opts, :callback)
 
     transaction = build_trx(address, nonce, call_data, gas_price, gas_limit, value, chain_id)
     callback = if(is_nil(callback), do: fn trx -> {:ok, trx} end, else: callback)
@@ -1967,8 +1950,8 @@ defmodule Cartouche.Transaction do
       )
       when is_list(access_list) do
     signer = Keyword.get(opts, :signer, Default)
-    chain_id = Keyword.get(opts, :chain_id, nil)
-    callback = Keyword.get(opts, :callback, nil)
+    chain_id = Keyword.get(opts, :chain_id)
+    callback = Keyword.get(opts, :callback)
 
     transaction =
       build_trx_v2(

@@ -56,6 +56,9 @@ defmodule Cartouche.DebugTrace do
     #                 current Geth node carry "DIFFICULTY", not "PREVRANDAO".
     #   PREVRANDAO  — forward-compat for clients (or a future Geth) that emit the
     #                 post-Merge name; Erigon/Reth historically used it.
+    # Atom literals (`~w(...)a`) so the compiler interns every opcode atom at
+    # build time — no `String.to_atom/1` on the list, and runtime lookup
+    # (`Map.fetch/2` keyed by the wire string) can never grow the atom table.
     @single_opcodes ~w(
       STOP ADD MUL SUB DIV SDIV MOD SMOD ADDMOD MULMOD EXP SIGNEXTEND
       LT GT SLT SGT EQ ISZERO AND OR XOR NOT BYTE SHL SHR SAR
@@ -67,14 +70,19 @@ defmodule Cartouche.DebugTrace do
       POP MLOAD MSTORE MSTORE8 SLOAD SSTORE JUMP JUMPI PC MSIZE GAS JUMPDEST
       TLOAD TSTORE MCOPY PUSH0
       CREATE CALL CALLCODE RETURN DELEGATECALL CREATE2 STATICCALL REVERT INVALID SELFDESTRUCT
-    )
+    )a
 
-    @ranged_opcodes Enum.map(1..32, &"PUSH#{&1}") ++
-                      Enum.map(1..16, &"DUP#{&1}") ++
-                      Enum.map(1..16, &"SWAP#{&1}") ++
-                      Enum.map(0..4, &"LOG#{&1}")
+    @ranged_opcodes ~w(
+      PUSH1 PUSH2 PUSH3 PUSH4 PUSH5 PUSH6 PUSH7 PUSH8 PUSH9 PUSH10 PUSH11 PUSH12
+      PUSH13 PUSH14 PUSH15 PUSH16 PUSH17 PUSH18 PUSH19 PUSH20 PUSH21 PUSH22 PUSH23
+      PUSH24 PUSH25 PUSH26 PUSH27 PUSH28 PUSH29 PUSH30 PUSH31 PUSH32
+      DUP1 DUP2 DUP3 DUP4 DUP5 DUP6 DUP7 DUP8 DUP9 DUP10 DUP11 DUP12 DUP13 DUP14 DUP15 DUP16
+      SWAP1 SWAP2 SWAP3 SWAP4 SWAP5 SWAP6 SWAP7 SWAP8 SWAP9 SWAP10 SWAP11 SWAP12
+      SWAP13 SWAP14 SWAP15 SWAP16
+      LOG0 LOG1 LOG2 LOG3 LOG4
+    )a
 
-    @opcode_to_atom Map.new(@single_opcodes ++ @ranged_opcodes, &{&1, String.to_atom(&1)})
+    @opcode_to_atom Map.new(@single_opcodes ++ @ranged_opcodes, &{Atom.to_string(&1), &1})
 
     api(:deserialize, "Decode a JSON-RPC debug trace struct-log object.",
       params: [
