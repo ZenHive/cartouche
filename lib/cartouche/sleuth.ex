@@ -328,9 +328,29 @@ defmodule Cartouche.Sleuth do
   # so we have to take the unordered map, and re-order the values by
   # referencing the ordering of the named_types.
   #
-  # TODO: Tighten — currently term() because postprocess walks heterogeneous ABI-decoded values
-  # (maps, lists, tuples, scalars) and can return any of those shapes plus annotated tuples.
-  @spec postprocess(term(), term(), Keyword.t()) :: term()
+  # A postprocessed ABI value: scalars decode to integers/booleans/binaries,
+  # arrays to lists, tuples/named-returns to tuples or string/atom-keyed maps,
+  # and — under `annotated: true` — to `{type, value}` pairs. Recursive because
+  # arrays and tuples nest. Narrower than `term()`: ABI has no atom/float/pid
+  # values, so those are excluded.
+  @typep decoded_value ::
+           integer()
+           | boolean()
+           | binary()
+           | [decoded_value()]
+           | tuple()
+           | map()
+
+  # The type descriptor postprocess folds over: a single ABI return type, a list
+  # of named return types, or `:anonymous`/`nil` for selectors without returns —
+  # exactly the shape of `ABI.FunctionSelector.t().returns`.
+  @typep returns_spec ::
+           ABI.FunctionSelector.type()
+           | [ABI.FunctionSelector.argument_type()]
+           | :anonymous
+           | nil
+
+  @spec postprocess(decoded_value(), returns_spec(), Keyword.t()) :: decoded_value()
   defp postprocess(results, named_types, opts) when is_map(results) and is_list(named_types) do
     results_values =
       Enum.map(named_types, fn %{name: name} ->
