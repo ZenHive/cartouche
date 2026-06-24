@@ -2242,39 +2242,37 @@
       "phase": 0,
       "bundle": "tooling_quality",
       "status": "pending",
-      "title": "Dedup cross-variant transaction helpers (plain functions, not macros)",
+      "title": "Finish + normalize typed-transaction helper extraction (dedup maybe_to_wei/chain_id_value; migrate V3 onto TypedDecode/Signature)",
       "scores": {
         "d": 2,
         "b": 4,
-        "u": 5
+        "u": 4
       },
-      "eff": 2.25,
+      "eff": 2.0,
       "dep_layer": 0,
       "unlocks": 1,
       "markers": [],
       "depends_on": [],
       "acceptance_criteria": [
-        "No duplicated `defp maybe_to_wei` or `defp chain_id_value` remains across the transaction-variant modules — all call a single shared function",
-        "Existing encode/decode round-trip doctests and tests pass unchanged (behavior byte-identical)",
-        "Touched modules stay at >=95% line coverage",
-        "safe_rlp_decode/1 either unified (if bodies identical) or explicitly left with a one-line reason"
+        "maybe_to_wei/1 and chain_id_value/1 are each defined once and called from V3/V4 — no surviving private copies",
+        "V3.decode routes through Cartouche.Transaction.TypedDecode (like V4 and V_2930 already do); V3's private safe_rlp_decode is removed",
+        "The binary-form add_signature/2 in V3 and V4 delegates to Cartouche.Transaction.Signature (single home for the packed r<>s<>v parsing)",
+        "encode/decode round-trip doctests + tests pass unchanged (byte-identical behavior); touched modules stay >=95% coverage"
       ],
       "out_of_scope": [
-        "The EIP-2718 envelope-shape `use` macro — that is Task 111's spike",
         "RPC wrapper changes — Task 110",
-        "Any change to RLP field ordering or struct shapes"
+        "Any change to RLP field ordering or struct shapes",
+        "New macros — this is plain-function consolidation; the typed-tx macro question was settled by 97869ab choosing shared callback modules"
       ],
       "files_to_modify": [
         "lib/cartouche/transaction/v3.ex",
-        "lib/cartouche/transaction/v4.ex",
-        "lib/cartouche/transaction/v_2930.ex",
-        "lib/cartouche/transaction.ex"
+        "lib/cartouche/transaction/v4.ex"
       ],
       "touches": [
         "lib/cartouche/wei.ex",
         "lib/cartouche/chain.ex"
       ],
-      "body": "maybe_to_wei/1 and chain_id_value/1 are defined verbatim in both lib/cartouche/transaction/v3.ex and v4.ex (and have inline equivalents in lib/cartouche/transaction.ex). Extract them to shared plain functions — NOT macros; a macro here would be the wrong tool — so there is one source of truth for the nil-tolerant wei conversion and the chain-id resolution. maybe_to_wei belongs alongside Cartouche.Wei (it already wraps Wei.to_wei/1); chain_id_value belongs with Cartouche.Chain (it resolves nil -> Cartouche.Application.chain_id() and otherwise Cartouche.Chain.parse_id/1). Every transaction-variant module calls the shared function instead of its private copy. If the safe_rlp_decode/1 bodies across v_2930/v3/v4/transaction.ex are byte-identical, fold them too; if they differ per variant, leave them and note why.\n\nThis is the clean low-risk first step; it also unblocks the Typed-envelope macro spike (Task 111), which should call these shared helpers rather than re-inject them.\n\nPre-mutation gate: Cartouche.Transaction* is critical-tier (signing-adjacent, >=95% coverage). Confirm/raise coverage on the touched modules BEFORE refactoring.\n",
+      "body": "Commit 97869ab partially extracted shared typed-transaction helpers into Cartouche.Transaction.TypedDecode (envelope decode + safe_rlp_decode via a callback) and Cartouche.Transaction.Signature (add/get on the struct-as-map), but the migration is uneven and small clones survive. Finish and normalize it — plain functions throughout, NOT macros:\n\n1. Dedup the still-duplicated `maybe_to_wei/1` (v3.ex + v4.ex) and `chain_id_value/1` (v3.ex) into shared plain functions — maybe_to_wei alongside Cartouche.Wei (it already wraps Wei.to_wei/1), chain_id_value with Cartouche.Chain (nil -> Cartouche.Application.chain_id(), else Cartouche.Chain.parse_id/1). These survive the `ex_dna --max-clones 0` gate only because each is a 2-line function below the clone-mass threshold; they are still real duplication.\n2. Migrate V3.decode onto Cartouche.Transaction.TypedDecode the way V4 and V_2930 already are, removing V3's private safe_rlp_decode (lib/cartouche/transaction/v3.ex) so all three typed decoders share one envelope path.\n3. Route the binary-form add_signature/2 through Cartouche.Transaction.Signature across V3 and V4 so the packed r<>s<>v parsing lives in one place.\n\nThe typed-transaction macro question (was Task 111) is settled — 97869ab deliberately chose shared callback modules over a `use`-macro, so this is consolidation, not a new abstraction. The remaining genuine macro opportunity is defrpc (Task 110), a different surface.\n\nPre-mutation gate: Cartouche.Transaction* is critical-tier (signing-adjacent, >=95% coverage). Confirm/raise coverage on the touched modules BEFORE refactoring.\n",
       "created_at": "2026-06-24",
       "scored_at": "2026-06-24",
       "cross_repo": []
@@ -2320,7 +2318,7 @@
       "id": "111",
       "phase": 0,
       "bundle": "tooling_quality",
-      "status": "pending",
+      "status": "superseded",
       "title": "Spike: evaluate a Cartouche.Transaction.Typed envelope macro across V_2930/V3/V4",
       "scores": {
         "d": 2,
@@ -2349,7 +2347,7 @@
         "lib/cartouche/transaction/v4.ex",
         "lib/cartouche/transaction/v_2930.ex"
       ],
-      "body": "SPIKE (bounded investigation + prototype, deliver a recommendation). V_2930, V3, and V4 share an EIP-2718 envelope shape: encode = `<<@tx_type>> <> ExRLP.encode(rlp_payload)`, `hash/1` (keccak of the encoded bytes), the binary-form `add_signature/2`, and `safe_rlp_decode/1`. Evaluate whether a `use Cartouche.Transaction.Typed, type: 0xNN` macro that injects those shared envelope methods nets more than it costs — the per-variant field sets and RLP payload ordering vary a lot, so the FIXED part being factored out may be small.\n\nPrototype the macro against V3 and V4 only. Measure LOC actually removed vs the indirection and stack-trace cost added. Deliver a clear implement-or-reject recommendation recorded in the task's `implemented` field. If implement: land it across V_2930/V3/V4. If reject: document the LOC/indirection math that killed it so a future session does not re-propose it.\n\nThe macro must CALL the shared maybe_to_wei/chain_id_value helpers from Task 109, never re-inject them. Critical-tier (signing) — keep coverage >=95% on any code that actually lands.\n",
+      "body": "SPIKE (bounded investigation + prototype, deliver a recommendation). V_2930, V3, and V4 share an EIP-2718 envelope shape: encode = `<<@tx_type>> <> ExRLP.encode(rlp_payload)`, `hash/1` (keccak of the encoded bytes), the binary-form `add_signature/2`, and `safe_rlp_decode/1`. Evaluate whether a `use Cartouche.Transaction.Typed, type: 0xNN` macro that injects those shared envelope methods nets more than it costs — the per-variant field sets and RLP payload ordering vary a lot, so the FIXED part being factored out may be small.\n\nPrototype the macro against V3 and V4 only. Measure LOC actually removed vs the indirection and stack-trace cost added. Deliver a clear implement-or-reject recommendation recorded in the task's `implemented` field. If implement: land it across V_2930/V3/V4. If reject: document the LOC/indirection math that killed it so a future session does not re-propose it.\n\nThe macro must CALL the shared maybe_to_wei/chain_id_value helpers from Task 109, never re-inject them. Critical-tier (signing) — keep coverage >=95% on any code that actually lands.\n\nSUPERSEDED 2026-06-24: commit 97869ab landed the EIP-2718 envelope sharing as plain callback modules — Cartouche.Transaction.TypedDecode (decode + safe_rlp_decode via a `decode_fields` callback) and Cartouche.Transaction.Signature (add/get on struct-as-map) — explicitly choosing function extraction over a `use`-macro (\"so they work uniformly across the typed-transaction modules without coupling them to one another\"). That answers this spike's macro-vs-not question: function extraction captured the win, and the per-variant residue (field sets, rlp_payload ordering) is exactly the part a macro could not factor out. The remaining real macro opportunity is defrpc (Task 110); the residual extraction cleanup (uneven V3 migration) folded into the reframed Task 109.\n",
       "created_at": "2026-06-24",
       "scored_at": "2026-06-24",
       "cross_repo": []
