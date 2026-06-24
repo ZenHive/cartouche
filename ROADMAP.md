@@ -338,7 +338,7 @@ Single-repo ownership simplifies this — we edit `mix.exs` and `mix.lock` direc
 `mix.exs` previously pinned `~> 0.38.1` (resolved `< 0.39`); now `~> 0.43.0` post-Tasks-24+25. Cartouche uses this in **two** signer modules — `lib/cartouche/signer/cloud_kms.ex` (Ethereum, secp256k1 `digest.sha256` sign) and `lib/cartouche/solana/signer/cloud_kms.ex` (Solana, `EC_SIGN_ED25519` raw-message sign) — both via `cloudkms_..._get_public_key` and `cloudkms_..._asymmetric_sign`, which collapsed at 0.40.0 from arity 6/7 (split path components) to arity 4 (`(connection, name, optional_params \\ [], opts \\ [])` with a single `name` resource path). Both modules are wrapped in `if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects)` and gated as critical-tier (≥95% coverage gate per `critical-rules.md`) — current coverage 88% / 90% post-bump; Goth-path mocking (Task 73) is the deferred follow-up to clear the gate.
 
 <!-- TASKS:BEGIN phase=7 -->
-> 5 tasks. See [CHANGELOG.md](CHANGELOG.md#phase-7-dependency-freshness).
+> 6 tasks. See [CHANGELOG.md](CHANGELOG.md#phase-7-dependency-freshness).
 <!-- TASKS:END -->
 
 ### 7.2 `ex_doc` 0.31.1 → 0.40

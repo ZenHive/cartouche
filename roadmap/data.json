@@ -2155,6 +2155,38 @@
       "delivered_by": "codex",
       "verified": true,
       "cross_repo": []
+    },
+    {
+      "id": "107",
+      "phase": 7,
+      "bundle": "phase7_deps",
+      "status": "pending",
+      "title": "Unblock tesla >= 1.18.3 — supply :max_body_size to the google_gax CloudKMS Tesla client",
+      "scores": {
+        "d": 4,
+        "b": 6,
+        "u": 5
+      },
+      "eff": 1.38,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "acceptance_criteria": [
+        "The CloudKMS Tesla client passes :max_body_size to Tesla.Middleware.Compression (or Compression is configured/removed so it does not raise under tesla >= 1.18.3).",
+        "tesla pin in mix.exs lifted from `== 1.18.2` to allow >= 1.18.3 (target 1.20.0); mix.lock updated; the pin-rationale comment is updated or removed to reflect the fix.",
+        "Full cloud_kms_test suite is green against the bumped tesla (the 14 previously-failing tests pass).",
+        "Critical-tier coverage (>=95%) held on both CloudKMS signer modules; dialyzer run LOCALLY shows no new warnings on touched files.",
+        "Dependabot PR #68 can be closed/merged or superseded by the local bump; CHANGELOG + implemented field note the CVE fixes unblocked."
+      ],
+      "out_of_scope": [
+        "The full Req/Goth dep-light rewrite dropping google_api_cloud_kms + google_gax — that is Task 104's named follow-up, a separate task.",
+        "Bumping any other transitive dep in the GCP cluster beyond what the tesla bump requires."
+      ],
+      "body": "tesla is pinned to EXACTLY 1.18.2 in mix.exs because tesla 1.18.3 made Tesla.Middleware.Compression require an explicit :max_body_size option (DoS hardening). The GCP CloudKMS signer cluster (google_api_cloud_kms -> google_gax, latest 0.4.1, abandoned since 2021) builds its Tesla client with the Compression middleware but WITHOUT :max_body_size, so any tesla bump to >= 1.18.3 raises on every CloudKMS signer call (14 cloud_kms_test failures, observed 2026-06). This blocks Dependabot PR #68 (tesla 1.18.2 -> 1.20.0), which carries five tesla security CVE fixes (CVE-2026-48594 decompression bomb, -48595 auth-header leak on cross-origin redirect, -48596 CRLF injection, -48597 atom exhaustion, -48598 multipart smuggling).\n\nMake the Tesla client used for CloudKMS pass :max_body_size to the Compression middleware (or configure/strip Compression so it no longer raises), so the tesla pin can be lifted. google_gax won't fix this upstream — investigate how google_api_cloud_kms builds its Connection/Tesla client and whether cartouche can inject a custom client or middleware config at the signer boundary. Once the CloudKMS path tolerates tesla >= 1.18.3, bump tesla in mix.exs/mix.lock (replace the `== 1.18.2` pin), update the pin-rationale comment, and confirm the full cloud_kms_test suite is green.\n\nThis is the narrow unblock; the broader Req/Goth dep-light rewrite that drops google_api_cloud_kms + google_gax entirely is Task 104's out_of_scope follow-up — cross-reference, don't duplicate. CloudKMS work => dialyzer verification stays LOCAL (cartouche PLT OOMs on cloud VMs, see CLAUDE.md). Critical-tier (signing) => >=95% coverage gate before mutating.\n",
+      "created_at": "2026-06-24",
+      "scored_at": "2026-06-24",
+      "cross_repo": []
     }
   ]
 }
