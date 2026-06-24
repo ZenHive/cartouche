@@ -12,5 +12,3 @@ config :cartouche, Cartouche.Solana.RPC, plug: &Cartouche.Solana.Test.Client.cal
 config :cartouche, :chain_id, :goerli
 config :cartouche, :open_chain_base_url, "https://example.com/open-chain"
 config :cartouche, :signer, default: {:priv_key, <<1::256>>}
-
-config :tesla, adapter: Tesla.Mock

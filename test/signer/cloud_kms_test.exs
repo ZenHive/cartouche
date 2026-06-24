@@ -8,69 +8,9 @@ defmodule Cartouche.Signer.CloudKMSTest do
   @credential_ref {:goth_credential, __MODULE__}
 
   setup do
-    Tesla.Mock.mock(fn
-      %{
-        method: :get,
-        url:
-          "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version/publicKey"
-      } ->
-        # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/getPublicKey
-        # projects/treasury-stage/locations/global/keyRings/
-        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
-        %Tesla.Env{
-          status: 200,
-          body:
-            Jason.encode!(%{
-              pem:
-                "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEI3tE5EGI0XQZMPwFEiYs4cvq3YHiNSDT\n3/ehihlwUqKAYJajnrlRGhSYdqC+bGekcjnQZxyLlw1xXf/pr+yj3g==\n-----END PUBLIC KEY-----\n",
-              algorithm: "EC_SIGN_SECP256K1_SHA256",
-              pemCrc32c: "1065940272",
-              name:
-                "projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1",
-              protectionLevel: "HSM"
-            })
-        }
-
-      %{
-        method: :get,
-        url:
-          "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
-      } ->
-        %Tesla.Env{
-          status: 200,
-          body:
-            Jason.encode!(%{
-              pem: "-----BEGIN PUBLIC KEY-----\nIRRELEVANT\n-----END PUBLIC KEY-----\n",
-              algorithm: "RSA_SIGN_PSS_2048_SHA256",
-              pemCrc32c: "0",
-              name:
-                "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
-              protectionLevel: "SOFTWARE"
-            })
-        }
-
-      %{
-        method: :post,
-        url:
-          "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version:asymmetricSign"
-      } ->
-        # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/asymmetricSign
-        # projects/treasury-stage/locations/global/keyRings/
-        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
-        # {"digest": {"sha256":"nCL/XyHwuBsRPmP3222pT+3vEbIRm0CIuJZk+5o8tlg="}}
-        %Tesla.Env{
-          status: 200,
-          body:
-            Jason.encode!(%{
-              signature:
-                "MEQCIGSKMaVlv78Uhc8D+6c9qacz7ISU4rXvH/zhgtaWy++9AiAU2LxgbNAmeYt5KgcgkzchwFsaRZtHTHdruwf5mY8IYQ==",
-              signatureCrc32c: "3329027021",
-              name:
-                "projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1",
-              protectionLevel: "HSM"
-            })
-        }
-    end)
+    previous_config = Application.get_env(:cartouche, CloudKMS, [])
+    Application.put_env(:cartouche, CloudKMS, Keyword.put(previous_config, :req_options, plug: &kms_plug/1))
+    on_exit(fn -> Application.put_env(:cartouche, CloudKMS, previous_config) end)
 
     :ok
   end
@@ -83,6 +23,63 @@ defmodule Cartouche.Signer.CloudKMSTest do
     on_exit(fn -> :meck.unload(Goth) end)
 
     {:ok, credential: @credential_ref}
+  end
+
+  defp kms_plug(conn) do
+    assert Plug.Conn.get_req_header(conn, "authorization") in [["Bearer token"], ["Bearer stubbed-token"]]
+
+    case conn do
+      %{
+        method: "GET",
+        request_path:
+          "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version/publicKey"
+      } ->
+        # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/getPublicKey
+        # projects/treasury-stage/locations/global/keyRings/
+        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
+        Req.Test.json(conn, %{
+          pem:
+            "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEI3tE5EGI0XQZMPwFEiYs4cvq3YHiNSDT\n3/ehihlwUqKAYJajnrlRGhSYdqC+bGekcjnQZxyLlw1xXf/pr+yj3g==\n-----END PUBLIC KEY-----\n",
+          algorithm: "EC_SIGN_SECP256K1_SHA256",
+          pemCrc32c: "1065940272",
+          name:
+            "projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1",
+          protectionLevel: "HSM"
+        })
+
+      %{
+        method: "GET",
+        request_path:
+          "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
+      } ->
+        Req.Test.json(conn, %{
+          pem: "-----BEGIN PUBLIC KEY-----\nIRRELEVANT\n-----END PUBLIC KEY-----\n",
+          algorithm: "RSA_SIGN_PSS_2048_SHA256",
+          pemCrc32c: "0",
+          name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
+          protectionLevel: "SOFTWARE"
+        })
+
+      %{
+        method: "POST",
+        request_path:
+          "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version:asymmetricSign"
+      } ->
+        # https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations.keyRings.cryptoKeys.cryptoKeyVersions/asymmetricSign
+        # projects/treasury-stage/locations/global/keyRings/
+        # treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1
+        # {"digest": {"sha256":"nCL/XyHwuBsRPmP3222pT+3vEbIRm0CIuJZk+5o8tlg="}}
+        body = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
+        assert %{"digest" => %{"sha256" => "nCL/XyHwuBsRPmP3222pT+3vEbIRm0CIuJZk+5o8tlg="}} = body
+
+        Req.Test.json(conn, %{
+          signature: "MEQCIGSKMaVlv78Uhc8D+6c9qacz7ISU4rXvH/zhgtaWy++9AiAU2LxgbNAmeYt5KgcgkzchwFsaRZtHTHdruwf5mY8IYQ==",
+          signatureCrc32c: "3329027021",
+          name:
+            "projects/treasury-stage/locations/global/keyRings/treasury-request-signer-6a14c34/cryptoKeys/testkeyyy/cryptoKeyVersions/1",
+          protectionLevel: "HSM"
+        })
+    end
   end
 
   describe "get_address/6" do
@@ -143,10 +140,36 @@ defmodule Cartouche.Signer.CloudKMSTest do
     end
   end
 
+  describe "HTTP error handling" do
+    test "returns non-2xx Req responses" do
+      Application.put_env(:cartouche, CloudKMS, req_options: [plug: &unauthorized_plug/1])
+
+      assert {:error, %Req.Response{status: 401, body: %{"error" => %{"message" => "unauthorized"}}}} =
+               CloudKMS.get_address("token", "project", "location", "keychain", "key", "version")
+    end
+
+    test "returns transport error messages" do
+      Application.put_env(:cartouche, CloudKMS, req_options: [plug: &transport_error_plug/1])
+
+      assert {:error, message} =
+               CloudKMS.get_address("token", "project", "location", "keychain", "key", "version")
+
+      assert message =~ "closed"
+    end
+  end
+
   describe "algorithm/1" do
     test "reports secp256k1" do
       assert CloudKMS.algorithm({"token", "project", "location", "keychain", "key", "version"}) ==
                :secp256k1
     end
   end
+
+  defp unauthorized_plug(conn) do
+    conn
+    |> Plug.Conn.put_status(:unauthorized)
+    |> Req.Test.json(%{"error" => %{"message" => "unauthorized"}})
+  end
+
+  defp transport_error_plug(conn), do: Req.Test.transport_error(conn, :closed)
 end

@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
+if Code.ensure_loaded?(Goth) do
   defmodule Cartouche.Solana.Signer.CloudKMS do
     @moduledoc """
     Ed25519 signing backend using Google Cloud KMS.
@@ -12,8 +12,6 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     - PEM contains Ed25519 SubjectPublicKeyInfo (RFC 8410), not an EC point
     - Signature is raw 64 bytes, not DER-encoded
 
-    Requires the `google_api_cloud_kms` optional dependency.
-
     Implements `Cartouche.Signer.Backend` — its `config` is the
     `{credentials, project, location, keychain, key, version}` key-coordinate
     tuple. Ed25519 signs raw message bytes, so
@@ -21,11 +19,10 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     """
     @behaviour Cartouche.Signer.Backend
 
-    alias GoogleApi.CloudKMS.V1.Api.Projects, as: CloudKMSApi
+    @kms_base_url "https://cloudkms.googleapis.com/v1"
+
     # Ed25519 SubjectPublicKeyInfo DER prefix (12 bytes):
     # SEQUENCE { SEQUENCE { OID 1.3.101.112 (id-Ed25519) } BIT STRING ... }
-    alias GoogleApi.CloudKMS.V1.Connection
-
     @ed25519_der_prefix <<0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21, 0x00>>
 
     @typedoc "Cloud KMS key coordinates: `{credentials, project, location, keychain, key, version}`."
@@ -45,11 +42,7 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     def public_key({cred, project, location, keychain, key, version}) do
       name = key_version_name(project, location, keychain, key, version)
 
-      with {:ok, %GoogleApi.CloudKMS.V1.Model.PublicKey{algorithm: algorithm, pem: pem}} <-
-             CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_get_public_key(
-               client(cred),
-               name
-             ) do
+      with {:ok, %{"algorithm" => algorithm, "pem" => pem}} <- get_public_key(credential_token(cred), name) do
         case algorithm do
           "EC_SIGN_ED25519" ->
             extract_ed25519_pubkey(pem)
@@ -81,18 +74,11 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     @impl true
     @spec sign_payload(binary(), config()) :: {:ok, <<_::512>>} | {:error, term()}
     def sign_payload(message, {cred, project, location, keychain, key, version}) when is_binary(message) do
-      message_enc = Base.encode64(message)
       name = key_version_name(project, location, keychain, key, version)
 
-      with {:ok, response} <-
-             CloudKMSApi.cloudkms_projects_locations_key_rings_crypto_keys_crypto_key_versions_asymmetric_sign(
-               client(cred),
-               name,
-               body: %{
-                 data: message_enc
-               }
-             ),
-           {:ok, <<signature::binary-64>>} <- Base.decode64(response.signature) do
+      with {:ok, %{"signature" => signature}} <-
+             asymmetric_sign(credential_token(cred), name, %{data: Base.encode64(message)}),
+           {:ok, <<signature::binary-64>>} <- Base.decode64(signature) do
         {:ok, signature}
       end
     end
@@ -127,13 +113,42 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
       end
     end
 
-    # TODO: Tesla.Env.client() — Tesla is in plt_ignore_apps (OOM workaround), so dialyzer can't resolve the type
-    @spec client(binary() | atom() | pid()) :: term()
-    defp client(token) when is_binary(token), do: Connection.new(token)
+    @spec get_public_key(String.t(), String.t()) :: {:ok, map()} | {:error, term()}
+    defp get_public_key(token, name), do: request(token, :get, "#{name}/publicKey")
 
-    defp client(cred) do
-      %{token: token, type: "Bearer"} = Goth.fetch!(cred)
-      Connection.new(token)
+    @spec asymmetric_sign(String.t(), String.t(), map()) :: {:ok, map()} | {:error, term()}
+    defp asymmetric_sign(token, name, body), do: request(token, :post, "#{name}:asymmetricSign", json: body)
+
+    @spec request(String.t(), atom(), String.t(), Keyword.t()) :: {:ok, map()} | {:error, term()}
+    defp request(token, method, path, options \\ []) do
+      [
+        method: method,
+        url: "#{@kms_base_url}/#{path}",
+        auth: {:bearer, token},
+        retry: false
+      ]
+      |> Keyword.merge(req_options())
+      |> Req.request(options)
+      |> normalize_response()
     end
+
+    @spec normalize_response({:ok, Req.Response.t()} | {:error, Exception.t()}) :: {:ok, map()} | {:error, term()}
+    defp normalize_response({:ok, %Req.Response{status: status, body: body}}) when status >= 200 and status < 300 do
+      {:ok, body}
+    end
+
+    defp normalize_response({:ok, %Req.Response{} = response}), do: {:error, response}
+    defp normalize_response({:error, exception}), do: {:error, Exception.message(exception)}
+
+    @spec credential_token(term()) :: String.t()
+    defp credential_token(token) when is_binary(token), do: token
+
+    defp credential_token(cred) do
+      %{token: token, type: "Bearer"} = Goth.fetch!(cred)
+      token
+    end
+
+    @spec req_options() :: Keyword.t()
+    defp req_options, do: :cartouche |> Application.get_env(__MODULE__, []) |> Keyword.get(:req_options, [])
   end
 end

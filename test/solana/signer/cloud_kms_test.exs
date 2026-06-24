@@ -36,80 +36,9 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
                         end).()
 
     setup do
-      Tesla.Mock.mock(fn
-        # getPublicKey
-        %{
-          method: :get,
-          url:
-            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version/publicKey"
-        } ->
-          %Tesla.Env{
-            status: 200,
-            body:
-              Jason.encode!(%{
-                pem: @ed25519_pem,
-                algorithm: "EC_SIGN_ED25519",
-                pemCrc32c: "0",
-                name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
-                protectionLevel: "HSM"
-              })
-          }
-
-        # getPublicKey — wrong algorithm
-        %{
-          method: :get,
-          url:
-            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
-        } ->
-          %Tesla.Env{
-            status: 200,
-            body:
-              Jason.encode!(%{
-                pem: @ed25519_pem,
-                algorithm: "EC_SIGN_SECP256K1_SHA256",
-                pemCrc32c: "0",
-                name:
-                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
-                protectionLevel: "HSM"
-              })
-          }
-
-        # getPublicKey — malformed DER (correct algo, wrong DER prefix)
-        %{
-          method: :get,
-          url:
-            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version/publicKey"
-        } ->
-          %Tesla.Env{
-            status: 200,
-            body:
-              Jason.encode!(%{
-                pem: @malformed_der_pem,
-                algorithm: "EC_SIGN_ED25519",
-                pemCrc32c: "0",
-                name:
-                  "projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version",
-                protectionLevel: "HSM"
-              })
-          }
-
-        # asymmetricSign
-        %{
-          method: :post,
-          url:
-            "https://cloudkms.googleapis.com/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version:asymmetricSign"
-        } ->
-          %Tesla.Env{
-            status: 200,
-            body:
-              Jason.encode!(%{
-                signature: Base.encode64(@test_signature),
-                signatureCrc32c: "0",
-                name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
-                protectionLevel: "HSM"
-              })
-          }
-      end)
+      previous_config = Application.get_env(:cartouche, CloudKMS, [])
+      Application.put_env(:cartouche, CloudKMS, Keyword.put(previous_config, :req_options, plug: &kms_plug/1))
+      on_exit(fn -> Application.put_env(:cartouche, CloudKMS, previous_config) end)
 
       :ok
     end
@@ -122,6 +51,70 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
       on_exit(fn -> :meck.unload(Goth) end)
 
       {:ok, credential: @credential_ref}
+    end
+
+    defp kms_plug(conn) do
+      assert Plug.Conn.get_req_header(conn, "authorization") in [["Bearer token"], ["Bearer stubbed-token"]]
+
+      case conn do
+        # getPublicKey
+        %{
+          method: "GET",
+          request_path:
+            "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version/publicKey"
+        } ->
+          Req.Test.json(conn, %{
+            pem: @ed25519_pem,
+            algorithm: "EC_SIGN_ED25519",
+            pemCrc32c: "0",
+            name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+            protectionLevel: "HSM"
+          })
+
+        # getPublicKey — wrong algorithm
+        %{
+          method: "GET",
+          request_path:
+            "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version/publicKey"
+        } ->
+          Req.Test.json(conn, %{
+            pem: @ed25519_pem,
+            algorithm: "EC_SIGN_SECP256K1_SHA256",
+            pemCrc32c: "0",
+            name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/wrong-algo/cryptoKeyVersions/version",
+            protectionLevel: "HSM"
+          })
+
+        # getPublicKey — malformed DER (correct algo, wrong DER prefix)
+        %{
+          method: "GET",
+          request_path:
+            "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version/publicKey"
+        } ->
+          Req.Test.json(conn, %{
+            pem: @malformed_der_pem,
+            algorithm: "EC_SIGN_ED25519",
+            pemCrc32c: "0",
+            name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/bad-der/cryptoKeyVersions/version",
+            protectionLevel: "HSM"
+          })
+
+        # asymmetricSign
+        %{
+          method: "POST",
+          request_path:
+            "/v1/projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version:asymmetricSign"
+        } ->
+          body = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
+          assert %{"data" => "dGVzdA=="} = body
+
+          Req.Test.json(conn, %{
+            signature: Base.encode64(@test_signature),
+            signatureCrc32c: "0",
+            name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+            protectionLevel: "HSM"
+          })
+      end
     end
 
     describe "get_address/6" do
@@ -221,11 +214,37 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
       end
     end
 
+    describe "HTTP error handling" do
+      test "returns non-2xx Req responses" do
+        Application.put_env(:cartouche, CloudKMS, req_options: [plug: &unauthorized_plug/1])
+
+        assert {:error, %Req.Response{status: 401, body: %{"error" => %{"message" => "unauthorized"}}}} =
+                 CloudKMS.get_address("token", "project", "location", "keychain", "key", "version")
+      end
+
+      test "returns transport error messages" do
+        Application.put_env(:cartouche, CloudKMS, req_options: [plug: &transport_error_plug/1])
+
+        assert {:error, message} =
+                 CloudKMS.get_address("token", "project", "location", "keychain", "key", "version")
+
+        assert message =~ "closed"
+      end
+    end
+
     describe "algorithm/1" do
       test "reports ed25519" do
         assert CloudKMS.algorithm({"token", "project", "location", "keychain", "key", "version"}) ==
                  :ed25519
       end
     end
+
+    defp unauthorized_plug(conn) do
+      conn
+      |> Plug.Conn.put_status(:unauthorized)
+      |> Req.Test.json(%{"error" => %{"message" => "unauthorized"}})
+    end
+
+    defp transport_error_plug(conn), do: Req.Test.transport_error(conn, :closed)
   end
 end

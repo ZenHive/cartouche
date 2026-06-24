@@ -32,12 +32,9 @@ defmodule Cartouche.MixProject do
       # gun, cowlib, etc.) is not in lib/'s call graph and bloats the PLT.
       #
       # plt_ignore_apps strips two clusters on top of :apps_direct:
-      #   1. GCP cluster (google_api_cloud_kms + google_gax + goth + tesla +
-      #      jose) — direct/optional runtime deps for the CloudKMS signer
-      #      (~600 modules). Trade-off: dialyzer won't type-check
-      #      Cartouche.Signer.CloudKMS calls into GoogleApi.* / Goth —
-      #      acceptable since CloudKMS is an optional signer with a narrow
-      #      call surface (Goth.Token + GoogleApi.CloudKMS.*).
+      #   1. Goth — optional runtime auth dependency for the CloudKMS signer.
+      #      The signer now calls KMS via Req directly; Goth only mints the
+      #      bearer token.
       #   2. Dev-only direct deps (bandit, tidewave) — pulled in via the
       #      `tidewave` mix alias, never called from lib/. Including them
       #      means every Tidewave or Bandit minor bump invalidates the
@@ -49,11 +46,7 @@ defmodule Cartouche.MixProject do
         plt_core_path: "priv/plts",
         plt_add_apps: [:mix, :ex_unit],
         plt_ignore_apps: [
-          :google_api_cloud_kms,
-          :google_gax,
           :goth,
-          :tesla,
-          :jose,
           :bandit,
           :tidewave
         ]
@@ -114,19 +107,9 @@ defmodule Cartouche.MixProject do
       # already pulls plug `only: :dev` — a narrower `:only` here fails the
       # env-match check. Still excluded from prod (PLT + published deps).
       {:plug, "~> 1.16", only: [:dev, :test]},
-      {:google_api_cloud_kms, "~> 0.43.0", optional: true},
       {:ex_sha3, "~> 0.1.5"},
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.5", optional: true},
-      # Transitive via the GCP/KMS cluster (google_api_cloud_kms → google_gax),
-      # pinned to EXACTLY 1.18.2 because tesla 1.18.3 made
-      # `Tesla.Middleware.Compression` require an explicit `:max_body_size` opt
-      # (DoS hardening). google_gax builds its Tesla client without that opt, so
-      # any bump to >= 1.18.3 raises on every CloudKMS signer call (14
-      # cloud_kms_test failures, 2026-06). `~> 1.18.0` is NOT enough — it resolves
-      # to 1.18.3. Hold at 1.18.2 until the google_gax stack passes
-      # `:max_body_size`, then lift. Optional to match the cluster.
-      {:tesla, "== 1.18.2", optional: true},
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
