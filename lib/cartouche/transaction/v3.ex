@@ -186,11 +186,11 @@ defmodule Cartouche.Transaction.V3 do
          {:ok, signature_s} <- decode_word(signature_s) do
       decode_payload(fields, {signature_y_parity, signature_r, signature_s})
     else
-      _ -> {:error, "invalid v3 transaction"}
+      _ -> {:error, @invalid}
     end
   end
 
-  defp decode_fields(_), do: {:error, "invalid v3 transaction"}
+  defp decode_fields(_), do: {:error, @invalid}
 
   @doc """
   Signs a V3 transaction with the given signer process.
@@ -383,33 +383,33 @@ defmodule Cartouche.Transaction.V3 do
          signature_s: signature_s
        }}
     else
-      _ -> {:error, "invalid v3 transaction"}
+      _ -> {:error, @invalid}
     end
   rescue
     # `:binary.decode_unsigned/1` and `byte_size/1` raise ArgumentError on the
     # non-binary terms a malformed RLP payload can yield; helpers return
     # `{:error, …}` rather than raising.
-    ArgumentError -> {:error, "invalid v3 transaction"}
+    ArgumentError -> {:error, @invalid}
   end
 
-  defp decode_payload(_, _), do: {:error, "invalid v3 transaction"}
+  defp decode_payload(_, _), do: {:error, @invalid}
 
   @spec decode_access_list(term()) :: {:ok, access_list()} | {:error, String.t()}
   defp decode_access_list(access_list) when is_list(access_list),
     do: access_list |> Enum.reduce_while({:ok, []}, &decode_access_entry/2) |> reverse_ok()
 
-  defp decode_access_list(_), do: {:error, "invalid v3 transaction"}
+  defp decode_access_list(_), do: {:error, @invalid}
 
   @spec decode_access_entry(term(), {:ok, access_list()}) ::
           {:cont, {:ok, access_list()}} | {:halt, {:error, String.t()}}
   defp decode_access_entry([address, storage], {:ok, entries}) when byte_size(address) == 20 and is_list(storage) do
     case decode_storage_keys(storage) do
       {:ok, storage} -> {:cont, {:ok, [{address, storage} | entries]}}
-      _ -> {:halt, {:error, "invalid v3 transaction"}}
+      _ -> {:halt, {:error, @invalid}}
     end
   end
 
-  defp decode_access_entry(_, _), do: {:halt, {:error, "invalid v3 transaction"}}
+  defp decode_access_entry(_, _), do: {:halt, {:error, @invalid}}
 
   @spec decode_storage_keys(list()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
   defp decode_storage_keys(storage) do
@@ -419,7 +419,7 @@ defmodule Cartouche.Transaction.V3 do
         {:cont, {:ok, [storage_key | keys]}}
 
       _storage_key, _acc ->
-        {:halt, {:error, "invalid v3 transaction"}}
+        {:halt, {:error, @invalid}}
     end)
     |> reverse_ok()
   end
@@ -431,25 +431,25 @@ defmodule Cartouche.Transaction.V3 do
        end) do
       {:ok, blob_versioned_hashes}
     else
-      {:error, "invalid v3 transaction"}
+      {:error, @invalid}
     end
   end
 
-  defp decode_blob_versioned_hashes(_), do: {:error, "invalid v3 transaction"}
+  defp decode_blob_versioned_hashes(_), do: {:error, @invalid}
 
   @spec decode_word(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
   defp decode_word(word) when byte_size(word) <= 32, do: {:ok, Cartouche.Hex.pad(word, 32)}
-  defp decode_word(_), do: {:error, "invalid v3 transaction"}
+  defp decode_word(_), do: {:error, @invalid}
 
   @spec decode_y_parity(binary()) :: {:ok, boolean()} | {:error, String.t()}
   defp decode_y_parity(y_parity) do
     case :binary.decode_unsigned(y_parity) do
       0 -> {:ok, false}
       1 -> {:ok, true}
-      _ -> {:error, "invalid v3 transaction"}
+      _ -> {:error, @invalid}
     end
   rescue
-    ArgumentError -> {:error, "invalid v3 transaction"}
+    ArgumentError -> {:error, @invalid}
   end
 
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
