@@ -126,7 +126,7 @@ defmodule Cartouche.MixProject do
       # cloud_kms_test failures, 2026-06). `~> 1.18.0` is NOT enough — it resolves
       # to 1.18.3. Hold at 1.18.2 until the google_gax stack passes
       # `:max_body_size`, then lift. Optional to match the cluster.
-      {:tesla, "== 1.18.2", optional: true},
+      {:tesla, "== 1.20.0", optional: true},
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.
