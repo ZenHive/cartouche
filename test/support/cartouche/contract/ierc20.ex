@@ -5,16 +5,146 @@ defmodule Cartouche.Contract.IERC20 do
   # credo:disable-for-this-file Credo.Check.Readability.MaxLineLength
   use Cartouche.Hex
 
+  alias Cartouche.Transaction.Call
+  alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
 
-  @doc false
-  @spec contract_name() :: term()
+  @doc "Returns the contract name."
+  @spec contract_name() :: String.t()
   def contract_name do
     "IERC20"
   end
 
-  @doc false
-  @spec allowance_selector() :: term()
+  @doc "Returns the contract ABI entries."
+  @spec abi() :: [map()]
+  def abi do
+    [
+      %{
+        "inputs" => [
+          %{"internalType" => "address", "name" => "owner", "type" => "address"},
+          %{"internalType" => "address", "name" => "spender", "type" => "address"}
+        ],
+        "name" => "allowance",
+        "outputs" => [%{"internalType" => "uint256", "name" => "", "type" => "uint256"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [
+          %{"internalType" => "address", "name" => "spender", "type" => "address"},
+          %{"internalType" => "uint256", "name" => "amount", "type" => "uint256"}
+        ],
+        "name" => "approve",
+        "outputs" => [%{"internalType" => "bool", "name" => "", "type" => "bool"}],
+        "stateMutability" => "nonpayable",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [%{"internalType" => "address", "name" => "account", "type" => "address"}],
+        "name" => "balanceOf",
+        "outputs" => [%{"internalType" => "uint256", "name" => "", "type" => "uint256"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [],
+        "name" => "decimals",
+        "outputs" => [%{"internalType" => "uint8", "name" => "", "type" => "uint8"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [],
+        "name" => "name",
+        "outputs" => [%{"internalType" => "string", "name" => "", "type" => "string"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [],
+        "name" => "symbol",
+        "outputs" => [%{"internalType" => "string", "name" => "", "type" => "string"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [],
+        "name" => "totalSupply",
+        "outputs" => [%{"internalType" => "uint256", "name" => "", "type" => "uint256"}],
+        "stateMutability" => "view",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [
+          %{"internalType" => "address", "name" => "to", "type" => "address"},
+          %{"internalType" => "uint256", "name" => "amount", "type" => "uint256"}
+        ],
+        "name" => "transfer",
+        "outputs" => [%{"internalType" => "bool", "name" => "", "type" => "bool"}],
+        "stateMutability" => "nonpayable",
+        "type" => "function"
+      },
+      %{
+        "inputs" => [
+          %{"internalType" => "address", "name" => "from", "type" => "address"},
+          %{"internalType" => "address", "name" => "to", "type" => "address"},
+          %{"internalType" => "uint256", "name" => "amount", "type" => "uint256"}
+        ],
+        "name" => "transferFrom",
+        "outputs" => [%{"internalType" => "bool", "name" => "", "type" => "bool"}],
+        "stateMutability" => "nonpayable",
+        "type" => "function"
+      },
+      %{
+        "anonymous" => false,
+        "inputs" => [
+          %{
+            "indexed" => true,
+            "internalType" => "address",
+            "name" => "owner",
+            "type" => "address"
+          },
+          %{
+            "indexed" => true,
+            "internalType" => "address",
+            "name" => "spender",
+            "type" => "address"
+          },
+          %{
+            "indexed" => false,
+            "internalType" => "uint256",
+            "name" => "value",
+            "type" => "uint256"
+          }
+        ],
+        "name" => "Approval",
+        "type" => "event"
+      },
+      %{
+        "anonymous" => false,
+        "inputs" => [
+          %{
+            "indexed" => true,
+            "internalType" => "address",
+            "name" => "from",
+            "type" => "address"
+          },
+          %{"indexed" => true, "internalType" => "address", "name" => "to", "type" => "address"},
+          %{
+            "indexed" => false,
+            "internalType" => "uint256",
+            "name" => "value",
+            "type" => "uint256"
+          }
+        ],
+        "name" => "Transfer",
+        "type" => "event"
+      }
+    ]
+  end
+
+  @doc "Returns the ABI function selector for `allowance_selector/allowance(address,address)`."
+  @spec allowance_selector() :: ABI.FunctionSelector.t()
   def allowance_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -26,51 +156,55 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_allowance(term(), term()) :: term()
+  @doc "Encodes ABI calldata for `encode_allowance/allowance(address,address)`."
+  @spec encode_allowance(<<_::160>>, <<_::160>>) :: binary()
   def encode_allowance(owner, spender) do
     ABI.encode(allowance_selector(), [owner, spender])
   end
 
-  @doc false
-  @spec prepare_allowance(term(), term(), term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_allowance/allowance(address,address)`."
+  @spec prepare_allowance(<<_::160>>, <<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_allowance(contract, owner, spender, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_allowance(owner, spender), opts)
   end
 
-  @doc false
-  @spec build_trx_allowance(term(), term(), term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_allowance/allowance(address,address)`."
+  @spec build_trx_allowance(<<_::160>>, <<_::160>>, <<_::160>>) :: Call.t()
   def build_trx_allowance(contract, owner, spender) do
-    %V2{destination: contract, data: encode_allowance(owner, spender)}
+    %Call{destination: contract, data: encode_allowance(owner, spender)}
   end
 
-  @doc false
-  @spec call_allowance(term(), term(), term(), term()) :: term()
+  @doc "Calls a contract function for `call_allowance/allowance(address,address)`."
+  @spec call_allowance(<<_::160>>, <<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def call_allowance(contract, owner, spender, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_allowance(contract, owner, spender), opts)
   end
 
-  @doc false
-  @spec estimate_gas_allowance(term(), term(), term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_allowance/allowance(address,address)`."
+  @spec estimate_gas_allowance(<<_::160>>, <<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_allowance(contract, owner, spender, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_allowance(contract, owner, spender), opts)
   end
 
-  @doc false
-  @spec execute_allowance(term(), term(), term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_allowance/allowance(address,address)`."
+  @spec execute_allowance(<<_::160>>, <<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_allowance(contract, owner, spender, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_allowance(owner, spender), opts)
   end
 
-  @doc false
-  @spec decode_allowance_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_allowance_call/allowance(address,address)`."
+  @spec decode_allowance_call(binary()) :: [<<_::160>> | <<_::160>>]
   def decode_allowance_call(<<221, 98, 237, 62>> <> calldata) do
     _signature = hex!("0xdd62ed3e")
     ABI.decode(allowance_selector(), calldata)
   end
 
-  @doc false
-  @spec approve_selector() :: term()
+  @doc "Returns the ABI function selector for `approve_selector/approve(address,uint256)`."
+  @spec approve_selector() :: ABI.FunctionSelector.t()
   def approve_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -82,51 +216,56 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_approve(term(), term()) :: term()
+  @doc "Encodes ABI calldata for `encode_approve/approve(address,uint256)`."
+  @spec encode_approve(<<_::160>>, non_neg_integer()) :: binary()
   def encode_approve(spender, amount) do
     ABI.encode(approve_selector(), [spender, amount])
   end
 
-  @doc false
-  @spec prepare_approve(term(), term(), term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_approve/approve(address,uint256)`."
+  @spec prepare_approve(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_approve(contract, spender, amount, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_approve(spender, amount), opts)
   end
 
-  @doc false
-  @spec build_trx_approve(term(), term(), term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_approve/approve(address,uint256)`."
+  @spec build_trx_approve(<<_::160>>, <<_::160>>, non_neg_integer()) ::
+          Call.t()
   def build_trx_approve(contract, spender, amount) do
-    %V2{destination: contract, data: encode_approve(spender, amount)}
+    %Call{destination: contract, data: encode_approve(spender, amount)}
   end
 
-  @doc false
-  @spec call_approve(term(), term(), term(), term()) :: term()
+  @doc "Calls a contract function for `call_approve/approve(address,uint256)`."
+  @spec call_approve(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def call_approve(contract, spender, amount, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_approve(contract, spender, amount), opts)
   end
 
-  @doc false
-  @spec estimate_gas_approve(term(), term(), term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_approve/approve(address,uint256)`."
+  @spec estimate_gas_approve(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_approve(contract, spender, amount, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_approve(contract, spender, amount), opts)
   end
 
-  @doc false
-  @spec execute_approve(term(), term(), term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_approve/approve(address,uint256)`."
+  @spec execute_approve(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_approve(contract, spender, amount, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_approve(spender, amount), opts)
   end
 
-  @doc false
-  @spec decode_approve_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_approve_call/approve(address,uint256)`."
+  @spec decode_approve_call(binary()) :: [<<_::160>> | non_neg_integer()]
   def decode_approve_call(<<9, 94, 167, 179>> <> calldata) do
     _signature = hex!("0x095ea7b3")
     ABI.decode(approve_selector(), calldata)
   end
 
-  @doc false
-  @spec balance_of_selector() :: term()
+  @doc "Returns the ABI function selector for `balance_of_selector/balanceOf(address)`."
+  @spec balance_of_selector() :: ABI.FunctionSelector.t()
   def balance_of_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -138,51 +277,54 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_balance_of(term()) :: term()
+  @doc "Encodes ABI calldata for `encode_balance_of/balanceOf(address)`."
+  @spec encode_balance_of(<<_::160>>) :: binary()
   def encode_balance_of(account) do
     ABI.encode(balance_of_selector(), [account])
   end
 
-  @doc false
-  @spec prepare_balance_of(term(), term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_balance_of/balanceOf(address)`."
+  @spec prepare_balance_of(<<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_balance_of(contract, account, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_balance_of(account), opts)
   end
 
-  @doc false
-  @spec build_trx_balance_of(term(), term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_balance_of/balanceOf(address)`."
+  @spec build_trx_balance_of(<<_::160>>, <<_::160>>) :: Call.t()
   def build_trx_balance_of(contract, account) do
-    %V2{destination: contract, data: encode_balance_of(account)}
+    %Call{destination: contract, data: encode_balance_of(account)}
   end
 
-  @doc false
-  @spec call_balance_of(term(), term(), term()) :: term()
+  @doc "Calls a contract function for `call_balance_of/balanceOf(address)`."
+  @spec call_balance_of(<<_::160>>, <<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_balance_of(contract, account, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_balance_of(contract, account), opts)
   end
 
-  @doc false
-  @spec estimate_gas_balance_of(term(), term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_balance_of/balanceOf(address)`."
+  @spec estimate_gas_balance_of(<<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_balance_of(contract, account, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_balance_of(contract, account), opts)
   end
 
-  @doc false
-  @spec execute_balance_of(term(), term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_balance_of/balanceOf(address)`."
+  @spec execute_balance_of(<<_::160>>, <<_::160>>, Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_balance_of(contract, account, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_balance_of(account), opts)
   end
 
-  @doc false
-  @spec decode_balance_of_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_balance_of_call/balanceOf(address)`."
+  @spec decode_balance_of_call(binary()) :: [<<_::160>>]
   def decode_balance_of_call(<<112, 160, 130, 49>> <> calldata) do
     _signature = hex!("0x70a08231")
     ABI.decode(balance_of_selector(), calldata)
   end
 
-  @doc false
-  @spec decimals_selector() :: term()
+  @doc "Returns the ABI function selector for `decimals_selector/decimals()`."
+  @spec decimals_selector() :: ABI.FunctionSelector.t()
   def decimals_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -194,51 +336,53 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_decimals() :: term()
+  @doc "Encodes ABI calldata for `encode_decimals/decimals()`."
+  @spec encode_decimals() :: binary()
   def encode_decimals do
     ABI.encode(decimals_selector(), [])
   end
 
-  @doc false
-  @spec prepare_decimals(term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_decimals/decimals()`."
+  @spec prepare_decimals(<<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_decimals(contract, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_decimals(), opts)
   end
 
-  @doc false
-  @spec build_trx_decimals(term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_decimals/decimals()`."
+  @spec build_trx_decimals(<<_::160>>) :: Call.t()
   def build_trx_decimals(contract) do
-    %V2{destination: contract, data: encode_decimals()}
+    %Call{destination: contract, data: encode_decimals()}
   end
 
-  @doc false
-  @spec call_decimals(term(), term()) :: term()
+  @doc "Calls a contract function for `call_decimals/decimals()`."
+  @spec call_decimals(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_decimals(contract, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_decimals(contract), opts)
   end
 
-  @doc false
-  @spec estimate_gas_decimals(term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_decimals/decimals()`."
+  @spec estimate_gas_decimals(<<_::160>>, Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_decimals(contract, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_decimals(contract), opts)
   end
 
-  @doc false
-  @spec execute_decimals(term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_decimals/decimals()`."
+  @spec execute_decimals(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def execute_decimals(contract, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_decimals(), opts)
   end
 
-  @doc false
-  @spec decode_decimals_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_decimals_call/decimals()`."
+  @spec decode_decimals_call(binary()) :: []
   def decode_decimals_call(<<49, 60, 229, 103>> <> calldata) do
     _signature = hex!("0x313ce567")
     ABI.decode(decimals_selector(), calldata)
   end
 
-  @doc false
-  @spec name_selector() :: term()
+  @doc "Returns the ABI function selector for `name_selector/name()`."
+  @spec name_selector() :: ABI.FunctionSelector.t()
   def name_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -250,51 +394,52 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_name() :: term()
+  @doc "Encodes ABI calldata for `encode_name/name()`."
+  @spec encode_name() :: binary()
   def encode_name do
     ABI.encode(name_selector(), [])
   end
 
-  @doc false
-  @spec prepare_name(term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_name/name()`."
+  @spec prepare_name(<<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_name(contract, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_name(), opts)
   end
 
-  @doc false
-  @spec build_trx_name(term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_name/name()`."
+  @spec build_trx_name(<<_::160>>) :: Call.t()
   def build_trx_name(contract) do
-    %V2{destination: contract, data: encode_name()}
+    %Call{destination: contract, data: encode_name()}
   end
 
-  @doc false
-  @spec call_name(term(), term()) :: term()
+  @doc "Calls a contract function for `call_name/name()`."
+  @spec call_name(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_name(contract, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_name(contract), opts)
   end
 
-  @doc false
-  @spec estimate_gas_name(term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_name/name()`."
+  @spec estimate_gas_name(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_name(contract, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_name(contract), opts)
   end
 
-  @doc false
-  @spec execute_name(term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_name/name()`."
+  @spec execute_name(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def execute_name(contract, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_name(), opts)
   end
 
-  @doc false
-  @spec decode_name_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_name_call/name()`."
+  @spec decode_name_call(binary()) :: []
   def decode_name_call(<<6, 253, 222, 3>> <> calldata) do
     _signature = hex!("0x06fdde03")
     ABI.decode(name_selector(), calldata)
   end
 
-  @doc false
-  @spec symbol_selector() :: term()
+  @doc "Returns the ABI function selector for `symbol_selector/symbol()`."
+  @spec symbol_selector() :: ABI.FunctionSelector.t()
   def symbol_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -306,51 +451,53 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_symbol() :: term()
+  @doc "Encodes ABI calldata for `encode_symbol/symbol()`."
+  @spec encode_symbol() :: binary()
   def encode_symbol do
     ABI.encode(symbol_selector(), [])
   end
 
-  @doc false
-  @spec prepare_symbol(term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_symbol/symbol()`."
+  @spec prepare_symbol(<<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_symbol(contract, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_symbol(), opts)
   end
 
-  @doc false
-  @spec build_trx_symbol(term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_symbol/symbol()`."
+  @spec build_trx_symbol(<<_::160>>) :: Call.t()
   def build_trx_symbol(contract) do
-    %V2{destination: contract, data: encode_symbol()}
+    %Call{destination: contract, data: encode_symbol()}
   end
 
-  @doc false
-  @spec call_symbol(term(), term()) :: term()
+  @doc "Calls a contract function for `call_symbol/symbol()`."
+  @spec call_symbol(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_symbol(contract, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_symbol(contract), opts)
   end
 
-  @doc false
-  @spec estimate_gas_symbol(term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_symbol/symbol()`."
+  @spec estimate_gas_symbol(<<_::160>>, Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_symbol(contract, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_symbol(contract), opts)
   end
 
-  @doc false
-  @spec execute_symbol(term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_symbol/symbol()`."
+  @spec execute_symbol(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def execute_symbol(contract, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_symbol(), opts)
   end
 
-  @doc false
-  @spec decode_symbol_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_symbol_call/symbol()`."
+  @spec decode_symbol_call(binary()) :: []
   def decode_symbol_call(<<149, 216, 155, 65>> <> calldata) do
     _signature = hex!("0x95d89b41")
     ABI.decode(symbol_selector(), calldata)
   end
 
-  @doc false
-  @spec total_supply_selector() :: term()
+  @doc "Returns the ABI function selector for `total_supply_selector/totalSupply()`."
+  @spec total_supply_selector() :: ABI.FunctionSelector.t()
   def total_supply_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -362,51 +509,53 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_total_supply() :: term()
+  @doc "Encodes ABI calldata for `encode_total_supply/totalSupply()`."
+  @spec encode_total_supply() :: binary()
   def encode_total_supply do
     ABI.encode(total_supply_selector(), [])
   end
 
-  @doc false
-  @spec prepare_total_supply(term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_total_supply/totalSupply()`."
+  @spec prepare_total_supply(<<_::160>>, Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_total_supply(contract, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_total_supply(), opts)
   end
 
-  @doc false
-  @spec build_trx_total_supply(term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_total_supply/totalSupply()`."
+  @spec build_trx_total_supply(<<_::160>>) :: Call.t()
   def build_trx_total_supply(contract) do
-    %V2{destination: contract, data: encode_total_supply()}
+    %Call{destination: contract, data: encode_total_supply()}
   end
 
-  @doc false
-  @spec call_total_supply(term(), term()) :: term()
+  @doc "Calls a contract function for `call_total_supply/totalSupply()`."
+  @spec call_total_supply(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def call_total_supply(contract, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_total_supply(contract), opts)
   end
 
-  @doc false
-  @spec estimate_gas_total_supply(term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_total_supply/totalSupply()`."
+  @spec estimate_gas_total_supply(<<_::160>>, Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_total_supply(contract, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_total_supply(contract), opts)
   end
 
-  @doc false
-  @spec execute_total_supply(term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_total_supply/totalSupply()`."
+  @spec execute_total_supply(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def execute_total_supply(contract, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_total_supply(), opts)
   end
 
-  @doc false
-  @spec decode_total_supply_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_total_supply_call/totalSupply()`."
+  @spec decode_total_supply_call(binary()) :: []
   def decode_total_supply_call(<<24, 22, 13, 221>> <> calldata) do
     _signature = hex!("0x18160ddd")
     ABI.decode(total_supply_selector(), calldata)
   end
 
-  @doc false
-  @spec transfer_selector() :: term()
+  @doc "Returns the ABI function selector for `transfer_selector/transfer(address,uint256)`."
+  @spec transfer_selector() :: ABI.FunctionSelector.t()
   def transfer_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -418,51 +567,56 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_transfer(term(), term()) :: term()
+  @doc "Encodes ABI calldata for `encode_transfer/transfer(address,uint256)`."
+  @spec encode_transfer(<<_::160>>, non_neg_integer()) :: binary()
   def encode_transfer(to, amount) do
     ABI.encode(transfer_selector(), [to, amount])
   end
 
-  @doc false
-  @spec prepare_transfer(term(), term(), term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_transfer/transfer(address,uint256)`."
+  @spec prepare_transfer(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_transfer(contract, to, amount, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_transfer(to, amount), opts)
   end
 
-  @doc false
-  @spec build_trx_transfer(term(), term(), term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_transfer/transfer(address,uint256)`."
+  @spec build_trx_transfer(<<_::160>>, <<_::160>>, non_neg_integer()) ::
+          Call.t()
   def build_trx_transfer(contract, to, amount) do
-    %V2{destination: contract, data: encode_transfer(to, amount)}
+    %Call{destination: contract, data: encode_transfer(to, amount)}
   end
 
-  @doc false
-  @spec call_transfer(term(), term(), term(), term()) :: term()
+  @doc "Calls a contract function for `call_transfer/transfer(address,uint256)`."
+  @spec call_transfer(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def call_transfer(contract, to, amount, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_transfer(contract, to, amount), opts)
   end
 
-  @doc false
-  @spec estimate_gas_transfer(term(), term(), term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_transfer/transfer(address,uint256)`."
+  @spec estimate_gas_transfer(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_transfer(contract, to, amount, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_transfer(contract, to, amount), opts)
   end
 
-  @doc false
-  @spec execute_transfer(term(), term(), term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_transfer/transfer(address,uint256)`."
+  @spec execute_transfer(<<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_transfer(contract, to, amount, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_transfer(to, amount), opts)
   end
 
-  @doc false
-  @spec decode_transfer_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_transfer_call/transfer(address,uint256)`."
+  @spec decode_transfer_call(binary()) :: [<<_::160>> | non_neg_integer()]
   def decode_transfer_call(<<169, 5, 156, 187>> <> calldata) do
     _signature = hex!("0xa9059cbb")
     ABI.decode(transfer_selector(), calldata)
   end
 
-  @doc false
-  @spec transfer_from_selector() :: term()
+  @doc "Returns the ABI function selector for `transfer_from_selector/transferFrom(address,address,uint256)`."
+  @spec transfer_from_selector() :: ABI.FunctionSelector.t()
   def transfer_from_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -478,51 +632,61 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_transfer_from(term(), term(), term()) :: term()
+  @doc "Encodes ABI calldata for `encode_transfer_from/transferFrom(address,address,uint256)`."
+  @spec encode_transfer_from(<<_::160>>, <<_::160>>, non_neg_integer()) :: binary()
   def encode_transfer_from(from, to, amount) do
     ABI.encode(transfer_from_selector(), [from, to, amount])
   end
 
-  @doc false
-  @spec prepare_transfer_from(term(), term(), term(), term(), term()) :: term()
+  @doc "Prepares a transaction for `prepare_transfer_from/transferFrom(address,address,uint256)`."
+  @spec prepare_transfer_from(<<_::160>>, <<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, V1.t() | V2.t()} | {:error, term()}
   def prepare_transfer_from(contract, from, to, amount, opts \\ []) do
     Cartouche.RPC.prepare_trx(contract, encode_transfer_from(from, to, amount), opts)
   end
 
-  @doc false
-  @spec build_trx_transfer_from(term(), term(), term(), term()) :: term()
+  @doc "Builds an eth_call transaction for `build_trx_transfer_from/transferFrom(address,address,uint256)`."
+  @spec build_trx_transfer_from(<<_::160>>, <<_::160>>, <<_::160>>, non_neg_integer()) ::
+          Call.t()
   def build_trx_transfer_from(contract, from, to, amount) do
-    %V2{destination: contract, data: encode_transfer_from(from, to, amount)}
+    %Call{destination: contract, data: encode_transfer_from(from, to, amount)}
   end
 
-  @doc false
-  @spec call_transfer_from(term(), term(), term(), term(), term()) :: term()
+  @doc "Calls a contract function for `call_transfer_from/transferFrom(address,address,uint256)`."
+  @spec call_transfer_from(<<_::160>>, <<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def call_transfer_from(contract, from, to, amount, opts \\ []) do
     Cartouche.RPC.call_trx(build_trx_transfer_from(contract, from, to, amount), opts)
   end
 
-  @doc false
-  @spec estimate_gas_transfer_from(term(), term(), term(), term(), term()) :: term()
+  @doc "Estimates gas for a contract function for `estimate_gas_transfer_from/transferFrom(address,address,uint256)`."
+  @spec estimate_gas_transfer_from(
+          <<_::160>>,
+          <<_::160>>,
+          <<_::160>>,
+          non_neg_integer(),
+          Keyword.t()
+        ) :: {:ok, non_neg_integer()} | {:error, term()}
   def estimate_gas_transfer_from(contract, from, to, amount, opts \\ []) do
     Cartouche.RPC.estimate_gas(build_trx_transfer_from(contract, from, to, amount), opts)
   end
 
-  @doc false
-  @spec execute_transfer_from(term(), term(), term(), term(), term()) :: term()
+  @doc "Executes a contract transaction for `execute_transfer_from/transferFrom(address,address,uint256)`."
+  @spec execute_transfer_from(<<_::160>>, <<_::160>>, <<_::160>>, non_neg_integer(), Keyword.t()) ::
+          {:ok, binary()} | {:error, term()}
   def execute_transfer_from(contract, from, to, amount, opts \\ []) do
     Cartouche.RPC.execute_trx(contract, encode_transfer_from(from, to, amount), opts)
   end
 
-  @doc false
-  @spec decode_transfer_from_call(term()) :: term()
+  @doc "Decodes ABI calldata for `decode_transfer_from_call/transferFrom(address,address,uint256)`."
+  @spec decode_transfer_from_call(binary()) :: [<<_::160>> | <<_::160>> | non_neg_integer()]
   def decode_transfer_from_call(<<35, 184, 114, 221>> <> calldata) do
     _signature = hex!("0x23b872dd")
     ABI.decode(transfer_from_selector(), calldata)
   end
 
-  @doc false
-  @spec approval_event_selector() :: term()
+  @doc "Returns the ABI event selector for `approval_event_selector/Approval(address,address,uint256)`."
+  @spec approval_event_selector() :: ABI.FunctionSelector.t()
   def approval_event_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -538,21 +702,22 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_approval_event(term(), term(), term()) :: term()
+  @doc "Encodes ABI event data for `encode_approval_event/Approval(address,address,uint256)`."
+  @spec encode_approval_event(<<_::160>>, <<_::160>>, non_neg_integer()) :: binary()
   def encode_approval_event(owner, spender, value) do
     ABI.encode(approval_event_selector(), [owner, spender, value])
   end
 
-  @doc false
-  @spec decode_approval_event(term(), term()) :: term()
+  @doc "Decodes ABI event topics and data for `decode_approval_event/Approval(address,address,uint256)`."
+  @spec decode_approval_event([binary()], binary()) ::
+          {:ok, String.t() | nil, map()} | {:error, term()}
   def decode_approval_event(topics, data) when is_list(topics) do
     _signature = hex!("0x8c5be1e5")
     ABI.Event.decode_event(data, topics, approval_event_selector())
   end
 
-  @doc false
-  @spec transfer_ddf252ad_event_selector() :: term()
+  @doc "Returns the ABI event selector for `transfer_ddf252ad_event_selector/Transfer(address,address,uint256)`."
+  @spec transfer_ddf252ad_event_selector() :: ABI.FunctionSelector.t()
   def transfer_ddf252ad_event_selector do
     %{
       __struct__: ABI.FunctionSelector,
@@ -568,21 +733,22 @@ defmodule Cartouche.Contract.IERC20 do
     }
   end
 
-  @doc false
-  @spec encode_transfer_ddf252ad_event(term(), term(), term()) :: term()
+  @doc "Encodes ABI event data for `encode_transfer_ddf252ad_event/Transfer(address,address,uint256)`."
+  @spec encode_transfer_ddf252ad_event(<<_::160>>, <<_::160>>, non_neg_integer()) :: binary()
   def encode_transfer_ddf252ad_event(from, to, value) do
     ABI.encode(transfer_ddf252ad_event_selector(), [from, to, value])
   end
 
-  @doc false
-  @spec decode_transfer_ddf252ad_event(term(), term()) :: term()
+  @doc "Decodes ABI event topics and data for `decode_transfer_ddf252ad_event/Transfer(address,address,uint256)`."
+  @spec decode_transfer_ddf252ad_event([binary()], binary()) ::
+          {:ok, String.t() | nil, map()} | {:error, term()}
   def decode_transfer_ddf252ad_event(topics, data) when is_list(topics) do
     _signature = hex!("0xddf252ad")
     ABI.Event.decode_event(data, topics, transfer_ddf252ad_event_selector())
   end
 
-  @doc false
-  @spec decode_call(term()) :: term()
+  @doc "Decodes ABI calldata and dispatches to the matching generated call decoder."
+  @spec decode_call(binary()) :: {:ok, String.t() | nil, term()} | :not_found
   def decode_call(<<221, 98, 237, 62>> <> _ = calldata) do
     _signature = hex!("0xdd62ed3e")
     {:ok, "allowance", decode_allowance_call(calldata)}
@@ -632,8 +798,9 @@ defmodule Cartouche.Contract.IERC20 do
     :not_found
   end
 
-  @doc false
-  @spec decode_event(term(), term()) :: term()
+  @doc "Decodes ABI event topics and data with the matching generated event decoder."
+  @spec decode_event([binary()], binary()) ::
+          {:ok, String.t() | nil, map()} | {:error, term()} | :not_found
   def decode_event(
         [
           <<140, 91, 225, 229, 235, 236, 125, 91, 209, 79, 113, 66, 125, 30, 132, 243, 221, 3, 20, 192, 247, 178, 41, 30,
@@ -660,13 +827,9 @@ defmodule Cartouche.Contract.IERC20 do
     :not_found
   end
 
-  @doc false
-  @spec decode_error(term()) :: term()
+  @doc "Decodes ABI revert data and dispatches to the matching generated error decoder."
+  @spec decode_error(binary()) :: {:ok, String.t() | nil, term()} | :not_found
   def decode_error(_) do
-    if true do
-      :not_found
-    else
-      {:ok, "Impossible", <<>>}
-    end
+    :not_found
   end
 end
