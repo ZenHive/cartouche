@@ -178,10 +178,13 @@ defmodule Cartouche.TransactionTest do
   end
 
   describe "build_signed_trx/7" do
-    test "default signer path surfaces the current nil chain-id boundary" do
+    test "default signer path defaults the nil chain id to the application chain" do
       Signer.start_signer(Default)
 
-      assert catch_exit(Transaction.build_signed_trx(<<1::160>>, 5, <<>>, {50, :gwei}, 100_000, 0))
+      {:ok, signed} = Transaction.build_signed_trx(<<1::160>>, 5, <<>>, {50, :gwei}, 100_000, 0)
+
+      {:ok, recovered} = V1.recover_signer(signed, :goerli)
+      assert recovered == Cartouche.Signer.address(Default)
     end
 
     test "callback can transform the unsigned transaction before signing" do
@@ -201,10 +204,14 @@ defmodule Cartouche.TransactionTest do
   end
 
   describe "build_signed_trx_v2/9" do
-    test "default signer path surfaces the current nil chain-id boundary" do
+    test "default signer path defaults the nil chain id to the application chain" do
       Signer.start_signer(Default)
 
-      assert catch_exit(Transaction.build_signed_trx_v2(<<1::160>>, 5, <<>>, {1, :gwei}, {100, :gwei}, 100_000, 0, []))
+      {:ok, signed} =
+        Transaction.build_signed_trx_v2(<<1::160>>, 5, <<>>, {1, :gwei}, {100, :gwei}, 100_000, 0, [])
+
+      {:ok, recovered} = V2.recover_signer(signed)
+      assert recovered == Cartouche.Signer.address(Default)
     end
 
     test "happy path: signature recovers to signer's address" do

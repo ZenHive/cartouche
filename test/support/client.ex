@@ -26,7 +26,7 @@ defmodule Cartouche.Test.Client do
     {method, params, id} =
       conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> parse_request()
 
-    case apply(__MODULE__, String.to_atom(method), params) do
+    case apply(__MODULE__, String.to_existing_atom(method), params) do
       {:error, error} -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "error" => error, "id" => id})
       {:ok, result} -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})
       result -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})

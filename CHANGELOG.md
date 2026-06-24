@@ -36,6 +36,10 @@ All notable changes to this project will be documented in this file.
 - Signer runtime carrier moved from the variadic `{module, function, args}` MFA to a `{backend_module, config}` pair where `config` is the backend's opaque configuration term (private key, KMS key-coordinate tuple, or Ed25519 seed). **Non-breaking**: the `:priv_key` / `:cloud_kms` / `:ed25519` config shorthands are unchanged (they now translate into the backend contract), an explicit `{BackendModule, config}` config form is additionally accepted, and the legacy `{module, function, args}` MFA still works through `Cartouche.Signer.sign_direct/4` and the dispatcher's back-compat path. Full offline suite green (1120 passed); all signer/recover modules at 100% coverage except the unreachable `find_recid` "too high recovery bit" defensive guard.
 - Bumped `ex_unit_json` requirement `~> 0.5.0` → `~> 0.6.0` (dev/test, `runtime: false`); resolves 0.5.1 → 0.6.0. 0.6.0 is purely additive (opt-in `@tag trace_messages` failure-only message tracing, zero runtime deps) — the `--cover`/`--failed`/`--output` flags and parsed JSON schema we rely on are unchanged. Offline suite green (1095 passed).
 
+### Fixed
+
+- The default-signer path (`build_signed_trx*` with no `chain_id:` option) no longer crashes. `Cartouche.Signer.encode_eip155/3` passed the `nil` chain id straight to `Cartouche.Chain.parse_id/1`, which raised `KeyError` and exited the caller. It now routes through `Cartouche.Chain.chain_id_value/1`, defaulting `nil` to the application-configured chain (`config :cartouche, :chain_id`), so EIP-155 `v` is computed for the configured chain — mirroring how `V1.new`/`V2.new` already resolve the transaction's `v`. `sign_direct/4` and `encode_eip155/3` specs widened to accept `nil`.
+
 ## [0.4.1] — 2026-06-24
 
 ### Fixed

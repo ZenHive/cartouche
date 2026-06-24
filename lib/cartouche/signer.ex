@@ -203,7 +203,7 @@ defmodule Cartouche.Signer do
       chain_id_or_name: [
         kind: :value,
         description:
-          "Ethereum chain id integer or configured chain atom, such as `:sepolia`, used for EIP-155 `v` calculation."
+          "Ethereum chain id integer, configured chain atom such as `:sepolia`, or `nil` to use the application-configured chain, used for EIP-155 `v` calculation."
       ]
     ],
     returns: %{
@@ -218,7 +218,7 @@ defmodule Cartouche.Signer do
 
   This is mostly used internally, but can be used safely externally as well.
   """
-  @spec sign_direct(String.t(), binary(), {module(), atom(), [any()]}, integer()) ::
+  @spec sign_direct(String.t(), binary(), {module(), atom(), [any()]}, integer() | atom() | nil) ::
           {:ok, binary()} | {:error, String.t()}
   def sign_direct(message, address, {mod, fun, args}, chain_id_or_name) do
     with {:ok, %Curvy.Signature{crv: :secp256k1, recid: nil} = signature} <-
@@ -254,7 +254,7 @@ defmodule Cartouche.Signer do
           Backend.t() | {module(), atom(), [any()]},
           String.t(),
           binary(),
-          integer() | atom()
+          integer() | atom() | nil
         ) :: {:ok, binary()} | {:error, term()}
   defp backend_sign({backend, config}, message, address, chain_id_or_name) when is_atom(backend) do
     digest = keccak(message)
@@ -271,9 +271,12 @@ defmodule Cartouche.Signer do
   end
 
   # Assemble the 65-byte EIP-155 signature from a recovered secp256k1 signature.
-  @spec encode_eip155(Curvy.Signature.t(), 0..1, integer() | atom()) :: binary()
+  # A `nil` chain id defaults to the application chain, mirroring how `V1.new`/
+  # `V2.new` already resolve the transaction's `v` field — so the default-signer
+  # path (no `chain_id:` option) signs for the configured chain instead of crashing.
+  @spec encode_eip155(Curvy.Signature.t(), 0..1, integer() | atom() | nil) :: binary()
   defp encode_eip155(%Curvy.Signature{r: r, s: s}, recid, chain_id_or_name) do
-    chain_id = Cartouche.Chain.parse_id(chain_id_or_name)
+    chain_id = Cartouche.Chain.chain_id_value(chain_id_or_name)
     v = if chain_id == 0, do: 27 + recid, else: chain_id * 2 + 35 + recid
 
     Hex.encode_bytes(r, 32) <> Hex.encode_bytes(s, 32) <> :binary.encode_unsigned(v)
