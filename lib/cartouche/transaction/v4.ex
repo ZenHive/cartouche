@@ -39,6 +39,7 @@ defmodule Cartouche.Transaction.V4 do
 
   alias Cartouche.Signer.Default
   alias Cartouche.Transaction.JsonField
+  alias Cartouche.Transaction.Signature
 
   @type authorization :: {
           non_neg_integer(),
@@ -138,10 +139,10 @@ defmodule Cartouche.Transaction.V4 do
         chain_id \\ nil
       ) do
     %__MODULE__{
-      chain_id: parse_chain_id(chain_id),
+      chain_id: Cartouche.Chain.chain_id_value(chain_id),
       nonce: nonce,
-      max_priority_fee_per_gas: maybe_to_wei(max_priority_fee_per_gas),
-      max_fee_per_gas: maybe_to_wei(max_fee_per_gas),
+      max_priority_fee_per_gas: Cartouche.Wei.maybe_to_wei(max_priority_fee_per_gas),
+      max_fee_per_gas: Cartouche.Wei.maybe_to_wei(max_fee_per_gas),
       gas_limit: gas_limit,
       destination: destination,
       amount: Cartouche.Wei.to_wei(amount),
@@ -197,10 +198,7 @@ defmodule Cartouche.Transaction.V4 do
   Adds an outer transaction signature from a packed binary (`r <> s <> v`).
   """
   @spec add_signature(t(), <<_::520, _::_*8>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>)
-      when byte_size(v_bin) > 0 do
-    %{transaction | signature_y_parity: signature_y_parity(v_bin), signature_r: r, signature_s: s}
-  end
+  def add_signature(%__MODULE__{} = transaction, signature), do: Signature.add_packed(transaction, signature)
 
   @doc """
   Recovers the signer from a signed EIP-7702 transaction.
@@ -259,7 +257,7 @@ defmodule Cartouche.Transaction.V4 do
         <<r::binary-size(32), s::binary-size(32), v_bin::binary>>
       )
       when byte_size(v_bin) > 0 do
-    {chain_id, address, nonce, signature_y_parity(v_bin), r, s}
+    {chain_id, address, nonce, Signature.y_parity_from_v(v_bin), r, s}
   end
 
   @doc """
@@ -588,23 +586,9 @@ defmodule Cartouche.Transaction.V4 do
 
   defp decode_uint(_, _max_bytes), do: {:error, @invalid}
 
-  @spec maybe_to_wei(non_neg_integer() | {non_neg_integer(), :wei | :gwei} | nil) :: non_neg_integer() | nil
-  defp maybe_to_wei(nil), do: nil
-  defp maybe_to_wei(value), do: Cartouche.Wei.to_wei(value)
-
-  @spec parse_chain_id(atom() | integer() | nil) :: integer()
-  defp parse_chain_id(nil), do: Cartouche.Application.chain_id()
-  defp parse_chain_id(chain_id), do: Cartouche.Chain.parse_id(chain_id)
-
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
   defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
   defp reverse_ok({:error, _} = error), do: error
-
-  @spec signature_y_parity(binary()) :: boolean()
-  defp signature_y_parity(v_bin) do
-    v = :binary.decode_unsigned(v_bin)
-    if v < 2, do: v == 1, else: rem(v, 2) == 0
-  end
 
   @spec y_parity_integer(boolean() | nil) :: 0 | 1
   defp y_parity_integer(true), do: 1

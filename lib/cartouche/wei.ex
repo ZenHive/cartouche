@@ -59,4 +59,33 @@ defmodule Cartouche.Wei do
     |> Decimal.mult(@decimal_wei_per_eth)
     |> Decimal.to_integer()
   end
+
+  api(:maybe_to_wei, "Convert an optional fee amount to wei, passing through nil.",
+    params: [
+      amount: [
+        kind: :value,
+        description:
+          "Amount in wei as a non-negative integer, `{amount, :wei}`, `{amount, :gwei}`, or `nil` to leave the field unset."
+      ]
+    ],
+    returns: %{
+      type: :wei,
+      description: "Amount in wei, or `nil` when the input is `nil`."
+    }
+  )
+
+  @doc ~S"""
+  Converts an optional fee amount to wei, passing through `nil`.
+
+  ## Examples
+
+      iex> Cartouche.Wei.maybe_to_wei(nil)
+      nil
+
+      iex> Cartouche.Wei.maybe_to_wei({1, :gwei})
+      1000000000
+  """
+  @spec maybe_to_wei(non_neg_integer() | {non_neg_integer(), :wei | :gwei} | nil) :: non_neg_integer() | nil
+  def maybe_to_wei(nil), do: nil
+  def maybe_to_wei(value), do: to_wei(value)
 end

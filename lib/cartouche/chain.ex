@@ -59,4 +59,33 @@ defmodule Cartouche.Chain do
   @spec parse_id(atom() | integer()) :: integer() | no_return()
   def parse_id(chain_id) when is_atom(chain_id), do: Map.fetch!(@chains, chain_id)
   def parse_id(chain_id) when is_integer(chain_id), do: chain_id
+
+  api(:chain_id_value, "Resolve a chain id for transaction construction, defaulting to the application chain.",
+    params: [
+      chain_id: [
+        kind: :value,
+        description:
+          "Ethereum chain id integer, known chain atom such as `:mainnet`, or `nil` for the application default."
+      ]
+    ],
+    returns: %{
+      type: :integer,
+      description: "Ethereum chain id integer suitable for typed transaction construction."
+    }
+  )
+
+  @doc ~S"""
+  Resolves a chain id for transaction construction, defaulting to the application chain.
+
+  ## Examples
+
+      iex> Cartouche.Chain.chain_id_value(:goerli)
+      5
+
+      iex> Cartouche.Chain.chain_id_value(42)
+      42
+  """
+  @spec chain_id_value(atom() | integer() | nil) :: integer()
+  def chain_id_value(nil), do: Cartouche.Application.chain_id()
+  def chain_id_value(chain_id), do: parse_id(chain_id)
 end

@@ -28,6 +28,10 @@ defmodule Cartouche.WeiTest do
       assert_raise FunctionClauseError, fn -> Wei.to_wei({-1, :wei}) end
       assert_raise FunctionClauseError, fn -> Wei.to_wei({-1, :gwei}) end
     end
+
+    test "maybe_to_wei/1 passes through bare wei amounts" do
+      assert Wei.maybe_to_wei(42) == 42
+    end
   end
 
   describe "to_wei/1 - :eth denomination (Task 74)" do

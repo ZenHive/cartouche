@@ -32,6 +32,9 @@ defmodule Cartouche.Transaction.V3 do
   alias Cartouche.Transaction.JsonField
   alias Cartouche.Transaction.Signature
 
+  @tx_type 0x03
+  @invalid "invalid v3 transaction"
+
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
 
   @type t :: %__MODULE__{
@@ -101,16 +104,16 @@ defmodule Cartouche.Transaction.V3 do
         chain_id \\ nil
       ) do
     %__MODULE__{
-      chain_id: chain_id_value(chain_id),
+      chain_id: Cartouche.Chain.chain_id_value(chain_id),
       nonce: nonce,
-      max_priority_fee_per_gas: maybe_to_wei(max_priority_fee_per_gas),
-      max_fee_per_gas: maybe_to_wei(max_fee_per_gas),
+      max_priority_fee_per_gas: Cartouche.Wei.maybe_to_wei(max_priority_fee_per_gas),
+      max_fee_per_gas: Cartouche.Wei.maybe_to_wei(max_fee_per_gas),
       gas_limit: gas_limit,
       destination: destination,
       amount: Cartouche.Wei.to_wei(amount),
       data: data,
       access_list: access_list,
-      max_fee_per_blob_gas: maybe_to_wei(max_fee_per_blob_gas),
+      max_fee_per_blob_gas: Cartouche.Wei.maybe_to_wei(max_fee_per_blob_gas),
       blob_versioned_hashes: blob_versioned_hashes,
       signature_y_parity: nil,
       signature_r: nil,
@@ -141,13 +144,7 @@ defmodule Cartouche.Transaction.V3 do
   decoded struct sets those fields to `nil`.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
-  def decode(<<0x03, trx_enc::binary>>) do
-    with {:ok, fields} <- safe_rlp_decode(trx_enc) do
-      decode_fields(fields)
-    end
-  end
-
-  def decode(_), do: {:error, "invalid v3 transaction"}
+  def decode(input), do: Cartouche.Transaction.TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
 
   @spec decode_fields(term()) :: {:ok, t()} | {:error, String.t()}
   defp decode_fields([_, _, _, _, _, _, _, _, _, _, _] = fields) do
@@ -223,9 +220,7 @@ defmodule Cartouche.Transaction.V3 do
   Adds a signature to a transaction from a packed binary (`r <> s <> v`).
   """
   @spec add_signature(t(), <<_::512, _::_*8>>) :: t()
-  def add_signature(%__MODULE__{} = transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>) do
-    add_signature(transaction, y_parity(v_bin), r, s)
-  end
+  def add_signature(%__MODULE__{} = transaction, signature), do: Signature.add_packed(transaction, signature)
 
   @doc """
   Recovers a signature from a transaction, if it has been signed.
@@ -307,14 +302,6 @@ defmodule Cartouche.Transaction.V3 do
       signature_s: JsonField.decode_signature_word(params["s"])
     }
   end
-
-  @spec chain_id_value(atom() | integer() | nil) :: integer()
-  defp chain_id_value(nil), do: Cartouche.Application.chain_id()
-  defp chain_id_value(chain_id), do: Cartouche.Chain.parse_id(chain_id)
-
-  @spec maybe_to_wei(integer() | {integer(), :wei | :gwei} | nil) :: integer() | nil
-  defp maybe_to_wei(nil), do: nil
-  defp maybe_to_wei(value), do: Cartouche.Wei.to_wei(value)
 
   @spec rlp_payload(t()) :: list()
   defp rlp_payload(%__MODULE__{} = transaction) do
@@ -468,24 +455,4 @@ defmodule Cartouche.Transaction.V3 do
   @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
   defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
   defp reverse_ok({:error, _} = error), do: error
-
-  @spec safe_rlp_decode(binary()) :: {:ok, term()} | {:error, String.t()}
-  defp safe_rlp_decode(trx_enc) do
-    {:ok, ExRLP.decode(trx_enc)}
-  rescue
-    # ExRLP raises DecodeError on most malformed input, but leaks a MatchError
-    # on truncated length-prefixed binaries (an internal `<<_::size>> = tail`).
-    _e in [ExRLP.DecodeError, MatchError] -> {:error, "invalid v3 transaction"}
-  end
-
-  @spec y_parity(binary()) :: boolean()
-  defp y_parity(v_bin) do
-    v = :binary.decode_unsigned(v_bin)
-
-    if v < 2 do
-      v == 1
-    else
-      rem(v, 2) == 0
-    end
-  end
 end

@@ -29,4 +29,21 @@ defmodule Cartouche.Transaction.Signature do
     v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
     {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
   end
+
+  @doc """
+  Attaches a packed `r <> s <> v` signature to a transaction struct.
+  """
+  @spec add_packed(map(), <<_::512, _::_*8>>) :: map()
+  def add_packed(transaction, <<r::binary-size(32), s::binary-size(32), v_bin::binary>>) when byte_size(v_bin) > 0 do
+    add(transaction, y_parity_from_v(v_bin), r, s)
+  end
+
+  @doc """
+  Derives EIP-155-style y-parity from a packed recovery `v` byte sequence.
+  """
+  @spec y_parity_from_v(binary()) :: boolean()
+  def y_parity_from_v(v_bin) do
+    v = :binary.decode_unsigned(v_bin)
+    if v < 2, do: v == 1, else: rem(v, 2) == 0
+  end
 end
