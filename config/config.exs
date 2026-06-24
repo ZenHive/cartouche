@@ -1,7 +1,15 @@
 import Config
 
-# Note: :client is the module that handles HTTP requests (Finch in prod, mock in test).
-# The Finch *process name* is configured separately via :finch_name (defaults to CartoucheFinch).
-# config :cartouche, :client, Finch  # this is the default, no need to set
+# HTTP transport is Req (`Cartouche.HTTP` + each RPC module). Production needs no
+# config — Req manages its own Finch pool (`Req.Finch`). To customise the pipeline
+# (a tuned Finch pool, retries, proxies, telemetry, plugs), set a global keyword
+# merged into every `Req.request/1` call:
+#
+#     config :cartouche, :req_options, finch: MyApp.Finch, retry: :transient
+#
+# Per-transport overrides are keyed by the calling module and take precedence over
+# the global seam — used mainly to inject a stub in tests, e.g.
+#
+#     config :cartouche, Cartouche.RPC, plug: {Req.Test, Cartouche.RPC}
 
 import_config "#{Mix.env()}.exs"

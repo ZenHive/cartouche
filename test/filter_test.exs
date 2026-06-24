@@ -6,10 +6,14 @@ defmodule Cartouche.FilterTest do
 
   doctest Cartouche.Filter
 
+  # Req function plugs (`fun(conn) -> conn`). These run inside the `Cartouche.Filter`
+  # GenServer process that issues the request, so `Process.get/put` here reads and
+  # writes that filter process's dictionary — which the expiry test asserts on.
   defmodule ExpiredFilterClient do
     @moduledoc false
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      %{"method" => method, "params" => params, "id" => id} = Jason.decode!(body)
+    def call(conn) do
+      %{"method" => method, "params" => params, "id" => id} =
+        conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
 
       response =
         case {method, params} do
@@ -31,7 +35,7 @@ defmodule Cartouche.FilterTest do
             %{jsonrpc: "2.0", result: Cartouche.Test.Client.eth_getFilterChanges("0xf11735"), id: id}
         end
 
-      {:ok, %Finch.Response{status: 200, body: Jason.encode!(response)}}
+      Req.Test.json(conn, response)
     end
   end
 
@@ -40,8 +44,9 @@ defmodule Cartouche.FilterTest do
 
     @indexed_topic :binary.copy(<<0xAB>>, 32)
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      %{"method" => method, "id" => id} = Jason.decode!(body)
+    def call(conn) do
+      %{"method" => method, "id" => id} =
+        conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
 
       response =
         case method do
@@ -52,7 +57,7 @@ defmodule Cartouche.FilterTest do
             %{jsonrpc: "2.0", result: [reference_type_log()], id: id}
         end
 
-      {:ok, %Finch.Response{status: 200, body: Jason.encode!(response)}}
+      Req.Test.json(conn, response)
     end
 
     defp reference_type_log do
@@ -128,7 +133,7 @@ defmodule Cartouche.FilterTest do
         name: ReferenceTypeFilter,
         events: ["Message(string indexed tag, uint256 value)"],
         check_delay: 20,
-        rpc_opts: [client: ReferenceTypeEventClient]
+        rpc_opts: [req_options: [plug: &ReferenceTypeEventClient.call/1]]
       )
 
     Cartouche.Filter.listen(ReferenceTypeFilter)
@@ -175,7 +180,7 @@ defmodule Cartouche.FilterTest do
         events: ["Transfer(address indexed from, address indexed to, uint amount)"],
         check_delay: 20,
         extra_data: extra_data,
-        rpc_opts: [client: ExpiredFilterClient]
+        rpc_opts: [req_options: [plug: &ExpiredFilterClient.call/1]]
       )
 
     Cartouche.Filter.listen(ExpiredFilter)

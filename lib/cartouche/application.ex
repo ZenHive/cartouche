@@ -15,28 +15,17 @@ defmodule Cartouche.Application do
   @spec ethereum_node() :: String.t()
   def ethereum_node, do: Application.get_env(:cartouche, :ethereum_node, "https://mainnet.infura.io")
 
-  @doc false
-  @spec http_client() :: module()
-  def http_client, do: Application.get_env(:cartouche, :client, Finch)
-
   @impl true
   def start(_type, _args) do
     eth_signers = Application.get_env(:cartouche, :signer, [])
     sol_signers = Application.get_env(:cartouche, :solana_signer, [])
 
-    finch_name = Application.get_env(:cartouche, :finch_name, CartoucheFinch)
-    # start a finch process by default
-    finch_child =
-      if Application.get_env(:cartouche, :start_finch, true) do
-        [{Finch, name: finch_name}]
-      else
-        []
-      end
-
+    # No HTTP pool child: Req manages its own Finch pool (`Req.Finch`). Consumers
+    # who need a tuned pool pass `req_options: [finch: MyFinch]` and supervise it
+    # themselves.
     children =
       Enum.map(eth_signers, &get_signer_spec/1) ++
-        Enum.map(sol_signers, &get_solana_signer_spec/1) ++
-        finch_child
+        Enum.map(sol_signers, &get_solana_signer_spec/1)
 
     opts = [strategy: :one_for_one, name: Cartouche.Supervisor]
     Supervisor.start_link(children, opts)

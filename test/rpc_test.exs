@@ -13,15 +13,26 @@ defmodule Cartouche.RPCTest do
     defstruct [:value]
   end
 
+  # Each mock is a Req function plug (`fun(conn) -> conn`). It runs in the process
+  # that calls `Req.request/1` — the test pid for direct calls here — so wire
+  # captures via `send(self(), ...)` and `Process.get/put` work with no Req.Test
+  # ownership ceremony. Request bodies are read with `Req.Test.raw_body/1`
+  # (idempotent — it reads the adapter's stored body, not a consumable stream),
+  # and responses are returned with `Req.Test.json/2`.
+  @doc false
+  def decode_id(conn) do
+    conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> Map.fetch!("id")
+  end
+
   defmodule CaptureClient do
     @moduledoc false
     # Delegates to `Cartouche.Test.Client` so doctest fixtures still work,
     # and `send`s the decoded JSON-RPC request body back to the test pid
     # registered as `:cartouche_rpc_capture` for wire-format assertions.
-    def request(%Finch.Request{body: body} = req, finch_name, opts) do
-      decoded = Jason.decode!(body)
+    def call(conn) do
+      decoded = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
       send(:cartouche_rpc_capture, {:rpc_request, decoded})
-      Cartouche.Test.Client.request(req, finch_name, opts)
+      Cartouche.Test.Client.call(conn)
     end
   end
 
@@ -30,53 +41,44 @@ defmodule Cartouche.RPCTest do
 
     @panic_data "0x" <> Base.encode16(<<0x4E487B71::32, 0::248, 0x11>>)
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
 
-      response =
-        Jason.encode!(%{
-          "jsonrpc" => "2.0",
-          "error" => %{"code" => 3, "message" => "execution reverted", "data" => @panic_data},
-          "id" => id
-        })
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "error" => %{"code" => 3, "message" => "execution reverted", "data" => @panic_data},
+        "id" => id
+      })
     end
   end
 
   defmodule PanicCodeClient do
     @moduledoc false
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
       panic_code = Process.get(:panic_code)
       panic_data = "0x" <> Base.encode16(<<0x4E487B71::32, 0::248, panic_code>>)
 
-      response =
-        Jason.encode!(%{
-          "jsonrpc" => "2.0",
-          "error" => %{"code" => 3, "message" => "execution reverted", "data" => panic_data},
-          "id" => id
-        })
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "error" => %{"code" => 3, "message" => "execution reverted", "data" => panic_data},
+        "id" => id
+      })
     end
   end
 
   defmodule NonHexRevertClient do
     @moduledoc false
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
 
-      response =
-        Jason.encode!(%{
-          "jsonrpc" => "2.0",
-          "error" => %{"code" => 3, "message" => "execution reverted", "data" => "not hex"},
-          "id" => id
-        })
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "error" => %{"code" => 3, "message" => "execution reverted", "data" => "not hex"},
+        "id" => id
+      })
     end
   end
 
@@ -85,42 +87,38 @@ defmodule Cartouche.RPCTest do
 
     @revert_data "0x" <> Base.encode16(ABI.encode("Overloaded(address)", [<<1::160>>]))
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
 
-      response =
-        Jason.encode!(%{
-          "jsonrpc" => "2.0",
-          "error" => %{"code" => 3, "message" => "execution reverted", "data" => @revert_data},
-          "id" => id
-        })
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "error" => %{"code" => 3, "message" => "execution reverted", "data" => @revert_data},
+        "id" => id
+      })
     end
   end
 
   defmodule InvalidJsonRpcClient do
     @moduledoc false
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
-      {:ok, %Finch.Response{status: 200, body: response}}
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
+      Req.Test.json(conn, %{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
     end
   end
 
   defmodule TransportErrorClient do
     @moduledoc false
 
-    def request(_request, _finch_name, _opts), do: {:error, :closed}
+    def call(conn), do: Req.Test.transport_error(conn, :closed)
   end
 
   describe "block-param wire encoding" do
     setup do
       Process.register(self(), :cartouche_rpc_capture)
-      prev = Application.get_env(:cartouche, :client)
-      Application.put_env(:cartouche, :client, CaptureClient)
-      on_exit(fn -> Application.put_env(:cartouche, :client, prev) end)
+      prev = Application.get_env(:cartouche, Cartouche.RPC)
+      Application.put_env(:cartouche, Cartouche.RPC, plug: &CaptureClient.call/1)
+      on_exit(fn -> Application.put_env(:cartouche, Cartouche.RPC, prev) end)
       :ok
     end
 
@@ -164,15 +162,23 @@ defmodule Cartouche.RPCTest do
   describe "send_rpc/3 response handling" do
     setup do
       Process.register(self(), :cartouche_rpc_capture)
-      prev = Application.get_env(:cartouche, :client)
-      Application.put_env(:cartouche, :client, CaptureClient)
-      on_exit(fn -> Application.put_env(:cartouche, :client, prev) end)
+      prev = Application.get_env(:cartouche, Cartouche.RPC)
+      Application.put_env(:cartouche, Cartouche.RPC, plug: &CaptureClient.call/1)
+      on_exit(fn -> Application.put_env(:cartouche, Cartouche.RPC, prev) end)
       :ok
     end
 
     test "invalid JSON-RPC responses return the sentinel error" do
       assert {:error, %{code: -999, message: "invalid JSON-RPC response"}} =
-               Cartouche.RPC.send_rpc("net_version", [], client: InvalidJsonRpcClient)
+               Cartouche.RPC.send_rpc("net_version", [], req_options: [plug: &InvalidJsonRpcClient.call/1])
+    end
+
+    test "invalid hex results return :invalid_hex" do
+      assert :invalid_hex =
+               Cartouche.RPC.send_rpc("net_version", [],
+                 decode: :hex,
+                 req_options: [plug: &Cartouche.Test.InvalidHexResultClient.call/1]
+               )
     end
 
     test "invalid params errors log the outbound request" do
@@ -192,7 +198,7 @@ defmodule Cartouche.RPCTest do
       assert {:error, %{code: 3, message: "execution reverted", revert: <<0x4E487B71::32, 0::248, 0x11>>} = error} =
                Cartouche.RPC.call_trx(
                  V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>),
-                 client: PanicClient
+                 req_options: [plug: &PanicClient.call/1]
                )
 
       refute Map.has_key?(error, :error_abi)
@@ -209,7 +215,7 @@ defmodule Cartouche.RPCTest do
       assert {:error, %{error_abi: "Overloaded(address)", error_params: [<<1::160>>]}} =
                Cartouche.RPC.call_trx(
                  V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>),
-                 client: OverloadedErrorClient,
+                 req_options: [plug: &OverloadedErrorClient.call/1],
                  errors: ["Overloaded(uint256)", "Overloaded(address)"]
                )
     end
@@ -221,7 +227,7 @@ defmodule Cartouche.RPCTest do
         assert {:error, %{revert: <<0x4E487B71::32, 0::248, ^code>>} = error} =
                  Cartouche.RPC.call_trx(
                    V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>),
-                   client: PanicCodeClient
+                   req_options: [plug: &PanicCodeClient.call/1]
                  )
 
         refute Map.has_key?(error, :error_abi)
@@ -242,7 +248,7 @@ defmodule Cartouche.RPCTest do
       assert {:error, %{code: 3, message: "execution reverted"} = error} =
                Cartouche.RPC.call_trx(
                  V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>),
-                 client: NonHexRevertClient
+                 req_options: [plug: &NonHexRevertClient.call/1]
                )
 
       refute Map.has_key?(error, :revert)
@@ -250,8 +256,8 @@ defmodule Cartouche.RPCTest do
     end
 
     test "transport errors are normalized before JSON-RPC decoding" do
-      assert {:error, "[Cartouche] Unknown error: :closed"} =
-               Cartouche.RPC.send_rpc("net_version", [], client: TransportErrorClient)
+      assert {:error, "[Cartouche] HTTP client error: :closed"} =
+               Cartouche.RPC.send_rpc("net_version", [], req_options: [plug: &TransportErrorClient.call/1])
     end
   end
 
@@ -279,9 +285,9 @@ defmodule Cartouche.RPCTest do
   describe "call params and tracing helpers" do
     setup do
       Process.register(self(), :cartouche_rpc_capture)
-      prev = Application.get_env(:cartouche, :client)
-      Application.put_env(:cartouche, :client, CaptureClient)
-      on_exit(fn -> Application.put_env(:cartouche, :client, prev) end)
+      prev = Application.get_env(:cartouche, Cartouche.RPC)
+      Application.put_env(:cartouche, Cartouche.RPC, plug: &CaptureClient.call/1)
+      on_exit(fn -> Application.put_env(:cartouche, Cartouche.RPC, prev) end)
       :ok
     end
 
@@ -397,15 +403,14 @@ defmodule Cartouche.RPCTest do
       defmodule MissingFeeHistoryClient do
         @moduledoc false
 
-        def request(%Finch.Request{body: body}, _finch_name, _opts) do
-          id = Jason.decode!(body)["id"]
-          response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => %{}, "id" => id})
-          {:ok, %Finch.Response{status: 200, body: response}}
+        def call(conn) do
+          id = Cartouche.RPCTest.decode_id(conn)
+          Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => %{}, "id" => id})
         end
       end
 
       assert_raise FunctionClauseError, fn ->
-        Cartouche.RPC.prepare_trx(<<1::160>>, <<>>, client: MissingFeeHistoryClient)
+        Cartouche.RPC.prepare_trx(<<1::160>>, <<>>, req_options: [plug: &MissingFeeHistoryClient.call/1])
       end
     end
   end

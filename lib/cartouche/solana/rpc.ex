@@ -20,7 +20,7 @@ defmodule Cartouche.Solana.RPC do
 
   use Descripex, namespace: "/solana/rpc"
 
-  import Cartouche.HTTP, only: [normalize_finch_result: 1]
+  import Cartouche.HTTP, only: [normalize_response: 1]
 
   alias Cartouche.Solana.Transaction
 
@@ -35,14 +35,10 @@ defmodule Cartouche.Solana.RPC do
   @type invalid_params_error :: {:invalid_params, Exception.t()}
 
   @typedoc "All error shapes returned by `send_rpc/3`."
-  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | Jason.DecodeError.t() | String.t()
+  @type send_rpc_error :: rpc_error() | invalid_params_error() | Req.Response.t() | Jason.DecodeError.t() | String.t()
 
   @spec solana_node() :: String.t() | nil
   defp solana_node, do: Application.get_env(:cartouche, :solana_node)
-  @spec http_client() :: module()
-  defp http_client, do: Application.get_env(:cartouche, :client, Finch)
-  @spec finch_name() :: atom()
-  defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
 
   # ---------------------------------------------------------------------------
   # Core transport
@@ -112,12 +108,26 @@ defmodule Cartouche.Solana.RPC do
     ]
 
     with {:ok, encoded_body} <- encode_body(body) do
-      request = Finch.build(:post, url, headers, encoded_body)
+      req_result =
+        normalize_response(
+          Req.request(
+            Cartouche.HTTP.req_options(
+              __MODULE__,
+              [
+                method: :post,
+                url: url,
+                headers: headers,
+                body: encoded_body,
+                receive_timeout: timeout,
+                decode_body: false,
+                retry: false
+              ],
+              opts
+            )
+          )
+        )
 
-      finch_result =
-        normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
-
-      with {:ok, %Finch.Response{body: resp_body}} <- finch_result do
+      with {:ok, %Req.Response{body: resp_body}} <- req_result do
         decode_response(resp_body, id, method)
       end
     end

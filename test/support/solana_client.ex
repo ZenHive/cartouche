@@ -7,23 +7,15 @@ defmodule Cartouche.Solana.Test.Client do
   @error_account "11111111111111111111111111111112"
 
   @doc false
-  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-  def request(%Finch.Request{body: body}, _finch_name, _opts) do
+  @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+  def call(conn) do
     %{"jsonrpc" => "2.0", "method" => method, "params" => params, "id" => id} =
-      Jason.decode!(body)
+      conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
 
-    result = dispatch(method, params)
-
-    return_body =
-      case result do
-        {:rpc_error, error} ->
-          Jason.encode!(%{"jsonrpc" => "2.0", "error" => error, "id" => id})
-
-        _ ->
-          Jason.encode!(%{"jsonrpc" => "2.0", "result" => result, "id" => id})
-      end
-
-    {:ok, %Finch.Response{status: 200, body: return_body}}
+    case dispatch(method, params) do
+      {:rpc_error, error} -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "error" => error, "id" => id})
+      result -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})
+    end
   end
 
   # ---------------------------------------------------------------------------

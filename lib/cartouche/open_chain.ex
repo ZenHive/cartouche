@@ -64,31 +64,30 @@ defmodule Cartouche.OpenChain do
 
   defmodule API do
     @moduledoc false
-    import Cartouche.HTTP, only: [normalize_finch_result: 1]
-
-    @doc false
-    @spec http_client() :: module()
-    def http_client, do: Application.get_env(:cartouche, :open_chain_client, Finch)
+    import Cartouche.HTTP, only: [normalize_response: 1]
 
     @spec base_url() :: String.t()
     defp base_url, do: Application.get_env(:cartouche, :open_chain_base_url, "https://api.4byte.sourcify.dev")
 
-    @spec finch_name() :: atom()
-    defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
-
     @doc false
-    @spec get(String.t(), Keyword.t()) :: {:ok, term()} | {:error, String.t()}
+    @spec get(String.t(), Keyword.t()) :: {:ok, term()} | {:error, Req.Response.t() | String.t()}
     def get(url, opts) do
       headers = Keyword.get(opts, :headers, [])
       timeout = Keyword.get(opts, :timeout, 30_000)
 
-      request = Finch.build(:get, url, headers)
+      req_result =
+        normalize_response(
+          Req.request(
+            Cartouche.HTTP.req_options(
+              __MODULE__,
+              [method: :get, url: url, headers: headers, receive_timeout: timeout, decode_body: false, retry: false],
+              opts
+            )
+          )
+        )
 
-      finch_result =
-        normalize_finch_result(http_client().request(request, finch_name(), receive_timeout: timeout))
-
-      case finch_result do
-        {:ok, %Finch.Response{status: _, body: resp_body}} ->
+      case req_result do
+        {:ok, %Req.Response{status: _, body: resp_body}} ->
           decode_response(resp_body)
 
         {:error, _} = error ->

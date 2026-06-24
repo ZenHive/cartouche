@@ -5,15 +5,17 @@ defmodule SleuthTest do
   alias Cartouche.Contract.BlockNumber
   alias Cartouche.Sleuth
 
+  # Req function plug (`fun(conn) -> conn`), running in the test process that
+  # issues the `eth_call`. Returns whatever the current test stashed under
+  # `:sleuth_eth_call_result` as the JSON-RPC result.
   defmodule StaticEthCallClient do
     @moduledoc false
 
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      %{"id" => id} = Jason.decode!(body)
+    @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+    def call(conn) do
+      %{"id" => id} = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
       result = Process.get(:sleuth_eth_call_result)
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => result, "id" => id})
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})
     end
   end
 
@@ -91,7 +93,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  %ABI.FunctionSelector{returns: selector.returns},
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  named_returns: true
                )
     end
@@ -107,7 +109,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  selector,
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
 
@@ -125,7 +127,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  %ABI.FunctionSelector{returns: selector.returns},
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
 
@@ -150,7 +152,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  selector,
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  decode_structs: true
                )
     end
@@ -226,7 +228,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  selector,
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  named_returns: true,
                  # decode_structs: false isolates the named_returns path
                  # from the existing INE-17 decode_structs preintern.
@@ -254,7 +256,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  selector,
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  named_returns: true,
                  decode_structs: false
                )
@@ -628,7 +630,7 @@ defmodule SleuthTest do
                  module_name.bytecode(),
                  module_name.encode_query(),
                  selector,
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  named_returns: true
                )
 
@@ -649,7 +651,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  selector,
-                 client: StaticEthCallClient,
+                 req_options: [plug: &StaticEthCallClient.call/1],
                  named_returns: true
                )
     end
@@ -686,7 +688,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  BlockNumber.query_selector(),
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
 
@@ -698,7 +700,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  BlockNumber.query_selector(),
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
 
@@ -734,7 +736,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  %ABI.FunctionSelector{returns: selector.returns},
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
 
@@ -770,7 +772,7 @@ defmodule SleuthTest do
                  BlockNumber.bytecode(),
                  BlockNumber.encode_query(),
                  %ABI.FunctionSelector{returns: selector.returns},
-                 client: StaticEthCallClient
+                 req_options: [plug: &StaticEthCallClient.call/1]
                )
     end
   end
@@ -829,7 +831,7 @@ defmodule SleuthTest do
           BlockNumber.bytecode(),
           BlockNumber.encode_query(),
           selector,
-          client: StaticEthCallClient,
+          req_options: [plug: &StaticEthCallClient.call/1],
           named_returns: true,
           decode_structs: false
         )
@@ -925,7 +927,7 @@ defmodule SleuthTest do
       BlockNumber.bytecode(),
       BlockNumber.encode_query(),
       selector,
-      Keyword.put(opts, :client, StaticEthCallClient)
+      Keyword.put(opts, :req_options, plug: &StaticEthCallClient.call/1)
     )
   end
 

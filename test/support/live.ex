@@ -1,9 +1,9 @@
 # Helpers for the mainnet archive integration suite.
 #
 # Tests pass `live_opts()` as the keyword list to every `Cartouche.RPC.*` call.
-# The opts include `client: Finch` (bypassing the test-env mock per-call) and
-# `ethereum_node: <url>` (overriding the default). No Application env mutation,
-# no `on_exit` cleanup needed.
+# The opts include `req_options: [plug: nil]` (clearing the test-env stub plug so
+# the call hits the real network per-call) and `ethereum_node: <url>` (overriding
+# the default). No Application env mutation, no `on_exit` cleanup needed.
 #
 #     test "eth_chainId returns 1" do
 #       assert {:ok, 1} = Cartouche.RPC.eth_chain_id(live_opts())
@@ -22,7 +22,7 @@ defmodule Cartouche.Test.Live do
 
   @doc false
   @spec live_opts() :: Keyword.t()
-  def live_opts, do: [client: Finch, ethereum_node: live_rpc_url(), timeout: 30_000]
+  def live_opts, do: [req_options: [plug: nil], ethereum_node: live_rpc_url(), timeout: 30_000]
 
   @doc false
   @spec assert_node_available!() :: :ok | no_return()

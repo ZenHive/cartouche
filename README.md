@@ -55,13 +55,44 @@ Each entry under `:signer` becomes a supervised `Cartouche.Signer` GenServer; th
 | `:solana_node` | `nil` | Solana JSON-RPC endpoint (required for any Solana RPC call) |
 | `:solana_signer` | `[]` | List of `{name, signer_spec}` for Solana signers |
 | `:contracts` | `[]` | Named contract address registry — see `Cartouche.get_contract_address/1` |
-| `:client` | `Finch` | HTTP client module |
-| `:finch_name` | `CartoucheFinch` | Name of the supervised Finch pool |
-| `:start_finch` | `true` | Set `false` to manage your own Finch pool |
+| `:req_options` | `[]` | Global [Req](https://hex.pm/packages/req) options merged into every HTTP request (see HTTP transport below) |
 | `:timeout` | `30_000` | Ethereum RPC request timeout (ms) — compile-time |
 | `:solana_timeout` | `30_000` | Solana RPC request timeout (ms) — compile-time |
-| `:open_chain_client` | `Finch` | HTTP client for OpenChain / 4byte signature lookups |
 | `:open_chain_base_url` | `"https://api.4byte.sourcify.dev"` | OpenChain base URL |
+
+### HTTP transport
+
+Cartouche issues all JSON-RPC and OpenChain requests through [Req](https://hex.pm/packages/req); it does **not** start an HTTP connection pool of its own. Three layers of [Req options](https://hexdocs.pm/req/Req.html#new/1) are merged into every request, lowest to highest precedence:
+
+1. **Global** — `config :cartouche, :req_options, [...]`
+2. **Per-transport** — `config :cartouche, Cartouche.RPC | Cartouche.Solana.RPC | Cartouche.OpenChain.API, <req options>`
+3. **Per-call** — `req_options: [...]` in the opts keyword passed to any RPC function
+
+```elixir
+# Reuse your own supervised Finch pool instead of Req's default (start MyFinch yourself):
+config :cartouche, :req_options, finch: MyFinch
+
+# Or scope it to one transport:
+config :cartouche, Cartouche.Solana.RPC, finch: MyFinch
+```
+
+A connection-level failure is returned as `{:error, "[Cartouche] HTTP client error: #{inspect(reason)}"}` (mapped from `%Req.TransportError{}`).
+
+**Testing** — stub the transport with [`Req.Test`](https://hexdocs.pm/req/Req.Test.html) or a plain function plug. A function plug runs in the calling process, so no ownership/`allow` ceremony is needed:
+
+```elixir
+# config/test.exs
+config :cartouche, Cartouche.RPC, plug: &MyApp.RPCStub.call/1
+
+# or per-call: Cartouche.RPC.send_rpc("eth_blockNumber", [], req_options: [plug: &MyApp.RPCStub.call/1])
+
+defmodule MyApp.RPCStub do
+  def call(conn) do
+    %{"id" => id} = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
+    Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => "0x10", "id" => id})
+  end
+end
+```
 
 Signer specs:
 

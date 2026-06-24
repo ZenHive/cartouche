@@ -7,16 +7,16 @@ defmodule Cartouche.Solana.RPCTest do
   alias Cartouche.Solana.Transaction
 
   setup do
-    prev_client = Application.get_env(:cartouche, :client)
+    prev_client = Application.get_env(:cartouche, RPC)
     prev_node = Application.get_env(:cartouche, :solana_node)
 
-    Application.put_env(:cartouche, :client, Cartouche.Solana.Test.Client)
+    Application.put_env(:cartouche, RPC, plug: &Cartouche.Solana.Test.Client.call/1)
     Application.put_env(:cartouche, :solana_node, "https://api.devnet.solana.com")
 
     on_exit(fn ->
       if prev_client,
-        do: Application.put_env(:cartouche, :client, prev_client),
-        else: Application.delete_env(:cartouche, :client)
+        do: Application.put_env(:cartouche, RPC, prev_client),
+        else: Application.delete_env(:cartouche, RPC)
 
       if prev_node,
         do: Application.put_env(:cartouche, :solana_node, prev_node),
@@ -39,35 +39,32 @@ defmodule Cartouche.Solana.RPCTest do
     defstruct [:value]
   end
 
+  # Req function plug (`fun(conn) -> conn`). Runs in the process that calls
+  # `Req.request/1` — for these direct RPC calls that is the test process, so
+  # `send(self(), ...)` reaches the test's own mailbox.
   defmodule InvalidJsonRpcClient do
     @moduledoc false
 
-    @doc false
-    @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      id = Jason.decode!(body)["id"]
-      response = Jason.encode!(%{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
-      {:ok, %Finch.Response{status: 200, body: response}}
+    @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+    def call(conn) do
+      id = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> Map.fetch!("id")
+      Req.Test.json(conn, %{"jsonrpc" => "2.0", "unexpected" => nil, "id" => id})
     end
   end
 
   defmodule RecordingClient do
     @moduledoc false
 
-    @doc false
-    @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-    def request(%Finch.Request{body: body}, _finch_name, _opts) do
-      decoded = Jason.decode!(body)
+    @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+    def call(conn) do
+      decoded = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
       send(self(), {:solana_rpc_request, decoded})
 
-      response =
-        Jason.encode!(%{
-          "jsonrpc" => "2.0",
-          "result" => result_for(decoded["method"]),
-          "id" => decoded["id"]
-        })
-
-      {:ok, %Finch.Response{status: 200, body: response}}
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "result" => result_for(decoded["method"]),
+        "id" => decoded["id"]
+      })
     end
 
     @spec result_for(String.t()) :: term()
@@ -79,8 +76,74 @@ defmodule Cartouche.Solana.RPCTest do
       %{"context" => %{"slot" => 256_000}, "value" => []}
     end
 
+    defp result_for("getSignatureStatuses") do
+      %{
+        "context" => %{"slot" => 256_000},
+        "value" => [
+          %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "finalized"}
+        ]
+      }
+    end
+
     defp result_for("getTransaction"), do: nil
     defp result_for("sendTransaction"), do: "recorded_signature"
+  end
+
+  # Script-driven plug for `send_and_confirm/2`. The whole submit→poll chain is
+  # synchronous in the test process, so the per-poll `getSignatureStatuses`
+  # sequence is pulled from the test process dictionary (`:status_script`); each
+  # entry is either `nil` (signature not yet known) or a status map. Once the
+  # script is exhausted it reports `finalized`.
+  defmodule PollClient do
+    @moduledoc false
+
+    @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+    def call(conn) do
+      %{"method" => method, "id" => id} =
+        conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
+
+      payload =
+        case method do
+          "sendTransaction" ->
+            %{"result" => "polled_sig"}
+
+          "getSignatureStatuses" ->
+            {value, rest} =
+              case Process.get(:status_script, []) do
+                [head | tail] -> {head, tail}
+                [] -> {finalized(), []}
+              end
+
+            Process.put(:status_script, rest)
+            %{"result" => %{"context" => %{"slot" => 1}, "value" => [value]}}
+        end
+
+      Req.Test.json(conn, Map.merge(%{"jsonrpc" => "2.0", "id" => id}, payload))
+    end
+
+    defp finalized do
+      %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "finalized"}
+    end
+  end
+
+  # Plug returning a single fixed response per method, configured via the test
+  # process dictionary (`:rpc_responses` → `%{method => {:ok, term} | {:error, map}}`).
+  defmodule StubClient do
+    @moduledoc false
+
+    @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+    def call(conn) do
+      %{"method" => method, "id" => id} =
+        conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!()
+
+      payload =
+        case Map.fetch!(Process.get(:rpc_responses, %{}), method) do
+          {:error, error} -> %{"error" => error}
+          {:ok, value} -> %{"result" => value}
+        end
+
+      Req.Test.json(conn, Map.merge(%{"jsonrpc" => "2.0", "id" => id}, payload))
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -98,7 +161,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "invalid JSON-RPC responses return the sentinel error" do
-      Application.put_env(:cartouche, :client, InvalidJsonRpcClient)
+      Application.put_env(:cartouche, RPC, plug: &InvalidJsonRpcClient.call/1)
 
       assert {:error, %{code: -999, message: "invalid JSON-RPC response"}} =
                RPC.send_rpc("getSlot", [])
@@ -157,7 +220,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "accepts supported account encodings" do
-      Application.put_env(:cartouche, :client, RecordingClient)
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
 
       for {encoding, expected} <- [
             {:base58, "base58"},
@@ -193,7 +256,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "propagates encoding config" do
-      Application.put_env(:cartouche, :client, RecordingClient)
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
 
       assert {:ok, []} = RPC.get_multiple_accounts([@test_pubkey], encoding: :"base64+zstd")
 
@@ -272,7 +335,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "accepts explicit transaction encodings" do
-      Application.put_env(:cartouche, :client, RecordingClient)
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
 
       for {encoding, expected} <- [
             {:base58, "base58"},
@@ -466,7 +529,7 @@ defmodule Cartouche.Solana.RPCTest do
     end
 
     test "accepts base58 encoding and send options" do
-      Application.put_env(:cartouche, :client, RecordingClient)
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
 
       assert RPC.send_transaction(<<1, 2, 3>>,
                encoding: :base58,
@@ -522,6 +585,174 @@ defmodule Cartouche.Solana.RPCTest do
     test "returns airdrop transaction signature" do
       assert RPC.request_airdrop(@test_pubkey, 1_000_000_000) ==
                {:ok, "2ZE3FQsWzjbkyNKP5qEDGjJEsaWmVFBCKSBMxpZUTgBs1PWDM1jN6hUEyFz1"}
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Config / response-shaping edge cases
+  # ---------------------------------------------------------------------------
+
+  describe "request config edge cases" do
+    test "min_context_slot is propagated through the commitment config" do
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
+
+      assert {:ok, nil} =
+               RPC.get_account_info(@test_pubkey, commitment: :confirmed, min_context_slot: 100)
+
+      assert_receive {:solana_rpc_request,
+                      %{
+                        "method" => "getAccountInfo",
+                        "params" => [_pubkey, %{"commitment" => "confirmed", "minContextSlot" => 100}]
+                      }}
+    end
+
+    test "get_signature_statuses sends searchTransactionHistory and parses confirmation status" do
+      Application.put_env(:cartouche, RPC, plug: &RecordingClient.call/1)
+
+      assert {:ok, [%{confirmation_status: :finalized}]} =
+               RPC.get_signature_statuses(["sig"], search_transaction_history: true)
+
+      assert_receive {:solana_rpc_request,
+                      %{
+                        "method" => "getSignatureStatuses",
+                        "params" => [["sig"], %{"searchTransactionHistory" => true}]
+                      }}
+    end
+
+    test "unwraps a status result that is not context/value shaped" do
+      # `getSignatureStatuses` here returns a bare list rather than the usual
+      # `%{"context" => _, "value" => _}` envelope, exercising unwrap_value/1's
+      # fallthrough clause.
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+
+      # A `nil` confirmationStatus also exercises parse_commitment/1's nil clause.
+      Process.put(:rpc_responses, %{
+        "getSignatureStatuses" => {
+          :ok,
+          [%{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => nil}]
+        }
+      })
+
+      assert {:ok, [%{confirmation_status: nil}]} = RPC.get_signature_statuses(["sig"])
+    end
+
+    test "simulate_transaction propagates commitment, sig_verify, and replace_recent_blockhash" do
+      assert {:ok, %{err: nil}} =
+               RPC.simulate_transaction(<<1, 2, 3>>,
+                 commitment: :confirmed,
+                 sig_verify: true,
+                 replace_recent_blockhash: true
+               )
+    end
+  end
+
+  describe "get_health/1 result mapping" do
+    test "treats any successful result as healthy" do
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+      Process.put(:rpc_responses, %{"getHealth" => {:ok, "behind"}})
+
+      assert RPC.get_health() == :ok
+    end
+
+    test "returns the error when the node reports unhealthy" do
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+      Process.put(:rpc_responses, %{"getHealth" => {:error, %{"code" => -32_005, "message" => "behind"}}})
+
+      assert {:error, %{code: -32_005}} = RPC.get_health()
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # send_and_confirm / poll_signature
+  # ---------------------------------------------------------------------------
+
+  describe "send_and_confirm/2" do
+    test "confirms immediately when the node already reports finalized" do
+      assert {:ok, signature} = RPC.send_and_confirm(<<1, 2, 3>>, poll_interval: 1)
+      assert is_binary(signature)
+    end
+
+    test "polls past unknown statuses until the target commitment is reached" do
+      Application.put_env(:cartouche, RPC, plug: &PollClient.call/1)
+
+      Process.put(:status_script, [
+        nil,
+        %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "confirmed"}
+      ])
+
+      assert {:ok, "polled_sig"} =
+               RPC.send_and_confirm(<<1>>, poll_interval: 1, commitment: :confirmed)
+    end
+
+    test "recurses on a below-target status before confirming (target :confirmed)" do
+      Application.put_env(:cartouche, RPC, plug: &PollClient.call/1)
+
+      Process.put(:status_script, [
+        %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "processed"},
+        %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "confirmed"}
+      ])
+
+      assert {:ok, "polled_sig"} =
+               RPC.send_and_confirm(<<1>>, poll_interval: 1, commitment: :confirmed)
+    end
+
+    test "accepts a confirmed status when the target is :processed" do
+      Application.put_env(:cartouche, RPC, plug: &PollClient.call/1)
+
+      Process.put(:status_script, [
+        %{"slot" => 1, "confirmations" => nil, "err" => nil, "confirmationStatus" => "confirmed"}
+      ])
+
+      assert {:ok, "polled_sig"} =
+               RPC.send_and_confirm(<<1>>, poll_interval: 1, commitment: :processed)
+    end
+
+    test "returns {:transaction_error, err} when the transaction failed" do
+      Application.put_env(:cartouche, RPC, plug: &PollClient.call/1)
+
+      Process.put(:status_script, [
+        %{
+          "slot" => 1,
+          "confirmations" => nil,
+          "err" => %{"InstructionError" => [0, "Custom"]},
+          "confirmationStatus" => "processed"
+        }
+      ])
+
+      assert {:error, {:transaction_error, %{"InstructionError" => [0, "Custom"]}}} =
+               RPC.send_and_confirm(<<1>>, poll_interval: 1)
+    end
+
+    test "times out when the signature never reaches a status" do
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+
+      Process.put(:rpc_responses, %{
+        "sendTransaction" => {:ok, "sig"},
+        "getSignatureStatuses" => {:ok, %{"context" => %{"slot" => 1}, "value" => [nil]}}
+      })
+
+      assert {:error, :timeout} = RPC.send_and_confirm(<<1>>, timeout: 5, poll_interval: 1)
+    end
+
+    test "propagates an RPC error raised during status polling" do
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+
+      Process.put(:rpc_responses, %{
+        "sendTransaction" => {:ok, "sig"},
+        "getSignatureStatuses" => {:error, %{"code" => -32_002, "message" => "node error"}}
+      })
+
+      assert {:error, %{code: -32_002}} = RPC.send_and_confirm(<<1>>, poll_interval: 1)
+    end
+
+    test "returns the submission error when sendTransaction fails" do
+      Application.put_env(:cartouche, RPC, plug: &StubClient.call/1)
+
+      Process.put(:rpc_responses, %{
+        "sendTransaction" => {:error, %{"code" => -32_000, "message" => "blockhash not found"}}
+      })
+
+      assert {:error, %{code: -32_000}} = RPC.send_and_confirm(<<1>>)
     end
   end
 end

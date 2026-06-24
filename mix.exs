@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.4.1",
+      version: "0.5.0",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -47,12 +47,7 @@ defmodule Cartouche.MixProject do
         plt_add_deps: :apps_direct,
         plt_local_path: "priv/plts",
         plt_core_path: "priv/plts",
-        # :mint added so dialyzer can resolve `Mint.Types.status/0` /
-        # `Mint.Types.headers/0` referenced from `deps/finch/lib/finch/response.ex`.
-        # Finch 0.22 surfaces those as transitive types — `:apps_direct` skips
-        # transitives, so without this entry dialyzer reports 3 `unknown_type`
-        # warnings on finch's response struct.
-        plt_add_apps: [:mix, :ex_unit, :mint],
+        plt_add_apps: [:mix, :ex_unit],
         plt_ignore_apps: [
           :google_api_cloud_kms,
           :google_gax,
@@ -112,7 +107,13 @@ defmodule Cartouche.MixProject do
       # safe for wei/fee token math (uint256 max ~78 digits << 6_178 string
       # cap). See https://github.com/ericmj/decimal/blob/main/CHANGELOG.md.
       {:decimal, "~> 3.1"},
-      {:finch, "~> 0.22"},
+      {:req, "~> 0.6.2"},
+      # Test-only intent: Req.Test builds `Plug.Conn`s for the stub plugs that
+      # mock cartouche's outbound RPC calls. Req lists plug as optional. Scoped
+      # `only: [:dev, :test]` (not `:test`) because the dev-only `tidewave` dep
+      # already pulls plug `only: :dev` — a narrower `:only` here fails the
+      # env-match check. Still excluded from prod (PLT + published deps).
+      {:plug, "~> 1.16", only: [:dev, :test]},
       {:google_api_cloud_kms, "~> 0.43.0", optional: true},
       {:ex_sha3, "~> 0.1.5"},
       {:curvy, "~> 0.3.1"},

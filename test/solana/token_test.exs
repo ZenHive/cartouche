@@ -3,19 +3,20 @@ defmodule Cartouche.Solana.TokenTest do
 
   alias Cartouche.Solana.ATA
   alias Cartouche.Solana.Programs
+  alias Cartouche.Solana.RPC
   alias Cartouche.Solana.Token
 
   setup do
-    prev_client = Application.get_env(:cartouche, :client)
+    prev_client = Application.get_env(:cartouche, RPC)
     prev_node = Application.get_env(:cartouche, :solana_node)
 
-    Application.put_env(:cartouche, :client, Cartouche.Solana.Test.Client)
+    Application.put_env(:cartouche, RPC, plug: &Cartouche.Solana.Test.Client.call/1)
     Application.put_env(:cartouche, :solana_node, "https://api.devnet.solana.com")
 
     on_exit(fn ->
       if prev_client,
-        do: Application.put_env(:cartouche, :client, prev_client),
-        else: Application.delete_env(:cartouche, :client)
+        do: Application.put_env(:cartouche, RPC, prev_client),
+        else: Application.delete_env(:cartouche, RPC)
 
       if prev_node,
         do: Application.put_env(:cartouche, :solana_node, prev_node),

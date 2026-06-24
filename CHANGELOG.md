@@ -14,7 +14,17 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
-## [Unreleased]
+## [0.5.0] — 2026-06-24
+
+### Changed
+
+- **BREAKING — HTTP transport moved from Finch to [Req](https://hex.pm/packages/req).** All three transports (`Cartouche.RPC`, `Cartouche.Solana.RPC`, `Cartouche.OpenChain.API`) now issue requests through `Req` (`{:req, "~> 0.6.2"}`) instead of building `Finch.Request` structs against a library-owned `CartoucheFinch` pool. Cartouche no longer starts a Finch pool of its own.
+  - **Removed config seams:** `config :cartouche, client:`, `finch_name:`, `open_chain_client:`, and `start_finch:` are gone, along with the `CartoucheFinch` child in the application supervision tree.
+  - **New config seams:** a global `config :cartouche, :req_options, [...]` (merged into every request) plus per-transport overrides `config :cartouche, Cartouche.RPC | Cartouche.Solana.RPC | Cartouche.OpenChain.API, <req option keyword>`. Per-call, pass `req_options: [...]` in the opts keyword (this replaces the old per-call `client:` option). Precedence low→high: base → per-transport config → global `:req_options` → per-call `req_options:`.
+  - **Custom connection pool:** to reuse a supervised Finch pool, pass `req_options: [finch: MyFinch]` (globally, per-transport, or per-call) and **start/supervise `MyFinch` yourself** — Cartouche no longer supervises one. Req owns the default pool otherwise.
+  - **Transport-error string changed:** a connection-level failure now surfaces as `"[Cartouche] HTTP client error: #{inspect(reason)}"` (e.g. `"[Cartouche] HTTP client error: :closed"`), mapped from `%Req.TransportError{}`. The previous Finch-era `"[Cartouche] Unknown error: :closed"` shape is gone — update any consumer matching on that text.
+  - **Testing consumers:** stub the transport with [`Req.Test`](https://hexdocs.pm/req/Req.Test.html) or a plain function plug — `config :cartouche, Cartouche.RPC, plug: &MyStub.call/1` (or per-call `req_options: [plug: &MyStub.call/1]`). Function plugs run in the calling process, so no `Req.Test` ownership/`allow` ceremony is needed even from spawned processes or async tests. Read the request body inside the plug with `Req.Test.raw_body/1` and respond with `Req.Test.json/2` / `Req.Test.text/2` / `Req.Test.transport_error/2`.
+  - **Transitive lock resolution:** Req requires `mime ~> 2.0.6`, which conflicts with the `mime ~> 1.0` pin in `google_gax 0.4.1` (transitive via `google_api_cloud_kms`, used by the CloudKMS signer path). `mime` is bumped `1.6.0 → 2.0.7` and `google_gax` is pinned back to `0.4.0` (which declares no `mime` dependency) to resolve. No CloudKMS source change — `google_gax 0.4.0` is functionally equivalent here — but the GCP signing cluster now resolves against the older `google_gax`; see Task 107 / Task 104 for the planned dep-light rewrite that drops it entirely.
 
 ### Added
 

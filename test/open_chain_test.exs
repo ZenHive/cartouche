@@ -63,21 +63,21 @@ defmodule Cartouche.OpenChainTest do
     }
     """
 
-    def request(
-          %Finch.Request{method: "GET", host: "example.com", path: "/open-chain/signature-database/v1/lookup"} = req,
-          _finch_name,
-          _opts
-        ) do
-      query = URI.decode_query(req.query || "")
+    # Req function plug. The fixtures are already-encoded JSON strings and the
+    # transport keeps `decode_body: false`, so each is returned verbatim with
+    # `Req.Test.text/2` (using `json/2` would re-encode the string). The query
+    # string comes from `Plug.Conn.query_string` rather than a Finch field.
+    def call(%Plug.Conn{method: "GET", request_path: "/open-chain/signature-database/v1/lookup"} = conn) do
+      query = URI.decode_query(conn.query_string || "")
       function_sigs = String.split(query["function"] || "", ",", trim: true)
 
       cond do
-        "0xee000001" in function_sigs -> {:ok, %Finch.Response{status: 200, body: @lookup_ok_false}}
-        "0xee000002" in function_sigs -> {:ok, %Finch.Response{status: 200, body: @lookup_bad_json}}
-        "0xee000003" in function_sigs -> {:ok, %Finch.Response{status: 200, body: @lookup_multi}}
-        "0xee000004" in function_sigs -> {:ok, %Finch.Response{status: 200, body: @lookup_empty}}
-        "0xee000005" in function_sigs -> {:error, :nxdomain}
-        true -> {:ok, %Finch.Response{status: 200, body: @lookup_success}}
+        "0xee000001" in function_sigs -> Req.Test.text(conn, @lookup_ok_false)
+        "0xee000002" in function_sigs -> Req.Test.text(conn, @lookup_bad_json)
+        "0xee000003" in function_sigs -> Req.Test.text(conn, @lookup_multi)
+        "0xee000004" in function_sigs -> Req.Test.text(conn, @lookup_empty)
+        "0xee000005" in function_sigs -> Req.Test.transport_error(conn, :nxdomain)
+        true -> Req.Test.text(conn, @lookup_success)
       end
     end
   end
@@ -93,7 +93,7 @@ defmodule Cartouche.OpenChainTest do
       assert is_binary(msg)
     end
 
-    test "transport-level Finch error propagates" do
+    test "transport-level error propagates" do
       assert {:error, msg} = OpenChain.lookup(<<0xEE, 0x00, 0x00, 0x05>>, :function)
       assert msg =~ "nxdomain"
     end

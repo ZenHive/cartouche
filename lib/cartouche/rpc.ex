@@ -5,7 +5,7 @@ defmodule Cartouche.RPC do
   use Descripex, namespace: "/ethereum/rpc"
   use Cartouche.Hex
 
-  import Cartouche.HTTP, only: [normalize_finch_result: 1]
+  import Cartouche.HTTP, only: [normalize_response: 1]
   import Cartouche.Wei, only: [to_wei: 1]
 
   alias Cartouche.Signer.Default
@@ -17,10 +17,6 @@ defmodule Cartouche.RPC do
 
   @spec ethereum_node() :: String.t()
   defp ethereum_node, do: Cartouche.Application.ethereum_node()
-  @spec http_client() :: module()
-  defp http_client, do: Cartouche.Application.http_client()
-  @spec finch_name() :: atom()
-  defp finch_name, do: Application.get_env(:cartouche, :finch_name, CartoucheFinch)
   @default_timeout Application.compile_env(:cartouche, :timeout, 30_000)
 
   @default_gas_price nil
@@ -42,7 +38,7 @@ defmodule Cartouche.RPC do
   @type invalid_params_error :: {:invalid_params, Exception.t()}
 
   @typedoc "All values that can appear inside an `{:error, reason}` tuple returned by `send_rpc/3`."
-  @type send_rpc_error :: rpc_error() | invalid_params_error() | Finch.Response.t() | String.t()
+  @type send_rpc_error :: rpc_error() | invalid_params_error() | Req.Response.t() | String.t()
 
   @spec headers([{String.t(), String.t()}]) :: [{String.t(), String.t()}]
   defp headers(extra_headers) do
@@ -189,7 +185,7 @@ defmodule Cartouche.RPC do
         kind: :value,
         default: [],
         description:
-          "Keyword options for transport and decoding: `:ethereum_node`, `:timeout`, `:headers`, `:verbose`, `:client`, `:decode`, `:errors`, and `:id`."
+          "Keyword options for transport and decoding: `:ethereum_node`, `:timeout`, `:headers`, `:verbose`, `:req_options`, `:decode`, `:errors`, and `:id`."
       ]
     ],
     opts: [
@@ -224,15 +220,6 @@ defmodule Cartouche.RPC do
       iex> Cartouche.RPC.send_rpc("get_balance", ["0x407d73d8a49eeb85d32cf465507dd71d507100c1", "latest"], ethereum_node: "http://example.com")
       {:ok, "0x0234c8a3397aab58"}
 
-      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.RPCTest.TransportErrorClient)
-      {:error, "[Cartouche] Unknown error: :closed"}
-
-      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.RPCTest.InvalidJsonRpcClient)
-      {:error, %{code: -999, message: "invalid JSON-RPC response"}}
-
-      iex> Cartouche.RPC.send_rpc("net_version", [], client: Cartouche.Test.InvalidHexResultClient, decode: :hex)
-      :invalid_hex
-
       iex> match?({:error, {:invalid_params, %Jason.EncodeError{}}}, Cartouche.RPC.send_rpc(<<255>>, []))
       true
 
@@ -244,36 +231,50 @@ defmodule Cartouche.RPC do
   Common options (other RPC wrappers forward `opts` here):
 
   - `:ethereum_node` — node URL; falls back to `Application.get_env(:cartouche, :ethereum_node)`
-  - `:timeout` — Finch `receive_timeout` in ms
+  - `:timeout` — Req `receive_timeout` in ms
   - `:headers` — extra request headers
   - `:verbose` — when `true`, decode failures log at `:error` instead of `:info`
-  - `:client` — HTTP client module (must expose `request/3`); private testing seam, defaults to
-    `Application.get_env(:cartouche, :client, Finch)` so the test env's mock client wins
-    automatically. Set to `Finch` per-call to bypass the mock (see `Cartouche.Test.Live`).
+  - `:req_options` — a keyword list merged into the `Req.request/1` options (highest
+    precedence), exposing Req's whole pipeline (retries, redirects, a custom `finch:`
+    pool, telemetry, proxies, plugs). A global default can be set with
+    `config :cartouche, :req_options, [...]`. Tests stub the transport by passing
+    `req_options: [plug: ...]` (or configuring `config :cartouche, Cartouche.RPC, plug: ...`).
   """
   @spec send_rpc(binary(), [term()], Keyword.t()) ::
           {:ok, term()} | {:error, send_rpc_error()} | :invalid_hex
   def send_rpc(method, params, opts \\ []) do
-    headers = Keyword.get(opts, :headers, [])
     decode = Keyword.get(opts, :decode, nil)
     errors = Keyword.get(opts, :errors, nil)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     verbose = Keyword.get(opts, :verbose, false)
     url = Keyword.get(opts, :ethereum_node, ethereum_node())
-    client = Keyword.get(opts, :client, http_client())
     id = Keyword.get_lazy(opts, :id, fn -> System.unique_integer([:positive]) end)
     body = get_body(method, params, id)
 
     with {:ok, encoded_body} <- encode_body(body) do
-      request = Finch.build(:post, url, headers(headers), encoded_body)
-
-      finch_result =
-        normalize_finch_result(
+      req_result =
+        normalize_response(
           # NOTE: `receive_timeout` is a best-effort maybe-sort-of timeout.
-          client.request(request, finch_name(), receive_timeout: timeout)
+          # `decode_body: false` keeps `body` a raw string so `decode_response/5`
+          # can `Jason.decode/1` it; `retry: false` preserves the no-retry contract.
+          Req.request(
+            Cartouche.HTTP.req_options(
+              __MODULE__,
+              [
+                method: :post,
+                url: url,
+                headers: headers(Keyword.get(opts, :headers, [])),
+                body: encoded_body,
+                receive_timeout: timeout,
+                decode_body: false,
+                retry: false
+              ],
+              opts
+            )
+          )
         )
 
-      with {:ok, %Finch.Response{body: resp_body}} <- finch_result,
+      with {:ok, %Req.Response{body: resp_body}} <- req_result,
            {:ok, result} <- decode_response(resp_body, body["id"], errors, method, body) do
         decode_result(decode, result, method, verbose)
       end
@@ -775,7 +776,7 @@ defmodule Cartouche.RPC do
     `eth_getBlockByNumber` as the second wire param. Note: `Cartouche.Block.deserialize/1`
     currently returns `transactions: []` regardless — see ROADMAP Task 66.
 
-  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:client`).
+  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:req_options`).
   """
   @spec get_block_by_number(non_neg_integer() | String.t(), Keyword.t()) ::
           {:ok, Cartouche.Block.t()} | {:error, term()}
@@ -866,7 +867,7 @@ defmodule Cartouche.RPC do
     calls with `-32602 Invalid params`). Note: `Cartouche.Block.deserialize/1`
     currently returns `transactions: []` regardless — see ROADMAP Task 66.
 
-  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:client`).
+  Plus any option accepted by `send_rpc/3` (e.g. `:ethereum_node`, `:timeout`, `:req_options`).
   """
   @spec get_block_by_hash(binary(), Keyword.t()) ::
           {:ok, Cartouche.Block.t()} | {:error, term()}

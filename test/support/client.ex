@@ -21,22 +21,15 @@ defmodule Cartouche.Test.Client do
   end
 
   @doc false
-  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-  def request(%Finch.Request{body: body}, _finch_name, _opts) do
-    {method, params, id} = parse_request(Jason.decode!(body))
+  @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+  def call(conn) do
+    {method, params, id} =
+      conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> parse_request()
 
     case apply(__MODULE__, String.to_atom(method), params) do
-      {:error, error} ->
-        return_body = Jason.encode!(%{"jsonrpc" => "2.0", "error" => error, "id" => id})
-        {:ok, %Finch.Response{status: 200, body: return_body}}
-
-      {:ok, result} ->
-        return_body = Jason.encode!(%{"jsonrpc" => "2.0", "result" => result, "id" => id})
-        {:ok, %Finch.Response{status: 200, body: return_body}}
-
-      result ->
-        return_body = Jason.encode!(%{"jsonrpc" => "2.0", "result" => result, "id" => id})
-        {:ok, %Finch.Response{status: 200, body: return_body}}
+      {:error, error} -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "error" => error, "id" => id})
+      {:ok, result} -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})
+      result -> Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => id})
     end
   end
 
@@ -961,10 +954,9 @@ defmodule Cartouche.Test.InvalidHexResultClient do
   @moduledoc false
 
   @doc false
-  @spec request(Finch.Request.t(), term(), term()) :: {:ok, Finch.Response.t()}
-  def request(%Finch.Request{body: body}, _finch_name, _opts) do
-    id = Jason.decode!(body)["id"]
-    response = Jason.encode!(%{"jsonrpc" => "2.0", "result" => "not hex", "id" => id})
-    {:ok, %Finch.Response{status: 200, body: response}}
+  @spec call(Plug.Conn.t()) :: Plug.Conn.t()
+  def call(conn) do
+    id = conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> Map.fetch!("id")
+    Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => "not hex", "id" => id})
   end
 end
