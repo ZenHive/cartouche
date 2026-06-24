@@ -5,6 +5,7 @@ defmodule Cartouche.Transaction.V_2930 do
   """
 
   alias Cartouche.Transaction.JsonField
+  alias Cartouche.Transaction.TypedDecode
 
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
 
@@ -43,7 +44,7 @@ defmodule Cartouche.Transaction.V_2930 do
   Decodes an EIP-2930 typed RLP transaction.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
-  def decode(input), do: Cartouche.Transaction.TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
+  def decode(input), do: TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
 
   @doc ~S"""
   Decodes an EIP-2930 (type 1) transaction object from block JSON-RPC.
@@ -83,9 +84,9 @@ defmodule Cartouche.Transaction.V_2930 do
          signature_r,
          signature_s
        ]) do
-    with {:ok, signature_y_parity} <- decode_y_parity(signature_y_parity),
-         {:ok, signature_r} <- decode_word(signature_r),
-         {:ok, signature_s} <- decode_word(signature_s) do
+    with {:ok, signature_y_parity} <- TypedDecode.decode_y_parity(signature_y_parity, @invalid),
+         {:ok, signature_r} <- TypedDecode.decode_word(signature_r, @invalid),
+         {:ok, signature_s} <- TypedDecode.decode_word(signature_s, @invalid) do
       decode_payload(
         [chain_id, nonce, gas_price, gas_limit, destination, amount, data, access_list],
         {signature_y_parity, signature_r, signature_s}
@@ -107,7 +108,7 @@ defmodule Cartouche.Transaction.V_2930 do
        )
        when is_binary(data) do
     with true <- byte_size(destination) == 20,
-         {:ok, access_list} <- decode_access_list(access_list) do
+         {:ok, access_list} <- TypedDecode.decode_access_list(access_list, @invalid) do
       {:ok,
        %__MODULE__{
          chain_id: :binary.decode_unsigned(chain_id),
@@ -133,53 +134,4 @@ defmodule Cartouche.Transaction.V_2930 do
   end
 
   defp decode_payload(_, _), do: {:error, @invalid}
-
-  @spec decode_access_list(term()) :: {:ok, access_list()} | {:error, String.t()}
-  defp decode_access_list(access_list) when is_list(access_list),
-    do: access_list |> Enum.reduce_while({:ok, []}, &decode_access_entry/2) |> reverse_ok()
-
-  defp decode_access_list(_), do: {:error, @invalid}
-
-  @spec decode_access_entry(term(), {:ok, access_list()}) ::
-          {:cont, {:ok, access_list()}} | {:halt, {:error, String.t()}}
-  defp decode_access_entry([address, storage], {:ok, entries}) when byte_size(address) == 20 and is_list(storage) do
-    case decode_storage_keys(storage) do
-      {:ok, storage} -> {:cont, {:ok, [{address, storage} | entries]}}
-      _ -> {:halt, {:error, @invalid}}
-    end
-  end
-
-  defp decode_access_entry(_, _), do: {:halt, {:error, @invalid}}
-
-  @spec decode_storage_keys(list()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
-  defp decode_storage_keys(storage) do
-    storage
-    |> Enum.reduce_while({:ok, []}, fn
-      storage_key, {:ok, keys} when byte_size(storage_key) == 32 ->
-        {:cont, {:ok, [storage_key | keys]}}
-
-      _storage_key, _acc ->
-        {:halt, {:error, @invalid}}
-    end)
-    |> reverse_ok()
-  end
-
-  @spec decode_word(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
-  defp decode_word(word) when byte_size(word) <= 32, do: {:ok, Cartouche.Hex.pad(word, 32)}
-  defp decode_word(_), do: {:error, @invalid}
-
-  @spec decode_y_parity(binary()) :: {:ok, boolean()} | {:error, String.t()}
-  defp decode_y_parity(y_parity) do
-    case :binary.decode_unsigned(y_parity) do
-      0 -> {:ok, false}
-      1 -> {:ok, true}
-      _ -> {:error, @invalid}
-    end
-  rescue
-    ArgumentError -> {:error, @invalid}
-  end
-
-  @spec reverse_ok({:ok, list()} | {:error, String.t()}) :: {:ok, list()} | {:error, String.t()}
-  defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
-  defp reverse_ok({:error, _} = error), do: error
 end
