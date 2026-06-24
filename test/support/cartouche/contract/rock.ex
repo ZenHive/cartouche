@@ -68,7 +68,7 @@ defmodule Cartouche.Contract.Rock do
   end
 
   @doc "Decodes ABI revert data for `decode_stumble_error/Stumble(uint256)`."
-  @spec decode_stumble_error(binary()) :: []
+  @spec decode_stumble_error(binary()) :: [non_neg_integer()]
   def decode_stumble_error(<<211, 49, 186, 152>> <> error) do
     _signature = hex!("0xd331ba98")
     ABI.decode(stumble_selector(), error)

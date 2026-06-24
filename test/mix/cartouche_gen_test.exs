@@ -365,6 +365,11 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert contents =~ "def encode_bad_thing(reason)"
       assert contents =~ "def decode_bad_thing_error(<<"
       assert contents =~ "def decode_error(<<"
+
+      # The error decoder decodes the error's *input* params, so its return spec
+      # must reflect them (`Stumble`-style errors carry inputs, never returns).
+      # Regression guard: keying the spec off `selector.returns` emitted `:: []`.
+      assert contents =~ "@spec decode_bad_thing_error(binary()) :: [non_neg_integer()]"
     end
 
     test "duplicate function names receive signature suffixes", %{tmp: tmp} do

@@ -1812,7 +1812,8 @@ defmodule Cartouche.Transaction do
         kind: :exchange_data,
         source: "Cartouche.RPC.eth_chain_id/1",
         default: nil,
-        description: "Ethereum chain id atom/integer used for signing."
+        description:
+          "Ethereum chain id atom/integer used for signing; the `nil` default resolves to the application-configured chain (`config :cartouche, :chain_id`)."
       ],
       callback: [
         kind: :value,
@@ -1898,7 +1899,8 @@ defmodule Cartouche.Transaction do
         kind: :exchange_data,
         source: "Cartouche.RPC.eth_chain_id/1",
         default: nil,
-        description: "Ethereum chain id atom/integer used for signing."
+        description:
+          "Ethereum chain id atom/integer used for signing; the `nil` default resolves to the application-configured chain (`config :cartouche, :chain_id`)."
       ],
       callback: [
         kind: :value,

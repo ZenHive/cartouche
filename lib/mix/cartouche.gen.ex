@@ -953,17 +953,22 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   @spec build_decode_error_fn(%{
           :names => map(),
-          :return_types => [ABI.FunctionSelector.argument_type()],
+          :input_types => [ABI.FunctionSelector.argument_type()],
           :sig => map(),
           optional(atom()) => any()
         }) :: Macro.t()
-  defp build_decode_error_fn(%{names: names, return_types: return_types, sig: sig}) do
+  defp build_decode_error_fn(%{names: names, input_types: input_types, sig: sig}) do
     doc = doc_for(:decode_error, names.decode_error, sig.abi)
-    return_spec = abi_decode_return_spec(return_types)
+    # An error decoder decodes the error's *input* params (Solidity errors carry
+    # inputs, never returns), so its return spec comes from `input_types` — the
+    # same source `build_decode_call_fn` uses. Keying off `return_types` here
+    # emitted `:: []` for every error decoder, since `selector.returns` is nil
+    # for errors (e.g. `decode_stumble_error/1` for `Stumble(uint256)`).
+    decoded_spec = abi_decode_return_spec(input_types)
 
     quote do
       @doc unquote(doc)
-      @spec unquote(names.decode_error)(binary()) :: unquote(return_spec)
+      @spec unquote(names.decode_error)(binary()) :: unquote(decoded_spec)
       def unquote(names.decode_error)(<<unquote_splicing(sig.abi_enc_signature_list)>> <> error) do
         unquote(sig.abi_enc_signature_hex)
         ABI.decode(unquote(names.selector)(), error)
