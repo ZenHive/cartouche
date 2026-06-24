@@ -523,8 +523,9 @@ defmodule Cartouche.Solana.Transaction do
 
   defp read_instructions(_, _, _), do: {:error, :insufficient_instruction_data}
 
-  # TODO: error tag and @spec couple to read_instructions/3 — generalize (parameterize tag
-  # or rename to `:insufficient_data`) if this helper gets a second callsite.
+  # Both callsites are inside read_instructions/3, so this shared helper deliberately
+  # returns the instruction reader's error tag (:insufficient_instruction_data); it
+  # parallels the sibling readers' tags. Parameterize only if a foreign caller appears.
   @spec read_size_prefixed(binary(), non_neg_integer()) ::
           {:ok, binary(), binary()} | {:error, :insufficient_instruction_data}
   defp read_size_prefixed(binary, size) when byte_size(binary) >= size do

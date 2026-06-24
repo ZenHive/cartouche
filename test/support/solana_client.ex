@@ -22,9 +22,11 @@ defmodule Cartouche.Solana.Test.Client do
   # getBalance
   # ---------------------------------------------------------------------------
 
-  # TODO: dispatch is a multi-clause stub that mimics the full Solana JSON-RPC surface;
-  # return shapes vary per method (numbers, maps, lists, base64 binaries, error tuples).
-  @spec dispatch(String.t(), [term()]) :: term()
+  # dispatch is a multi-clause stub mimicking the Solana JSON-RPC surface; return shapes
+  # vary per method (slots/lamports as integers, account/tx objects as maps, fee history
+  # as a list, signatures as binaries, nil for not-found, error tuples for RPC errors).
+  @spec dispatch(String.t(), [term()]) ::
+          non_neg_integer() | binary() | nil | map() | [map()] | {:rpc_error, map()}
   defp dispatch("getBalance", [@error_account | _]) do
     {:rpc_error, %{"code" => -32_600, "message" => "Invalid request"}}
   end
