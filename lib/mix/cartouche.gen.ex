@@ -794,103 +794,62 @@ defmodule Mix.Tasks.Cartouche.Gen do
     end
   end
 
-  @spec build_preintern_return_atoms_fns() :: [Macro.t()]
-  defp build_preintern_return_atoms_fns do
+  # `decode_structs: true` (hieroglyph 1.4+) resolves ABI return-field names via
+  # `String.to_existing_atom/1` at decode time, so those atoms must already be
+  # interned. A generated module owns a *bounded* field set, fully known from the
+  # ABI at generation time — so we compute the atoms here (one controlled
+  # `String.to_atom/1` over operator-supplied ABI, never on consumer input) and
+  # emit them as a compile-time literal the BEAM interns when the module loads.
+  # This replaces the previous runtime walk, which shipped an unbounded-looking
+  # `String.to_atom/1` into every generated contract (flagged at each consumer).
+  @spec build_preintern_return_atoms_fns([atom()]) :: [Macro.t()]
+  defp build_preintern_return_atoms_fns(field_atoms) do
     [
-      build_preintern_return_atoms_list_fn(),
-      build_preintern_return_atoms_fallback_fn(),
-      build_preintern_return_atom_named_fn(),
-      build_preintern_return_atom_fallback_fn(),
-      build_preintern_tuple_atoms_fn(),
-      build_preintern_array_atoms_fn(),
-      build_preintern_fixed_array_atoms_fn(),
-      build_preintern_type_atoms_fallback_fn(),
-      build_preintern_name_atom_fn(),
-      build_preintern_name_atom_fallback_fn()
+      quote do
+        @decode_field_atoms unquote(field_atoms)
+        @spec preintern_return_atoms!(term()) :: [atom()]
+        defp preintern_return_atoms!(_returns), do: @decode_field_atoms
+      end
     ]
   end
 
-  @spec build_preintern_return_atoms_list_fn() :: Macro.t()
-  defp build_preintern_return_atoms_list_fn do
-    quote do
-      defp preintern_return_atoms!(types) when is_list(types) do
-        Enum.each(types, &preintern_return_atom!/1)
-      end
-    end
+  # Collect, at generation time, every ABI return-field name atom a module's
+  # `decode_structs: true` decode can produce — the same recursion the old
+  # runtime walk performed (named fields, recursing through tuples and arrays),
+  # but resolved once over the contract's own ABI.
+  @spec collect_return_field_atoms(map()) :: [atom()]
+  defp collect_return_field_atoms(abi_map) do
+    (abi_map["abi"] || [])
+    |> Enum.flat_map(&selector_return_field_atoms/1)
+    |> Enum.uniq()
+    |> Enum.sort()
   end
 
-  @spec build_preintern_return_atoms_fallback_fn() :: Macro.t()
-  defp build_preintern_return_atoms_fallback_fn do
-    quote do
-      defp preintern_return_atoms!(_), do: :ok
-    end
+  @spec selector_return_field_atoms(map()) :: [atom()]
+  defp selector_return_field_atoms(abi_item) do
+    %ABI.FunctionSelector{returns: returns} = ABI.FunctionSelector.parse_specification_item(abi_item)
+    field_name_atoms(normalize_return_types(returns))
+  rescue
+    _ -> []
   end
 
-  @spec build_preintern_return_atom_named_fn() :: Macro.t()
-  defp build_preintern_return_atom_named_fn do
-    quote do
-      # `decode_structs: true` in hieroglyph 1.4+ requires these atoms to exist
-      # before decode. Generated modules own the bounded ABI field set, so this
-      # compile-time wrapper is the right place to intern those atoms explicitly.
-      defp preintern_return_atom!(%{name: name, type: type}) do
-        preintern_name_atom!(name)
-        preintern_type_atoms!(type)
-      end
-    end
-  end
+  @spec field_name_atoms([map()] | term()) :: [atom()]
+  defp field_name_atoms(types) when is_list(types), do: Enum.flat_map(types, &field_name_atom/1)
+  defp field_name_atoms(_), do: []
 
-  @spec build_preintern_return_atom_fallback_fn() :: Macro.t()
-  defp build_preintern_return_atom_fallback_fn do
-    quote do
-      defp preintern_return_atom!(_), do: :ok
-    end
-  end
+  @spec field_name_atom(map() | term()) :: [atom()]
+  defp field_name_atom(%{name: name, type: type}), do: name_to_atom(name) ++ type_field_name_atoms(type)
+  defp field_name_atom(_), do: []
 
-  @spec build_preintern_tuple_atoms_fn() :: Macro.t()
-  defp build_preintern_tuple_atoms_fn do
-    quote do
-      defp preintern_type_atoms!({:tuple, types}), do: preintern_return_atoms!(types)
-    end
-  end
+  @spec name_to_atom(term()) :: [atom()]
+  defp name_to_atom(name) when is_binary(name) and name != "", do: [String.to_atom(Macro.underscore(name))]
+  defp name_to_atom(_), do: []
 
-  @spec build_preintern_array_atoms_fn() :: Macro.t()
-  defp build_preintern_array_atoms_fn do
-    quote do
-      defp preintern_type_atoms!({:array, type}), do: preintern_type_atoms!(type)
-    end
-  end
-
-  @spec build_preintern_fixed_array_atoms_fn() :: Macro.t()
-  defp build_preintern_fixed_array_atoms_fn do
-    quote do
-      defp preintern_type_atoms!({:array, type, _size}), do: preintern_type_atoms!(type)
-    end
-  end
-
-  @spec build_preintern_type_atoms_fallback_fn() :: Macro.t()
-  defp build_preintern_type_atoms_fallback_fn do
-    quote do
-      defp preintern_type_atoms!(_), do: :ok
-    end
-  end
-
-  @spec build_preintern_name_atom_fn() :: Macro.t()
-  defp build_preintern_name_atom_fn do
-    quote do
-      defp preintern_name_atom!(name) when is_binary(name) and name != "" do
-        name
-        |> Macro.underscore()
-        |> String.to_atom()
-      end
-    end
-  end
-
-  @spec build_preintern_name_atom_fallback_fn() :: Macro.t()
-  defp build_preintern_name_atom_fallback_fn do
-    quote do
-      defp preintern_name_atom!(_), do: :ok
-    end
-  end
+  @spec type_field_name_atoms(term()) :: [atom()]
+  defp type_field_name_atoms({:tuple, types}), do: field_name_atoms(types)
+  defp type_field_name_atoms({:array, type}), do: type_field_name_atoms(type)
+  defp type_field_name_atoms({:array, type, _size}), do: type_field_name_atoms(type)
+  defp type_field_name_atoms(_), do: []
 
   defp build_exec_vm_raw_fn(ctx) do
     %{
@@ -1367,7 +1326,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
     preintern_return_atoms_decl =
       if uses_preintern_return_atoms?(encode_call_decl) do
-        build_preintern_return_atoms_fns()
+        build_preintern_return_atoms_fns(collect_return_field_atoms(abi_map))
       else
         []
       end

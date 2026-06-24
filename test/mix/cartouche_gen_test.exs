@@ -187,13 +187,19 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert_bytecode_emission(generate(tmp, "RealBytecode", "0x6080604052348015"))
     end
 
-    test "generated preintern helpers include specs on private functions", %{tmp: tmp} do
+    test "generated preintern helper is a compile-time atom literal, not a runtime walk",
+         %{tmp: tmp} do
       contents = generate(tmp, "SpecPreintern", "0x6080604052348015")
 
-      assert contents =~ "@spec preintern_return_atoms!(term()) :: term()"
-      assert contents =~ "defp preintern_return_atoms!(types) when is_list(types)"
-      assert contents =~ "@spec preintern_name_atom!(term()) :: term()"
-      assert contents =~ "defp preintern_name_atom!(name) when is_binary(name) and name != \"\""
+      # The decode-field atom set is collected at generation time and emitted as a
+      # module-attribute literal the BEAM interns at load; the helper just returns it.
+      assert contents =~ "@decode_field_atoms"
+      assert contents =~ "defp preintern_return_atoms!(_returns)"
+
+      # No runtime String.to_atom/1 — the previous walk shipped that unsafe idiom
+      # into every generated contract.
+      refute contents =~ "String.to_atom"
+      refute contents =~ "preintern_name_atom!"
     end
 
     test "whitespace-only bytecode is treated as blank", %{tmp: tmp} do
@@ -487,6 +493,56 @@ defmodule Mix.Tasks.Cartouche.GenTest do
       assert function_exported?(module, :exec_vm_ping, 1)
       assert function_exported?(module, :deployed_bytecode, 0)
       refute function_exported?(module, :bytecode, 0)
+    end
+
+    # ABI return-field names a function can return — top-level and nested tuple
+    # components, in camelCase to exercise Macro.underscore/1.
+    defp named_return_abi do
+      [
+        %{
+          "type" => "function",
+          "name" => "snapshot",
+          "inputs" => [],
+          "outputs" => [
+            %{"name" => "blockNumber", "type" => "uint256", "internalType" => "uint256"},
+            %{
+              "name" => "feeData",
+              "type" => "tuple",
+              "internalType" => "struct Fee",
+              "components" => [
+                %{"name" => "baseFee", "type" => "uint256", "internalType" => "uint256"},
+                %{"name" => "maxTip", "type" => "uint256", "internalType" => "uint256"}
+              ]
+            }
+          ],
+          "stateMutability" => "pure"
+        }
+      ]
+    end
+
+    test "exec_vm contracts intern the bounded ABI field-atom set at compile time, not via String.to_atom",
+         %{tmp: tmp} do
+      artifact =
+        "NamedReturns"
+        |> solidity_artifact(named_return_abi())
+        |> put_bytecodes(:absent, "0x60806041")
+
+      contents = generate_artifact(tmp, "NamedReturns", artifact)
+
+      # Field names (incl. nested tuple components) are collected at generation
+      # time, underscored, deduped/sorted, and emitted as a compile-time literal
+      # the BEAM interns at module load — so ABI.decode(decode_structs: true) can
+      # resolve them via String.to_existing_atom/1.
+      assert contents =~ "@decode_field_atoms [:base_fee, :block_number, :fee_data, :max_tip]"
+      assert contents =~ "defp preintern_return_atoms!"
+
+      # The previous runtime walk shipped an unsafe String.to_atom/1 into every
+      # generated contract; the compile-time form must not.
+      refute contents =~ "String.to_atom"
+
+      # And it still compiles — the literal interning is valid module source.
+      module = generated_module(contents)
+      assert function_exported?(module, :exec_vm_snapshot, 1)
     end
   end
 

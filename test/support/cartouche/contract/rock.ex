@@ -307,48 +307,11 @@ defmodule Cartouche.Contract.Rock do
     )
   end
 
-  @spec preintern_return_atoms!(term()) :: term()
-  defp preintern_return_atoms!(types) when is_list(types) do
-    Enum.each(types, &preintern_return_atom!/1)
-  end
-
-  defp preintern_return_atoms!(_) do
-    :ok
-  end
-
-  @spec preintern_return_atom!(term()) :: term()
-  defp preintern_return_atom!(%{name: name, type: type}) do
-    preintern_name_atom!(name)
-    preintern_type_atoms!(type)
-  end
-
-  defp preintern_return_atom!(_) do
-    :ok
-  end
-
-  @spec preintern_type_atoms!(term()) :: term()
-  defp preintern_type_atoms!({:tuple, types}) do
-    preintern_return_atoms!(types)
-  end
-
-  defp preintern_type_atoms!({:array, type}) do
-    preintern_type_atoms!(type)
-  end
-
-  defp preintern_type_atoms!({:array, type, _size}) do
-    preintern_type_atoms!(type)
-  end
-
-  defp preintern_type_atoms!(_) do
-    :ok
-  end
-
-  @spec preintern_name_atom!(term()) :: term()
-  defp preintern_name_atom!(name) when is_binary(name) and name != "" do
-    name |> Macro.underscore() |> String.to_atom()
-  end
-
-  defp preintern_name_atom!(_) do
-    :ok
-  end
+  (
+    @decode_field_atoms [:beats, :f, :song]
+    @spec preintern_return_atoms!(term()) :: [atom()]
+    defp preintern_return_atoms!(_returns) do
+      @decode_field_atoms
+    end
+  )
 end

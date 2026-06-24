@@ -24,3 +24,13 @@ DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:1350,36992C7
 Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1480,3FAC5D1
 DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:883,4781120
 Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1519,7DAF1FA
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1476,24A7326
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1477,30B9097
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:844,5582158
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1438,70A7B64
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:1308,7EDD60D
+Traversal.FileModule: Directory Traversal in `File.write!`,lib/mix/cartouche.gen.ex:1478,1725D4
+Traversal.FileModule: Directory Traversal in `File.mkdir_p!`,lib/mix/cartouche.gen.ex:1477,29814F1
+Traversal.FileModule: Directory Traversal in `File.read!`,lib/mix/cartouche.gen.ex:1439,3A79055
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:845,4362CA2
+DOS.StringToAtom: Unsafe `String.to_atom`,lib/mix/cartouche.gen.ex:1309,7BCB8E5
