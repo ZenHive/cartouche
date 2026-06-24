@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped `ex_unit_json` requirement `~> 0.5.0` → `~> 0.6.0` (dev/test, `runtime: false`); resolves 0.5.1 → 0.6.0. 0.6.0 is purely additive (opt-in `@tag trace_messages` failure-only message tracing, zero runtime deps) — the `--cover`/`--failed`/`--output` flags and parsed JSON schema we rely on are unchanged. Offline suite green (1095 passed). `tesla` remains pinned at `== 1.18.2` (1.20.0 available but blocked by the google_gax `:max_body_size` issue — see 0.4.1).
+
 ## [0.4.1] — 2026-06-24
 
 ### Fixed
