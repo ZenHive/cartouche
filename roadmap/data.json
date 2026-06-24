@@ -2362,6 +2362,38 @@
       "created_at": "2026-06-24",
       "scored_at": "2026-06-24",
       "cross_repo": []
+    },
+    {
+      "id": "112",
+      "phase": 8,
+      "bundle": "phase8_dedup",
+      "status": "pending",
+      "title": "Finish typed-tx Signature extraction: migrate V4.get_signature onto Signature.get/1",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 4
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "composer-2.5",
+      "acceptance_criteria": [
+        "V4.get_signature/1 delegates to Cartouche.Transaction.Signature.get/1 with no behavior change",
+        "No remaining hand-rolled signature nil-guard / packed-assembly duplication across V3 and V4",
+        "Existing V4 transaction tests (sign to encode to decode to recover round-trip) stay green"
+      ],
+      "out_of_scope": [
+        "V2/V1 legacy signature paths",
+        "any change to the packed signature wire format"
+      ],
+      "body": "Task 109 extracted the shared signature-field helpers into `Cartouche.Transaction.Signature` and migrated V3 (`get_signature/1` now delegates to `Signature.get/1`), but left `Cartouche.Transaction.V4.get_signature/1` hand-rolled — it still duplicates the exact nil-guard error clause and the packed `r <> s <> y_parity` assembly that `Signature.get/1` now owns. This is the residual half of the \"uneven extraction\" the dedup task set out to finish.\n\nMigrate `V4.get_signature/1` to delegate to `Cartouche.Transaction.Signature.get/1` (as V3 already does), confirming the recovery-byte encoding stays byte-identical (`<<y_parity_integer(v)>>` vs `Signature.get`'s `:binary.encode_unsigned/1` form — both emit `<<0>>`/`<<1>>`). Keep V4's existing tests green; the round-trip sign/encode/decode/recover path is the equivalence check.\n",
+      "created_at": "2026-06-24",
+      "scored_at": "2026-06-24",
+      "cross_repo": []
     }
   ]
 }
