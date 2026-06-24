@@ -1438,6 +1438,8 @@ acceptance_criteria = ["maybe_to_wei/1 and chain_id_value/1 are each defined onc
 out_of_scope = ["RPC wrapper changes — Task 110", "Any change to RLP field ordering or struct shapes", "New macros — this is plain-function consolidation; the typed-tx macro question was settled by 97869ab choosing shared callback modules"]
 files_to_modify = ["lib/cartouche/transaction/v3.ex", "lib/cartouche/transaction/v4.ex"]
 touches = ["lib/cartouche/wei.ex", "lib/cartouche/chain.ex"]
+assignee = "cursor"
+model = "composer-2.5"
 body = """
 Commit 97869ab partially extracted shared typed-transaction helpers into Cartouche.Transaction.TypedDecode (envelope decode + safe_rlp_decode via a callback) and Cartouche.Transaction.Signature (add/get on the struct-as-map), but the migration is uneven and small clones survive. Finish and normalize it — plain functions throughout, NOT macros:
 
