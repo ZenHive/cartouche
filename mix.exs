@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.4.0",
+      version: "0.4.1",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -117,6 +117,15 @@ defmodule Cartouche.MixProject do
       {:ex_sha3, "~> 0.1.5"},
       {:curvy, "~> 0.3.1"},
       {:goth, "~> 1.4.5", optional: true},
+      # Transitive via the GCP/KMS cluster (google_api_cloud_kms → google_gax),
+      # pinned to EXACTLY 1.18.2 because tesla 1.18.3 made
+      # `Tesla.Middleware.Compression` require an explicit `:max_body_size` opt
+      # (DoS hardening). google_gax builds its Tesla client without that opt, so
+      # any bump to >= 1.18.3 raises on every CloudKMS signer call (14
+      # cloud_kms_test failures, 2026-06). `~> 1.18.0` is NOT enough — it resolves
+      # to 1.18.3. Hold at 1.18.2 until the google_gax stack passes
+      # `:max_body_size`, then lift. Optional to match the cluster.
+      {:tesla, "== 1.18.2", optional: true},
       {:ex_rlp, "~> 0.6.0"},
       # Promoted from transitive (via :hieroglyph) to direct so consumer
       # mix.exs files don't need to add it to use Cartouche.describe/0,1,2.

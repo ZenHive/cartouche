@@ -296,6 +296,31 @@ defmodule Cartouche.TransactionTest do
                "0x02F8590501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003010102"
     end
 
+    test "unsigned encode accepts tuple access list entries (signing-digest path)" do
+      # Regression: signing derives the digest from the UNSIGNED encoding, so tuple
+      # entries — the canonical {address, [storage_keys]} shape — must normalize there
+      # too, not only in the signed branch. Previously this raised (ExRLP can't encode
+      # a tuple), breaking signing of any EIP-1559 tx with a non-empty access list.
+      unsigned =
+        V2.new(
+          1,
+          {1, :gwei},
+          {100, :gwei},
+          100_000,
+          <<1::160>>,
+          {2, :wei},
+          <<1, 2, 3>>,
+          [{<<2::160>>, [<<22::256>>]}],
+          :goerli
+        )
+
+      encoded = V2.encode(unsigned)
+      assert <<0x02, _rest::binary>> = encoded
+      # round-trips: the digest bytes are well-formed RLP, not a hand-pinned golden
+      assert {:ok, decoded} = V2.decode(encoded)
+      assert decoded.access_list == [{<<2::160>>, [<<22::256>>]}]
+    end
+
     test "signed encode accepts mixed tuple and bare-address access list entries" do
       hex =
         1

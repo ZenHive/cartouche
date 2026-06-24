@@ -799,7 +799,6 @@ defmodule Cartouche.Transaction do
       <<0x02>> <>
         (transaction
          |> unsigned_rlp_list()
-         |> List.update_at(8, &normalize_access_list/1)
          |> Kernel.++([
            signature_y_parity(signature_y_parity),
            String.trim_leading(signature_r, <<0>>),
@@ -830,7 +829,7 @@ defmodule Cartouche.Transaction do
         destination,
         amount,
         data,
-        access_list
+        normalize_access_list(access_list)
       ]
     end
 

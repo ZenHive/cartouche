@@ -16,6 +16,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-06-24
+
+### Fixed
+
+- `Cartouche.Transaction.V2.encode/1` now normalizes tuple access-list entries (`{address, [storage_keys]}`) on the **unsigned** encoding path, not only the signed one. Signing derives the digest from the unsigned encoding, but `unsigned_rlp_list/1` passed the access list through raw — so signing any EIP-1559 transaction with a non-empty access list raised in ExRLP (it can't encode a tuple). Normalization moved into the shared `unsigned_rlp_list/1` builder and the redundant `List.update_at(8, …)` dropped from the signed branch; signed-path output is byte-identical (golden test unchanged). New regression test exercises the unsigned/signing path and round-trips through `decode/1`. V3/V4 already normalized in their shared payload builder and were unaffected; V_2930 is decode-only.
+
+### Changed
+
+- Promoted `tesla` to a direct `optional: true` dependency pinned at `== 1.18.2` in `mix.exs` (was lock-only). tesla 1.18.3+ made `Tesla.Middleware.Compression` require an explicit `:max_body_size` opt (DoS hardening); the `google_gax` stack under the GCP/CloudKMS cluster builds its Tesla client without it, so any bump to ≥ 1.18.3 raises on every CloudKMS signer call. `~> 1.18.0` is insufficient (resolves to 1.18.3) — held exactly until google_gax passes the option. In-line dep refreshes: `plug` 1.19.2 → 1.20.1, `tidewave` 0.6.0 → 0.6.1 (dev-only), `earmark_parser` 1.4.44 → 1.4.45, `ex_unit_json` 0.5.0 → 0.5.1.
+
 ## [0.4.0] — 2026-06-19
 
 ### Changed
