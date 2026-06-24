@@ -367,7 +367,7 @@ Single-repo ownership simplifies this — we edit `mix.exs` and `mix.lock` direc
 Natural extraction: a private helper returning the prefix list from the struct. Each clause either encodes that list as-is (unsigned) or concatenates the signature triple before encoding (signed).
 
 <!-- TASKS:BEGIN phase=8 -->
-> 1 task. See [CHANGELOG.md](CHANGELOG.md#phase-8-cartouche-transaction-v2-encode-1-duplication).
+> 2 tasks. See [CHANGELOG.md](CHANGELOG.md#phase-8-cartouche-transaction-v2-encode-1-duplication).
 <!-- TASKS:END -->
 
 **Do not run `mix ex_dna --literal-mode abstract` for refactor targets.** It finds near-misses that are often intentional (EIP version pairs, opcode groupings). Type I / exact duplication only.
