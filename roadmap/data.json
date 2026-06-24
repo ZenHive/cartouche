@@ -2281,7 +2281,7 @@
       "id": "110",
       "phase": 0,
       "bundle": "tooling_quality",
-      "status": "pending",
+      "status": "done",
       "title": "defrpc macro — generate uniform JSON-RPC wrappers + @spec + @doc + Descripex api() from one declaration",
       "scores": {
         "d": 5,
@@ -2309,9 +2309,12 @@
         "lib/cartouche/rpc.ex",
         "lib/cartouche/solana/rpc.ex"
       ],
+      "shipped_in": "3b8f27b",
       "body": "Cartouche.RPC (~2250 LOC) and Cartouche.Solana.RPC (~1170 LOC) repeat one wrapper shape ~50 times: a hand-written Descripex `api(...)` annotation, a `@doc`, a `@spec`, and a thin body that hex-encodes arguments, optionally normalizes a block selector, and calls `send_rpc(method, params, decode: <type>)`. The account-at-block trio — get_balance / get_code / get_transaction_count — is byte-for-byte identical except for the RPC method string and the decode type. Keeping the four artifacts (body, spec, doc, api metadata) in sync by hand is the cost this removes.\n\nIntroduce a `defrpc` macro that generates all four from a single declaration. The macro MUST emit the Descripex `api()` block, not replace or bypass it — agent introspection (Cartouche.describe/*, __descripex_modules__/0) must see identical metadata for converted methods. Apply `defrpc` only to the genuinely uniform subset of wrappers in both RPC modules. Leave the irregular methods hand-written — those with binary/address guards, struct dispatch (send_trx, to_call_params, simulate/send_transaction), or multi-clause normalization. A defrpc that tries to swallow the irregular ones would grow more knobs than the duplication it removes.\n\nKeep the macro thin and readable — these wrappers are read often, and macro-generated bodies obscure stack traces; the mitigation is a dumb, declarative macro, not a clever one. Precedent: exth_rpc / ethers-style libs generate RPC wrappers, so this is not novel complexity.\n\nPre-mutation gate: both RPC modules are critical-tier (signing-adjacent transport, >=95% coverage). Confirm/raise coverage before converting.\n",
       "created_at": "2026-06-24",
+      "done_at": "2026-06-24",
       "scored_at": "2026-06-24",
+      "implemented": "Shipped 3b8f27b. Added Cartouche.RPC.DSL with defrpc/3 generating wrapper + @spec + @doc + Descripex api() from one declaration; two uniform shapes (address-at-block, no-arg). Converted 7 ETH wrappers: get_code/get_balance/get_transaction_count (address-at-block) + eth_chain_id/eth_block_number/gas_price/max_priority_fee_per_gas (no-arg). __api__ introspection proven byte-identical for all 7 (mix-run baseline diff), 82 rpc tests + doctests green. Boundary cases left hand-written and documented: get_nonce (param name 'account', :big_hex encoder, AND a different opts description — 3 deviations); Cartouche.Solana.RPC out of scope — its send_rpc has no :decode contract and wrappers post-process via with-pipelines/params_with_config/commitment configs, so no fitting uniform subset. Doctor's defmacro/def-unquote blind spot handled via existing ignore_modules precedent. verified unset: hand-built, self-verified (introspection diff + hooks), no separate reviewer.",
       "cross_repo": []
     },
     {

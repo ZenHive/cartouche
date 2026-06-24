@@ -1456,7 +1456,7 @@ scored_at = "2026-06-24"
 id = "110"
 phase = 0
 bundle = "tooling_quality"
-status = "pending"
+status = "done"
 title = "defrpc macro — generate uniform JSON-RPC wrappers + @spec + @doc + Descripex api() from one declaration"
 scores = { d = 5, b = 6, u = 5 }
 acceptance_criteria = ["`defrpc` macro defined with a @moduledoc/@doc explaining the declaration shape", "Each generated wrapper emits an equivalent @spec, @doc, and Descripex api() block — Cartouche.describe output for converted methods is unchanged", "The uniform subset in Cartouche.RPC and Cartouche.Solana.RPC is converted; compiled behavior is byte-identical (existing doctests + tests pass unchanged)", "Irregular wrappers (guards, struct dispatch, multi-clause) are left hand-written and listed in the PR description", "Both RPC modules stay at >=95% line coverage"]
@@ -1471,8 +1471,11 @@ Keep the macro thin and readable — these wrappers are read often, and macro-ge
 
 Pre-mutation gate: both RPC modules are critical-tier (signing-adjacent transport, >=95% coverage). Confirm/raise coverage before converting.
 """
+implemented = "Shipped 3b8f27b. Added Cartouche.RPC.DSL with defrpc/3 generating wrapper + @spec + @doc + Descripex api() from one declaration; two uniform shapes (address-at-block, no-arg). Converted 7 ETH wrappers: get_code/get_balance/get_transaction_count (address-at-block) + eth_chain_id/eth_block_number/gas_price/max_priority_fee_per_gas (no-arg). __api__ introspection proven byte-identical for all 7 (mix-run baseline diff), 82 rpc tests + doctests green. Boundary cases left hand-written and documented: get_nonce (param name 'account', :big_hex encoder, AND a different opts description — 3 deviations); Cartouche.Solana.RPC out of scope — its send_rpc has no :decode contract and wrappers post-process via with-pipelines/params_with_config/commitment configs, so no fitting uniform subset. Doctor's defmacro/def-unquote blind spot handled via existing ignore_modules precedent. verified unset: hand-built, self-verified (introspection diff + hooks), no separate reviewer."
 created_at = "2026-06-24"
 scored_at = "2026-06-24"
+done_at = "2026-06-24"
+shipped_in = "3b8f27b"
 
 [[task]]
 id = "111"
