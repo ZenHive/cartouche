@@ -179,7 +179,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 105 | ⬜ | 🎁 **generator_hardening** · Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb) [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
 | Task 104 | 🔄 | 🎁 **signer_backends** · Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing [D:4/B:6/U:6 → Eff:1.5] 🚀 |
 | Task 106 | ✅ | 🎁 **generator_hardening** · Generator fixture: unlinked-library / immutable bytecode placeholders through blank_bytecode?/hex! [D:2/B:3/U:3 → Eff:1.5] 🚀 |
-| Task 109 | ⬜ | 🎁 **tooling_quality** · Finish + normalize typed-transaction helper extraction (dedup maybe_to_wei/chain_id_value; migrate V3 onto TypedDecode/Signature) [D:2/B:4/U:4 → Eff:2.0] 🎯 |
+| Task 109 | 🔄 | 🎁 **tooling_quality** · Finish + normalize typed-transaction helper extraction (dedup maybe_to_wei/chain_id_value; migrate V3 onto TypedDecode/Signature) [D:2/B:4/U:4 → Eff:2.0] 🎯 |
 | Task 110 | ✅ | 🎁 **tooling_quality** · defrpc macro — generate uniform JSON-RPC wrappers + @spec + @doc + Descripex api() from one declaration [D:5/B:6/U:5 → Eff:1.1] 📋 |
 | Task 111 | ⛔ | 🎁 **tooling_quality** · Spike: evaluate a Cartouche.Transaction.Typed envelope macro across V_2930/V3/V4 [D:2/B:3/U:3 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->
