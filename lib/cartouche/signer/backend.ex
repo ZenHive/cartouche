@@ -68,9 +68,9 @@ defmodule Cartouche.Signer.Backend do
 
   Returns the *public key*, not a chain address — the caller derives the address
   (secp256k1 ⇒ `Cartouche.Address.from_public_key/1`; ed25519 ⇒ the 32-byte key
-  *is* the Solana address). Returns the uncompressed secp256k1 point (64 bytes
-  without the `0x04` prefix, as `Cartouche.Address.from_public_key/1` expects) or
-  the 32-byte Ed25519 public key.
+  *is* the Solana address). Returns the uncompressed SEC1 secp256k1 point (65
+  bytes *including* the leading `0x04` prefix, which `Cartouche.Address.from_public_key/1`
+  strips) or the 32-byte Ed25519 public key.
   """
   @callback public_key(config()) :: {:ok, binary()} | {:error, term()}
 
