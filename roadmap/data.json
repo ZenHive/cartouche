@@ -2241,7 +2241,7 @@
       "id": "109",
       "phase": 0,
       "bundle": "tooling_quality",
-      "status": "in_progress",
+      "status": "done",
       "title": "Finish + normalize typed-transaction helper extraction (dedup maybe_to_wei/chain_id_value; migrate V3 onto TypedDecode/Signature)",
       "scores": {
         "d": 2,
@@ -2274,10 +2274,15 @@
         "lib/cartouche/wei.ex",
         "lib/cartouche/chain.ex"
       ],
+      "shipped_in": "3e681e4e07bb3b04a1f70ce0cff1ca85aefe53b4",
       "body": "Commit 97869ab partially extracted shared typed-transaction helpers into Cartouche.Transaction.TypedDecode (envelope decode + safe_rlp_decode via a callback) and Cartouche.Transaction.Signature (add/get on the struct-as-map), but the migration is uneven and small clones survive. Finish and normalize it — plain functions throughout, NOT macros:\n\n1. Dedup the still-duplicated `maybe_to_wei/1` (v3.ex + v4.ex) and `chain_id_value/1` (v3.ex) into shared plain functions — maybe_to_wei alongside Cartouche.Wei (it already wraps Wei.to_wei/1), chain_id_value with Cartouche.Chain (nil -> Cartouche.Application.chain_id(), else Cartouche.Chain.parse_id/1). These survive the `ex_dna --max-clones 0` gate only because each is a 2-line function below the clone-mass threshold; they are still real duplication.\n2. Migrate V3.decode onto Cartouche.Transaction.TypedDecode the way V4 and V_2930 already are, removing V3's private safe_rlp_decode (lib/cartouche/transaction/v3.ex) so all three typed decoders share one envelope path.\n3. Route the binary-form add_signature/2 through Cartouche.Transaction.Signature across V3 and V4 so the packed r<>s<>v parsing lives in one place.\n\nThe typed-transaction macro question (was Task 111) is settled — 97869ab deliberately chose shared callback modules over a `use`-macro, so this is consolidation, not a new abstraction. The remaining genuine macro opportunity is defrpc (Task 110), a different surface.\n\nPre-mutation gate: Cartouche.Transaction* is critical-tier (signing-adjacent, >=95% coverage). Confirm/raise coverage on the touched modules BEFORE refactoring.\n",
       "created_at": "2026-06-24",
       "started_at": "2026-06-24",
+      "done_at": "2026-06-24",
       "scored_at": "2026-06-24",
+      "implemented": "Landed by cursor via merge-train; reviewer-approved (run run-1782293704724-7735ab31, 3e681e4e07bb3b04a1f70ce0cff1ca85aefe53b4).",
+      "delivered_by": "cursor",
+      "verified": true,
       "cross_repo": []
     },
     {
