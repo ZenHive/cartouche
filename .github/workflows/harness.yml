@@ -40,7 +40,7 @@ jobs:
           - elixir: '1.18.4'
             otp: '27.3'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - id: beam
         uses: erlef/setup-beam@v1
