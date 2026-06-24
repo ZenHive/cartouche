@@ -151,7 +151,7 @@ defmodule Cartouche.MixProject do
   defp zenhive_dev_deps do
     [
       {:styler, "~> 1.11.0", only: [:dev, :test], runtime: false},
-      {:ex_unit_json, "~> 0.5.0", only: [:dev, :test], runtime: false},
+      {:ex_unit_json, "~> 0.6.0", only: [:dev, :test], runtime: false},
       {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
