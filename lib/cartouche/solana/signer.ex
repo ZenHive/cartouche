@@ -27,6 +27,7 @@ defmodule Cartouche.Solana.Signer do
   use Descripex, namespace: "/solana/signer"
   use GenServer
 
+  alias Cartouche.Signer.Backend
   alias Cartouche.Solana.Signer.Default
 
   require Logger
@@ -44,11 +45,12 @@ defmodule Cartouche.Solana.Signer do
     }
   )
 
-  api(:start_link, "Start a Solana signer process backed by the provided Ed25519 signing MFA.",
+  api(:start_link, "Start a Solana signer process backed by the provided Ed25519 signer backend carrier.",
     params: [
       opts: [
         kind: :value,
-        description: "Keyword list containing `:mfa` as `{module, function, args}` and `:name` as the GenServer name."
+        description:
+          "Keyword list containing `:mfa` as a `{backend_module, config}` carrier (or a legacy `{module, function, args}` MFA) and `:name` as the GenServer name."
       ]
     ],
     returns: %{
@@ -162,23 +164,45 @@ defmodule Cartouche.Solana.Signer do
   @doc false
   @impl true
   def handle_call({:sign, message}, _from, %{mfa: mfa} = state) do
-    {:reply, sign_direct(message, mfa), state}
+    {:reply, backend_sign(mfa, message), state}
   end
 
   def handle_call(:get_address, _from, %{address: address} = state) do
     {:reply, address, state}
   end
 
-  def handle_call(:get_address, _from, %{name: name, mfa: {mod, _fun, args}} = state) do
-    {:ok, address} = apply(mod, :get_address, args)
+  def handle_call(:get_address, _from, %{name: name, mfa: mfa} = state) do
+    {:ok, address} = backend_address(mfa)
 
     Logger.info("Cartouche.Solana.Signer #{inspect(name)} address: #{Cartouche.Solana.Keys.to_address(address)}")
 
     {:reply, address, Map.put(state, :address, address)}
   end
 
-  @spec sign_direct(binary(), {module(), atom(), [term()]}) :: {:ok, <<_::512>>} | {:error, term()}
-  defp sign_direct(message, {mod, fun, args}) do
+  # --- Backend dispatch (pure-payload contract) ---
+  #
+  # The runtime carries a backend as either the new `{backend_module, config}`
+  # pair (`Cartouche.Signer.Backend`) or, for back-compat, a legacy
+  # `{module, function, args}` MFA. Ed25519 signs raw message bytes, so there is
+  # no digest/recid/chain-id step.
+
+  @spec backend_sign(Backend.t() | {module(), atom(), [term()]}, binary()) ::
+          {:ok, <<_::512>>} | {:error, term()}
+  defp backend_sign({backend, config}, message) when is_atom(backend) do
+    backend.sign_payload(message, config)
+  end
+
+  defp backend_sign({mod, fun, args}, message) do
     apply(mod, fun, [message | args])
+  end
+
+  @spec backend_address(Backend.t() | {module(), atom(), [term()]}) ::
+          {:ok, <<_::256>>} | {:error, term()}
+  defp backend_address({backend, config}) when is_atom(backend) do
+    backend.public_key(config)
+  end
+
+  defp backend_address({mod, _fun, args}) do
+    apply(mod, :get_address, args)
   end
 end

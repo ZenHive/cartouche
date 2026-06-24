@@ -1322,12 +1322,12 @@ scored_at = "2026-06-04"
 id = "104"
 phase = 0
 bundle = "signer_backends"
-status = "pending"
-assignee = "human"
+status = "in_progress"
 title = "Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing"
 scores = { d = 4, b = 6, u = 6 }
 acceptance_criteria = ["A `Cartouche.Signer.Backend` behaviour exists with documented `@callback get_address/...` and `@callback sign/...`; the existing implicit MFA contract is now compile-checked.", "`Cartouche.Signer.Curvy` and `Cartouche.Signer.CloudKMS` declare `@behaviour Cartouche.Signer.Backend` + `@impl true`, compile clean (warnings-as-errors), all existing doctests/tests green.", "The sign contract is a PURE DIGEST/PAYLOAD signer: the backend signs exactly the bytes it is handed (secp256k1 backends expect the 32-byte digest; ed25519 backends expect the raw message). Message hashing moves OUT of the backend into the caller (`Cartouche.Signer` / a helper), so plain Eth-tx signing, EIP-712 typed-data, and Solana all reuse one backend set with no per-venue backend change. `find_recid` is fed the same digest the backend signed.", "Both signer modules are at critical-tier >=95% coverage BEFORE mutating (raise first if below); full suite green; dialyzer run LOCALLY (per CLAUDE.md KMS-dialyzer-stays-local rule) shows no new warnings on touched files.", "Config decision is recorded and proven by a test: either (a) keep `:priv_key`/`:cloud_kms` shorthands AND accept an explicit `{BackendModule, config}` form (non-breaking), or (b) clean break to module-form-only. A test asserts the chosen config path still starts a working signer end-to-end.", "CHANGELOG + `implemented` field document the contract and the config decision."]
 out_of_scope = ["New backend implementations (AWS KMS secp256k1, Azure Key Vault P-256K/ES256K, HashiCorp Vault Transit ed25519 + Kaleido ethsign plugin for secp256k1, MPC/custody Turnkey/Fireblocks/Dfns) — each is a separate follow-up task once the behaviour lands.", "EIP-712 / Hyperliquid 'phantom agent' and other Axis-B venue message builders — orthogonal (a message builder on top of `Cartouche.Typed`, not a signer backend); separate task.", "Req/Goth-based dep-light rewrite of the GCP CloudKMS backend (dropping google_api_cloud_kms + google_gax) — separate task; the behaviour just makes it a drop-in second impl later.", "Solana signer-family refactor is IN scope only if the Eth/Solana parallel structures would otherwise diverge; splitting Solana onto the behaviour can be a fast-follow if it balloons this task."]
+assignee = "human"
 body = """
 Investigation thread (this session): the existing MFA dispatch in Cartouche.Application (`signer_mfa/1` / `solana_signer_mfa/1`) + `Cartouche.Signer`'s `apply(mod, :get_address, args)` / `apply(mod, :sign, [message | args])` is ALREADY a de-facto signer API — every backend exposes `get_address` + `sign`, called blindly. This task formalizes that implicit contract into a real `@behaviour` (compile-time `@impl` checks, docs, discoverability) and makes adding backends not require a new clause in the per-type dispatch.
 
@@ -1346,6 +1346,7 @@ OPEN FORKS for the design phase (do not pre-decide here): (1) config back-compat
 Touch points: lib/cartouche/signer.ex (sign_direct hashing, GenServer handle_call), lib/cartouche/signer/{curvy,cloud_kms}.ex, lib/cartouche/application.ex (signer_mfa dispatch / config parsing), and the Solana parallels if in scope. CloudKMS work => dialyzer verification stays LOCAL (cartouche PLT OOMs on cloud VMs — see CLAUDE.md). Critical-tier (signing) => >=95% coverage gate before mutating.
 """
 created_at = "2026-06-04"
+started_at = "2026-06-24"
 scored_at = "2026-06-04"
 
 [[task]]

@@ -5,6 +5,8 @@ defmodule Cartouche.Application do
 
   use Application
 
+  alias Cartouche.Signer.Backend
+
   @doc false
   @spec chain_id() :: integer()
   def chain_id, do: Cartouche.Chain.parse_id(Application.get_env(:cartouche, :chain_id, 1))
@@ -57,18 +59,23 @@ defmodule Cartouche.Application do
     )
   end
 
-  @spec signer_mfa(tuple()) :: {module(), atom(), [term()]}
+  # Translate a `:signer` config entry into a `{backend_module, config}` carrier.
+  #
+  # The `:priv_key` / `:cloud_kms` shorthands are kept (they translate into the
+  # backend contract); an explicit `{BackendModule, config}` form is also
+  # accepted for backends not covered by a shorthand.
+  @spec signer_mfa(tuple()) :: Backend.t()
   defp signer_mfa({:priv_key, priv_key}) do
-    {Cartouche.Signer.Curvy, :sign, [Cartouche.Hex.decode_hex_input!(priv_key)]}
+    {Cartouche.Signer.Curvy, Cartouche.Hex.decode_hex_input!(priv_key)}
   end
 
   defp signer_mfa({:cloud_kms, kms_credentials, key_path, version}) do
-    # E.g. "projects/*/locations/*/keyRings/*/cryptoKeys/*"
+    {project, location, key_ring, key_id} = parse_kms_key_path(key_path)
+    {Cartouche.Signer.CloudKMS, {kms_credentials, project, location, key_ring, key_id, version}}
+  end
 
-    ["projects", project, "locations", location, "keyRings", key_ring, "cryptoKeys", key_id] =
-      String.split(key_path, "/")
-
-    {Cartouche.Signer.CloudKMS, :sign, [kms_credentials, project, location, key_ring, key_id, version]}
+  defp signer_mfa({backend, config}) when is_atom(backend) do
+    {backend, config}
   end
 
   # --- Solana signers ---
@@ -87,16 +94,27 @@ defmodule Cartouche.Application do
     )
   end
 
-  @spec solana_signer_mfa(tuple()) :: {module(), atom(), [term()]}
+  @spec solana_signer_mfa(tuple()) :: Backend.t()
   defp solana_signer_mfa({:ed25519, seed}) do
-    {Cartouche.Solana.Signer.Ed25519, :sign, [decode_solana_key!(seed)]}
+    {Cartouche.Solana.Signer.Ed25519, decode_solana_key!(seed)}
   end
 
   defp solana_signer_mfa({:cloud_kms, kms_credentials, key_path, version}) do
+    {project, location, key_ring, key_id} = parse_kms_key_path(key_path)
+    {Cartouche.Solana.Signer.CloudKMS, {kms_credentials, project, location, key_ring, key_id, version}}
+  end
+
+  defp solana_signer_mfa({backend, config}) when is_atom(backend) do
+    {backend, config}
+  end
+
+  # E.g. "projects/*/locations/*/keyRings/*/cryptoKeys/*"
+  @spec parse_kms_key_path(String.t()) :: {String.t(), String.t(), String.t(), String.t()}
+  defp parse_kms_key_path(key_path) do
     ["projects", project, "locations", location, "keyRings", key_ring, "cryptoKeys", key_id] =
       String.split(key_path, "/")
 
-    {Cartouche.Solana.Signer.CloudKMS, :sign, [kms_credentials, project, location, key_ring, key_id, version]}
+    {project, location, key_ring, key_id}
   end
 
   # Solana keys can be raw 32-byte binaries, hex-encoded, or Base58-encoded

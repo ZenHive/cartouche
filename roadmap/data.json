@@ -222,6 +222,7 @@
       },
       "eff": 5.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -241,6 +242,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -260,6 +262,7 @@
       },
       "eff": 2.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -279,6 +282,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -298,6 +302,7 @@
       },
       "eff": 5.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -317,6 +322,7 @@
       },
       "eff": 6.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -336,6 +342,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -355,6 +362,7 @@
       },
       "eff": 4.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -374,6 +382,7 @@
       },
       "eff": 0.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -393,6 +402,7 @@
       },
       "eff": 1.33,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -412,6 +422,7 @@
       },
       "eff": 6.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -431,6 +442,7 @@
       },
       "eff": 6.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -450,6 +462,7 @@
       },
       "eff": 1.63,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -469,6 +482,7 @@
       },
       "eff": 3.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -488,6 +502,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -510,6 +525,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #8",
@@ -530,6 +546,7 @@
       },
       "eff": 1.67,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -551,6 +568,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -570,6 +588,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -589,6 +608,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -611,6 +631,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -633,6 +654,7 @@
       },
       "eff": 0.9,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -655,6 +677,7 @@
       },
       "eff": 2.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -674,6 +697,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -693,6 +717,7 @@
       },
       "eff": 3.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -712,6 +737,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -734,6 +760,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -756,6 +783,7 @@
       },
       "eff": 3.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -775,6 +803,7 @@
       },
       "eff": 2.17,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -794,6 +823,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -813,6 +843,7 @@
       },
       "eff": 4.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -832,6 +863,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -851,6 +883,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -870,6 +903,7 @@
       },
       "eff": 0.9,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -892,6 +926,7 @@
       },
       "eff": 0.67,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "assignee": "codex",
@@ -918,6 +953,7 @@
       },
       "eff": 1.75,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -937,6 +973,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -956,6 +993,7 @@
       },
       "eff": 2.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "assignee": "human",
@@ -976,6 +1014,7 @@
       },
       "eff": 2.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -998,6 +1037,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1017,6 +1057,7 @@
       },
       "eff": 0.71,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1039,6 +1080,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "body": "PREMISE FALSIFIED 2026-06-05 by the Task 103 Assembly fix. The original framing of this task — \"the deps PLT exceeds the 16 GB ubuntu-latest budget; run 25319850405 OOM'd while adding 621 modules; needs a larger runner\" — attributed the 2026-05-04 CI OOM to dep-set SIZE. It was not size. It was Cartouche.Assembly.compile/1's 7-arity tuple_set product exploding dialyzer's success-typing fixpoint on OTP 29 — the same ~30 GB bomb Task 103 diagnosed and fixed. Collapsing the seven heads to one is_tuple/1 clause cut a downstream cold PLT build 27.6 GB -> 1.02 GB; cartouche's own local dialyzer now peaks ~3.49 GB. The 621-module dep PLT was never the problem.\n\nConsequences for this task:\n- The three old \"restoration shapes\" (32 GB ubuntu-latest-large workflow / aggressive :plt_ignore_apps trimming / nightly cron) are ALL obsolete — a stock 16 GB ubuntu-latest now has ~12 GB headroom.\n- The 2026-05-04 \"upstream dep-slimming ruled out\" investigation is moot — size was never the lever.\n- :plt_ignore_apps for the GCP cluster (google_api_cloud_kms et al.) can stay as-is for unknown_type hygiene, but is no longer load-bearing for memory.\n\nRe-scoped work:\n1. Measure cartouche's COLD CI PLT build peak RSS post-Assembly-fix on a stock ubuntu-latest (rm priv/plts cache; /usr/bin/time the deps PLT add). Expectation: well under 16 GB.\n2. If it fits (very likely), restore dialyzer to the NORMAL PR harness (.github/workflows/harness.yml) — no separate workflow, no larger runner. If it somehow doesn't, fall back to the push-to-development workflow, but that is now the unlikely branch.\n3. This is the trigger that lifts the project-CLAUDE.md rule \"Never delegate dialyzer-scoped tasks to cloud agents\" — once a cloud-agent VM completes a full cartouche PLT build at the new memory floor, that rule and this repo's no-cloud-dialyzer delegation block can both relax. Verify with one cloud/CI cold-build measurement before lifting; don't lift on the downstream onchain number alone.\n",
@@ -1059,6 +1101,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #14",
@@ -1079,6 +1122,7 @@
       },
       "eff": 1.75,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1101,6 +1145,7 @@
       },
       "eff": 3.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1123,6 +1168,7 @@
       },
       "eff": 3.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1145,6 +1191,7 @@
       },
       "eff": 0.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1167,6 +1214,7 @@
       },
       "eff": 4.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1186,6 +1234,7 @@
       },
       "eff": 4.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1205,6 +1254,7 @@
       },
       "eff": 1.75,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1226,6 +1276,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1248,6 +1299,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1270,6 +1322,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1297,6 +1350,7 @@
       },
       "eff": 1.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1318,6 +1372,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "shipped_in": "PR #54",
@@ -1338,6 +1393,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1360,6 +1416,7 @@
       },
       "eff": 1.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1381,6 +1438,7 @@
       },
       "eff": 1.17,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1400,6 +1458,7 @@
       },
       "eff": 0.8,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1419,6 +1478,7 @@
       },
       "eff": 1.75,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1438,6 +1498,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1457,6 +1518,7 @@
       },
       "eff": 1.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1476,6 +1538,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1498,6 +1561,7 @@
       },
       "eff": 1.17,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1519,6 +1583,7 @@
       },
       "eff": 1.1,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1540,6 +1605,7 @@
       },
       "eff": 1.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1562,6 +1628,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1584,6 +1651,7 @@
       },
       "eff": 1.67,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "body": "External package — ABI.decode/2 specced no_return() in poanetwork/ex_abi. Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this.",
@@ -1604,6 +1672,7 @@
       },
       "eff": 1.2,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1625,6 +1694,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "csr"
       ],
@@ -1646,6 +1716,7 @@
       },
       "eff": 1.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1667,6 +1738,7 @@
       },
       "eff": 2.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "scored_at": "2026-05-27",
@@ -1686,6 +1758,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1709,6 +1782,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1732,6 +1806,7 @@
       },
       "eff": 1.67,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1755,6 +1830,7 @@
       },
       "eff": 1.67,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1778,6 +1854,7 @@
       },
       "eff": 1.13,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1801,6 +1878,7 @@
       },
       "eff": 1.13,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "parallel",
         "cx"
@@ -1824,6 +1902,7 @@
       },
       "eff": 2.0,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1846,6 +1925,7 @@
       },
       "eff": 2.75,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1868,6 +1948,7 @@
       },
       "eff": 3.25,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1890,6 +1971,7 @@
       },
       "eff": 2.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1912,6 +1994,7 @@
       },
       "eff": 2.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1934,6 +2017,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [
         "cx"
       ],
@@ -1956,6 +2040,7 @@
       },
       "eff": 1.63,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "acceptance_criteria": [
@@ -1988,6 +2073,7 @@
       },
       "eff": 0.83,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "assignee": "human",
@@ -2009,7 +2095,7 @@
       "id": "104",
       "phase": 0,
       "bundle": "signer_backends",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing",
       "scores": {
         "d": 4,
@@ -2018,6 +2104,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "assignee": "human",
@@ -2037,6 +2124,7 @@
       ],
       "body": "Investigation thread (this session): the existing MFA dispatch in Cartouche.Application (`signer_mfa/1` / `solana_signer_mfa/1`) + `Cartouche.Signer`'s `apply(mod, :get_address, args)` / `apply(mod, :sign, [message | args])` is ALREADY a de-facto signer API — every backend exposes `get_address` + `sign`, called blindly. This task formalizes that implicit contract into a real `@behaviour` (compile-time `@impl` checks, docs, discoverability) and makes adding backends not require a new clause in the per-type dispatch.\n\nTWO ORTHOGONAL AXES surfaced and must stay separated:\n- Axis A (THIS task) — key custody / signer backend: WHERE the key lives, WHO computes the secp256k1/ed25519 signature. Local Curvy, GCP/AWS/Azure KMS, Vault, MPC all collapse to the same two callbacks. The only variance is auth, request shape, signature encoding (DER vs raw), and prehash-vs-raw.\n- Axis B (separate tasks) — signing TARGET / message format: Ethereum tx, EIP-712 typed data, Hyperliquid phantom-agent action hash, Solana tx. These are message builders on top of Cartouche.Typed (lib/cartouche/typed.ex, already present), NOT signer backends.\n\nTHE ONE DESIGN DECISION THAT MATTERS (the payoff): make the backend a pure digest/payload signer. Today CloudKMS/Curvy keccak the message INTERNALLY — wrong for EIP-712/Hyperliquid where the caller already computed the typed-data hash. If the behaviour signs exactly the bytes handed to it (secp256k1 -> 32-byte digest; ed25519 -> raw message) and the caller owns hashing, then ONE backend set covers plain Eth tx + EIP-712 + Hyperliquid + Solana with zero per-venue backend touches. Bake hashing into the backend and every new venue forces a backend change.\n\nCURVE-SUPPORT CONSTRAINT (verified this session via web research; sources in transcript): only GCP Cloud KMS signs BOTH curves natively (secp256k1 EC_SIGN_SECP256K1_SHA256 + ed25519 EC_SIGN_ED25519, Apr 2024). AWS KMS and Azure Key Vault do secp256k1 but NOT ed25519. HashiCorp Vault Transit does ed25519 natively but NOT secp256k1 (needs Kaleido vault-plugin-secrets-ethsign). MPC/custody (Turnkey/Fireblocks/Dfns/Fordefi) cover both but are higher-level/async. Implication: a multi-provider story is NOT 'swap Google for X' — it's pick-a-provider-per-curve. The behaviour must NOT assume one backend covers both chains.\n\nIMPLEMENTATION GOTCHA to bake into the contract from the start (so backend tasks inherit it): AWS/Azure return DER-encoded ECDSA needing low-s canonicalization (EIP-2 malleability — the classic 'dark side of the elliptic curve' bug). The contract / a shared helper should normalize to low-s so each new secp256k1 backend does not re-solve it.\n\nOPEN FORKS for the design phase (do not pre-decide here): (1) config back-compat — keep :priv_key/:cloud_kms shorthands + add module form, vs clean break to module-form-only; (2) Eth-only vs Eth+Solana scope; (3) which provider proves the extension point first — recommended AWS KMS (largest install base, smallest delta from GCP shape, forces DER/low-s handling into the contract early).\n\nTouch points: lib/cartouche/signer.ex (sign_direct hashing, GenServer handle_call), lib/cartouche/signer/{curvy,cloud_kms}.ex, lib/cartouche/application.ex (signer_mfa dispatch / config parsing), and the Solana parallels if in scope. CloudKMS work => dialyzer verification stays LOCAL (cartouche PLT OOMs on cloud VMs — see CLAUDE.md). Critical-tier (signing) => >=95% coverage gate before mutating.\n",
       "created_at": "2026-06-04",
+      "started_at": "2026-06-24",
       "scored_at": "2026-06-04",
       "cross_repo": []
     },
@@ -2053,6 +2141,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
+      "unlocks": 0,
       "markers": [],
       "depends_on": [],
       "assignee": "codex",

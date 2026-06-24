@@ -177,7 +177,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 92 `[CX]` | ✅ | 🎁 **solana_hardening** · Cartouche.Solana.Transaction.add_signature/3 — guard index against length(transaction.signatures) before List.replace_at/3 [D:1/B:3/U:3 → Eff:3.0] 🎯 |
 | Task 103 | ✅ | 🎁 **generator_hardening** · Fix the ~30 GB downstream dialyzer bomb — collapse Assembly.compile/1's 7-arity tuple_set (NOT IConsole) [D:4/B:7/U:6 → Eff:1.62] 🚀 |
 | Task 105 | ⬜ | 🎁 **generator_hardening** · Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb) [D:3/B:2/U:3 → Eff:0.83] ⚠️ |
-| Task 104 | ⬜ | 🎁 **signer_backends** · Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing [D:4/B:6/U:6 → Eff:1.5] 🚀 |
+| Task 104 | 🔄 | 🎁 **signer_backends** · Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing [D:4/B:6/U:6 → Eff:1.5] 🚀 |
 | Task 106 | ✅ | 🎁 **generator_hardening** · Generator fixture: unlinked-library / immutable bytecode placeholders through blank_bytecode?/hex! [D:2/B:3/U:3 → Eff:1.5] 🚀 |
 <!-- TASKS:END -->
 

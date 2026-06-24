@@ -25,6 +25,10 @@ defmodule Cartouche.Recover do
   import Cartouche.Address, only: [from_public_key: 1]
   import Cartouche.Hash, only: [keccak: 1]
 
+  # secp256k1 group order (n) and its halfway point, for EIP-2 low-s canonicalization.
+  @secp256k1_n 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+  @secp256k1_half_n div(@secp256k1_n, 2)
+
   @spec decode_signature(Curvy.Signature.t() | String.t() | <<_::520>>) :: Curvy.Signature.t() | :invalid_hex
   defp decode_signature(%Curvy.Signature{} = s), do: s
 
@@ -106,11 +110,41 @@ defmodule Cartouche.Recover do
   """
   @spec recover_public_key(binary(), Curvy.Signature.t() | binary()) :: binary()
   def recover_public_key(message, signature) do
+    recover_public_key_from_digest(keccak(message), signature)
+  end
+
+  @doc """
+  Recovers a signer's public key from a signature over an already-computed
+  32-byte digest, performing **no** hashing of its own.
+
+  This is the digest-native counterpart to `recover_public_key/2`: use it when
+  the bytes that were signed are a pre-computed hash (an Ethereum tx keccak, an
+  EIP-712 / Hyperliquid typed-data hash, …) rather than a raw message to be
+  keccak'd. The recid may be embedded in the signature or set on the struct.
+  """
+  @spec recover_public_key_from_digest(<<_::256>>, Curvy.Signature.t() | binary()) :: binary()
+  def recover_public_key_from_digest(digest, signature) do
     signature
     |> decode_signature()
-    |> Curvy.recover_key(keccak(message), hash: :keccak)
+    |> Curvy.recover_key(digest, hash: :keccak)
     |> Curvy.Key.to_pubkey(compressed: false)
   end
+
+  @doc """
+  Canonicalizes a secp256k1 signature to its low-`s` form (EIP-2).
+
+  If `s > n/2`, replaces it with `n - s` (and leaves `recid` as `nil`, since the
+  recovery bit is re-derived by `find_recid_from_digest/3` afterward). Local
+  Curvy already emits low-`s`, so this is a no-op there; it exists so DER-decoded
+  KMS/HSM backends (which may return high-`s`) inherit the invariant without each
+  re-solving the malleability fix. Idempotent.
+  """
+  @spec normalize_low_s(Curvy.Signature.t()) :: Curvy.Signature.t()
+  def normalize_low_s(%Curvy.Signature{s: s} = signature) when s > @secp256k1_half_n do
+    %{signature | s: @secp256k1_n - s, recid: nil}
+  end
+
+  def normalize_low_s(%Curvy.Signature{} = signature), do: signature
 
   @doc """
   Recovers a signer's Ethereum address from a signed message. The message will
@@ -135,6 +169,20 @@ defmodule Cartouche.Recover do
   end
 
   @doc """
+  Recovers a signer's Ethereum address from a signature over an already-computed
+  32-byte digest, performing **no** hashing of its own.
+
+  Digest-native counterpart to `recover_eth/2`; see
+  `recover_public_key_from_digest/2`.
+  """
+  @spec recover_eth_from_digest(<<_::256>>, Curvy.Signature.t() | binary()) :: <<_::160>>
+  def recover_eth_from_digest(digest, signature) do
+    digest
+    |> recover_public_key_from_digest(signature)
+    |> from_public_key()
+  end
+
+  @doc """
   Finds the given recid which recovers the given signature for the message to the given
   Ethereum address. This is a very simple guess-check-revise since there are only four
   possible values, and we only accept two of those.
@@ -152,9 +200,25 @@ defmodule Cartouche.Recover do
   @spec find_recid(binary(), Curvy.Signature.t(), <<_::160>>) ::
           {:ok, 0..1} | {:error, String.t()}
   def find_recid(message, signature, address) do
+    find_recid_from_digest(keccak(message), signature, address)
+  end
+
+  @doc """
+  Finds the recid recovering `signature` (over an already-computed 32-byte
+  `digest`) to `address`, performing **no** hashing of its own.
+
+  Digest-native counterpart to `find_recid/3` — this is the entrypoint the signer
+  uses so the recid is searched against the *same digest the backend signed*,
+  which is what lets one backend set cover plain Eth tx, EIP-712, and Hyperliquid
+  without re-hashing assumptions. Same guess-check over the four candidate recids,
+  accepting only `0`/`1`.
+  """
+  @spec find_recid_from_digest(<<_::256>>, Curvy.Signature.t(), <<_::160>>) ::
+          {:ok, 0..1} | {:error, String.t()}
+  def find_recid_from_digest(digest, signature, address) do
     recid =
       Enum.find(0..3, fn recid ->
-        Cartouche.Recover.recover_eth(message, %{signature | recid: recid}) == address
+        recover_eth_from_digest(digest, %{signature | recid: recid}) == address
       end)
 
     case recid do

@@ -13,7 +13,13 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     - Signature is raw 64 bytes, not DER-encoded
 
     Requires the `google_api_cloud_kms` optional dependency.
+
+    Implements `Cartouche.Signer.Backend` — its `config` is the
+    `{credentials, project, location, keychain, key, version}` key-coordinate
+    tuple. Ed25519 signs raw message bytes, so
+    `c:Cartouche.Signer.Backend.sign_payload/2` is the raw-message signer.
     """
+    @behaviour Cartouche.Signer.Backend
 
     alias GoogleApi.CloudKMS.V1.Api.Projects, as: CloudKMSApi
     # Ed25519 SubjectPublicKeyInfo DER prefix (12 bytes):
@@ -22,12 +28,21 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
 
     @ed25519_der_prefix <<0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21, 0x00>>
 
+    @typedoc "Cloud KMS key coordinates: `{credentials, project, location, keychain, key, version}`."
+    @type config :: {term(), String.t(), String.t(), String.t(), String.t(), String.t()}
+
+    @impl true
+    @spec algorithm(config()) :: :ed25519
+    def algorithm(_config), do: :ed25519
+
     @doc """
     Get the Ed25519 public key (32 bytes) from a KMS key version.
+
+    For Solana the public key *is* the address, so `get_address/6` is an alias.
     """
-    @spec get_address(term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
-            {:ok, <<_::256>>} | {:error, term()}
-    def get_address(cred, project, location, keychain, key, version) do
+    @impl true
+    @spec public_key(config()) :: {:ok, <<_::256>>} | {:error, term()}
+    def public_key({cred, project, location, keychain, key, version}) do
       name = key_version_name(project, location, keychain, key, version)
 
       with {:ok, %GoogleApi.CloudKMS.V1.Model.PublicKey{algorithm: algorithm, pem: pem}} <-
@@ -46,16 +61,26 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
     end
 
     @doc """
-    Sign message bytes using a KMS Ed25519 key.
+    Alias for `public_key/1` (arg-spread form) — on Solana the public key is the
+    address.
+    """
+    @spec get_address(term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
+            {:ok, <<_::256>>} | {:error, term()}
+    def get_address(cred, project, location, keychain, key, version) do
+      public_key({cred, project, location, keychain, key, version})
+    end
+
+    @doc """
+    Sign raw message bytes via a KMS Ed25519 key — the pure-payload contract.
 
     Ed25519 signs raw message bytes (no external hashing). The message is
     sent to KMS via the `data` field (not `digest`).
 
     Returns `{:ok, signature}` where signature is exactly 64 bytes.
     """
-    @spec sign(binary(), term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
-            {:ok, <<_::512>>} | {:error, term()}
-    def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
+    @impl true
+    @spec sign_payload(binary(), config()) :: {:ok, <<_::512>>} | {:error, term()}
+    def sign_payload(message, {cred, project, location, keychain, key, version}) when is_binary(message) do
       message_enc = Base.encode64(message)
       name = key_version_name(project, location, keychain, key, version)
 
@@ -70,6 +95,15 @@ if Code.ensure_loaded?(GoogleApi.CloudKMS.V1.Api.Projects) do
            {:ok, <<signature::binary-64>>} <- Base.decode64(response.signature) do
         {:ok, signature}
       end
+    end
+
+    @doc """
+    Back-compat alias for `sign_payload/2` (arg-spread form).
+    """
+    @spec sign(binary(), term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
+            {:ok, <<_::512>>} | {:error, term()}
+    def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
+      sign_payload(message, {cred, project, location, keychain, key, version})
     end
 
     @spec key_version_name(String.t(), String.t(), String.t(), String.t(), String.t() | non_neg_integer()) ::

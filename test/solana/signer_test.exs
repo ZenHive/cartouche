@@ -45,6 +45,16 @@ defmodule Cartouche.Solana.SignerTest do
   ]
 
   describe "Ed25519 backend" do
+    test "algorithm/1 reports ed25519" do
+      seed = Base.decode16!(hd(@test_vectors).seed)
+      assert Ed25519Backend.algorithm(seed) == :ed25519
+    end
+
+    test "get_address/1 is an alias for public_key/1" do
+      seed = Base.decode16!(hd(@test_vectors).seed)
+      assert Ed25519Backend.get_address(seed) == Ed25519Backend.public_key(seed)
+    end
+
     test "get_address returns correct pubkey for all RFC 8032 vectors" do
       for v <- @test_vectors do
         seed = Base.decode16!(v.seed)
@@ -188,6 +198,34 @@ defmodule Cartouche.Solana.SignerTest do
 
       assert Signer.verify("roundtrip test", sig, pub)
       refute Signer.verify("different message", sig, pub)
+    end
+
+    test "sign/1 and address/0 resolve against the default name" do
+      # Exercises the arg-less `\\ Default` clauses by registering a signer
+      # under `Cartouche.Solana.Signer.Default`.
+      Cartouche.Solana.Test.Signer.start_signer(Cartouche.Solana.Signer.Default)
+
+      assert <<_::256>> = Signer.address()
+      assert {:ok, <<_::512>>} = Signer.sign("default name message")
+    end
+  end
+
+  describe "{backend, config} carrier (pure-payload path)" do
+    @seed Base.decode16!("9D61B19DEFFD5A60BA844AF492EC2CC44449C5697B326919703BAC031CAE7F60")
+    @pub Base.decode16!("D75A980182B10AB7D54BFED3C964073A0EE172F3DAA62325AF021A68F707511A")
+
+    setup do
+      {:ok, pid} = Signer.start_link(mfa: {Ed25519Backend, @seed}, name: nil)
+      %{signer: pid}
+    end
+
+    test "address resolves the public key from the backend", %{signer: signer} do
+      assert Signer.address(signer) == @pub
+    end
+
+    test "sign produces a verifiable 64-byte signature", %{signer: signer} do
+      assert {:ok, <<_::512>> = sig} = Signer.sign("carrier message", signer)
+      assert Signer.verify("carrier message", sig, @pub)
     end
   end
 end

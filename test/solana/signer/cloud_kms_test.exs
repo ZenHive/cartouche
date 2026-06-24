@@ -220,5 +220,12 @@ if Code.ensure_loaded?(Cartouche.Solana.Signer.CloudKMS) do
         assert :crypto.verify(:eddsa, :none, @test_message, sig, [@pub, :ed25519])
       end
     end
+
+    describe "algorithm/1" do
+      test "reports ed25519" do
+        assert CloudKMS.algorithm({"token", "project", "location", "keychain", "key", "version"}) ==
+                 :ed25519
+      end
+    end
   end
 end

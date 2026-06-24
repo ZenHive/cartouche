@@ -142,4 +142,11 @@ defmodule Cartouche.Signer.CloudKMSTest do
                CloudKMS.get_address("token", "project", "location", "keychain", "wrong-algo", "version")
     end
   end
+
+  describe "algorithm/1" do
+    test "reports secp256k1" do
+      assert CloudKMS.algorithm({"token", "project", "location", "keychain", "key", "version"}) ==
+               :secp256k1
+    end
+  end
 end

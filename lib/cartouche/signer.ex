@@ -21,6 +21,9 @@ defmodule Cartouche.Signer do
   use GenServer
   use Cartouche.Hex
 
+  import Cartouche.Hash, only: [keccak: 1]
+
+  alias Cartouche.Signer.Backend
   alias Cartouche.Signer.Default
 
   require Logger
@@ -38,11 +41,12 @@ defmodule Cartouche.Signer do
     }
   )
 
-  api(:start_link, "Start a signer process backed by the provided signing MFA.",
+  api(:start_link, "Start a signer process backed by the provided signer backend carrier.",
     params: [
       signer_options: [
         kind: :value,
-        description: "Keyword list containing `:mfa` as `{module, function, args}` and `:name` as the GenServer name."
+        description:
+          "Keyword list containing `:mfa` as a `{backend_module, config}` carrier (or a legacy `{module, function, args}` MFA) and `:name` as the GenServer name."
       ]
     ],
     returns: %{
@@ -54,7 +58,8 @@ defmodule Cartouche.Signer do
   @doc """
   Starts a new Cartouche.Signer process.
   """
-  @spec start_link(mfa: {module(), atom(), [any()]}, name: GenServer.name()) :: GenServer.on_start()
+  @spec start_link(mfa: Backend.t() | {module(), atom(), [any()]}, name: GenServer.name()) ::
+          GenServer.on_start()
   def start_link(mfa: mfa, name: name) do
     Logger.info("Starting Cartouche.Signer #{name}...")
     chain_id = Cartouche.Application.chain_id()
@@ -161,15 +166,15 @@ defmodule Cartouche.Signer do
   @doc false
   @impl true
   def handle_call({:sign, {message, chain_id}}, _from, %{address: address, mfa: mfa} = state) do
-    {:reply, sign_direct(message, address, mfa, chain_id), state}
+    {:reply, backend_sign(mfa, message, address, chain_id), state}
   end
 
   # Note absence of address in state, find it and set it and then sign. Address will be cached on next signing.
-  def handle_call({:sign, {message, chain_id}}, _from, %{name: name, mfa: {mod, _fn, args} = mfa} = state) do
-    {:ok, address} = apply(mod, :get_address, args)
+  def handle_call({:sign, {message, chain_id}}, _from, %{name: name, mfa: mfa} = state) do
+    {:ok, address} = backend_address(mfa)
     Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
 
-    {:reply, sign_direct(message, address, mfa, chain_id), Map.put(state, :address, address)}
+    {:reply, backend_sign(mfa, message, address, chain_id), Map.put(state, :address, address)}
   end
 
   # Reads address from state, or finds and memoize address on first call.
@@ -177,8 +182,8 @@ defmodule Cartouche.Signer do
     {:reply, address, state}
   end
 
-  def handle_call(:get_address, _from, %{name: name, mfa: {mod, _fn, args}} = state) do
-    {:ok, address} = apply(mod, :get_address, args)
+  def handle_call(:get_address, _from, %{name: name, mfa: mfa} = state) do
+    {:ok, address} = backend_address(mfa)
     Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
     {:reply, address, Map.put(state, :address, address)}
   end
@@ -216,19 +221,61 @@ defmodule Cartouche.Signer do
   @spec sign_direct(String.t(), binary(), {module(), atom(), [any()]}, integer()) ::
           {:ok, binary()} | {:error, String.t()}
   def sign_direct(message, address, {mod, fun, args}, chain_id_or_name) do
-    with {:ok,
-          %Curvy.Signature{
-            crv: :secp256k1,
-            r: r,
-            recid: nil,
-            s: s
-          } = signature} <- apply(mod, fun, [message] ++ args),
+    with {:ok, %Curvy.Signature{crv: :secp256k1, recid: nil} = signature} <-
+           apply(mod, fun, [message] ++ args),
          {:ok, recid} <- Cartouche.Recover.find_recid(message, signature, address) do
-      # EIP-155
-      chain_id = Cartouche.Chain.parse_id(chain_id_or_name)
-      v = if chain_id == 0, do: 27 + recid, else: chain_id * 2 + 35 + recid
-
-      {:ok, Hex.encode_bytes(r, 32) <> Hex.encode_bytes(s, 32) <> :binary.encode_unsigned(v)}
+      {:ok, encode_eip155(signature, recid, chain_id_or_name)}
     end
+  end
+
+  # --- Backend dispatch (pure-payload contract) ---
+  #
+  # The runtime carries a backend as either the new `{backend_module, config}`
+  # pair (pure-payload `Cartouche.Signer.Backend`) or, for back-compat, a legacy
+  # `{module, function, args}` MFA whose `sign` keccaks internally.
+
+  # Resolve the signer's Ethereum address from the backend carrier.
+  @spec backend_address(Backend.t() | {module(), atom(), [any()]}) ::
+          {:ok, binary()} | {:error, term()}
+  defp backend_address({backend, config}) when is_atom(backend) do
+    with {:ok, public_key} <- backend.public_key(config) do
+      {:ok, Cartouche.Address.from_public_key(public_key)}
+    end
+  end
+
+  defp backend_address({mod, _fun, args}) do
+    apply(mod, :get_address, args)
+  end
+
+  # Sign through the backend carrier. New carriers take the pure-payload path:
+  # the caller keccaks the message, the backend signs that digest, low-s is
+  # normalized, and the recid is searched against the SAME digest.
+  @spec backend_sign(
+          Backend.t() | {module(), atom(), [any()]},
+          String.t(),
+          binary(),
+          integer() | atom()
+        ) :: {:ok, binary()} | {:error, term()}
+  defp backend_sign({backend, config}, message, address, chain_id_or_name) when is_atom(backend) do
+    digest = keccak(message)
+
+    with {:ok, raw_signature} <- backend.sign_payload(digest, config),
+         signature = Cartouche.Recover.normalize_low_s(raw_signature),
+         {:ok, recid} <- Cartouche.Recover.find_recid_from_digest(digest, signature, address) do
+      {:ok, encode_eip155(signature, recid, chain_id_or_name)}
+    end
+  end
+
+  defp backend_sign({_mod, _fun, _args} = mfa, message, address, chain_id_or_name) do
+    sign_direct(message, address, mfa, chain_id_or_name)
+  end
+
+  # Assemble the 65-byte EIP-155 signature from a recovered secp256k1 signature.
+  @spec encode_eip155(Curvy.Signature.t(), 0..1, integer() | atom()) :: binary()
+  defp encode_eip155(%Curvy.Signature{r: r, s: s}, recid, chain_id_or_name) do
+    chain_id = Cartouche.Chain.parse_id(chain_id_or_name)
+    v = if chain_id == 0, do: 27 + recid, else: chain_id * 2 + 35 + recid
+
+    Hex.encode_bytes(r, 32) <> Hex.encode_bytes(s, 32) <> :binary.encode_unsigned(v)
   end
 end
