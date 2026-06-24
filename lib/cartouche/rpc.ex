@@ -6,6 +6,7 @@ defmodule Cartouche.RPC do
   use Cartouche.Hex
 
   import Cartouche.HTTP, only: [normalize_response: 1]
+  import Cartouche.RPC.DSL, only: [defrpc: 3]
   import Cartouche.Wei, only: [to_wei: 1]
 
   alias Cartouche.Signer.Default
@@ -547,166 +548,89 @@ defmodule Cartouche.RPC do
     )
   end
 
-  api(:eth_chain_id, "Fetch the current Ethereum chain id.",
-    params: [
-      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description: "`{:ok, chain_id}` as a non-negative integer decoded from `eth_chainId`, or `{:error, reason}`."
-    }
+  defrpc(:eth_chain_id, "eth_chainId",
+    decode: :hex_unsigned,
+    summary: "Fetch the current Ethereum chain id.",
+    returns_desc: "`{:ok, chain_id}` as a non-negative integer decoded from `eth_chainId`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC to get the current chain id.
+
+    Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_chainid
+
+    ## Examples
+
+        iex> Cartouche.RPC.eth_chain_id()
+        {:ok, 0x22}
+    """
   )
 
-  @doc ~S"""
-  RPC to get the current chain id.
+  defrpc(:get_code, "eth_getCode",
+    encode: :big_hex,
+    decode: :hex,
+    summary: "Fetch contract bytecode at an address and block selector.",
+    address_desc: "20-byte Ethereum contract or account address.",
+    returns_desc: "`{:ok, bytecode}` decoded from `eth_getCode`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC call to get code for a contract at an address.
 
-  Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_chainid
+    ## Examples
 
-  ## Examples
-
-      iex> Cartouche.RPC.eth_chain_id()
-      {:ok, 0x22}
-  """
-  @spec eth_chain_id(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def eth_chain_id(opts \\ []) do
-    Cartouche.RPC.send_rpc("eth_chainId", [], Keyword.put(opts, :decode, :hex_unsigned))
-  end
-
-  api(:get_code, "Fetch contract bytecode at an address and block selector.",
-    params: [
-      address: [kind: :value, description: "20-byte Ethereum contract or account address."],
-      opts: [
-        kind: :value,
-        default: [],
-        description:
-          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
-      ]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description: "`{:ok, bytecode}` decoded from `eth_getCode`, or `{:error, reason}`."
-    }
+        iex> Cartouche.RPC.get_code(<<1::160>>)
+        {:ok, <<0x11, 0x22, 0x33>>}
+    """
   )
 
-  @doc """
-  RPC call to get code for a contract at an address.
+  defrpc(:get_balance, "eth_getBalance",
+    decode: :hex_unsigned,
+    summary: "Fetch an account ETH balance at a block selector.",
+    address_desc: "20-byte Ethereum account or contract address.",
+    returns_desc: "`{:ok, wei_balance}` as a non-negative integer decoded from `eth_getBalance`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC to get an account's eth balance.
 
-  ## Examples
+    Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getbalance
 
-      iex> Cartouche.RPC.get_code(<<1::160>>)
-      {:ok, <<0x11, 0x22, 0x33>>}
-  """
-  @spec get_code(<<_::160>>, Keyword.t()) :: {:ok, binary()} | {:error, term()}
-  def get_code(<<_::160>> = address, opts \\ []) do
-    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
+    ## Examples
 
-    send_rpc(
-      "eth_getCode",
-      [Hex.encode_big_hex(address), block_number],
-      Keyword.put(opts, :decode, :hex)
-    )
-  end
-
-  api(:get_balance, "Fetch an account ETH balance at a block selector.",
-    params: [
-      address: [kind: :value, description: "20-byte Ethereum account or contract address."],
-      opts: [
-        kind: :value,
-        default: [],
-        description:
-          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
-      ]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description: "`{:ok, wei_balance}` as a non-negative integer decoded from `eth_getBalance`, or `{:error, reason}`."
-    }
+        iex> Cartouche.RPC.get_balance(~h[0x0000000000000000000000000000000000000001])
+        {:ok, 0x55}
+    """
   )
 
-  @doc ~S"""
-  RPC to get an account's eth balance.
+  defrpc(:get_transaction_count, "eth_getTransactionCount",
+    decode: :hex_unsigned,
+    summary: "Fetch an account transaction count at a block selector.",
+    address_desc: "20-byte Ethereum account address.",
+    returns_desc:
+      "`{:ok, nonce}` as a non-negative integer decoded from `eth_getTransactionCount`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC to get an account's transaction count (i.e. nonce)
 
-  Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_getbalance
+    Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactioncount
 
-  ## Examples
+    ## Examples
 
-      iex> Cartouche.RPC.get_balance(~h[0x0000000000000000000000000000000000000001])
-      {:ok, 0x55}
-  """
-  @spec get_balance(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def get_balance(<<_::160>> = address, opts \\ []) do
-    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
-
-    Cartouche.RPC.send_rpc(
-      "eth_getBalance",
-      [to_hex(address), block_number],
-      Keyword.put(opts, :decode, :hex_unsigned)
-    )
-  end
-
-  api(:get_transaction_count, "Fetch an account transaction count at a block selector.",
-    params: [
-      address: [kind: :value, description: "20-byte Ethereum account address."],
-      opts: [
-        kind: :value,
-        default: [],
-        description:
-          ~s{Keyword options including `:block_number` (`"latest"`, `"pending"`, integer, or hex quantity) and transport options.}
-      ]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description:
-        "`{:ok, nonce}` as a non-negative integer decoded from `eth_getTransactionCount`, or `{:error, reason}`."
-    }
+        iex> Cartouche.RPC.get_transaction_count(~h[0x0000000000000000000000000000000000000001])
+        {:ok, 0x4}
+    """
   )
 
-  @doc ~S"""
-  RPC to get an account's transaction count (i.e. nonce)
+  defrpc(:eth_block_number, "eth_blockNumber",
+    decode: :hex_unsigned,
+    summary: "Fetch the current Ethereum block number.",
+    returns_desc:
+      "`{:ok, block_number}` as a non-negative integer decoded from `eth_blockNumber`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC to get the current block number.
 
-  Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_gettransactioncount
+    Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_blocknumber
 
-  ## Examples
+    ## Examples
 
-      iex> Cartouche.RPC.get_transaction_count(~h[0x0000000000000000000000000000000000000001])
-      {:ok, 0x4}
-  """
-  @spec get_transaction_count(<<_::160>>, Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def get_transaction_count(<<_::160>> = address, opts \\ []) do
-    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
-
-    Cartouche.RPC.send_rpc(
-      "eth_getTransactionCount",
-      [to_hex(address), block_number],
-      Keyword.put(opts, :decode, :hex_unsigned)
-    )
-  end
-
-  api(:eth_block_number, "Fetch the current Ethereum block number.",
-    params: [
-      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description:
-        "`{:ok, block_number}` as a non-negative integer decoded from `eth_blockNumber`, or `{:error, reason}`."
-    }
+        iex> Cartouche.RPC.eth_block_number()
+        {:ok, 0x44}
+    """
   )
-
-  @doc ~S"""
-  RPC to get the current block number.
-
-  Docs: https://ethereum.org/en/developers/docs/apis/json-rpc/#eth_blocknumber
-
-  ## Examples
-
-      iex> Cartouche.RPC.eth_block_number()
-      {:ok, 0x44}
-  """
-  @spec eth_block_number(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def eth_block_number(opts \\ []) do
-    Cartouche.RPC.send_rpc("eth_blockNumber", [], Keyword.put(opts, :decode, :hex_unsigned))
-  end
 
   api(:get_block_by_number, "Fetch a block by block number or block tag.",
     params: [
@@ -1576,59 +1500,33 @@ defmodule Cartouche.RPC do
     )
   end
 
-  api(:gas_price, "Fetch the current legacy gas price.",
-    params: [
-      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description: "`{:ok, wei_per_gas}` decoded from `eth_gasPrice`, or `{:error, reason}`."
-    }
+  defrpc(:gas_price, "eth_gasPrice",
+    decode: :hex_unsigned,
+    summary: "Fetch the current legacy gas price.",
+    returns_desc: "`{:ok, wei_per_gas}` decoded from `eth_gasPrice`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC call to call to get the current gas price.
+
+    ## Examples
+
+        iex> Cartouche.RPC.gas_price()
+        {:ok, 1000000000}
+    """
   )
 
-  @doc """
-  RPC call to call to get the current gas price.
+  defrpc(:max_priority_fee_per_gas, "eth_maxPriorityFeePerGas",
+    decode: :hex_unsigned,
+    summary: "Fetch the current max priority fee per gas.",
+    returns_desc: "`{:ok, max_priority_fee_per_gas}` decoded from `eth_maxPriorityFeePerGas`, or `{:error, reason}`.",
+    doc: ~S"""
+    RPC call to call to get the current max priority fee per gas.
 
-  ## Examples
+    ## Examples
 
-      iex> Cartouche.RPC.gas_price()
-      {:ok, 1000000000}
-  """
-  @spec gas_price(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def gas_price(opts \\ []) do
-    send_rpc(
-      "eth_gasPrice",
-      [],
-      Keyword.put(opts, :decode, :hex_unsigned)
-    )
-  end
-
-  api(:max_priority_fee_per_gas, "Fetch the current max priority fee per gas.",
-    params: [
-      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
-    ],
-    returns: %{
-      type: :ok_error_tuple,
-      description: "`{:ok, max_priority_fee_per_gas}` decoded from `eth_maxPriorityFeePerGas`, or `{:error, reason}`."
-    }
+        iex> Cartouche.RPC.max_priority_fee_per_gas()
+        {:ok, 1000000001}
+    """
   )
-
-  @doc """
-  RPC call to call to get the current max priority fee per gas.
-
-  ## Examples
-
-      iex> Cartouche.RPC.max_priority_fee_per_gas()
-      {:ok, 1000000001}
-  """
-  @spec max_priority_fee_per_gas(Keyword.t()) :: {:ok, non_neg_integer()} | {:error, term()}
-  def max_priority_fee_per_gas(opts \\ []) do
-    send_rpc(
-      "eth_maxPriorityFeePerGas",
-      [],
-      Keyword.put(opts, :decode, :hex_unsigned)
-    )
-  end
 
   api(:fee_history, "Fetch and decode EIP-1559 fee history data.",
     params: [
