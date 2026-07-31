@@ -14,6 +14,15 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [0.6.0] — 2026-07-31
+
+### Changed
+
+- **`req` bound widened to `~> 0.6.2 or ~> 0.7`**, admitting Req 0.7.x alongside the existing 0.6.x line. Cartouche only uses Req's stable surface (`Req.request/1`, `%Req.Response{}`, `%Req.TransportError{}`) and touches none of the APIs Req 0.7 removed (`run_finch`, `put_plug`/`run_plug`, `Req.Request.current_request_steps`), so the change is source-compatible in both directions — no consumer code change is required and the 0.6.x line stays permitted.
+  - **Why this is a release and not a local tweak:** the published `cartouche 0.5.0` declared `req ~> 0.6.2` (= `< 0.7.0`), which transitively hard-capped Req below 0.7 for *every* downstream consumer — `onchain`, `onchain_tempo` and `mpp` all resolved to Req 0.6.x no matter what their own bounds allowed. This release is what lifts that cap.
+  - Downstream repos need only `mix deps.update cartouche req`; `onchain` declares `cartouche ~> 0.5`, which already admits 0.6.0, so **no intermediate `onchain` republish is needed** to unblock the chain.
+  - Verified against Req 0.7.1: compiles `--warnings-as-errors` clean, full suite green (1148 tests, 339 doctests).
+
 ## [0.5.0] — 2026-06-24
 
 ### Changed

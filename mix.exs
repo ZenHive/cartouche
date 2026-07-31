@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.5.0",
+      version: "0.6.0",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -115,7 +115,7 @@ defmodule Cartouche.MixProject do
       # safe for wei/fee token math (uint256 max ~78 digits << 6_178 string
       # cap). See https://github.com/ericmj/decimal/blob/main/CHANGELOG.md.
       {:decimal, "~> 3.1"},
-      {:req, "~> 0.6.2"},
+      {:req, "~> 0.6.2 or ~> 0.7"},
       # Test-only intent: Req.Test builds `Plug.Conn`s for the stub plugs that
       # mock cartouche's outbound RPC calls. Req lists plug as optional. Scoped
       # `only: [:dev, :test]` (not `:test`) because the dev-only `tidewave` dep
