@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [Unreleased]
+
+### Changed
+
+- **`{:descripex, "~> 0.11"}` → `{:descripex, "~> 0.12"}`.** The declared floor no longer matched what resolves: hieroglyph 1.6.0 requires `descripex ~> 0.12.0`, so 0.11.x has been unreachable since 0.6.1 shipped. The old bound advertised a range cartouche cannot actually be built against — a consumer pinning 0.11.x got a resolution conflict surfaced from hieroglyph rather than a clear bound here. No behavioural change; the resolved dependency set is identical.
+
 ## [0.6.1] — 2026-08-01
 
 ### Changed

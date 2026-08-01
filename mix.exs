@@ -135,7 +135,12 @@ defmodule Cartouche.MixProject do
       # crashed (CaseClauseError in json_spec) on the `%{non_neg_integer() =>
       # <<_::256>>}` spec of Solana.Transaction.sign_partial/2, taking down
       # Cartouche.describe/0 and __api__/1. Fixed in descripex 0.9.1.
-      {:descripex, "~> 0.11"},
+      # Floor tracks what actually resolves: hieroglyph 1.6.0 requires
+      # `descripex ~> 0.12.0`, so 0.11.x has been unreachable since that bump.
+      # Declaring `~> 0.11` advertised a range cartouche can no longer be built
+      # against — a consumer pinning 0.11.x hit a resolution conflict from
+      # hieroglyph instead of a clear bound here.
+      {:descripex, "~> 0.12"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
