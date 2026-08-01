@@ -3,6 +3,8 @@ defmodule Mix.Tasks.Cartouche.GenTest do
 
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureLog
+
   alias Mix.Tasks.Cartouche.Gen
 
   # Drives the generator end-to-end through its public Mix-task entrypoint
@@ -586,12 +588,116 @@ defmodule Mix.Tasks.Cartouche.GenTest do
 
       # Two distinct encoders survive — pre-fix the shadowed clause collapses
       # these into a single encode_get_value/1.
-      assert length(encoders) == 2
+      assert [_, _] = encoders
 
       # Behavioral proof: each encoder emits its own selector, so neither is
       # an unreachable duplicate of the other.
       calldatas = Enum.map(encoders, &apply(module, &1, [1]))
       assert calldatas == Enum.uniq(calldatas)
+    end
+  end
+
+  describe "malformed ABI items are warned-and-skipped, not crashed, by the narrowed rescues" do
+    # accumulate_named_abi/2, get_encode_call/4, and selector_return_field_atoms/1
+    # each wrap a call to ABI.FunctionSelector.parse_specification_item/1 in a
+    # try/rescue over @parse_specification_errors. Direct probing of that
+    # dependency call (hieroglyph) found these exception types reachable from
+    # malformed-but-plausible solc ABI-JSON input: ArgumentError (an
+    # accepted-by-grammar-but-unimplemented type, e.g. fixed128x18),
+    # FunctionClauseError (an unrecognized/missing/non-string "type", at the item
+    # or input level), MatchError (an inner type string the lexer can't tokenize
+    # at all), and Protocol.UndefinedError ("inputs"/"outputs" present but JSON
+    # null — parse_specification_item/1's `Map.get(item, "inputs", [])` default
+    # only applies when the key is ABSENT, so nil reaches Enum.map/2). The list is
+    # evidence-based, not proven exhaustive: a newly-reachable exception type must
+    # be added to @parse_specification_errors with a case here. Each case combines
+    # a well-formed struct-returning function (to force the
+    # collect_return_field_atoms/selector_return_field_atoms path, which only
+    # runs when the generated module uses preintern_return_atoms!) with one
+    # malformed sibling function, so a single generation run exercises all three
+    # rescue sites at once.
+
+    defp abi_with_malformed_sibling(malformed_item) do
+      named_return_abi() ++ [malformed_item]
+    end
+
+    defp generate_with_malformed_sibling(tmp, name, malformed_item) do
+      artifact =
+        name
+        |> solidity_artifact(abi_with_malformed_sibling(malformed_item))
+        |> put_bytecodes(:absent, "0x60806041")
+
+      with_log(fn -> generate_artifact(tmp, name, artifact) end)
+    end
+
+    test "unsupported fixed-point type (ArgumentError) is skipped, not raised", %{tmp: tmp} do
+      malformed = %{
+        "type" => "function",
+        "name" => "brokenFixed",
+        "inputs" => [%{"name" => "x", "type" => "fixed128x18", "internalType" => "fixed128x18"}],
+        "outputs" => [],
+        "stateMutability" => "pure"
+      }
+
+      {contents, log} = generate_with_malformed_sibling(tmp, "MalformedArgError", malformed)
+
+      assert log =~ "Ignoring"
+      refute contents =~ "broken_fixed"
+      assert contents =~ "def exec_vm_snapshot"
+      assert contents =~ "defp preintern_return_atoms!"
+    end
+
+    test "unrecognized top-level ABI item type (FunctionClauseError) is skipped, not raised", %{tmp: tmp} do
+      malformed = %{
+        "type" => "weird_type_here",
+        "name" => "brokenType",
+        "inputs" => [],
+        "outputs" => []
+      }
+
+      {contents, log} = generate_with_malformed_sibling(tmp, "MalformedFunctionClauseError", malformed)
+
+      assert log =~ "Ignoring"
+      refute contents =~ "broken_type"
+      assert contents =~ "def exec_vm_snapshot"
+      assert contents =~ "defp preintern_return_atoms!"
+    end
+
+    test "unlexable inner type string (MatchError) is skipped, not raised", %{tmp: tmp} do
+      malformed = %{
+        "type" => "function",
+        "name" => "brokenMatch",
+        "inputs" => [%{"name" => "x", "type" => "not_a_real_type!!", "internalType" => "not_a_real_type!!"}],
+        "outputs" => [],
+        "stateMutability" => "pure"
+      }
+
+      {contents, log} = generate_with_malformed_sibling(tmp, "MalformedMatchError", malformed)
+
+      assert log =~ "Ignoring"
+      refute contents =~ "broken_match"
+      assert contents =~ "def exec_vm_snapshot"
+      assert contents =~ "defp preintern_return_atoms!"
+    end
+
+    test "null inputs/outputs (Protocol.UndefinedError) is skipped, not raised", %{tmp: tmp} do
+      # `Map.get(item, "inputs", [])` inside parse_specification_item/1 returns the
+      # JSON null, not the default — the default only fires on an ABSENT key — so
+      # Enum.map/2 is handed nil and raises Protocol.UndefinedError.
+      malformed = %{
+        "type" => "function",
+        "name" => "brokenNull",
+        "inputs" => nil,
+        "outputs" => nil,
+        "stateMutability" => "pure"
+      }
+
+      {contents, log} = generate_with_malformed_sibling(tmp, "MalformedProtocolError", malformed)
+
+      assert log =~ "Ignoring due to failed parse"
+      refute contents =~ "broken_null"
+      assert contents =~ "def exec_vm_snapshot"
+      assert contents =~ "defp preintern_return_atoms!"
     end
   end
 

@@ -77,6 +77,21 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
   @unlinked_library_marker ~r/_{2}\$[[:xdigit:]]{34}\$_{2}/
 
+  # Exceptions `ABI.FunctionSelector.parse_specification_item/1` raises on
+  # malformed-but-plausible solc ABI JSON, established by probing hieroglyph
+  # directly (see the matching describe block in test/mix/cartouche_gen_test.exs):
+  #
+  #   * ArgumentError          — a type the grammar accepts but ABI doesn't implement (fixed128x18)
+  #   * FunctionClauseError    — an unrecognized/missing/non-string "type", at the item or input level
+  #   * MatchError             — an inner type string the lexer can't tokenize, or `tuple` with no components
+  #   * Protocol.UndefinedError — "inputs"/"outputs" present but JSON null (the `Map.get/3` default
+  #                               only applies when the key is ABSENT, so nil reaches Enum.map/2)
+  #
+  # Shared by all three call sites so the set can't drift between them. A parse
+  # failure is warned-and-skipped, never fatal: one malformed item must not abort
+  # generation for the whole artifact.
+  @parse_specification_errors [ArgumentError, FunctionClauseError, MatchError, Protocol.UndefinedError]
+
   defmodule InvalidFileError do
     @moduledoc false
     defexception message: "invalid file error"
@@ -125,7 +140,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
 
       file_name ->
         file_name
-        |> String.split(".")
+        |> String.split(".", parts: 2)
         |> List.first()
     end
   end
@@ -147,16 +162,16 @@ defmodule Mix.Tasks.Cartouche.Gen do
       try do
         ABI.FunctionSelector.parse_specification_item(abi)
       rescue
-        e ->
+        e in @parse_specification_errors ->
           Logger.warning("Ignoring due to failed parse: #{inspect(abi)}")
           Logger.error(e)
 
-          nil
+          {:error, e}
       end
 
     case {fn_sel, abi["name"]} do
+      {{:error, _exception}, _} -> {[abi | acc], seen}
       {_, nil} -> {[abi | acc], seen}
-      {nil, _} -> {[abi | acc], seen}
       {fs, name} -> dedup_named_abi(abi, name, fs, acc, seen)
     end
   end
@@ -248,7 +263,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
       try do
         ABI.FunctionSelector.parse_specification_item(abi)
       rescue
-        _e ->
+        _e in @parse_specification_errors ->
           Logger.warning("Ignoring due to failed parse: #{inspect(abi)}")
           nil
       end
@@ -830,7 +845,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
     %ABI.FunctionSelector{returns: returns} = ABI.FunctionSelector.parse_specification_item(abi_item)
     field_name_atoms(normalize_return_types(returns))
   rescue
-    _ -> []
+    _ in @parse_specification_errors -> []
   end
 
   @spec field_name_atoms([map()] | term()) :: [atom()]
@@ -1439,8 +1454,7 @@ defmodule Mix.Tasks.Cartouche.Gen do
   # Gets the output-json of all included Solidity files to auto-generate.
   defp get_json_out(patterns) do
     patterns
-    |> Enum.map(fn pattern -> Path.wildcard(pattern) end)
-    |> List.flatten()
+    |> Enum.flat_map(fn pattern -> Path.wildcard(pattern) end)
     |> Enum.map(fn filename -> {filename, File.read!(filename)} end)
     |> Enum.map(fn {filename, contents} -> {filename, Jason.decode!(contents)} end)
     |> Enum.map(fn {filename, contents} ->
