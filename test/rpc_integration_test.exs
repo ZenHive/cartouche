@@ -468,23 +468,10 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert byte_size(second.output) == 32
     end
 
-    test "debug_traceCall WETH9.totalSupply() at block 18,000,000" do
-      trx = V1.new(0, {0, :gwei}, 100_000, @weth9, 0, @weth9_total_supply_selector)
-      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
-
-      assert {:ok, %Cartouche.DebugTrace{} = dt} = Cartouche.RPC.debug_trace_call(trx, opts)
-      assert dt.failed == false
-      assert is_integer(dt.gas)
-      assert dt.gas > 0
-      assert is_binary(dt.return_value)
-      assert byte_size(dt.return_value) == 32
-      assert :binary.decode_unsigned(dt.return_value) == @weth9_total_supply
-      # struct_logs shape only — opcode coverage is unit-tested via
-      # `test/debug_trace_atom_safety_test.exs`. The cons-pattern match below
-      # both type-checks and pins non-emptiness in one line.
-      assert is_list(dt.struct_logs)
-      assert [%Cartouche.DebugTrace.StructLog{} | _] = dt.struct_logs
-    end
+    # `debug_traceCall` lives in `test/rpc_debug_namespace_test.exs` under its
+    # own `:debug_namespace` tag — the archive node keeps the `debug_*`
+    # namespace disabled for security, so it cannot pass here. See that file's
+    # moduledoc for the rationale and how to opt in.
 
     test "trace_transaction at type-4 (EIP-7702) anchor — delegation tx" do
       assert {:ok, traces} = Cartouche.RPC.trace_trx(@type_4_trace_hash, live_opts())
