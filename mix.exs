@@ -149,7 +149,7 @@ defmodule Cartouche.MixProject do
   # PR branches fork from `main` so these never appear in any upstream diff.
   defp zenhive_dev_deps do
     [
-      {:styler, "~> 1.11.0", only: [:dev, :test], runtime: false},
+      {:styler, "~> 1.12.0", only: [:dev, :test], runtime: false},
       {:ex_unit_json, "~> 0.6.0", only: [:dev, :test], runtime: false},
       {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
@@ -158,7 +158,7 @@ defmodule Cartouche.MixProject do
       {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
       {:meck, "~> 1.2.0", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
-      {:ex_ast, "~> 0.12", only: [:dev, :test], runtime: false},
+      {:ex_ast, "~> 0.13", only: [:dev, :test], runtime: false, override: true},
       {:ex_slop, "~> 0.4", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
@@ -200,10 +200,51 @@ defmodule Cartouche.MixProject do
         "ex_dna --max-clones 0",
         "reach.check --arch --smells",
         "sobelow --config",
+        "deps.audit.gated",
         "test.json --cover --cover-threshold 85 --summary-only --exclude integration",
-        "dialyzer"
+        "dialyzer",
+        "agents.check"
       ],
+      # Fails when AGENTS.md has drifted from CLAUDE.md. Compares rendered output,
+      # not mtimes, so drift in a transitive @-import is caught too.
+      "agents.check": [&agents_check/1],
+      # mix_audit discards its own sync exit status (mirego/mix_audit#61), so a
+      # frozen advisory DB still reports "No vulnerabilities found" and exits 0.
+      # Prove freshness first, then audit. cartouche's dep tree carries no gun
+      # (no `.mix_audit_ignore` needed — audits clean).
+      "deps.audit.gated": [&advisory_freshness/1, "deps.audit"],
       ci: ["precommit.full"]
     ]
+  end
+
+  # Both gates below shell out to scripts that live OUTSIDE this repo, on the
+  # developer host: the AGENTS.md renderer needs the claude-marketplace checkout
+  # plus ~/.claude/includes, and the advisory-freshness prover needs the local
+  # mix_audit mirror. Neither exists on a CI runner, and `mix cmd` with an
+  # absent path dies with `:enoent` — which used to abort the whole `mix ci`
+  # alias (and, since these steps precede `test.json`/`dialyzer`, took the test,
+  # coverage, and test-env dialyzer signal down with it). Skip loudly when the
+  # script is absent so CI keeps running the checks it CAN run; the developer
+  # host and the harness reviewer still get the full gate.
+  defp agents_check(_args) do
+    host_script("~/_DATA/code/claude-marketplace/scripts/sync-agents-md.sh", ["--check"], "AGENTS.md freshness check")
+  end
+
+  defp advisory_freshness(_args) do
+    host_script("~/_DATA/code/onchain-stack/bin/advisory-freshness.sh", [], "advisory-mirror freshness check")
+  end
+
+  defp host_script(path, args, label) do
+    expanded = Path.expand(path)
+
+    if File.exists?(expanded) do
+      {_out, status} = System.cmd(expanded, args, into: IO.stream(:stdio, :line), stderr_to_stdout: true)
+
+      if status != 0 do
+        Mix.raise("#{label} failed (#{expanded} exited #{status})")
+      end
+    else
+      Mix.shell().info("[skip] #{label}: #{expanded} not found (developer-host script, absent in CI).")
+    end
   end
 end

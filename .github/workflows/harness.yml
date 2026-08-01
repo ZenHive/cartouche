@@ -60,31 +60,6 @@ jobs:
 
       - run: mix deps.get
 
-      - name: Compile (warnings as errors)
-        run: mix compile --warnings-as-errors
-
-      - name: Format check
-        run: mix format --check-formatted
-
-      # tag_todo / tag_fixme stay enabled in .credo.exs (see
-      # ~/.claude/includes/feedback memory: "TODO credos must stay visible") —
-      # they're tracked-debt visibility, not a CI gate. Excluding them here lets
-      # the harness fail only on real Credo regressions.
-      - name: Credo (strict, excluding TODO/FIXME design tags)
-        run: mix credo --strict --ignore TagTODO,TagFIXME
-
-      # ExDNA + Reach mirror the `mix ci` / `mix precommit.full` alias gate
-      # (mix.exs). Both deps were previously fetched but never invoked anywhere;
-      # wiring them here keeps CI and the local/harness-reviewer gate in sync.
-      - name: ExDNA (zero clone budget)
-        run: mix ex_dna --max-clones 0
-
-      - name: Reach (architecture + cross-function smells)
-        run: mix reach.check --arch --smells
-
-      - name: Doctor (--raise overrides .doctor.exs raise=false to gate CI)
-        run: mix doctor --raise
-
       # ── Sobelow drift check ──────────────────────────────────────────────
       # `.sobelow-skips` is a list of line-fingerprint hashes for known-acceptable
       # findings. Every PR that shifts lines in `lib/mix/cartouche.gen.ex` (heavy
@@ -120,21 +95,9 @@ jobs:
           fi
           echo "Sobelow skips fingerprints in sync with source."
 
-      - name: Sobelow (honors .sobelow-conf, exit=Low)
-        run: mix sobelow --config
-
-      # CLAUDE.md tiers: >=80% standard, >=95% critical (signing/crypto/wire-format).
-      # Aggregate floor is 85%: meaningful bump from 80%, leaves headroom under
-      # current ~87%. Per-module 95% gating for critical paths is a separate ratchet.
-      - name: Tests + coverage gate (>=85%)
-        run: mix test.json --cover --cover-threshold 85 --summary-only --exclude integration
-
-      # ── Dialyzer (restored 2026-06-05, Task 76) ──────────────────────────
-      # Runs in MIX_ENV=dev: dialyxir builds the `…_deps-dev.plt` PLT and the
-      # repo's `dialyzer.json`/`dialyzer` preferred env is :dev. `mix dialyzer`
-      # exits non-zero on any warning, so this gates. `priv/plts/` is pinned
-      # outside `_build/` (see mix.exs dialyzer config) precisely so it caches
-      # here — cold build is ~1.0 GB / ~26s, cached is seconds.
+      # `mix ci` runs the test-env dialyzer, so restore the shared PLT cache
+      # before invoking it. The separate dev-env dialyzer below reuses the same
+      # cache directory.
       - name: Cache dialyzer PLT (priv/plts)
         uses: actions/cache@v6
         with:
@@ -143,6 +106,32 @@ jobs:
           restore-keys: |
             plt-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
 
+      # Single deterministic gate: compile / format / credo / doctor / ex_dna /
+      # reach.check (arch+smells) / sobelow --config / deps.audit.gated /
+      # test.json (coverage >=85%) / dialyzer (MIX_ENV=test, per cli/0) /
+      # agents.check (AGENTS.md freshness). Keep this as one `mix ci` invocation
+      # so CI and the local/harness-reviewer gate cannot drift apart again —
+      # see mix.exs `aliases/0`.
+      #
+      # Two of those steps shell out to developer-host scripts that don't exist
+      # on a runner (the AGENTS.md renderer in the claude-marketplace checkout;
+      # the advisory-mirror freshness prover in onchain-stack). They print a
+      # `[skip] …` line here instead of dying on :enoent — see the `host_script/3`
+      # comment in mix.exs. `mix deps.audit` itself still runs on CI, against the
+      # advisory DB bundled with the locked mix_audit dep.
+      - name: mix ci
+        run: mix ci
+
+      # ── Dialyzer (restored 2026-06-05, Task 76) ──────────────────────────
+      # This is a SEPARATE, intentional dev-env dialyzer run on top of the
+      # test-env one inside `mix ci` above — see the `def cli` comment in
+      # mix.exs: the alias pins :test for a single-env local run, CI keeps its
+      # own MIX_ENV=dev pass against the cached dev PLT.
+      # Runs in MIX_ENV=dev: dialyxir builds the `…_deps-dev.plt` PLT and the
+      # repo's `dialyzer.json`/`dialyzer` preferred env is :dev. `mix dialyzer`
+      # exits non-zero on any warning, so this gates. `priv/plts/` is pinned
+      # outside `_build/` (see mix.exs dialyzer config) precisely so it caches
+      # here — cold build is ~1.0 GB / ~26s, cached is seconds.
       - name: Dialyzer (cold ~1.0 GB peak / ~26s — Task 76)
         env:
           MIX_ENV: dev
