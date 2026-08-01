@@ -58,7 +58,7 @@ defmodule Cartouche.Signer do
   @doc """
   Starts a new Cartouche.Signer process.
   """
-  @spec start_link(mfa: Backend.t() | {module(), atom(), [any()]}, name: GenServer.name()) ::
+  @spec start_link(mfa: Backend.t() | {module(), atom(), [any()]}, name: GenServer.name() | nil) ::
           GenServer.on_start()
   def start_link(mfa: mfa, name: name) do
     Logger.info("Starting Cartouche.Signer #{name}...")
@@ -114,7 +114,7 @@ defmodule Cartouche.Signer do
       iex> :binary.decode_unsigned(v)
       0x05f5e0ff * 2 + 35 + 1
   """
-  @spec sign(String.t(), GenServer.name(), Keyword.t()) ::
+  @spec sign(String.t(), GenServer.server(), Keyword.t()) ::
           {:ok, binary()} | {:error, String.t()}
   def sign(message, name \\ Default, opts \\ []) do
     chain_id = Keyword.get(opts, :chain_id, GenServer.call(name, :get_chain_id))
@@ -137,7 +137,7 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.address(signer_proc) |> Cartouche.Hex.to_address()
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
-  @spec address(GenServer.name()) :: Cartouche.address()
+  @spec address(GenServer.server()) :: Cartouche.address()
   def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
@@ -158,7 +158,7 @@ defmodule Cartouche.Signer do
       iex> Cartouche.Signer.chain_id(signer_proc)
       5
   """
-  @spec chain_id(GenServer.name()) :: integer()
+  @spec chain_id(GenServer.server()) :: integer()
   def chain_id(name \\ Default) do
     GenServer.call(name, :get_chain_id)
   end

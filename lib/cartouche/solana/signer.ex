@@ -97,7 +97,7 @@ defmodule Cartouche.Solana.Signer do
       iex> byte_size(sig)
       64
   """
-  @spec sign(binary(), GenServer.name()) :: {:ok, <<_::512>>} | {:error, term()}
+  @spec sign(binary(), GenServer.server()) :: {:ok, <<_::512>>} | {:error, term()}
   def sign(message, name \\ Default) when is_binary(message) do
     GenServer.call(name, {:sign, message})
   end
@@ -123,7 +123,7 @@ defmodule Cartouche.Solana.Signer do
       iex> byte_size(address)
       32
   """
-  @spec address(GenServer.name()) :: <<_::256>>
+  @spec address(GenServer.server()) :: <<_::256>>
   def address(name \\ Default) do
     GenServer.call(name, :get_address)
   end
