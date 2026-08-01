@@ -4,8 +4,11 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.6.0",
-      elixir: "~> 1.17",
+      version: "0.6.1",
+      # 1.18 floor inherited from hieroglyph 1.6.0, whose encode path uses
+      # `Enum.sum_by/2` (Elixir 1.18+). Declaring less would let cartouche
+      # resolve on 1.17 and then fail compiling its own dependency.
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -140,7 +143,7 @@ defmodule Cartouche.MixProject do
       # `override: true` dropped at publish time — no transitive dep
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
-      {:hieroglyph, "~> 1.5"},
+      {:hieroglyph, "~> 1.6"},
       {:junit_formatter, "~> 3.4.0", only: [:test]}
     ] ++ zenhive_dev_deps()
   end

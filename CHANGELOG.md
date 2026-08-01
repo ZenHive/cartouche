@@ -14,6 +14,17 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [0.6.1] — 2026-08-01
+
+### Changed
+
+- **`{:hieroglyph, "~> 1.5"}` → `{:hieroglyph, "~> 1.6"}`, and with it `elixir: "~> 1.17"` → `"~> 1.18"`.** hieroglyph 1.6.0 restores `ABI.Event.decode_event/4`'s documented total contract (inputs whose type map carries no `:name` no longer raise `KeyError`/`FunctionClauseError`; an array length prefix that cannot fit the remaining payload is rejected before the element list is materialized, closing an allocation DoS on adversarial log data) and makes `decode_structs: true` work on the event path instead of reporting itself as the caller's malformed data. `mix cartouche.gen` and every `eth_getLogs` consumer decode through that path. The Elixir floor moves with it because hieroglyph's encode path uses `Enum.sum_by/2` (1.18+) — declaring `~> 1.17` here would let cartouche resolve on 1.17 and then fail compiling its own dependency. Transitively pulls `descripex` 0.11.0 → 0.12.0; cartouche overwrites `short_name` from its own alias map (`lib/cartouche.ex:205`), so that package's atom→string change at 0.12.0 does not reach this API.
+
+### Fixed
+
+- **`mix cartouche.gen` no longer aborts the whole generation run on one malformed ABI item.** The three `try/rescue` blocks wrapping `ABI.FunctionSelector.parse_specification_item/1` listed only `ArgumentError`, `MatchError`, and `FunctionClauseError`, so an item carrying an explicit JSON `null` for `"inputs"` or `"outputs"` escaped them: `parse_specification_item/1` does `Map.get(item, "inputs", [])`, whose default fires only when the key is *absent*, so `nil` reaches `Enum.map/2` and raises `Protocol.UndefinedError`. Such an item is now warned-and-skipped like every other unparseable one, matching the documented behaviour for the rest of the artifact. The exception list moved to a single `@parse_specification_errors` module attribute shared by all three rescue sites, so they can no longer drift apart.
+- **`Cartouche.Signer.{sign/3,address/1,chain_id/1}` and `Cartouche.Solana.Signer.{sign/2,address/1}` now spec their server argument as `GenServer.server()` instead of `GenServer.name()`.** All five pass the argument straight to `GenServer.call/2`, and both modules' own doctests (plus the `api/3` parameter docs, "Signer GenServer name or pid") hand them a bare `pid()` — which `GenServer.name()` excludes. The published specs contradicted the published examples; consumers passing a pid were spec-violating on paper. `start_link/1`'s `name:` option keeps `GenServer.name()`, where a registration name is genuinely what is required.
+
 ## [0.6.0] — 2026-07-31
 
 ### Changed
