@@ -399,7 +399,7 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert length(fh.base_fee_per_gas) == @fee_history_block_count + 1
       assert length(fh.gas_used_ratio) == @fee_history_block_count
       assert length(fh.reward) == @fee_history_block_count
-      assert Enum.all?(fh.reward, fn inner -> length(inner) == 3 end)
+      assert Enum.all?(fh.reward, &match?([_, _, _], &1))
     end
   end
 

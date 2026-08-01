@@ -461,7 +461,7 @@ defmodule Cartouche.Solana.RPCTest do
       assert {:ok, accounts} =
                RPC.get_token_accounts_by_owner(@test_pubkey, program_id: token_program)
 
-      assert length(accounts) == 2
+      assert [_, _] = accounts
     end
 
     test "requires a mint or program id filter" do

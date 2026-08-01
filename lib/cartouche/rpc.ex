@@ -242,8 +242,8 @@ defmodule Cartouche.RPC do
   @spec send_rpc(binary(), [term()], Keyword.t()) ::
           {:ok, term()} | {:error, send_rpc_error()} | :invalid_hex
   def send_rpc(method, params, opts \\ []) do
-    decode = Keyword.get(opts, :decode, nil)
-    errors = Keyword.get(opts, :errors, nil)
+    decode = Keyword.get(opts, :decode)
+    errors = Keyword.get(opts, :errors)
     timeout = Keyword.get(opts, :timeout, @default_timeout)
     verbose = Keyword.get(opts, :verbose, false)
     url = Keyword.get(opts, :ethereum_node, Cartouche.Application.ethereum_node())

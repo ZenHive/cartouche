@@ -1778,7 +1778,7 @@ defmodule Cartouche.VmTest do
 
     for {test_info, i} <- Enum.with_index(@tests) do
       is_skip =
-        test_info[:skip] == true or (has_only and not (test_info[:only] == true)) or
+        test_info[:skip] == true or (has_only and test_info[:only] != true) or
           (not is_nil(here_index) and i > here_index)
 
       test_info_escaped = Macro.escape(test_info)

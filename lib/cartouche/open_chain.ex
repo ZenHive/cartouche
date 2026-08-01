@@ -52,13 +52,12 @@ defmodule Cartouche.OpenChain do
     defp decode_entries(entries) when is_map(entries) do
       entries
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-      |> Enum.map(fn
+      |> Enum.flat_map(fn
         {k, vs} ->
           vs
           |> Enum.filter(fn v -> not v["filtered"] end)
           |> Enum.map(fn v -> {from_hex!(k), v["name"]} end)
       end)
-      |> List.flatten()
     end
   end
 

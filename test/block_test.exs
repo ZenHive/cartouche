@@ -105,7 +105,7 @@ defmodule Cartouche.BlockTest do
 
       assert byte_size(b.withdrawals_root) == 32
       assert is_list(b.withdrawals)
-      assert length(b.withdrawals) == 2
+      assert [_, _] = b.withdrawals
       assert [%Withdrawal{index: 0x4D8F7D} | _] = b.withdrawals
       # Cancun fields still nil at the Shanghai tier.
       assert b.parent_beacon_block_root == nil

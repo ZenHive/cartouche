@@ -113,7 +113,7 @@ defmodule Cartouche.ReceiptTest do
 
       log = Log.deserialize(%{@log_skeleton | "topics" => topics})
 
-      assert length(log.topics) == 4
+      assert [_, _, _, _] = log.topics
       assert Enum.all?(log.topics, &(byte_size(&1) == 32))
     end
 
@@ -125,7 +125,7 @@ defmodule Cartouche.ReceiptTest do
 
       log = Log.deserialize(%{@log_skeleton | "topics" => topics})
 
-      assert length(log.topics) == 2
+      assert [_, _] = log.topics
     end
   end
 end

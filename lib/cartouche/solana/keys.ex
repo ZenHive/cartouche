@@ -20,6 +20,8 @@ defmodule Cartouche.Solana.Keys do
 
   use Descripex, namespace: "/solana/keys"
 
+  @keypair_byte_size 64
+
   @type keypair :: {pub_key :: <<_::256>>, seed :: <<_::256>>}
 
   api(:generate_keypair, "Generate a fresh Solana Ed25519 keypair.",
@@ -142,7 +144,7 @@ defmodule Cartouche.Solana.Keys do
   @spec from_json(String.t()) :: {:ok, keypair()} | {:error, term()}
   def from_json(json_string) do
     with {:ok, bytes} when is_list(bytes) <- Jason.decode(json_string),
-         true <- length(bytes) == 64 do
+         true <- Enum.count_until(bytes, @keypair_byte_size + 1) == @keypair_byte_size do
       keypair_bytes = :binary.list_to_bin(bytes)
       from_keypair_bytes(keypair_bytes)
     else

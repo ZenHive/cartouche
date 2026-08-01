@@ -46,7 +46,7 @@ defmodule Cartouche.Solana.TokenTest do
       assert {:ok, balances} = Token.get_all_balances(@wallet)
 
       # Should have 2 from Token Program + 1 from Token-2022
-      assert length(balances) == 3
+      assert [_, _, _] = balances
 
       # First two from SPL Token
       assert Enum.at(balances, 0) == %{
@@ -74,7 +74,7 @@ defmodule Cartouche.Solana.TokenTest do
 
     test "with include_token_2022: false only returns SPL Token" do
       assert {:ok, balances} = Token.get_all_balances(@wallet, include_token_2022: false)
-      assert length(balances) == 2
+      assert [_, _] = balances
     end
   end
 

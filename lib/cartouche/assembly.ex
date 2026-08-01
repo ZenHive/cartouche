@@ -410,10 +410,6 @@ defmodule Cartouche.Assembly do
   """
   @spec assemble([term()]) :: binary()
   def assemble(opcodes) when is_list(opcodes) do
-    # We're now going to do multiple passes
-    # First, we assign pcs to all jump_dests
-    # Then we transform jump pts to jump_dests
-    # Finally, we'll encode the instructions.
     opcodes
     |> transform_jumps()
     |> Enum.map_join(&assemble_opcode/1)

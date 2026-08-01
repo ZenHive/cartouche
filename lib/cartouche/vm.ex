@@ -42,6 +42,7 @@ defmodule Cartouche.VM do
   @two_pow_256 2 ** 256
   @max_uint256 @two_pow_256 - 1
   @gas_amount 4_000_000
+  @max_stack_depth 1_024
 
   defmodule FFIs do
     @moduledoc false
@@ -367,7 +368,7 @@ defmodule Cartouche.VM do
   @doc false
   @spec push_word(Context.t(), word()) :: {:ok, Context.t()} | {:error, vm_error()}
   def push_word(context, v) when is_binary(v) and bit_size(v) == 256 do
-    if length(context.stack) == 1024 do
+    if Enum.count_until(context.stack, @max_stack_depth) == @max_stack_depth do
       {:error, :stack_overflow}
     else
       {:ok, %{context | stack: [v | context.stack]}}

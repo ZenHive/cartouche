@@ -83,7 +83,7 @@ defmodule Cartouche.Solana.TransactionTest do
       assert msg.header.num_readonly_unsigned_accounts == 1
 
       # 3 accounts total: fee_payer, recipient, system_program
-      assert length(msg.account_keys) == 3
+      assert [_, _, _] = msg.account_keys
 
       # System program is last (readonly non-signer)
       assert List.last(msg.account_keys) == <<0::256>>
@@ -221,7 +221,7 @@ defmodule Cartouche.Solana.TransactionTest do
       assert {:ok, decoded} = Transaction.deserialize(bytes)
 
       # Verify structure matches
-      assert length(decoded.signatures) == 1
+      assert [_] = decoded.signatures
       assert decoded.message.header == trx.message.header
       assert decoded.message.account_keys == trx.message.account_keys
       assert decoded.message.recent_blockhash == trx.message.recent_blockhash
@@ -253,7 +253,7 @@ defmodule Cartouche.Solana.TransactionTest do
       bytes = Transaction.serialize(trx)
       assert {:ok, decoded} = Transaction.deserialize(bytes)
 
-      assert length(decoded.signatures) == 2
+      assert [_, _] = decoded.signatures
       assert decoded.message.header.num_required_signatures == 2
       assert decoded.message == trx.message
     end
@@ -538,7 +538,7 @@ defmodule Cartouche.Solana.TransactionTest do
       {_pub2, seed2} = Keys.from_seed(<<2::256>>)
       partial = Transaction.sign_partial(msg, %{1 => seed2})
 
-      assert length(partial.signatures) == 2
+      assert [_, _] = partial.signatures
       assert Enum.at(partial.signatures, 0) == <<0::512>>
       assert Enum.at(partial.signatures, 1) != <<0::512>>
       assert byte_size(Enum.at(partial.signatures, 1)) == 64

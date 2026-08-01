@@ -8,6 +8,8 @@ defmodule Cartouche.VM.ContextTest do
   alias Cartouche.VM
   alias Cartouche.VM.Context
 
+  @max_stack_depth 1_024
+
   describe "init_from/2" do
     test "builds a fresh context with assembled code and initial execution state" do
       ffi = fn <<>> -> {:return, <<1>>} end
@@ -69,6 +71,27 @@ defmodule Cartouche.VM.ContextTest do
       context = %{Context.init_from([], %{}) | pc: 16, stack: [word(1)]}
 
       assert Context.show(context) == Enum.join(["pc=16", "stack:", "\t00 #{to_hex(word(1))}"], "\n")
+    end
+  end
+
+  describe "stack underflow" do
+    test "returns explicit errors for empty-stack pop operations" do
+      context = Context.init_from([], %{})
+
+      assert {:error, :stack_underflow} = VM.pop_unsigned(context)
+      assert {:error, :stack_underflow} = VM.pop2(context)
+      assert {:error, :stack_underflow} = VM.pop2_unsigned(context)
+      assert {:error, :stack_underflow} = VM.pop3_unsigned(context)
+      assert {:error, :stack_underflow} = VM.pop2_unsigned_word(context)
+      assert {:error, :stack_underflow} = VM.pop3(context)
+    end
+  end
+
+  describe "push_word/2" do
+    test "rejects a word when the stack is full" do
+      context = %{Context.init_from([], %{}) | stack: List.duplicate(word(0), @max_stack_depth)}
+
+      assert {:error, :stack_overflow} = VM.push_word(context, word(1))
     end
   end
 end

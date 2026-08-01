@@ -382,6 +382,8 @@ defmodule Cartouche.Solana.Test.Client do
 
   @spec token_account_fixture(String.t(), String.t(), String.t(), non_neg_integer()) :: map()
   defp token_account_fixture(pubkey, mint, amount, decimals) do
+    ui_amount = String.to_integer(amount) / :math.pow(10, decimals)
+
     %{
       "pubkey" => pubkey,
       "account" => %{
@@ -395,8 +397,8 @@ defmodule Cartouche.Solana.Test.Client do
               "tokenAmount" => %{
                 "amount" => amount,
                 "decimals" => decimals,
-                "uiAmount" => String.to_integer(amount) / :math.pow(10, decimals),
-                "uiAmountString" => "#{String.to_integer(amount) / :math.pow(10, decimals)}"
+                "uiAmount" => ui_amount,
+                "uiAmountString" => "#{ui_amount}"
               }
             },
             "type" => "account"
