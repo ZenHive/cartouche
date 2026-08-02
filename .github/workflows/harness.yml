@@ -1,4 +1,4 @@
-# Deterministic Elixir harness gate for PRs against `development`.
+# Deterministic Elixir harness gate for PRs against `main`.
 # Closes the Codex-env-blocked-hex.pm gap: every PR push gets format / compile /
 # credo / doctor / sobelow / test+cover evidence as PR checks, instead of needing
 # a local reviewer to fetch the branch and run the suite.
@@ -17,9 +17,9 @@ name: Harness
 
 on:
   pull_request:
-    branches: [development]
+    branches: [main]
   push:
-    branches: [development]
+    branches: [main]
 
 permissions:
   contents: read
