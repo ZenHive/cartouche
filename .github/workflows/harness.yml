@@ -11,7 +11,13 @@
 # ~1.0 GB / ~26s locally — ~15x under the 16 GB `ubuntu-latest` budget. See the
 # dialyzer step below the coverage gate.
 #
-# No untrusted-input interpolation — only matrix, runner, beam outputs, hashFiles.
+# Elixir/OTP come from `.tool-versions` via setup-beam's `version-file`, so CI
+# and local dev resolve one toolchain and cannot silently diverge. This replaced
+# a one-entry `strategy.matrix` that pinned Elixir 1.20.1 / OTP 27.3 — a second
+# source of truth that bought no multi-version coverage and had already drifted
+# out of step with the toolchain the repo is actually developed on.
+#
+# No untrusted-input interpolation — only runner, beam outputs, hashFiles.
 
 name: Harness
 
@@ -30,23 +36,17 @@ concurrency:
 
 jobs:
   harness:
-    name: Harness (Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }})
+    name: Harness
     runs-on: ubuntu-latest
     env:
       MIX_ENV: test
-    strategy:
-      matrix:
-        include:
-          - elixir: '1.20.1'
-            otp: '27.3'
     steps:
       - uses: actions/checkout@v7
 
       - id: beam
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: ${{ matrix.elixir }}
-          otp-version: ${{ matrix.otp }}
+          version-file: .tool-versions
 
       - name: Cache deps & _build
         uses: actions/cache@v6
