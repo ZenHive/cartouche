@@ -1,6 +1,6 @@
 schema_version = 2
 project = "cartouche"
-default_branch = "development"
+default_branch = "main"
 vision = "Cartouche is an attributed fork of hayesgm/signet under ZenHive ownership. Active development happens here. Upstream PRs to hayesgm/signet are opened on-demand when a fix is clean, self-contained, and independently useful — no SLA either direction."
 
 [phases.0]
