@@ -16,6 +16,8 @@
 # a one-entry `strategy.matrix` that pinned Elixir 1.20.1 / OTP 27.3 — a second
 # source of truth that bought no multi-version coverage and had already drifted
 # out of step with the toolchain the repo is actually developed on.
+# `version-type: strict` is mandatory alongside `version-file` — setup-beam
+# hard-errors without it.
 #
 # No untrusted-input interpolation — only runner, beam outputs, hashFiles.
 
@@ -47,6 +49,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           version-file: .tool-versions
+          version-type: strict
 
       - name: Cache deps & _build
         uses: actions/cache@v6
