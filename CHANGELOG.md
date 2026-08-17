@@ -16,9 +16,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-08-17
+
 ### Changed
 
 - **`{:descripex, "~> 0.11"}` → `{:descripex, "~> 0.12"}`.** The declared floor no longer matched what resolves: hieroglyph 1.6.0 requires `descripex ~> 0.12.0`, so 0.11.x has been unreachable since 0.6.1 shipped. The old bound advertised a range cartouche cannot actually be built against — a consumer pinning 0.11.x got a resolution conflict surfaced from hieroglyph rather than a clear bound here. No behavioural change; the resolved dependency set is identical.
+- **Dependency refresh.** Resolved the published `descripex 0.12.1` and
+  `hieroglyph 1.6.1` patches. Updated dev/test tooling: `sobelow`
+  0.14.1 → 0.15.0 and `tidewave` 0.8.1 → 0.8.4. No additional runtime
+  dependency requirement changed.
 
 ## [0.6.1] — 2026-08-01
 

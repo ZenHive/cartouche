@@ -4,7 +4,7 @@ defmodule Cartouche.MixProject do
   def project do
     [
       app: :cartouche,
-      version: "0.6.1",
+      version: "0.7.0",
       # 1.18 floor inherited from hieroglyph 1.6.0, whose encode path uses
       # `Enum.sum_by/2` (Elixir 1.18+). Declaring less would let cartouche
       # resolve on 1.17 and then fail compiling its own dependency.
@@ -167,7 +167,7 @@ defmodule Cartouche.MixProject do
       {:dialyzer_json, "~> 0.2.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.7", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.15", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.23.0", only: [:dev, :test], runtime: false},
       {:meck, "~> 1.2.0", only: [:dev, :test], runtime: false},
       {:ex_dna, "~> 1.5.1", only: [:dev, :test], runtime: false},
