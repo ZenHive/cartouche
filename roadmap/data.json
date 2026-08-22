@@ -2418,7 +2418,7 @@
       "id": "113",
       "phase": 0,
       "bundle": "coverage_pushes",
-      "status": "in_progress",
+      "status": "done",
       "title": "Property + cross-implementation vector suite for Ethereum tx envelopes and signing",
       "scores": {
         "d": 4,
@@ -2465,10 +2465,17 @@
         "test/fixtures/vectors/",
         "docs/verification-ledger.md"
       ],
+      "shipped_in": "6c8acb20b15fcda238473c5b9c5fed31edcfd2be",
       "body": "Establish the evidence base that cartouche's signing and transaction encoding are correct against the specs rather than merely self-consistent. Two instruments: properties that must hold across generated inputs, and golden vectors produced by implementations outside this codebase.\n\nThe authority order is the one this repo already follows: the EIP text first (EIP-155 chain-id replay protection, EIP-2718 typed envelopes, EIP-1559, EIP-4844, EIP-7702, EIP-2 low-s), then independently generated vectors where an EIP leaves edge behaviour implicit. Third-party clients are compatibility evidence, never semantics. Where a vector and the EIP disagree, record the discrepancy — do not pick a reading.\n\nWhy vectors from outside cartouche matter here specifically: the existing suite computes expectations with the same code it is testing, so a wrong constant or a wrong field order would be ratified by its own golden values. An externally generated vector is the only artifact in the suite that cannot share that mistake.\n\nSPLIT NOTE 2026-08-22 (roadmap review): this was one oversized task also carrying a mutation campaign, a fault canary and a survivor ledger — five criteria, each a session's work, with no mutation tool named. It is now the first half; the mutation-adequacy half is a separate task that depends on this one, because it measures the suite this task builds.\n",
       "created_at": "2026-08-17",
       "started_at": "2026-08-22",
+      "done_at": "2026-08-22",
       "scored_at": "2026-08-22",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787387047478-02622bc7, 6c8acb20b15fcda238473c5b9c5fed31edcfd2be).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787387047478-02622bc7",
       "cross_repo": []
     },
     {
