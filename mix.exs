@@ -158,7 +158,8 @@ defmodule Cartouche.MixProject do
       # pulls `hieroglyph` or `:abi`, so nothing needs overriding, and
       # hex rejects overrides on published packages.
       {:hieroglyph, "~> 1.6"},
-      {:junit_formatter, "~> 3.4.0", only: [:test]}
+      {:junit_formatter, "~> 3.4.0", only: [:test]},
+      {:stream_data, "~> 1.4", only: :test, runtime: false}
     ] ++ zenhive_dev_deps()
   end
 
