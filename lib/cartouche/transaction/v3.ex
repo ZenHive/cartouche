@@ -324,7 +324,7 @@ defmodule Cartouche.Transaction.V3 do
       transaction.destination,
       transaction.amount,
       transaction.data,
-      encode_access_list(transaction.access_list),
+      TypedDecode.encode_access_list(transaction.access_list),
       transaction.max_fee_per_blob_gas,
       encode_blob_versioned_hashes(transaction.blob_versioned_hashes)
     ]
@@ -337,9 +337,6 @@ defmodule Cartouche.Transaction.V3 do
   defp signature_payload(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
     [if(v, do: 1, else: 0), trim_signature_word(r), trim_signature_word(s)]
   end
-
-  @spec encode_access_list(access_list()) :: list()
-  defp encode_access_list(access_list), do: TypedDecode.encode_access_list(access_list)
 
   @spec encode_blob_versioned_hashes(term()) :: encodable_blob_versioned_hashes()
   defp encode_blob_versioned_hashes(blob_versioned_hashes) do

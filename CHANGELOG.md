@@ -95,6 +95,33 @@ All notable changes to this project will be documented in this file.
   can be attributed. Custom errors are unaffected; an unlisted selector now stays
   unattributed instead of borrowing a neighbour's name.
 
+- **`encode/1` could emit RLP that this library's own `decode/1` rejects.** Three
+  encode/decode asymmetries are closed as one invariant — *whatever `encode/1`
+  emits, `decode/1` must accept*, now stated once in `Cartouche.Transaction`'s
+  moduledoc rather than per envelope. (1) `V2.new/9` and `V2.new/12` accept a
+  bare 20-byte address as an access-list shorthand, and the encoder passed it
+  through as a raw RLP string, where EIP-2930 requires `[address,
+  storageKeys]` — so a shorthand transaction produced wire bytes that
+  `V2.decode/1` returned `{:error, "invalid v2 transaction"}` for, that no node
+  would accept, and whose signature covered a payload no counterparty could
+  reconstruct. `V2.t()` had declared the tuple form all along. Fixed at
+  construction: `new/*` lifts `<<addr::160>>` to `{addr, []}`, so the struct
+  always matches its own type and the encoder has one shape to serialize. Seven
+  doctests pinned the malformed bytes; they were corrected against a hand-decode
+  of the EIP-2930 text, not regenerated from the encoder. (2) `V3.encode/1` and
+  `V3.decode/1` now share `valid_blob_versioned_hashes?/1`, requiring a
+  non-empty list of 32-byte hashes with the `0x01` version prefix (EIP-4844).
+  (3) `V4.encode/1` raises `ArgumentError` on an empty or nil
+  `authorization_list`, matching what `decode/1` already refused (EIP-7702).
+  The encode-side access-list guard lives in
+  `Cartouche.Transaction.TypedDecode.encode_access_list/1` and is wired into
+  every typed envelope, so V3, V4 and V_2930 cannot regrow the V2 defect.
+
+  *Behaviour change:* a transaction built with the bare-address shorthand now
+  encodes — and therefore hashes and signs — to different bytes than in 0.7.1.
+  The old bytes were not valid EIP-2930, so nothing that depended on them was
+  working against a node; anything that recorded the old hash must re-derive it.
+
 - **`Cartouche.Signer.sign_direct/4` (and the legacy MFA carrier) could emit a
   high-s signature whenever the backend did not canonicalize.** Low-s (EIP-2)
   was applied only on the `{backend, config}` path; `sign_direct/4` — the

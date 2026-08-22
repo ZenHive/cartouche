@@ -61,11 +61,13 @@ defmodule Cartouche.MixProject do
 
   # ZenHive dev-branch only: preferred envs for our tooling.
   #
-  # ci / precommit / precommit.full pin :test so every step (compile, credo,
-  # test.json, dialyzer) runs in one consistent env — dialyzer then builds a
-  # `priv/plts/*_deps-test.plt`. CI (harness.yml) keeps its own MIX_ENV=dev
-  # dialyzer step with the cached dev PLT; the alias is for local + the harness
-  # reviewer's `check_command`, where a single-env run is simpler.
+  # ci / precommit / precommit.full / check.dispatch pin :test so every step
+  # (compile, credo, test.json, dialyzer) runs in one consistent env — dialyzer
+  # then builds a `priv/plts/*_deps-test.plt`. The MIX_ENV=dev dialyzer pass
+  # against the cached `priv/plts` PLT lived in `.github/workflows/harness.yml`,
+  # removed family-wide on 2026-08-22 and never replaced: the :test view is the
+  # only one anything checks now, so a clean `mix dialyzer` (dev) does not imply
+  # a clean gate. Reproduce the gate's view with `MIX_ENV=test mix dialyzer`.
   def cli do
     [
       preferred_envs: [
@@ -216,6 +218,7 @@ defmodule Cartouche.MixProject do
         "credo --strict --ignore Credo.Check.Design.TagTODO,Credo.Check.Design.TagFIXME",
         "doctor --raise",
         "ex_dna --max-clones 0",
+        "reach.check --arch --smells",
         "sobelow --config",
         "test.json --exclude integration"
       ],
