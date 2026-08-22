@@ -199,22 +199,35 @@ defmodule Cartouche.Transaction.V3Test do
       assert {:error, "invalid v3 transaction"} = V3.decode(bytes)
     end
 
-    test "rejects non-word blob versioned hashes" do
-      malformed =
-        representative_tx()
-        |> Map.put(:blob_versioned_hashes, [<<1, 2, 3>>])
-        |> V3.encode()
+    test "encode and decode reject non-word blob versioned hashes symmetrically" do
+      malformed = Map.put(representative_tx(), :blob_versioned_hashes, [<<1, 2, 3>>])
 
-      assert {:error, "invalid v3 transaction"} = V3.decode(malformed)
+      assert_raise ArgumentError,
+                   "blob_versioned_hashes must be a non-empty list of 32-byte hashes prefixed with 0x01",
+                   fn -> V3.encode(malformed) end
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(encoded_with_blob_hashes([<<1, 2, 3>>]))
     end
 
-    test "rejects 32-byte blob versioned hashes whose leading byte is not 0x01" do
-      malformed =
-        representative_tx()
-        |> Map.put(:blob_versioned_hashes, [<<0, 0::248>>])
-        |> V3.encode()
+    test "encode and decode reject blob hashes whose leading byte is not 0x01" do
+      malformed = Map.put(representative_tx(), :blob_versioned_hashes, [<<0, 0::248>>])
 
-      assert {:error, "invalid v3 transaction"} = V3.decode(malformed)
+      assert_raise ArgumentError,
+                   "blob_versioned_hashes must be a non-empty list of 32-byte hashes prefixed with 0x01",
+                   fn -> V3.encode(malformed) end
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(encoded_with_blob_hashes([<<0, 0::248>>]))
+    end
+
+    test "encode and decode reject empty blob versioned hash lists symmetrically" do
+      malformed = Map.put(representative_tx(), :blob_versioned_hashes, [])
+      encode = Function.capture(V3, :encode, 1)
+
+      assert_raise ArgumentError,
+                   "blob_versioned_hashes must be a non-empty list of 32-byte hashes prefixed with 0x01",
+                   fn -> encode.(malformed) end
+
+      assert {:error, "invalid v3 transaction"} = V3.decode(encoded_with_blob_hashes([]))
     end
 
     test "rejects signatures wider than 32 bytes" do
@@ -256,5 +269,11 @@ defmodule Cartouche.Transaction.V3Test do
       :mainnet
     )
     |> V3.add_signature(true, <<0x01::256>>, <<0x02::256>>)
+  end
+
+  defp encoded_with_blob_hashes(blob_versioned_hashes) do
+    <<0x03, payload::binary>> = V3.encode(representative_tx())
+    fields = payload |> ExRLP.decode() |> List.replace_at(10, blob_versioned_hashes)
+    <<0x03>> <> ExRLP.encode(fields)
   end
 end

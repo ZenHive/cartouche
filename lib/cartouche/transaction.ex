@@ -458,6 +458,10 @@ defmodule Cartouche.Transaction do
 
     alias Cartouche.Transaction.JsonField
 
+    @type access_list_entry :: {<<_::160>>, [<<_::256>>]}
+    @type access_list :: [access_list_entry()]
+    @type access_list_input :: [access_list_entry() | <<_::160>>]
+
     @type t :: %__MODULE__{
             chain_id: integer(),
             nonce: integer(),
@@ -470,7 +474,7 @@ defmodule Cartouche.Transaction do
             destination: <<_::160>> | nil,
             amount: integer(),
             data: binary(),
-            access_list: [{<<_::160>>, [<<_::256>>]}],
+            access_list: access_list(),
             signature_y_parity: boolean() | nil,
             signature_r: <<_::256>> | nil,
             signature_s: <<_::256>> | nil
@@ -575,7 +579,7 @@ defmodule Cartouche.Transaction do
             <<_::160>>,
             integer() | {integer(), :wei | :gwei},
             binary(),
-            list(),
+            access_list_input(),
             atom() | integer() | nil
           ) :: t()
     def new(
@@ -662,7 +666,7 @@ defmodule Cartouche.Transaction do
             <<_::160>>,
             integer() | {integer(), :wei | :gwei},
             binary(),
-            list(),
+            access_list_input(),
             boolean() | nil,
             <<_::256>> | nil,
             <<_::256>> | nil,
@@ -699,7 +703,7 @@ defmodule Cartouche.Transaction do
         destination: destination,
         amount: Cartouche.Wei.to_wei(amount),
         data: data,
-        access_list: access_list,
+        access_list: canonicalize_access_list(access_list),
         signature_y_parity: signature_y_parity,
         signature_r: signature_r,
         signature_s: signature_s
@@ -735,7 +739,7 @@ defmodule Cartouche.Transaction do
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
         ...> |> Cartouche.Hex.encode_big_hex()
-        "0x02F8560501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003"
+        "0x02F85A0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EED6940000000000000000000000000000000000000002C0D6940000000000000000000000000000000000000003C0"
 
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], true, <<0x01::256>>, <<0x02::256>>, :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
@@ -745,7 +749,7 @@ defmodule Cartouche.Transaction do
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], true, <<0x01::256>>, <<0x02::256>>, :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
         ...> |> Cartouche.Hex.encode_big_hex()
-        "0x02F8590501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003010102"
+        "0x02F85D0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EED6940000000000000000000000000000000000000002C0D6940000000000000000000000000000000000000003C0010102"
 
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}], true, <<0x01::256>>, <<0x00, 0x02::248>>, :goerli)
         ...> |> Cartouche.Transaction.V2.encode()
@@ -838,14 +842,35 @@ defmodule Cartouche.Transaction do
       ]
     end
 
-    @spec normalize_access_list([{<<_::160>>, [<<_::256>>]} | <<_::160>>]) ::
-            [[<<_::160>> | [<<_::256>>]] | <<_::160>>]
-    defp normalize_access_list(access_list) do
+    @invalid_access_list "access_list entries must contain a 20-byte address and 32-byte storage keys"
+
+    @spec canonicalize_access_list(access_list_input()) :: access_list()
+    defp canonicalize_access_list(access_list) do
       Enum.map(access_list, fn
-        {address, storage} -> [address, storage]
-        bare_address when is_binary(bare_address) -> bare_address
+        <<_::160>> = address -> {address, []}
+        entry -> validate_access_list_entry!(entry)
       end)
     end
+
+    @spec normalize_access_list(access_list()) :: [[<<_::160>> | [<<_::256>>]]]
+    defp normalize_access_list(access_list) do
+      Enum.map(access_list, fn entry ->
+        {address, storage} = validate_access_list_entry!(entry)
+        [address, storage]
+      end)
+    end
+
+    @spec validate_access_list_entry!(term()) :: access_list_entry()
+    defp validate_access_list_entry!({address, storage} = entry)
+         when is_binary(address) and byte_size(address) == 20 and is_list(storage) do
+      if Enum.all?(storage, &(is_binary(&1) and byte_size(&1) == 32)) do
+        entry
+      else
+        raise ArgumentError, @invalid_access_list
+      end
+    end
+
+    defp validate_access_list_entry!(_entry), do: raise(ArgumentError, @invalid_access_list)
 
     @spec signature_y_parity(boolean()) :: 0 | 1
     defp signature_y_parity(true), do: 1
@@ -1101,7 +1126,7 @@ defmodule Cartouche.Transaction do
           destination: <<1::160>>,
           amount: 2,
           data: <<1, 2, 3>>,
-          access_list: [<<2::160>>, <<3::160>>],
+          access_list: [{<<2::160>>, []}, {<<3::160>>, []}],
           signature_y_parity: true,
           signature_r: <<0x01::256>>,
           signature_s: <<0x02::256>>
@@ -1118,7 +1143,7 @@ defmodule Cartouche.Transaction do
           destination: <<1::160>>,
           amount: 2,
           data: <<1, 2, 3>>,
-          access_list: [<<2::160>>, <<3::160>>],
+          access_list: [{<<2::160>>, []}, {<<3::160>>, []}],
           signature_y_parity: true,
           signature_r: <<0x01::256>>,
           signature_s: <<0x02::256>>
@@ -1135,7 +1160,7 @@ defmodule Cartouche.Transaction do
           destination: <<1::160>>,
           amount: 2,
           data: <<1, 2, 3>>,
-          access_list: [<<2::160>>, <<3::160>>],
+          access_list: [{<<2::160>>, []}, {<<3::160>>, []}],
           signature_y_parity: false,
           signature_r: <<0x01::256>>,
           signature_s: <<0x02::256>>
@@ -1152,7 +1177,7 @@ defmodule Cartouche.Transaction do
           destination: <<1::160>>,
           amount: 2,
           data: <<1, 2, 3>>,
-          access_list: [<<2::160>>, <<3::160>>],
+          access_list: [{<<2::160>>, []}, {<<3::160>>, []}],
           signature_y_parity: true,
           signature_r: <<0x01::256>>,
           signature_s: <<0x02::256>>
@@ -1169,7 +1194,7 @@ defmodule Cartouche.Transaction do
           destination: <<1::160>>,
           amount: 2,
           data: <<1, 2, 3>>,
-          access_list: [<<2::160>>, <<3::160>>],
+          access_list: [{<<2::160>>, []}, {<<3::160>>, []}],
           signature_y_parity: true,
           signature_r: <<0x01::256>>,
           signature_s: <<0x02::256>>
@@ -1251,7 +1276,7 @@ defmodule Cartouche.Transaction do
         ...>   Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], true, <<0x01::256>>, <<0x02::256>>, :goerli)
         ...>   |> Cartouche.Transaction.V2.recover_signer()
         ...> Cartouche.Hex.to_address(address)
-        "0xC002Ca628F93e1550b5f30Ed10902A9e7783364B"
+        "0xCaF1CF8ea0EBE79552A8cCFca5519ED7Db6a0F99"
 
         iex> Cartouche.Transaction.V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [<<2::160>>, <<3::160>>], :goerli)
         ...> |> Cartouche.Transaction.V2.recover_signer()
@@ -1718,7 +1743,7 @@ defmodule Cartouche.Transaction do
         destination: <<1::160>>,
         amount: 0,
         data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
-        access_list: [<<1::160>>],
+        access_list: [{<<1::160>>, []}],
         signature_y_parity: nil,
         signature_r: nil,
         signature_s: nil
@@ -1736,7 +1761,7 @@ defmodule Cartouche.Transaction do
         destination: <<1::160>>,
         amount: 0,
         data: ~h[0xA291ADD600000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000001],
-        access_list: [<<1::160>>],
+        access_list: [{<<1::160>>, []}],
         signature_y_parity: nil,
         signature_r: nil,
         signature_s: nil
@@ -1750,7 +1775,7 @@ defmodule Cartouche.Transaction do
           integer() | {integer(), :wei | :gwei} | nil,
           integer(),
           integer() | {integer(), :wei | :gwei},
-          list(),
+          V2.access_list_input(),
           atom() | integer() | nil
         ) :: V2.t()
   def build_trx_v2(
@@ -1939,7 +1964,7 @@ defmodule Cartouche.Transaction do
           integer() | {integer(), :wei | :gwei} | nil,
           integer(),
           integer() | {integer(), :wei | :gwei},
-          list(),
+          V2.access_list_input(),
           Keyword.t()
         ) :: {:ok, V2.t()} | {:error, String.t()}
   def build_signed_trx_v2(

@@ -52,6 +52,7 @@ defmodule Cartouche.Transaction.V4 do
 
   @type unsigned_authorization :: {non_neg_integer(), <<_::160>>, non_neg_integer()}
   @type authorization_input :: authorization() | {non_neg_integer(), <<_::160>>, non_neg_integer(), nil, nil, nil}
+  @type authorization_list :: nonempty_list(authorization())
 
   @type t :: %__MODULE__{
           chain_id: non_neg_integer(),
@@ -66,7 +67,7 @@ defmodule Cartouche.Transaction.V4 do
           amount: non_neg_integer(),
           data: binary(),
           access_list: [{<<_::160>>, [<<_::256>>]}],
-          authorization_list: [authorization()],
+          authorization_list: authorization_list(),
           signature_y_parity: boolean() | nil,
           signature_r: <<_::256>> | nil,
           signature_s: <<_::256>> | nil
@@ -123,7 +124,7 @@ defmodule Cartouche.Transaction.V4 do
           non_neg_integer() | {non_neg_integer(), :wei | :gwei},
           binary(),
           list(),
-          [authorization()],
+          authorization_list(),
           atom() | integer() | nil
         ) :: t()
   def new(
@@ -368,9 +369,14 @@ defmodule Cartouche.Transaction.V4 do
     Enum.map(access_list, fn {address, storage} -> [address, storage] end)
   end
 
-  @spec encode_authorization_list([authorization()] | nil) :: list()
-  defp encode_authorization_list(nil), do: []
-  defp encode_authorization_list(authorization_list), do: Enum.map(authorization_list, &encode_authorization/1)
+  @spec encode_authorization_list(term()) :: list()
+  defp encode_authorization_list([_authorization | _rest] = authorization_list) do
+    Enum.map(authorization_list, &encode_authorization/1)
+  end
+
+  defp encode_authorization_list(_authorization_list) do
+    raise ArgumentError, @empty_authorization_list
+  end
 
   @spec encode_authorization(authorization()) :: list()
   defp encode_authorization({chain_id, address, nonce, y_parity, r, s})
@@ -524,7 +530,7 @@ defmodule Cartouche.Transaction.V4 do
     end
   end
 
-  @spec decode_authorization_list(list()) :: {:ok, [authorization()]} | {:error, String.t()}
+  @spec decode_authorization_list(list()) :: {:ok, authorization_list()} | {:error, String.t()}
   defp decode_authorization_list([]), do: {:error, @empty_authorization_list}
 
   defp decode_authorization_list(authorization_list) when is_list(authorization_list) do

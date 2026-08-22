@@ -35,8 +35,12 @@ defmodule Cartouche.Transaction.V3 do
 
   @tx_type 0x03
   @invalid "invalid v3 transaction"
+  @invalid_blob_versioned_hashes "blob_versioned_hashes must be a non-empty list of 32-byte hashes prefixed with 0x01"
+  @versioned_hash_version_kzg <<0x01>>
 
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
+  @type blob_versioned_hashes :: list(<<_::256>>)
+  @type encodable_blob_versioned_hashes :: nonempty_list(<<_::256>>)
 
   @type t :: %__MODULE__{
           chain_id: integer(),
@@ -52,7 +56,7 @@ defmodule Cartouche.Transaction.V3 do
           data: binary(),
           access_list: access_list(),
           max_fee_per_blob_gas: integer(),
-          blob_versioned_hashes: [<<_::256>>],
+          blob_versioned_hashes: blob_versioned_hashes(),
           signature_y_parity: boolean() | nil,
           signature_r: <<_::256>> | nil,
           signature_s: <<_::256>> | nil
@@ -88,7 +92,7 @@ defmodule Cartouche.Transaction.V3 do
           binary(),
           access_list(),
           integer() | {integer(), :wei | :gwei} | nil,
-          [<<_::256>>],
+          blob_versioned_hashes(),
           atom() | integer() | nil
         ) :: t()
   def new(
@@ -322,7 +326,7 @@ defmodule Cartouche.Transaction.V3 do
       transaction.data,
       encode_access_list(transaction.access_list),
       transaction.max_fee_per_blob_gas,
-      transaction.blob_versioned_hashes
+      encode_blob_versioned_hashes(transaction.blob_versioned_hashes)
     ]
   end
 
@@ -337,6 +341,15 @@ defmodule Cartouche.Transaction.V3 do
   @spec encode_access_list(access_list()) :: list()
   defp encode_access_list(access_list) do
     Enum.map(access_list, fn {address, storage} -> [address, storage] end)
+  end
+
+  @spec encode_blob_versioned_hashes(term()) :: encodable_blob_versioned_hashes()
+  defp encode_blob_versioned_hashes(blob_versioned_hashes) do
+    if valid_blob_versioned_hashes?(blob_versioned_hashes) do
+      blob_versioned_hashes
+    else
+      raise ArgumentError, @invalid_blob_versioned_hashes
+    end
   end
 
   @spec trim_signature_word(<<_::256>>) :: binary()
@@ -395,16 +408,21 @@ defmodule Cartouche.Transaction.V3 do
 
   defp decode_payload(_, _), do: {:error, @invalid}
 
-  @spec decode_blob_versioned_hashes(term()) :: {:ok, [<<_::256>>]} | {:error, String.t()}
-  defp decode_blob_versioned_hashes(blob_versioned_hashes) when is_list(blob_versioned_hashes) do
-    if Enum.all?(blob_versioned_hashes, fn hash ->
-         is_binary(hash) and byte_size(hash) == 32 and binary_part(hash, 0, 1) == <<0x01>>
-       end) do
+  @spec decode_blob_versioned_hashes(term()) :: {:ok, encodable_blob_versioned_hashes()} | {:error, String.t()}
+  defp decode_blob_versioned_hashes(blob_versioned_hashes) do
+    if valid_blob_versioned_hashes?(blob_versioned_hashes) do
       {:ok, blob_versioned_hashes}
     else
       {:error, @invalid}
     end
   end
 
-  defp decode_blob_versioned_hashes(_), do: {:error, @invalid}
+  @spec valid_blob_versioned_hashes?(term()) :: boolean()
+  defp valid_blob_versioned_hashes?([_hash | _rest] = blob_versioned_hashes) do
+    Enum.all?(blob_versioned_hashes, fn hash ->
+      is_binary(hash) and byte_size(hash) == 32 and binary_part(hash, 0, 1) == @versioned_hash_version_kzg
+    end)
+  end
+
+  defp valid_blob_versioned_hashes?(_), do: false
 end

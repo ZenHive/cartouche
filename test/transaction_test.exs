@@ -261,10 +261,10 @@ defmodule Cartouche.TransactionTest do
   end
 
   describe "V2.encode/1 access_list shapes" do
-    test "unsigned encode accepts bare-address access list entries" do
-      hex =
-        1
-        |> V2.new(
+    test "unsigned bare-address shorthand is canonicalized and round-trips" do
+      transaction =
+        V2.new(
+          1,
           {1, :gwei},
           {100, :gwei},
           100_000,
@@ -274,17 +274,23 @@ defmodule Cartouche.TransactionTest do
           [<<2::160>>, <<3::160>>],
           :goerli
         )
-        |> V2.encode()
-        |> Cartouche.Hex.encode_big_hex()
 
-      assert hex ==
-               "0x02F8560501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003"
+      encoded = V2.encode(transaction)
+
+      assert transaction.access_list == [{<<2::160>>, []}, {<<3::160>>, []}]
+
+      assert Cartouche.Hex.encode_big_hex(encoded) ==
+               "0x02F85A0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EED6940000000000000000000000000000000000000002C0D6940000000000000000000000000000000000000003C0"
+
+      <<0x02, payload::binary>> = encoded
+      assert Enum.at(ExRLP.decode(payload), 8) == [[<<2::160>>, []], [<<3::160>>, []]]
+      assert {:ok, ^transaction} = V2.decode(encoded)
     end
 
-    test "signed encode accepts bare-address access list entries" do
-      hex =
-        1
-        |> V2.new(
+    test "signed bare-address shorthand emits two-element access-list entries" do
+      transaction =
+        V2.new(
+          1,
           {1, :gwei},
           {100, :gwei},
           100_000,
@@ -297,11 +303,15 @@ defmodule Cartouche.TransactionTest do
           <<0x02::256>>,
           :goerli
         )
-        |> V2.encode()
-        |> Cartouche.Hex.encode_big_hex()
 
-      assert hex ==
-               "0x02F8590501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EA940000000000000000000000000000000000000002940000000000000000000000000000000000000003010102"
+      encoded = V2.encode(transaction)
+
+      assert Cartouche.Hex.encode_big_hex(encoded) ==
+               "0x02F85D0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203EED6940000000000000000000000000000000000000002C0D6940000000000000000000000000000000000000003C0010102"
+
+      <<0x02, payload::binary>> = encoded
+      assert Enum.at(ExRLP.decode(payload), 8) == [[<<2::160>>, []], [<<3::160>>, []]]
+      assert {:ok, ^transaction} = V2.decode(encoded)
     end
 
     test "unsigned encode accepts tuple access list entries (signing-digest path)" do
@@ -329,10 +339,10 @@ defmodule Cartouche.TransactionTest do
       assert decoded.access_list == [{<<2::160>>, [<<22::256>>]}]
     end
 
-    test "signed encode accepts mixed tuple and bare-address access list entries" do
-      hex =
-        1
-        |> V2.new(
+    test "mixed tuple and bare-address inputs are canonicalized before encoding" do
+      transaction =
+        V2.new(
+          1,
           {1, :gwei},
           {100, :gwei},
           100_000,
@@ -345,11 +355,26 @@ defmodule Cartouche.TransactionTest do
           <<0x02::256>>,
           :goerli
         )
-        |> V2.encode()
-        |> Cartouche.Hex.encode_big_hex()
 
-      assert hex ==
-               "0x02F87D0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203F84DF7940000000000000000000000000000000000000002E1A00000000000000000000000000000000000000000000000000000000000000016940000000000000000000000000000000000000003010102"
+      encoded = V2.encode(transaction)
+
+      assert transaction.access_list == [{<<2::160>>, [<<22::256>>]}, {<<3::160>>, []}]
+
+      assert Cartouche.Hex.encode_big_hex(encoded) ==
+               "0x02F87F0501843B9ACA0085174876E800830186A09400000000000000000000000000000000000000010283010203F84FF7940000000000000000000000000000000000000002E1A00000000000000000000000000000000000000000000000000000000000000016D6940000000000000000000000000000000000000003C0010102"
+
+      assert {:ok, ^transaction} = V2.decode(encoded)
+    end
+
+    test "encode rejects noncanonical bare-address structs" do
+      transaction =
+        V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<>>, [])
+
+      for access_list <- [[<<2::160>>], [{<<2::160>>, [<<1, 2>>]}]] do
+        assert_raise ArgumentError,
+                     "access_list entries must contain a 20-byte address and 32-byte storage keys",
+                     fn -> V2.encode(%{transaction | access_list: access_list}) end
+      end
     end
   end
 
@@ -714,19 +739,22 @@ defmodule Cartouche.TransactionTest do
       assert {:ok, ^transaction} = transaction |> V4.encode() |> V4.decode()
     end
 
-    test "rejects empty authorization lists at the RLP boundary" do
+    test "encode and decode reject empty authorization lists symmetrically" do
       transaction = v4_transaction([])
 
-      assert {:error, "authorization_list must not be empty"} = transaction |> V4.encode() |> V4.decode()
+      assert_raise ArgumentError, "authorization_list must not be empty", fn -> V4.encode(transaction) end
+
+      assert {:error, "authorization_list must not be empty"} =
+               [] |> encoded_v4_with_authorizations() |> V4.decode()
     end
 
-    test "normalizes nil authorization lists at the encoding boundary before decode rejects" do
+    test "encode rejects nil authorization lists with the named boundary error" do
       transaction =
         1
         |> V4.new({1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], nil, :mainnet)
         |> V4.add_signature(<<1::256, 2::256, 1>>)
 
-      assert {:error, "authorization_list must not be empty"} = transaction |> V4.encode() |> V4.decode()
+      assert_raise ArgumentError, "authorization_list must not be empty", fn -> V4.encode(transaction) end
     end
 
     test "supports multiple authorization entries including chain_id 0" do
@@ -1594,6 +1622,12 @@ defmodule Cartouche.TransactionTest do
       :mainnet
     )
     |> V4.add_signature(<<1::256, 2::256, 1>>)
+  end
+
+  defp encoded_v4_with_authorizations(authorization_list) do
+    <<0x04, payload::binary>> = V4.encode(v4_transaction([signed_authorization(1, <<2::160>>, 7)]))
+    fields = payload |> ExRLP.decode() |> List.replace_at(9, authorization_list)
+    <<0x04>> <> ExRLP.encode(fields)
   end
 
   defp v2930_transaction do
