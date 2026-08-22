@@ -1722,7 +1722,7 @@ scored_at = "2026-08-22"
 id = "118"
 phase = 0
 bundle = "signer_backends"
-status = "pending"
+status = "in_progress"
 title = "Low-s is a library-wide invariant, not a per-backend convention — close the sign_direct/4 bypass"
 scores = { d = 3, b = 7, u = 7 }
 markers = ["security"]
@@ -1746,4 +1746,5 @@ Scope this as the invariant, not as a one-line patch, so the next non-normalizin
 Discovered 2026-08-22 by an orchestrator conformance sweep of the signing surface. The same sweep confirmed the EIP-155 v-formula is computed rather than hard-coded (signer.ex:277-283), that the y_parity translation is convention-invariant, and that recovery correctly does not require low-s — this bypass is the only malleability gap it found.
 """
 created_at = "2026-08-22"
+started_at = "2026-08-22"
 scored_at = "2026-08-22"

@@ -2689,7 +2689,7 @@
       "id": "118",
       "phase": 0,
       "bundle": "signer_backends",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Low-s is a library-wide invariant, not a per-backend convention — close the sign_direct/4 bypass",
       "scores": {
         "d": 3,
@@ -2727,6 +2727,7 @@
       ],
       "body": "The library guarantees low-s signatures on one signing path and not the other, and the unguarded one is the path a downstream repo actually uses in production.\n\nVerified by reading the code, not inferred. `Cartouche.Signer.backend_sign/4`'s pure-payload clause (lib/cartouche/signer.ex:259-267) calls `Cartouche.Recover.normalize_low_s/1` on the raw backend signature before searching the recid. `Cartouche.Signer.sign_direct/4` (:222-229) — the legacy `{module, function, args}` path — takes whatever the MFA returns and goes straight to `find_recid/3` and `encode_eip155/3` with no normalization. `sign_direct/4` is public, Descripex-`api()`-annotated, and also reachable via `start_link/1` when handed a raw 3-tuple, because `backend_sign/4`'s second clause (:269-271) forwards to it.\n\nThis is not a latent-only gap. `onchain/lib/onchain/signer.ex:211` signs every transaction through `Cartouche.Signer.sign_direct/4`, and that module's own moduledoc names it as the signing route. It currently produces low-s signatures only by accident of its backend: it passes `{Cartouche.Signer.Curvy, :sign, [key_bin]}`, whose `sign_payload/2` (signer/curvy.ex:74-81) calls `Curvy.sign(digest, priv_key, hash: :keccak)` without a `normalize:` option, and the curvy 0.3.1 dependency defaults `:normalize` to `true` (confirmed in deps/curvy/lib/curvy.ex, `sign/3` docs). Change that dep default, or plug in any backend that does not normalize internally, and the library silently starts emitting malleable signatures.\n\n`Cartouche.Signer.CloudKMS.sign/7` (cloud_kms.ex:98-102) is exactly that backend. It is legacy-MFA-shaped, returns a DER-parsed `Curvy.Signature` with no normalization, and cloud KMS providers give no low-s guarantee — the case `Cartouche.Signer.Backend`'s own moduledoc (backend.ex:33-36) and `Cartouche.Recover`'s comment (recover.ex:138-141) both warn about. Wired into `sign_direct/4` as its shape invites, it produces malleable signatures today.\n\nScope this as the invariant, not as a one-line patch, so the next non-normalizing backend cannot reopen it: state once that this library never emits a signature with `s > n/2`, and make the code structurally enforce it rather than delegating the guarantee to whichever backend happens to be configured. The legacy MFA carrier is the thing that makes the invariant unenforceable, so decide its fate as part of this — the library is pre-1.0 (0.7.1) and `Cartouche.Signer.Backend` was formalized in task 104 precisely to replace it.\n\nDiscovered 2026-08-22 by an orchestrator conformance sweep of the signing surface. The same sweep confirmed the EIP-155 v-formula is computed rather than hard-coded (signer.ex:277-283), that the y_parity translation is convention-invariant, and that recovery correctly does not require low-s — this bypass is the only malleability gap it found.\n",
       "created_at": "2026-08-22",
+      "started_at": "2026-08-22",
       "scored_at": "2026-08-22",
       "cross_repo": []
     }
