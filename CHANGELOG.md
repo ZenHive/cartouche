@@ -16,6 +16,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-08-22
+
+### Changed
+
+- **Widened `{:descripex, "~> 0.12.0"}` → `{:descripex, "~> 0.12}`, and
+  `{:hieroglyph, "~> 1.6"}` now resolves 1.6.2.** The three-segment cap was a
+  correct reading of the risk (descripex 0.12.0 turned `short_name` from atom to
+  string at a *minor*) and a wrong allocation of its cost: the requirement ships
+  in the published package, so the cap propagated transitively — a consumer of
+  cartouche could not resolve descripex 0.13.0 whatever its own bound said, and
+  every descripex minor became a forced release here. In-family the cap guarded
+  nothing, `mix.lock` being committed in every repo. Widening is not a
+  narrowing, so no consumer that resolved before can fail to resolve now; this
+  is a patch.
+- **Verified against descripex 0.13.0** — 1154 tests, 94.47% coverage, dialyzer
+  clean, no reach smell findings. `test/descripex_validation_test.exs`, the one
+  test in the family that compares `__api__/0` hints, passes unchanged: it
+  strips runtime `:schema` keys, which is exactly what 0.13.0 adds.
+
 ## [0.7.0] — 2026-08-17
 
 ### Changed
