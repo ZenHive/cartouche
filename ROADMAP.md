@@ -182,7 +182,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 109 | ✅ | 🎁 **tooling_quality** · Finish + normalize typed-transaction helper extraction (dedup maybe_to_wei/chain_id_value; migrate V3 onto TypedDecode/Signature) [D:2/B:4/U:4 → Eff:2.0?] 🎯 |
 | Task 110 | ✅ | 🎁 **tooling_quality** · defrpc macro — generate uniform JSON-RPC wrappers + @spec + @doc + Descripex api() from one declaration [D:5/B:6/U:5 → Eff:1.1?] 📋 |
 | Task 111 | ⛔ | 🎁 **tooling_quality** · Spike: evaluate a Cartouche.Transaction.Typed envelope macro across V_2930/V3/V4 [D:2/B:3/U:3 → Eff:1.5?] 🚀 |
-| Task 113 | ⬜ | 🎁 **coverage_pushes** · 🔒 Property + cross-implementation vector suite for Ethereum tx envelopes and signing [D:4/B:8/U:8 → Eff:2.0] 🎯 |
+| Task 113 | 🔄 | 🎁 **coverage_pushes** · 🔒 Property + cross-implementation vector suite for Ethereum tx envelopes and signing [D:4/B:8/U:8 → Eff:2.0] 🎯 |
 | Task 114 | ⬜ | 🎁 **coverage_pushes** · 🔒 Mutation-adequacy campaign over the signing and transaction paths [D:5/B:7/U:6 → Eff:1.3] 📋 |
 | Task 115 | ✅ | 🎁 **phase8_dedup** · Cartouche.Transaction.V_2930 write surface — new/encode/sign/hash/signature/recover [D:3/B:4/U:4 → Eff:1.33] 📋 |
 | Task 116 | ✅ | 🎁 **signer_backends** · 🔒 Enforce the Signer.Backend contract at the boundary — payload length, curve, DER parse [D:3/B:6/U:6 → Eff:2.0] 🎯 |
