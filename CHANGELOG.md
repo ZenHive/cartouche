@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **Widened `{:descripex, "~> 0.12.0"}` → `{:descripex, "~> 0.12}`, and
+- **Widened `{:descripex, "~> 0.12.0"}` → `{:descripex, "~> 0.12"}`, and
   `{:hieroglyph, "~> 1.6"}` now resolves 1.6.2.** The three-segment cap was a
   correct reading of the risk (descripex 0.12.0 turned `short_name` from atom to
   string at a *minor*) and a wrong allocation of its cost: the requirement ships
