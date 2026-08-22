@@ -1603,7 +1603,7 @@ shipped_in = "6c8acb20b15fcda238473c5b9c5fed31edcfd2be"
 id = "114"
 phase = 0
 bundle = "coverage_pushes"
-status = "pending"
+status = "in_progress"
 title = "Mutation-adequacy campaign over the signing and transaction paths"
 scores = { d = 5, b = 7, u = 6 }
 markers = ["security"]
@@ -1623,6 +1623,7 @@ The deliverable is not the mutation score. It is (a) the tests written to kill g
 TOOLING DECISION 2026-08-22 (roadmap review): `muex` is named deliberately. The obvious reach is `muzak`, which is stale (1.1.1, Dec 2022) and whose free tier samples 25 random mutations per run — reproducibility and exhaustiveness are both impossible under it, so a campaign built on it would satisfy the letter of this task and none of its intent.
 """
 created_at = "2026-08-22"
+started_at = "2026-08-22"
 scored_at = "2026-08-22"
 
 [[task]]
