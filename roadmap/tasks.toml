@@ -1603,7 +1603,7 @@ shipped_in = "6c8acb20b15fcda238473c5b9c5fed31edcfd2be"
 id = "114"
 phase = 0
 bundle = "coverage_pushes"
-status = "pending"
+status = "in_progress"
 title = "Mutation-adequacy campaign over the signing and transaction paths"
 scores = { d = 5, b = 7, u = 6 }
 markers = ["security"]
