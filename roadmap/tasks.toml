@@ -686,7 +686,7 @@ implemented = """Osaka activated on mainnet 2025-12-03 (Fusaka, epoch 411392), s
 delivered_by = "human"
 scored_at = "2026-05-27"
 done_at = "2026-08-22"
-shipped_in = "pending"
+shipped_in = "ebb664d68777ca7bdb32f0efc4c36301f74065ae"
 
 [[task]]
 id = 73

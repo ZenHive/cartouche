@@ -1019,7 +1019,7 @@
         "cx"
       ],
       "depends_on": [],
-      "shipped_in": "pending",
+      "shipped_in": "ebb664d68777ca7bdb32f0efc4c36301f74065ae",
       "body": "CLZ ('count leading zeros') is in go-ethereum master's newOsakaInstructionSet() per EIP-7607 Osaka composition, with EIP-7939 defining the opcode at slot 0x1e. Once Osaka activates, any eth_debug_traceCall against an Osaka tx that uses CLZ will raise ArgumentError in the closed whitelist.\n\nPre-add gate: confirm the mnemonic emitted in struct-logs matches 'CLZ' exactly against an Osaka testnet trace (geth's opCodeToString in core/vm/opcodes.go master is the source of truth); add the atom to @single_opcodes in lib/cartouche/debug_trace.ex and a regression test that round-trips the new mnemonic.\n\nWatch list for Amsterdam (post-Osaka): SLOTNUM (0x4b, EIP-7843) — currently Draft, file separately when EIP leaves Draft and Amsterdam composition firms up.\n\nReplaces the abandoned Task 68 (which conflated EIP-3074's withdrawn AUTH/AUTHCALL with EIP-7702). Discovered during Codex consultation 2026-05-01.\n",
       "done_at": "2026-08-22",
       "scored_at": "2026-05-27",
