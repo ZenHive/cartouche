@@ -2704,8 +2704,8 @@
       "depends_on": [
         116
       ],
-      "assignee": "codex",
-      "model": "gpt-5.6-sol",
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
       "acceptance_criteria": [
         "Every path that produces a 65-byte Ethereum signature normalizes low-s per EIP-2, with no path relying on the backend to have done it. Verified by enumerating the signature-producing functions in lib/cartouche/signer.ex and pointing at the `Cartouche.Recover.normalize_low_s/1` call each one passes through",
         "`Cartouche.Signer.sign_direct/4` (signer.ex:222-229) specifically no longer emits an unnormalized signature: a test stubs a signing MFA that returns a deliberately high-s `Curvy.Signature` and asserts the resulting packed signature carries `s <= secp256k1n/2`. This test must fail against the current code — confirm that before fixing",
