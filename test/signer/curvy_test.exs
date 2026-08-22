@@ -21,4 +21,9 @@ defmodule Cartouche.Signer.CurvyTest do
   test "get_address/1 derives the Ethereum address from the public key" do
     assert {:ok, @address} = Curvy.get_address(@priv_key)
   end
+
+  test "sign_payload/2 rejects a short and an over-long payload" do
+    assert_raise FunctionClauseError, fn -> Curvy.sign_payload(<<0::248>>, @priv_key) end
+    assert_raise FunctionClauseError, fn -> Curvy.sign_payload(<<0::264>>, @priv_key) end
+  end
 end

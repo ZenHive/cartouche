@@ -66,8 +66,8 @@ if Code.ensure_loaded?(Goth) do
     contract. Performs no hashing; the caller owns digest computation.
     """
     @impl true
-    @spec sign_payload(binary(), config()) :: {:ok, Curvy.Signature.t()} | {:error, term()}
-    def sign_payload(digest, {cred, project, location, keychain, key, version}) when is_binary(digest) do
+    @spec sign_payload(<<_::256>>, config()) :: {:ok, Curvy.Signature.t()} | {:error, term()}
+    def sign_payload(<<digest::binary-size(32)>>, {cred, project, location, keychain, key, version}) do
       name = CloudKMS.key_version_name(project, location, keychain, key, version)
 
       with {:ok, %{"signature" => signature}} <-
@@ -78,7 +78,7 @@ if Code.ensure_loaded?(Goth) do
                __MODULE__
              ),
            {:ok, decoded_sig} <- Base.decode64(signature) do
-        {:ok, Curvy.Signature.parse(decoded_sig)}
+        parse_kms_signature(decoded_sig)
       end
     end
 
@@ -99,6 +99,14 @@ if Code.ensure_loaded?(Goth) do
             {:ok, Curvy.Signature.t()} | {:error, term()}
     def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
       sign_payload(keccak(message), {cred, project, location, keychain, key, version})
+    end
+
+    @spec parse_kms_signature(binary()) :: {:ok, Curvy.Signature.t()} | {:error, :invalid_signature}
+    defp parse_kms_signature(decoded_sig) do
+      case Curvy.Signature.parse(decoded_sig) do
+        %Curvy.Signature{} = parsed -> {:ok, parsed}
+        _ -> {:error, :invalid_signature}
+      end
     end
 
     @spec credential_token(term()) :: String.t()

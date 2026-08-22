@@ -165,6 +165,36 @@ defmodule Cartouche.Signer.CloudKMSTest do
     end
   end
 
+  describe "sign_payload/2 contract" do
+    test "rejects a short and an over-long payload" do
+      config = {"token", "project", "location", "keychain", "key", "version"}
+
+      assert_raise FunctionClauseError, fn -> CloudKMS.sign_payload(<<0::248>>, config) end
+      assert_raise FunctionClauseError, fn -> CloudKMS.sign_payload(<<0::264>>, config) end
+    end
+
+    test "returns an error tuple for malformed DER instead of wrapping parse failure" do
+      Application.put_env(:cartouche, CloudKMS, req_options: [plug: &malformed_der_sign_plug/1])
+
+      digest = Cartouche.Hash.keccak("test")
+
+      assert {:error, :invalid_signature} =
+               CloudKMS.sign_payload(
+                 digest,
+                 {"token", "project", "location", "keychain", "key", "version"}
+               )
+    end
+  end
+
+  defp malformed_der_sign_plug(conn) do
+    Req.Test.json(conn, %{
+      signature: Base.encode64("not-a-der-signature"),
+      signatureCrc32c: "0",
+      name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+      protectionLevel: "HSM"
+    })
+  end
+
   defp unauthorized_plug(conn) do
     conn
     |> Plug.Conn.put_status(:unauthorized)

@@ -60,6 +60,10 @@ defmodule Cartouche.Signer.Backend do
 
   Determines how the caller prepares the payload: `:secp256k1` ⇒ hand a 32-byte
   digest; `:ed25519` ⇒ hand the raw message bytes.
+
+  Callers must check this before dispatching: `Cartouche.Signer` requires
+  `:secp256k1` and `Cartouche.Solana.Signer` requires `:ed25519`. Use
+  `expect_algorithm/3`.
   """
   @callback algorithm(config()) :: :secp256k1 | :ed25519
 
@@ -83,4 +87,20 @@ defmodule Cartouche.Signer.Backend do
   """
   @callback sign_payload(payload :: binary(), config()) ::
               {:ok, Curvy.Signature.t() | <<_::512>>} | {:error, term()}
+
+  @doc """
+  Reject a backend whose `c:algorithm/1` is not `expected`.
+
+  Returns `:ok` on match, or
+  `{:error, {:algorithm_mismatch, expected, got}}` so a crossed-curve
+  `{module, config}` fails instead of mis-signing.
+  """
+  @spec expect_algorithm(module(), config(), :secp256k1 | :ed25519) ::
+          :ok | {:error, {:algorithm_mismatch, :secp256k1 | :ed25519, atom()}}
+  def expect_algorithm(backend, config, expected) when is_atom(backend) and expected in [:secp256k1, :ed25519] do
+    case backend.algorithm(config) do
+      ^expected -> :ok
+      other -> {:error, {:algorithm_mismatch, expected, other}}
+    end
+  end
 end

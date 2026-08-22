@@ -189,7 +189,9 @@ defmodule Cartouche.Solana.Signer do
   @spec backend_sign(Backend.t() | {module(), atom(), [term()]}, binary()) ::
           {:ok, <<_::512>>} | {:error, term()}
   defp backend_sign({backend, config}, message) when is_atom(backend) do
-    backend.sign_payload(message, config)
+    with :ok <- Backend.expect_algorithm(backend, config, :ed25519) do
+      backend.sign_payload(message, config)
+    end
   end
 
   defp backend_sign({mod, fun, args}, message) do
@@ -199,7 +201,9 @@ defmodule Cartouche.Solana.Signer do
   @spec backend_address(Backend.t() | {module(), atom(), [term()]}) ::
           {:ok, <<_::256>>} | {:error, term()}
   defp backend_address({backend, config}) when is_atom(backend) do
-    backend.public_key(config)
+    with :ok <- Backend.expect_algorithm(backend, config, :ed25519) do
+      backend.public_key(config)
+    end
   end
 
   defp backend_address({mod, _fun, args}) do

@@ -70,8 +70,8 @@ defmodule Cartouche.Signer.Curvy do
       "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
   """
   @impl true
-  @spec sign_payload(binary(), binary()) :: {:ok, Curvy.Signature.t()} | {:error, String.t()}
-  def sign_payload(digest, private_key) when is_binary(digest) do
+  @spec sign_payload(<<_::256>>, binary()) :: {:ok, Curvy.Signature.t()} | {:error, String.t()}
+  def sign_payload(<<digest::binary-size(32)>>, private_key) do
     priv_key = Curvy.Key.from_privkey(private_key)
 
     digest

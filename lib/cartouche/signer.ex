@@ -115,7 +115,7 @@ defmodule Cartouche.Signer do
       0x05f5e0ff * 2 + 35 + 1
   """
   @spec sign(String.t(), GenServer.server(), Keyword.t()) ::
-          {:ok, binary()} | {:error, String.t()}
+          {:ok, binary()} | {:error, term()}
   def sign(message, name \\ Default, opts \\ []) do
     chain_id = Keyword.get(opts, :chain_id, GenServer.call(name, :get_chain_id))
     GenServer.call(name, {:sign, {message, chain_id}})
@@ -171,10 +171,15 @@ defmodule Cartouche.Signer do
 
   # Note absence of address in state, find it and set it and then sign. Address will be cached on next signing.
   def handle_call({:sign, {message, chain_id}}, _from, %{name: name, mfa: mfa} = state) do
-    {:ok, address} = backend_address(mfa)
-    Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
+    case backend_address(mfa) do
+      {:ok, address} ->
+        Logger.info("Cartouche.Signer #{name} signing with address #{to_address(address)}")
 
-    {:reply, backend_sign(mfa, message, address, chain_id), Map.put(state, :address, address)}
+        {:reply, backend_sign(mfa, message, address, chain_id), Map.put(state, :address, address)}
+
+      {:error, _} = error ->
+        {:reply, error, state}
+    end
   end
 
   # Reads address from state, or finds and memoize address on first call.
@@ -238,7 +243,8 @@ defmodule Cartouche.Signer do
   @spec backend_address(Backend.t() | {module(), atom(), [any()]}) ::
           {:ok, binary()} | {:error, term()}
   defp backend_address({backend, config}) when is_atom(backend) do
-    with {:ok, public_key} <- backend.public_key(config) do
+    with :ok <- Backend.expect_algorithm(backend, config, :secp256k1),
+         {:ok, public_key} <- backend.public_key(config) do
       {:ok, Cartouche.Address.from_public_key(public_key)}
     end
   end
@@ -257,9 +263,9 @@ defmodule Cartouche.Signer do
           integer() | atom() | nil
         ) :: {:ok, binary()} | {:error, term()}
   defp backend_sign({backend, config}, message, address, chain_id_or_name) when is_atom(backend) do
-    digest = keccak(message)
-
-    with {:ok, raw_signature} <- backend.sign_payload(digest, config),
+    with :ok <- Backend.expect_algorithm(backend, config, :secp256k1),
+         digest = keccak(message),
+         {:ok, raw_signature} <- backend.sign_payload(digest, config),
          signature = Cartouche.Recover.normalize_low_s(raw_signature),
          {:ok, recid} <- Cartouche.Recover.find_recid_from_digest(digest, signature, address) do
       {:ok, encode_eip155(signature, recid, chain_id_or_name)}
