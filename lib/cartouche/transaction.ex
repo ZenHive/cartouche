@@ -1,6 +1,14 @@
 defmodule Cartouche.Transaction do
   @moduledoc """
-  A module to help build, sign and encode Ethereum transactions.
+  Build, sign, and encode Ethereum transactions.
+
+  Encode/decode invariant for every envelope (`V1`, `V_2930`, `V2`, `V3`,
+  `V4`): anything `encode/1` accepts must round-trip through that envelope's
+  `decode/1` to an equal struct and match the EIP wire shape. EIP-2930
+  access-list items are `[address, storage_keys]`; EIP-4844 requires a
+  non-empty `blob_versioned_hashes` whose entries begin with
+  `VERSIONED_HASH_VERSION_KZG` `0x01`; EIP-7702 forbids an empty
+  `authorization_list`.
   """
 
   use Descripex, namespace: "/ethereum/transaction"
@@ -457,6 +465,7 @@ defmodule Cartouche.Transaction do
     use Descripex, namespace: "/ethereum/transaction/v2"
 
     alias Cartouche.Transaction.JsonField
+    alias Cartouche.Transaction.TypedDecode
 
     @type access_list_entry :: {<<_::160>>, [<<_::256>>]}
     @type access_list :: [access_list_entry()]
@@ -842,35 +851,18 @@ defmodule Cartouche.Transaction do
       ]
     end
 
-    @invalid_access_list "access_list entries must contain a 20-byte address and 32-byte storage keys"
-
     @spec canonicalize_access_list(access_list_input()) :: access_list()
     defp canonicalize_access_list(access_list) do
       Enum.map(access_list, fn
+        # Lift the documented shorthand to an EIP-2930 `{address, []}` tuple so
+        # encode emits `[address, []]`, never a raw 20-byte RLP string.
         <<_::160>> = address -> {address, []}
-        entry -> validate_access_list_entry!(entry)
+        entry -> TypedDecode.validate_access_list_entry!(entry)
       end)
     end
 
     @spec normalize_access_list(access_list()) :: [[<<_::160>> | [<<_::256>>]]]
-    defp normalize_access_list(access_list) do
-      Enum.map(access_list, fn entry ->
-        {address, storage} = validate_access_list_entry!(entry)
-        [address, storage]
-      end)
-    end
-
-    @spec validate_access_list_entry!(term()) :: access_list_entry()
-    defp validate_access_list_entry!({address, storage} = entry)
-         when is_binary(address) and byte_size(address) == 20 and is_list(storage) do
-      if Enum.all?(storage, &(is_binary(&1) and byte_size(&1) == 32)) do
-        entry
-      else
-        raise ArgumentError, @invalid_access_list
-      end
-    end
-
-    defp validate_access_list_entry!(_entry), do: raise(ArgumentError, @invalid_access_list)
+    defp normalize_access_list(access_list), do: TypedDecode.encode_access_list(access_list)
 
     @spec signature_y_parity(boolean()) :: 0 | 1
     defp signature_y_parity(true), do: 1

@@ -40,6 +40,7 @@ defmodule Cartouche.Transaction.V4 do
   alias Cartouche.Signer.Default
   alias Cartouche.Transaction.JsonField
   alias Cartouche.Transaction.Signature
+  alias Cartouche.Transaction.TypedDecode
 
   @type authorization :: {
           non_neg_integer(),
@@ -161,14 +162,17 @@ defmodule Cartouche.Transaction.V4 do
   """
   @spec encode(tx_input()) :: binary()
   def encode(%__MODULE__{} = transaction) do
-    <<@tx_type>> <> ExRLP.encode(encoded_fields(transaction))
+    <<@tx_type>> <>
+      (transaction
+       |> encoded_fields()
+       |> ExRLP.encode())
   end
 
   @doc """
   Decode an RLP-encoded EIP-7702 transaction.
   """
   @spec decode(binary()) :: {:ok, t()} | {:error, String.t()}
-  def decode(input), do: Cartouche.Transaction.TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
+  def decode(input), do: TypedDecode.decode(input, @tx_type, @invalid, &decode_fields/1)
 
   @doc """
   Signs the outer EIP-7702 transaction.
@@ -364,10 +368,7 @@ defmodule Cartouche.Transaction.V4 do
 
   @spec encode_access_list([{<<_::160>>, [<<_::256>>]}] | nil) :: list()
   defp encode_access_list(nil), do: []
-
-  defp encode_access_list(access_list) do
-    Enum.map(access_list, fn {address, storage} -> [address, storage] end)
-  end
+  defp encode_access_list(access_list), do: TypedDecode.encode_access_list(access_list)
 
   @spec encode_authorization_list(term()) :: list()
   defp encode_authorization_list([_authorization | _rest] = authorization_list) do

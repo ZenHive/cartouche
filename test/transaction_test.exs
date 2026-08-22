@@ -757,6 +757,23 @@ defmodule Cartouche.TransactionTest do
       assert_raise ArgumentError, "authorization_list must not be empty", fn -> V4.encode(transaction) end
     end
 
+    test "encode and decode reject malformed access-list storage keys symmetrically" do
+      transaction =
+        [signed_authorization(1, <<2::160>>, 7)]
+        |> v4_transaction()
+        |> Map.put(:access_list, [{<<3::160>>, [<<1, 2>>]}])
+
+      encode = Function.capture(V4, :encode, 1)
+
+      assert_raise ArgumentError,
+                   "access_list entries must contain a 20-byte address and 32-byte storage keys",
+                   fn -> encode.(transaction) end
+
+      <<0x04, payload::binary>> = V4.encode(v4_transaction([signed_authorization(1, <<2::160>>, 7)]))
+      fields = payload |> ExRLP.decode() |> List.replace_at(8, [[<<3::160>>, [<<1, 2>>]]])
+      assert {:error, "invalid v4 transaction"} = V4.decode(<<0x04>> <> ExRLP.encode(fields))
+    end
+
     test "supports multiple authorization entries including chain_id 0" do
       authorizations = [
         signed_authorization(1, <<2::160>>, 7),
@@ -1317,6 +1334,15 @@ defmodule Cartouche.TransactionTest do
       transaction = v2930_transaction()
 
       assert {:ok, ^transaction} = transaction |> V_2930.encode() |> V_2930.decode()
+    end
+
+    test "encode rejects malformed access-list storage keys that decode already rejects" do
+      transaction = %{v2930_transaction() | access_list: [{<<1::160>>, [<<1, 2, 3>>]}]}
+      encode = Function.capture(V_2930, :encode, 1)
+
+      assert_raise ArgumentError,
+                   "access_list entries must contain a 20-byte address and 32-byte storage keys",
+                   fn -> encode.(transaction) end
     end
 
     test "new/8 defaults chain id and leaves signature fields unset" do

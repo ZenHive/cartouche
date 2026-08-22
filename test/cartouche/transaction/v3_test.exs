@@ -230,6 +230,28 @@ defmodule Cartouche.Transaction.V3Test do
       assert {:error, "invalid v3 transaction"} = V3.decode(encoded_with_blob_hashes([]))
     end
 
+    test "encode and decode reject malformed access-list storage keys symmetrically" do
+      malformed = Map.put(representative_tx(), :access_list, [{<<1::160>>, [<<1, 2, 3>>]}])
+      encode = Function.capture(V3, :encode, 1)
+
+      assert_raise ArgumentError,
+                   "access_list entries must contain a 20-byte address and 32-byte storage keys",
+                   fn -> encode.(malformed) end
+
+      <<0x03, payload::binary>> = V3.encode(representative_tx())
+      fields = payload |> ExRLP.decode() |> List.replace_at(8, [[<<1::160>>, [<<1, 2, 3>>]]])
+      assert {:error, "invalid v3 transaction"} = V3.decode(<<0x03>> <> ExRLP.encode(fields))
+    end
+
+    test "encode rejects a non-list access list" do
+      malformed = Map.put(representative_tx(), :access_list, :not_a_list)
+      encode = Function.capture(V3, :encode, 1)
+
+      assert_raise ArgumentError,
+                   "access_list entries must contain a 20-byte address and 32-byte storage keys",
+                   fn -> encode.(malformed) end
+    end
+
     test "rejects signatures wider than 32 bytes" do
       malformed =
         <<0x03>> <>

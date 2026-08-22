@@ -339,9 +339,7 @@ defmodule Cartouche.Transaction.V3 do
   end
 
   @spec encode_access_list(access_list()) :: list()
-  defp encode_access_list(access_list) do
-    Enum.map(access_list, fn {address, storage} -> [address, storage] end)
-  end
+  defp encode_access_list(access_list), do: TypedDecode.encode_access_list(access_list)
 
   @spec encode_blob_versioned_hashes(term()) :: encodable_blob_versioned_hashes()
   defp encode_blob_versioned_hashes(blob_versioned_hashes) do

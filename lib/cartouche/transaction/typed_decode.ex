@@ -1,12 +1,13 @@
 defmodule Cartouche.Transaction.TypedDecode do
   @moduledoc """
-  Shared EIP-2718 typed-transaction envelope dispatch.
+  Shared EIP-2718 typed-transaction envelope helpers.
 
   Every typed transaction (EIP-2930 `V_2930`, EIP-7702 `V4`, …) decodes the
   same way: match the leading type byte, RLP-decode the remaining payload, then
   hand the decoded field list to a type-specific `decode_fields` callback. This
-  module owns that envelope contract so each decoder only declares its type
-  byte, its error message, and how to turn the RLP list into its struct.
+  module also owns the EIP-2930 access-list encode/decode guards so every
+  envelope that carries an access list rejects the same malformed entries on
+  both sides of the wire.
   """
 
   @doc """
@@ -37,6 +38,9 @@ defmodule Cartouche.Transaction.TypedDecode do
 
   @typedoc "EIP-2930 access list: `{address, [storage_key]}` pairs."
   @type access_list :: [{<<_::160>>, [<<_::256>>]}]
+  @type access_list_entry :: {<<_::160>>, [<<_::256>>]}
+
+  @invalid_access_list "access_list entries must contain a 20-byte address and 32-byte storage keys"
 
   @doc """
   Decodes an RLP-decoded access list into `{address, [storage_key]}` tuples.
@@ -50,6 +54,39 @@ defmodule Cartouche.Transaction.TypedDecode do
     do: access_list |> Enum.reduce_while({:ok, []}, &decode_access_entry(&1, &2, invalid)) |> reverse_ok()
 
   def decode_access_list(_, invalid), do: {:error, invalid}
+
+  @doc """
+  Encodes an access list as EIP-2930 RLP items (`[address, storage_keys]`).
+
+  Constructors that document a bare-address shorthand must canonicalize to
+  `{address, []}` before calling this. Malformed entries raise `ArgumentError`.
+  """
+  @spec encode_access_list(term()) :: [[<<_::160>> | [<<_::256>>]]]
+  def encode_access_list(access_list) when is_list(access_list) do
+    Enum.map(access_list, fn entry ->
+      {address, storage} = validate_access_list_entry!(entry)
+      [address, storage]
+    end)
+  end
+
+  def encode_access_list(_access_list), do: raise(ArgumentError, @invalid_access_list)
+
+  @doc """
+  Accepts a canonical `{address, storage_keys}` access-list entry.
+
+  Used by constructors that lift documented shorthand before encoding.
+  """
+  @spec validate_access_list_entry!(term()) :: access_list_entry()
+  def validate_access_list_entry!({address, storage} = entry)
+      when is_binary(address) and byte_size(address) == 20 and is_list(storage) do
+    if Enum.all?(storage, &(is_binary(&1) and byte_size(&1) == 32)) do
+      entry
+    else
+      raise ArgumentError, @invalid_access_list
+    end
+  end
+
+  def validate_access_list_entry!(_entry), do: raise(ArgumentError, @invalid_access_list)
 
   @spec decode_access_entry(term(), {:ok, access_list()}, String.t()) ::
           {:cont, {:ok, access_list()}} | {:halt, {:error, String.t()}}

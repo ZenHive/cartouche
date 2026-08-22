@@ -262,7 +262,7 @@ defmodule Cartouche.Transaction.V_2930 do
       tx.destination,
       tx.amount,
       tx.data,
-      Enum.map(tx.access_list, fn {address, storage} -> [address, storage] end)
+      TypedDecode.encode_access_list(tx.access_list)
     ] ++ maybe_signature_rlp(tx)
   end
 
