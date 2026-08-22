@@ -99,3 +99,35 @@ defmodule Cartouche.RecoverTest do
     end
   end
 end
+
+defmodule Cartouche.RecoverHighRecidTest do
+  use ExUnit.Case, async: false
+  use Cartouche.Hex
+
+  alias Cartouche.Recover
+
+  @priv_key ~h[0x800509fa3e80882ad0be77c27505bdc91380f800d51ed80897d22f9fcc75f4bf]
+  @address ~h[0x63CC7C25E0CDB121ABB0FE477A6B9901889F99A7]
+  @other_priv ~h[0x1111111111111111111111111111111111111111111111111111111111111111]
+
+  # Curvy aliases recid 2/3 onto 0/1, so Enum.find/2 never returns >1 against a
+  # real recover. The production clause still has to reject an overflow-only
+  # match; stub recover_key so only recid 2/3 land on the expected address.
+  test "find_recid_from_digest rejects a match that exists only at recid 2 or 3" do
+    digest = <<1::256>>
+    signature = %Curvy.Signature{crv: :secp256k1, r: 1, s: 1, recid: nil}
+
+    :meck.new(Curvy, [:passthrough, :unstick, :no_link])
+
+    :meck.expect(Curvy, :recover_key, fn %Curvy.Signature{recid: recid}, _message, _opts ->
+      Curvy.Key.from_privkey(if(recid > 1, do: @priv_key, else: @other_priv))
+    end)
+
+    try do
+      assert {:error, reason} = Recover.find_recid_from_digest(digest, signature, @address)
+      assert reason =~ "too high recovery bit"
+    after
+      :meck.unload(Curvy)
+    end
+  end
+end

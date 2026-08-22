@@ -21,7 +21,7 @@ Task 113 establishes these invariants for Cartouche's Ethereum transaction surfa
 | [EIP-4844](https://eips.ethereum.org/EIPS/eip-4844) | Type `0x03`, field order, signed preimage, and versioned-hash shape. |
 | [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) | Type `0x04`, field order, non-empty authorization list, and authorization signing domain. |
 
-The exercised wire behavior is explicit in those EIPs. No vector overrides an EIP interpretation, and no discrepancy was observed. ethers and viem agree byte-for-byte on all signed payloads, unsigned payloads, hashes, recovered senders, and the EIP-7702 authorization.
+The exercised wire behavior is explicit in those EIPs. No vector overrides an EIP interpretation, and no discrepancy was observed. ethers and viem agree byte-for-byte on all signed payloads, unsigned payloads, hashes, recovered senders, and the EIP-7702 authorization. The V1 vector is the EIP-155 worked example (signing data, signing hash, and signed transaction).
 
 ## Vector provenance
 

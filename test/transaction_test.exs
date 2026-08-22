@@ -21,6 +21,11 @@ defmodule Cartouche.TransactionTest do
   doctest V_2930
 
   describe "Call.new/3" do
+    test "defaults optional eth_call fields when omitted" do
+      assert %Call{destination: <<1::160>>, data: <<0x12, 0x34>>, from: nil, gas: nil, value: nil} =
+               Call.new(<<1::160>>, <<0x12, 0x34>>)
+    end
+
     test "builds eth_call params without transaction-only fields" do
       call = Call.new(<<1::160>>, <<0x12, 0x34>>, from: <<2::160>>, gas: 21_000, value: 7)
 
