@@ -2641,7 +2641,7 @@
       "id": "117",
       "phase": 0,
       "bundle": "phase9_tx",
-      "status": "in_progress",
+      "status": "done",
       "title": "Encode must not emit wire-non-conformant RLP — close the encode/decode conformance gap across V2/V3/V4",
       "scores": {
         "d": 3,
@@ -2679,10 +2679,17 @@
         "lib/cartouche/transaction/v4.ex",
         "test/transaction_test.exs"
       ],
+      "shipped_in": "710868e80fcdb0dc560febd4bedfd35e30a170ff",
       "body": "`Cartouche.Transaction.V2.encode/1` can emit an access list that no conformant Ethereum node will accept, and the library's own decoder cannot read back.\n\nVerified by reading the code, not inferred. `normalize_access_list/1` (lib/cartouche/transaction.ex:843-849) carries a `bare_address when is_binary(bare_address) -> bare_address` clause that passes a raw 20-byte address straight through as an RLP string item, where EIP-2930 requires each access-list entry to be a two-element `[address, storage_keys]` list. `V2.decode_access_list/1` (:1021-1035) pattern-matches only `[address, storage]`, so the bare-address entry raises FunctionClauseError into the rescue clause and decode returns `{:error, \"invalid v2 transaction\"}`. `V2.t()` declares `access_list: [{<<_::160>>, [<<_::256>>]}]` (:473) — tuples only — so the struct type, the encoder and the decoder disagree three ways. V3 (v3.ex:337-340) and V4 (v4.ex:371-374) accept only the tuple form, so this is V2-specific drift.\n\nThe shorthand is not an accident that nobody exercises: five module doctests pin its output as correct (transaction.ex:735-738, :745-748) and the `build_trx_v2` / `build_signed_trx_v2` convenience-builder doctests (:1718, :1736) use it too. Hand-decoding the pinned hex at :738 confirms the defect — `...EA 94<20 bytes> 94<20 bytes>` is a list of two 20-byte strings, not a list of two sublists. So the documented happy path of the library builds transactions with a malformed access list.\n\nScope this as the class invariant, not as the one patch. The same encode-permits / decode-rejects asymmetry appears twice more on the same surface, and fixing only V2 leaves the next instance free to spawn a sibling task:\n- V4 `authorization_list: []` — EIP-7702 declares such a transaction invalid; `decode_authorization_list/1` (v4.ex:533) rejects it, but `V4.new/10` and `encode_authorization_list/1` (v4.ex:377) accept it silently.\n- V3 `blob_versioned_hashes` — EIP-4844 requires a non-empty list whose entries carry the 0x01 KZG version prefix; decode enforces the prefix (v3.ex:398-407) but the `Enum.all?` is vacuously true on `[]`, and encode (v3.ex:337-340) checks neither.\n\nAuthority is the EIP text, per this repo's standing rule: verify the wire shape against EIP-2930 / EIP-4844 / EIP-7702 directly, never against the current encoders, so a copied-forward error cannot be ratified.\n\nDispatch trigger: this is transaction-encoding code on the money path and the fix changes a documented public input shape.\n\nDiscovered 2026-08-22 by an orchestrator conformance sweep that read every envelope's RLP field order against the fetched EIP texts. That sweep found the base field orders of V1/V2/V3/V4 correct and the EIP-155 v-formula computed rather than hard-coded — the access-list and list-emptiness asymmetries above are the only conformance defects it surfaced.\n",
       "created_at": "2026-08-22",
       "started_at": "2026-08-22",
+      "done_at": "2026-08-22",
       "scored_at": "2026-08-22",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787384096316-ad114146, 710868e80fcdb0dc560febd4bedfd35e30a170ff).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787384096316-ad114146",
       "cross_repo": []
     },
     {

@@ -186,7 +186,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 114 | ⬜ | 🎁 **coverage_pushes** · 🔒 Mutation-adequacy campaign over the signing and transaction paths [D:5/B:7/U:6 → Eff:1.3] 📋 |
 | Task 115 | ✅ | 🎁 **phase8_dedup** · Cartouche.Transaction.V_2930 write surface — new/encode/sign/hash/signature/recover [D:3/B:4/U:4 → Eff:1.33] 📋 |
 | Task 116 | ✅ | 🎁 **signer_backends** · 🔒 Enforce the Signer.Backend contract at the boundary — payload length, curve, DER parse [D:3/B:6/U:6 → Eff:2.0] 🎯 |
-| Task 117 | 🔄 | 🎁 **phase9_tx** · 🔒 Encode must not emit wire-non-conformant RLP — close the encode/decode conformance gap across V2/V3/V4 [D:3/B:8/U:7 → Eff:2.5] 🎯 |
+| Task 117 | ✅ | 🎁 **phase9_tx** · 🔒 Encode must not emit wire-non-conformant RLP — close the encode/decode conformance gap across V2/V3/V4 [D:3/B:8/U:7 → Eff:2.5] 🎯 |
 | Task 118 | ✅ | 🎁 **signer_backends** · 🔒 Low-s is a library-wide invariant, not a per-backend convention — close the sign_direct/4 bypass [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
