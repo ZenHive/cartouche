@@ -16,7 +16,61 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **`Cartouche.Transaction.V_2930` gained its write surface** (`new/8`, `encode/1`,
+  `sign/2`, `hash/1`, `add_signature/4`, `add_signature/2`, `get_signature/1`,
+  `recover_signer/1`). EIP-2930 type-1 transactions were decode-only: the module
+  existed solely so the block deserializer would stop crashing on them, so no
+  caller could construct, sign or re-encode one by any route. `encode/1` emits
+  `0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList,
+  yParity, r, s])`, with the field order checked against the EIP text rather than
+  against the existing decoder, and a mainnet type-1 vector round-trips
+  byte-identically. `Cartouche.Transaction.encode/1` now dispatches `%V_2930{}`,
+  which previously raised `FunctionClauseError` on a hand-built type-1 struct.
+  The signature helpers delegate to `Cartouche.Transaction.Signature` rather than
+  re-implementing it.
+
+### Changed
+
+- **`mix check.dispatch` is now defined** and is the harness reviewer's
+  dispatch-scale gate; `mix precommit.full` / `mix ci` is the landed-base gate.
+  The project was registered with `check_command: "mix check.dispatch"` while
+  defining no such task, so every dispatched reviewer burned a check on
+  `** (Mix) The task "check.dispatch" could not be found` and substituted the
+  full gate by hand. The dispatch gate deliberately omits dialyzer and coverage
+  (cold-PLT cost in a fresh run worktree) and `agents.check` — harness prepends
+  an ephemeral do-not-commit preamble to `AGENTS.md` inside the reviewer
+  worktree, which that check correctly reports as drift, producing a red the
+  reviewer can neither fix nor ignore. `AGENTS.md` freshness stays enforced by
+  `precommit.full` on the landed base.
+
 ### Fixed
+
+- **The secp256k1 signing backends accepted any binary as a payload, and a
+  malformed KMS signature crashed instead of erroring.** `sign_payload/2` guarded
+  only with `is_binary/1` in both `Cartouche.Signer.Curvy` and
+  `Cartouche.Signer.CloudKMS`, so a caller passing anything other than the
+  32-byte digest the `Cartouche.Signer.Backend` contract documents got it signed
+  as garbage; both now match an exact 32 bytes. The `algorithm/1` callback is now
+  consumed rather than merely declared: both the Ethereum and Solana signer
+  families check the backend's curve before dispatching, so an ed25519 backend
+  under the Eth signer (or the reverse) fails loudly instead of mis-signing.
+  `Cartouche.Signer.CloudKMS` no longer wraps a possibly-non-struct result of
+  `Curvy.Signature.parse/1` in an `:ok` tuple — a DER parse failure returns
+  `{:error, :invalid_signature}` instead of producing a term that made
+  `Cartouche.Recover.normalize_low_s/1` raise `FunctionClauseError`.
+
+- **`Cartouche.Transaction.V4` hand-rolled signature packing that
+  `Cartouche.Transaction.Signature` already owned.** `get_signature/1` now
+  delegates to `Signature.get/1` as V3 does, and the EIP-7702
+  `get_authorization_signature/1` — which handles a 6-tuple that `Signature.get/1`
+  cannot pattern-match — uses a new shared `Signature.pack/3` instead of
+  duplicating the nil-guard and `r <> s <> y_parity` assembly. The packing is
+  byte-identical for 32-byte components; a struct carrying a short `r` or `s` now
+  raises instead of emitting a malformed packed signature, which is pinned by a
+  test.
+
 
 - **A compiler-defined `Error(string)` revert was reported under an unrelated
   caller-supplied ABI entry.** `Cartouche.RPC.call_trx/2` re-derives which error

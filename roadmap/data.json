@@ -2107,7 +2107,7 @@
       },
       "eff": 1.5,
       "dep_layer": 0,
-      "unlocks": 1,
+      "unlocks": 3,
       "markers": [],
       "depends_on": [],
       "assignee": "human",
@@ -2377,7 +2377,7 @@
       "id": "112",
       "phase": 8,
       "bundle": "phase8_dedup",
-      "status": "pending",
+      "status": "done",
       "title": "Finish typed-tx Signature extraction: migrate V4.get_signature onto Signature.get/1",
       "scores": {
         "d": 2,
@@ -2402,9 +2402,16 @@
         "V2/V1 legacy signature paths",
         "any change to the packed signature wire format"
       ],
+      "shipped_in": "82a990d",
       "body": "Task 109 extracted the shared signature-field helpers into `Cartouche.Transaction.Signature` and migrated V3 (`get_signature/1` now delegates to `Signature.get/1`), but left `Cartouche.Transaction.V4.get_signature/1` hand-rolled — it still duplicates the exact nil-guard error clause and the packed `r <> s <> y_parity` assembly that `Signature.get/1` now owns. This is the residual half of the \"uneven extraction\" the dedup task set out to finish.\n\nMigrate `V4.get_signature/1` to delegate to `Cartouche.Transaction.Signature.get/1` (as V3 already does), confirming the recovery-byte encoding stays byte-identical (`<<y_parity_integer(v)>>` vs `Signature.get`'s `:binary.encode_unsigned/1` form — both emit `<<0>>`/`<<1>>`). Keep V4's existing tests green; the round-trip sign/encode/decode/recover path is the equivalence check.\n\nSCOPE CORRECTED 2026-08-22 (roadmap review). Two corrections, both to criteria that the task as originally scoped could not have met:\n\n1. There are TWO hand-rolled sites in v4.ex, not one. `get_signature/1` (v4.ex:220) is the struct path and is straight delegation. `get_authorization_signature/1` (v4.ex:281) handles the EIP-7702 authorization tuple `{chain_id, address, nonce, v, r, s}` and duplicates the identical nil-guard and `r <> s <> <<y_parity_integer(v)>>` assembly. `Signature.get/1` matches on `%{signature_y_parity:, signature_r:, signature_s:}` keys and cannot serve a 6-tuple, so closing this site needs a shared primitive both call. The old criterion \"no remaining duplication across V3 and V4\" would still have been false on delivery.\n\n2. This is NOT a pure no-op. `Signature.get/1` builds with `<<r::binary-size(32), s::binary-size(32), v_enc::binary>>`; V4 concatenates with an unbounded `r <> s <> ...`. Every current producer pads to 32 bytes (`decode_word/1` -> `Hex.pad(word, 32)` at v4.ex:564; `add_signature/2` matches `binary-size(32)` at v4.ex:257), so live behaviour is unchanged — but a directly-constructed struct carrying a short `r`/`s` goes from silently emitting a malformed packed signature to raising. That is desirable hardening; pin it with a test rather than describing the task as behaviour-preserving.\n",
       "created_at": "2026-06-24",
+      "done_at": "2026-08-22",
       "scored_at": "2026-06-24",
+      "implemented": "V4.get_signature/1 now delegates to Cartouche.Transaction.Signature.get/1, and get_authorization_signature/1 uses the new shared Signature.pack/3 (nil-guard + 32-byte r/s <> y_parity) so the EIP-7702 authorization 6-tuple no longer hand-rolls the packing. Grep of lib/cartouche/transaction/ confirms no packed-signature assembly remains outside Signature; the surviving is_nil guards are RLP unsigned-preimage omission, not recovery packing. V1's integer-v path at transaction.ex:310 left untouched per scope. 32-byte packing verified byte-identical; short r/s now raises and is pinned by a test. Signature at 100% coverage.",
+      "delivered_by": "grok-4.6 (harness, coalesced with 115)",
+      "verified": true,
+      "verified_by": "harness reviewer (codex, cross-family)",
+      "verification_ref": "harness-run:run-1787381758852-70de5421",
       "cross_repo": []
     },
     {
@@ -2419,17 +2426,19 @@
         "u": 8
       },
       "eff": 2.0,
-      "dep_layer": 0,
+      "dep_layer": 2,
       "unlocks": 1,
       "markers": [
         "security"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "117"
+      ],
       "assignee": "codex",
       "model": "gpt-5.6-sol",
       "acceptance_criteria": [
         "`stream_data` added as a test-only dependency (mix.exs + mix.lock committed)",
-        "Property tests cover every ENCODABLE envelope — V1 (legacy/EIP-155), V2 (EIP-1559), V3 (EIP-4844), V4 (EIP-7702) — asserting encode/decode round-trip identity, sign to recover_signer identity, and boundary-sized fields (zero, one, 2^256-1, empty data, empty and maximal access lists, 32-byte r/s). V_2930 is decode-only today and is explicitly out of scope",
+        "Property tests cover every ENCODABLE envelope — V1 (legacy/EIP-155), V_2930 (EIP-2930), V2 (EIP-1559), V3 (EIP-4844), V4 (EIP-7702) — asserting encode/decode round-trip identity, sign to recover_signer identity, and boundary-sized fields (zero, one, 2^256-1, empty data, empty and maximal access lists, 32-byte r/s). V_2930 gained its full write surface in task 115 (landed 82a990d) and is now in scope on equal footing with the others",
         "Chain-id / domain separation is a property, not an example: a payload signed for chain A must not recover the signing address when re-checked under chain B, and the EIP-155 v-encoding is asserted against the EIP formula rather than a recorded constant",
         "Golden vectors live under test/fixtures/vectors/ as committed files, each carrying inline provenance: source implementation, its exact version, and the command that generated it. The EIP text is the authority for semantics; vectors from at least two independently maintained implementations are required ONLY where an EIP leaves edge behaviour implicit — where the EIP is explicit, cite the EIP and one vector suffices",
         "A short docs/verification-ledger.md records, for this task: which EIPs were treated as authoritative, every vector's provenance, and the toolchain versions used to generate them",
@@ -2437,7 +2446,7 @@
       ],
       "out_of_scope": [
         "The mutation-adequacy campaign, the deliberate-fault canary and the survivor ledger — those are the follow-up task that depends on this one",
-        "V_2930: it has no encode/sign surface to exercise; adding one is its own task",
+        "Fixing any conformance defect the properties surface — task 117 closes the known encode/decode asymmetries (V2 bare-address access list, V4 empty authorization_list, V3 blob-hash emptiness and version prefix) and this task depends on it, so a red round-trip property here means 117 regressed, not that the property should be weakened",
         "Solana signing and transaction paths",
         "Any change to public API signatures — this task only adds tests, fixtures and a test-only dep"
       ],
@@ -2472,13 +2481,14 @@
         "u": 6
       },
       "eff": 1.3,
-      "dep_layer": 1,
+      "dep_layer": 3,
       "unlocks": 0,
       "markers": [
         "security"
       ],
       "depends_on": [
-        113
+        113,
+        "118"
       ],
       "assignee": "codex",
       "model": "gpt-5.6-sol",
@@ -2519,7 +2529,7 @@
       "id": "115",
       "phase": 0,
       "bundle": "phase8_dedup",
-      "status": "pending",
+      "status": "done",
       "title": "Cartouche.Transaction.V_2930 write surface — new/encode/sign/hash/signature/recover",
       "scores": {
         "d": 3,
@@ -2528,7 +2538,7 @@
       },
       "eff": 1.33,
       "dep_layer": 0,
-      "unlocks": 0,
+      "unlocks": 3,
       "markers": [],
       "depends_on": [],
       "assignee": "grok",
@@ -2556,16 +2566,23 @@
         "lib/cartouche/transaction/signature.ex",
         "test/transaction_test.exs"
       ],
+      "shipped_in": "82a990d",
       "body": "Cartouche.Transaction.V_2930 (EIP-2930, type 0x01) is decode-only. It has decode/1 (v_2930.ex:47), from_json/1 (v_2930.ex:53) and private field decoders — and nothing else. A caller cannot construct, encode, sign, hash or recover a type-1 transaction by any route in this library: verified by enumerating every V_2930 reference in lib/ (the dispatcher's decode/1 clause at transaction.ex:1564, the block-JSON dispatch at block.ex:402, and the module itself), and by the absence of a %V_2930{} clause in the encode dispatcher at transaction.ex:1509-1512.\n\nThe omission is historical, not a decision. Task 99 (done 2026-06-05, cf9e2d3) introduced the module for one purpose — stop the block deserializer crashing on type-1 transactions — and its body scoped exactly that. No task or CHANGELOG entry anywhere argues the write side should be withheld; CHANGELOG.md:98 notes \"V_2930 is decode-only\" only as a factual aside.\n\nMost of the work is delegation. Cartouche.Transaction.Signature and TypedDecode are already struct-agnostic (they match on map keys, not module), so the four signature functions are the same one-liners V3 uses. The genuinely new code is encode/1 (single gas_price field instead of the two EIP-1559 fee fields, no blob fields), sign/2, hash/1, new/… and the dispatcher clause — roughly the same increment V3 needed over the shared helpers.\n\nHonest demand note: nothing downstream consumes this today — onchain, onchain_aave, onchain_evm and onchain_tempo reference V_2930 zero times, and every access_list hit in those repos is EIP-1559 or Tempo plumbing. Score it as completeness of a public transaction-type surface in a general-purpose library, which is what it is. Do not inflate it with a usage claim.\n",
       "created_at": "2026-08-22",
+      "done_at": "2026-08-22",
       "scored_at": "2026-08-22",
+      "implemented": "V_2930 gained new/8, encode/1, sign/2, hash/1, add_signature/4, add_signature/2, get_signature/1 and recover_signer/1, all signature helpers delegating to Cartouche.Transaction.Signature. encode/1 emits 0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, yParity, r, s]) with the field order checked against the EIP-2930 text rather than the existing decoder; a mainnet type-1 vector round-trips encode == raw. Cartouche.Transaction.encode/1 now dispatches %V_2930{}, so a hand-built type-1 struct no longer raises FunctionClauseError. Reviewer additionally aligned the descripex api(:encode) metadata, which still listed only V1/V2/V3/V4 (f53c888). V_2930 at 100% coverage.",
+      "delivered_by": "grok-4.6 (harness, coalesced with 112)",
+      "verified": true,
+      "verified_by": "harness reviewer (codex, cross-family)",
+      "verification_ref": "harness-run:run-1787381758852-70de5421",
       "cross_repo": []
     },
     {
       "id": "116",
       "phase": 0,
       "bundle": "signer_backends",
-      "status": "pending",
+      "status": "done",
       "title": "Enforce the Signer.Backend contract at the boundary — payload length, curve, DER parse",
       "scores": {
         "d": 3,
@@ -2574,7 +2591,7 @@
       },
       "eff": 2.0,
       "dep_layer": 1,
-      "unlocks": 0,
+      "unlocks": 2,
       "markers": [
         "security"
       ],
@@ -2608,7 +2625,106 @@
         "test/signer/cloud_kms_test.exs",
         "test/solana/signer_test.exs"
       ],
+      "shipped_in": "7964cc8",
       "body": "Task 104 formalized Cartouche.Signer.Backend and landed clean, but its dual-reviewer audit (.audit/7c82cd8-task-104-formalize-signer.md, 2026-06-24) recorded three defects it deliberately did not fix, on the grounds that hardening critical signing code belonged to the warm implementer rather than an audit pass. Task 104 then closed. This task carries those three forward so they are not lost with it.\n\n1. Findings 2 (pri 3, verified latent) — the secp256k1 sign_payload/2 guard is only is_binary/1. The behaviour's freshly-documented contract says the argument IS the 32-byte digest, but a caller passing anything else gets it signed as garbage rather than rejected. No live trigger today: every caller passes keccak(message). It is a footgun against a contract that now exists in writing, and it is the kind of thing a future backend author trips over.\n\n2. Finding 4 (discuss-design, Claude and Codex agreed) — algorithm/1 is declared by the behaviour and implemented by all four backends, and consumed by nobody. There is no curve-mismatch guard: an ed25519 backend configured under the Eth signer, or Curvy under the Solana signer, mis-dispatches instead of failing. An unconsumed callback is either a missing guard or dead weight; decide which and act, do not leave it declared-and-ignored.\n\n3. Finding 3 (pri 4, verified latent) — cloud_kms.ex:88 wraps Curvy.Signature.parse/1 output in {:ok, ...} without checking it is a %Curvy.Signature{}; a malformed DER response then reaches Recover.normalize_low_s/1 and raises FunctionClauseError instead of returning an error. KMS-path only and pre-existing, but low-s normalization is exactly where a malleability bug hides.\n\nThey are grouped as one task because they are one surface — the backend contract boundary — touching the same four modules, and a reviewer verifies them in a single pass. Splitting them would pay three dispatch cycles for one coherent diff.\n",
+      "created_at": "2026-08-22",
+      "done_at": "2026-08-22",
+      "scored_at": "2026-08-22",
+      "implemented": "All three contract-boundary defects carried forward from task 104's audit shipped in one diff: secp256k1 sign_payload/2 now matches an exact 32 bytes in both Curvy and CloudKMS instead of is_binary/1; algorithm/1 is CONSUMED (not removed) via a shared pre-dispatch curve check in both the Eth and Solana signer families, so a cross-curve backend fails loudly instead of mis-signing; and CloudKMS maps a Curvy.Signature.parse/1 failure to {:error, :invalid_signature} before low-s normalization instead of wrapping a non-struct that made Recover.normalize_low_s/1 raise. Tests cover both invalid payload lengths, both curve-mismatch directions, and malformed DER. 100% coverage on every Cartouche.Signer and Cartouche.Solana.Signer module; dialyzer clean.",
+      "delivered_by": "cursor-grok-4.6-high (harness)",
+      "verified": true,
+      "verified_by": "harness reviewer (codex, cross-family)",
+      "verification_ref": "harness-run:run-1787381763079-96aae307",
+      "cross_repo": []
+    },
+    {
+      "id": "117",
+      "phase": 0,
+      "bundle": "phase9_tx",
+      "status": "pending",
+      "title": "Encode must not emit wire-non-conformant RLP — close the encode/decode conformance gap across V2/V3/V4",
+      "scores": {
+        "d": 3,
+        "b": 8,
+        "u": 7
+      },
+      "eff": 2.5,
+      "dep_layer": 1,
+      "unlocks": 2,
+      "markers": [
+        "security"
+      ],
+      "depends_on": [
+        115
+      ],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "The invariant is stated once and enforced for every encodable envelope: anything `encode/1` accepts must produce RLP that this library's own `decode/1` reads back to an equal struct, and that matches the EIP's wire shape. Verify the shape against the EIP text (EIP-2930 access-list item is `[address, storage_keys]`; EIP-7702 forbids an empty `authorization_list`; EIP-4844 requires a non-empty `blob_versioned_hashes` whose entries begin with VERSIONED_HASH_VERSION_KZG 0x01), not against the existing encoders",
+        "V2's bare-address access-list shorthand no longer produces a raw 20-byte RLP item: `normalize_access_list/1` (lib/cartouche/transaction.ex:843) either rejects a bare address or lifts it to `[address, []]`. Whichever is chosen, the choice is recorded in the CHANGELOG as a behaviour change and `V2.t()`'s declared `access_list` type (transaction.ex:473) and the private spec agree with the runtime",
+        "The seven doctests that currently pin the non-conformant bytes are corrected, not deleted: transaction.ex:735-738, :745-748, and the `build_trx_v2`/`build_signed_trx_v2` examples at :1718 and :1736. Each corrected expected value is justified by hand-decoding the RLP, and the corrected V2 hex round-trips through `V2.decode/1`",
+        "A round-trip test per envelope asserts `decode(encode(tx)) == {:ok, tx}` over the previously-broken inputs: a V2 access list containing a bare address, a V4 with `authorization_list: []`, a V3 with an empty `blob_versioned_hashes` and a V3 whose blob hash lacks the 0x01 prefix. Each currently fails; each must pass or be rejected at encode with a named error",
+        "Encode-side validation and decode-side validation are symmetric: no envelope rejects on decode a value it silently accepted on encode. Verified by enumerating the decode-side guards (v3.ex:398-407, v4.ex:533) and pointing at the matching encode-side guard",
+        "Touched modules stay at >=95% coverage (transaction encoding is critical tier) and `mix ci` passes"
+      ],
+      "out_of_scope": [
+        "V_2930's write surface — that is task 115, which this depends on; if 115 has landed, its encoder must satisfy the same invariant and is in scope only for that check",
+        "The property-test and golden-vector suite — task 113 consumes this invariant, it does not establish it",
+        "Any change to the RLP codec itself or to `Cartouche.Hex`",
+        "Solana transaction paths"
+      ],
+      "touches": [
+        "lib/cartouche/transaction.ex",
+        "lib/cartouche/transaction/v3.ex",
+        "lib/cartouche/transaction/v4.ex",
+        "test/transaction_test.exs"
+      ],
+      "body": "`Cartouche.Transaction.V2.encode/1` can emit an access list that no conformant Ethereum node will accept, and the library's own decoder cannot read back.\n\nVerified by reading the code, not inferred. `normalize_access_list/1` (lib/cartouche/transaction.ex:843-849) carries a `bare_address when is_binary(bare_address) -> bare_address` clause that passes a raw 20-byte address straight through as an RLP string item, where EIP-2930 requires each access-list entry to be a two-element `[address, storage_keys]` list. `V2.decode_access_list/1` (:1021-1035) pattern-matches only `[address, storage]`, so the bare-address entry raises FunctionClauseError into the rescue clause and decode returns `{:error, \"invalid v2 transaction\"}`. `V2.t()` declares `access_list: [{<<_::160>>, [<<_::256>>]}]` (:473) — tuples only — so the struct type, the encoder and the decoder disagree three ways. V3 (v3.ex:337-340) and V4 (v4.ex:371-374) accept only the tuple form, so this is V2-specific drift.\n\nThe shorthand is not an accident that nobody exercises: five module doctests pin its output as correct (transaction.ex:735-738, :745-748) and the `build_trx_v2` / `build_signed_trx_v2` convenience-builder doctests (:1718, :1736) use it too. Hand-decoding the pinned hex at :738 confirms the defect — `...EA 94<20 bytes> 94<20 bytes>` is a list of two 20-byte strings, not a list of two sublists. So the documented happy path of the library builds transactions with a malformed access list.\n\nScope this as the class invariant, not as the one patch. The same encode-permits / decode-rejects asymmetry appears twice more on the same surface, and fixing only V2 leaves the next instance free to spawn a sibling task:\n- V4 `authorization_list: []` — EIP-7702 declares such a transaction invalid; `decode_authorization_list/1` (v4.ex:533) rejects it, but `V4.new/10` and `encode_authorization_list/1` (v4.ex:377) accept it silently.\n- V3 `blob_versioned_hashes` — EIP-4844 requires a non-empty list whose entries carry the 0x01 KZG version prefix; decode enforces the prefix (v3.ex:398-407) but the `Enum.all?` is vacuously true on `[]`, and encode (v3.ex:337-340) checks neither.\n\nAuthority is the EIP text, per this repo's standing rule: verify the wire shape against EIP-2930 / EIP-4844 / EIP-7702 directly, never against the current encoders, so a copied-forward error cannot be ratified.\n\nDispatch trigger: this is transaction-encoding code on the money path and the fix changes a documented public input shape.\n\nDiscovered 2026-08-22 by an orchestrator conformance sweep that read every envelope's RLP field order against the fetched EIP texts. That sweep found the base field orders of V1/V2/V3/V4 correct and the EIP-155 v-formula computed rather than hard-coded — the access-list and list-emptiness asymmetries above are the only conformance defects it surfaced.\n",
+      "created_at": "2026-08-22",
+      "scored_at": "2026-08-22",
+      "cross_repo": []
+    },
+    {
+      "id": "118",
+      "phase": 0,
+      "bundle": "signer_backends",
+      "status": "pending",
+      "title": "Low-s is a library-wide invariant, not a per-backend convention — close the sign_direct/4 bypass",
+      "scores": {
+        "d": 3,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 2.33,
+      "dep_layer": 2,
+      "unlocks": 1,
+      "markers": [
+        "security"
+      ],
+      "depends_on": [
+        116
+      ],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Every path that produces a 65-byte Ethereum signature normalizes low-s per EIP-2, with no path relying on the backend to have done it. Verified by enumerating the signature-producing functions in lib/cartouche/signer.ex and pointing at the `Cartouche.Recover.normalize_low_s/1` call each one passes through",
+        "`Cartouche.Signer.sign_direct/4` (signer.ex:222-229) specifically no longer emits an unnormalized signature: a test stubs a signing MFA that returns a deliberately high-s `Curvy.Signature` and asserts the resulting packed signature carries `s <= secp256k1n/2`. This test must fail against the current code — confirm that before fixing",
+        "The legacy `{module, function, args}` signer carrier is either kept with the invariant enforced, or retired outright — no third option. If retired: the `sign_direct/4` public function, the legacy clause of `backend_sign/4` (signer.ex:269-271), the legacy arm of `start_link/1`'s spec (signer.ex:61) and `Cartouche.Signer.CloudKMS.sign/7` (cloud_kms.ex:98-102) all go, the CHANGELOG records the removal, and the downstream call site named in the body is migrated in its own repo's task. If kept: the reason is recorded and the invariant holds on it",
+        "`Cartouche.Signer.CloudKMS.sign/7` no longer returns a DER-parsed signature with no low-s normalization while presenting the same shape as a signing entry point",
+        "Both signer module families stay at >=95% coverage; dialyzer runs LOCALLY per the KMS PLT rule with no new warnings on touched files; `mix ci` passes"
+      ],
+      "out_of_scope": [
+        "The three fixes task 116 carries (32-byte payload guard, `algorithm/1` consume-or-remove, CloudKMS DER parse) — this task depends on 116 and must not re-do them",
+        "New backend implementations",
+        "Changing the pure-payload contract settled by task 104",
+        "Editing the downstream `onchain` repo — that is a task in onchain's own roadmap once this lands"
+      ],
+      "touches": [
+        "lib/cartouche/signer.ex",
+        "lib/cartouche/signer/cloud_kms.ex",
+        "test/signer_test.exs"
+      ],
+      "body": "The library guarantees low-s signatures on one signing path and not the other, and the unguarded one is the path a downstream repo actually uses in production.\n\nVerified by reading the code, not inferred. `Cartouche.Signer.backend_sign/4`'s pure-payload clause (lib/cartouche/signer.ex:259-267) calls `Cartouche.Recover.normalize_low_s/1` on the raw backend signature before searching the recid. `Cartouche.Signer.sign_direct/4` (:222-229) — the legacy `{module, function, args}` path — takes whatever the MFA returns and goes straight to `find_recid/3` and `encode_eip155/3` with no normalization. `sign_direct/4` is public, Descripex-`api()`-annotated, and also reachable via `start_link/1` when handed a raw 3-tuple, because `backend_sign/4`'s second clause (:269-271) forwards to it.\n\nThis is not a latent-only gap. `onchain/lib/onchain/signer.ex:211` signs every transaction through `Cartouche.Signer.sign_direct/4`, and that module's own moduledoc names it as the signing route. It currently produces low-s signatures only by accident of its backend: it passes `{Cartouche.Signer.Curvy, :sign, [key_bin]}`, whose `sign_payload/2` (signer/curvy.ex:74-81) calls `Curvy.sign(digest, priv_key, hash: :keccak)` without a `normalize:` option, and the curvy 0.3.1 dependency defaults `:normalize` to `true` (confirmed in deps/curvy/lib/curvy.ex, `sign/3` docs). Change that dep default, or plug in any backend that does not normalize internally, and the library silently starts emitting malleable signatures.\n\n`Cartouche.Signer.CloudKMS.sign/7` (cloud_kms.ex:98-102) is exactly that backend. It is legacy-MFA-shaped, returns a DER-parsed `Curvy.Signature` with no normalization, and cloud KMS providers give no low-s guarantee — the case `Cartouche.Signer.Backend`'s own moduledoc (backend.ex:33-36) and `Cartouche.Recover`'s comment (recover.ex:138-141) both warn about. Wired into `sign_direct/4` as its shape invites, it produces malleable signatures today.\n\nScope this as the invariant, not as a one-line patch, so the next non-normalizing backend cannot reopen it: state once that this library never emits a signature with `s > n/2`, and make the code structurally enforce it rather than delegating the guarantee to whichever backend happens to be configured. The legacy MFA carrier is the thing that makes the invariant unenforceable, so decide its fate as part of this — the library is pre-1.0 (0.7.1) and `Cartouche.Signer.Backend` was formalized in task 104 precisely to replace it.\n\nDiscovered 2026-08-22 by an orchestrator conformance sweep of the signing surface. The same sweep confirmed the EIP-155 v-formula is computed rather than hard-coded (signer.ex:277-283), that the y_parity translation is convention-invariant, and that recovery correctly does not require low-s — this bypass is the only malleability gap it found.\n",
       "created_at": "2026-08-22",
       "scored_at": "2026-08-22",
       "cross_repo": []

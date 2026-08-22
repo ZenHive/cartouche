@@ -74,7 +74,8 @@ defmodule Cartouche.MixProject do
         integration: :test,
         ci: :test,
         precommit: :test,
-        "precommit.full": :test
+        "precommit.full": :test,
+        "check.dispatch": :test
       ]
     ]
   end
@@ -202,10 +203,25 @@ defmodule Cartouche.MixProject do
         "ex_dna --max-clones 0",
         "test.json --exclude integration"
       ],
-      # Comprehensive gate — this is the harness reviewer's `check_command` and
-      # the `mix ci` target. Mirrors .github/workflows/harness.yml (the tuned CI
-      # is still ground truth; harness.yml keeps its own dev-PLT dialyzer step and
-      # the sobelow `--mark-skip-all` drift check, which is CI-only bookkeeping).
+      # Dispatch-scale gate — the harness reviewer's `check_command`. Deliberately
+      # lighter than `precommit.full`: no dialyzer (cold PLT dominates a fresh run
+      # worktree) and no coverage pass. It also omits `agents.check`, because
+      # harness prepends an ephemeral "do not commit" preamble to AGENTS.md inside
+      # the reviewer worktree, which that check correctly reports as drift — a red
+      # the reviewer can neither fix nor ignore. Freshness stays enforced by
+      # `precommit.full`, which runs on the landed base where no preamble exists.
+      "check.dispatch": [
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "credo --strict --ignore Credo.Check.Design.TagTODO,Credo.Check.Design.TagFIXME",
+        "doctor --raise",
+        "ex_dna --max-clones 0",
+        "sobelow --config",
+        "test.json --exclude integration"
+      ],
+      # Comprehensive gate — the landed-base Architect/QA pass and the `mix ci`
+      # target. The GitHub Actions workflows were removed family-wide on
+      # 2026-08-22, so a local green here is the only green there is.
       "precommit.full": [
         "compile --warnings-as-errors",
         "format --check-formatted",
