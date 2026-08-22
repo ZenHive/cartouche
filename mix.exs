@@ -140,12 +140,13 @@ defmodule Cartouche.MixProject do
       # Declaring `~> 0.11` advertised a range cartouche can no longer be built
       # against — a consumer pinning 0.11.x hit a resolution conflict from
       # hieroglyph instead of a clear bound here.
-      # Three segments (caps at < 0.13.0), matching the other nine repos:
-      # descripex 0.12.0 changed `short_name` in describe/1 output from atom to
-      # string at a *minor*, so a two-segment `~> 0.12` would absorb the next
-      # such break silently. This was the family's last two-segment descripex
-      # bound. Raise the cap deliberately after reading its CHANGELOG.
-      {:descripex, "~> 0.12.0"},
+      # Two-segment on purpose: the three-segment cap turned every descripex
+      # minor into a forced nine-repo release cascade, while the committed
+      # `mix.lock` already blocks a silent in-family upgrade — a new descripex
+      # lands only through a deliberate `mix deps.update` behind `mix ci`. The
+      # break-on-minor history that earned the cap (0.12.0 turned `short_name`
+      # from atom to string) is being retired at descripex, not paid for here.
+      {:descripex, "~> 0.12"},
       # Formerly `{:abi, path: "../abi"}`. The fork has been renamed and
       # published on hex.pm as `hieroglyph` 1.0.0 (hex package name only;
       # module namespace remains `ABI`). Switching to hex unblocks
