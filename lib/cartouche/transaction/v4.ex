@@ -172,7 +172,7 @@ defmodule Cartouche.Transaction.V4 do
   @doc """
   Signs the outer EIP-7702 transaction.
   """
-  @spec sign(t(), GenServer.name()) :: {:ok, t()} | {:error, String.t()}
+  @spec sign(t(), GenServer.server()) :: {:ok, t()} | {:error, String.t()}
   def sign(%__MODULE__{} = transaction, signer \\ Default) do
     with {:ok, signature} <- Cartouche.Signer.sign(signing_payload(transaction), signer, chain_id: transaction.chain_id) do
       {:ok, add_signature(transaction, signature)}
@@ -219,7 +219,7 @@ defmodule Cartouche.Transaction.V4 do
   @doc """
   Signs an EIP-7702 authorization tuple.
   """
-  @spec sign_authorization(unsigned_authorization(), GenServer.name()) ::
+  @spec sign_authorization(unsigned_authorization(), GenServer.server()) ::
           {:ok, authorization()} | {:error, String.t()}
   def sign_authorization({chain_id, address, nonce} = authorization, signer \\ Default) do
     with {:ok, signature} <-

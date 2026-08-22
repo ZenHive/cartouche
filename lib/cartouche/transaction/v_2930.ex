@@ -164,7 +164,7 @@ defmodule Cartouche.Transaction.V_2930 do
   @doc """
   Signs a type-1 transaction with the given signer process.
   """
-  @spec sign(t(), GenServer.name()) :: {:ok, t()} | {:error, String.t()}
+  @spec sign(t(), GenServer.server()) :: {:ok, t()} | {:error, String.t()}
   def sign(%__MODULE__{} = transaction, signer \\ Default) do
     payload = encode(%{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil})
 

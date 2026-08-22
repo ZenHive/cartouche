@@ -31,6 +31,15 @@ All notable changes to this project will be documented in this file.
   The signature helpers delegate to `Cartouche.Transaction.Signature` rather than
   re-implementing it.
 
+- **`CLZ` (EIP-7939) added to the `Cartouche.DebugTrace.StructLog` opcode
+  whitelist.** The whitelist is deliberately closed — an unknown opcode raises
+  rather than growing the atom table — so it needs a fork-by-fork update. Osaka
+  activated on mainnet with Fusaka on 2025-12-03 and EIP-7939 is in its final
+  core-EIP set; go-ethereum maps opcode `0x1e` to the exact string `"CLZ"`
+  (`core/vm/opcodes.go`, wired through `enable7939` in `newOsakaInstructionSet`).
+  Without this, any `debug_traceCall` over an Osaka transaction using CLZ raised
+  `ArgumentError`. Closes ROADMAP Task 70.
+
 ### Changed
 
 - **`mix check.dispatch` is now defined** and is the harness reviewer's
@@ -71,7 +80,6 @@ All notable changes to this project will be documented in this file.
   raises instead of emitting a malformed packed signature, which is pinned by a
   test.
 
-
 - **A compiler-defined `Error(string)` revert was reported under an unrelated
   caller-supplied ABI entry.** `Cartouche.RPC.call_trx/2` re-derives which error
   ABI a revert corresponds to by looping over the `:errors` list and asking
@@ -87,17 +95,17 @@ All notable changes to this project will be documented in this file.
   can be attributed. Custom errors are unaffected; an unlisted selector now stays
   unattributed instead of borrowing a neighbour's name.
 
-### Added
-
-- **`CLZ` (EIP-7939) added to the `Cartouche.DebugTrace.StructLog` opcode
-  whitelist.** The whitelist is deliberately closed — an unknown opcode raises
-  rather than growing the atom table — so it needs a fork-by-fork update. Osaka
-  activated on mainnet with Fusaka on 2025-12-03 and EIP-7939 is in its final
-  core-EIP set; go-ethereum maps opcode `0x1e` to the exact string `"CLZ"`
-  (`core/vm/opcodes.go`, wired through `enable7939` in `newOsakaInstructionSet`).
-  Without this, any `debug_traceCall` over an Osaka transaction using CLZ raised
-  `ArgumentError`. Closes ROADMAP Task 70.
-
+- **`Cartouche.Signer.sign_direct/4` (and the legacy MFA carrier) could emit a
+  high-s signature whenever the backend did not canonicalize.** Low-s (EIP-2)
+  was applied only on the `{backend, config}` path; `sign_direct/4` — the
+  production signing route in the downstream `onchain` repo — packed whatever
+  `s` the MFA returned. Both paths now share one emission funnel that calls
+  `Cartouche.Recover.normalize_low_s/1` before recovery-bit search, so a high-s
+  backend cannot produce a malleable 65-byte signature. The MFA carrier is kept
+  (migrating the `onchain` call site is a separate task); it cannot bypass the
+  invariant. `Cartouche.Signer.CloudKMS.sign/7`, the MFA-shaped wrapper, also
+  canonicalizes before returning so it is not an unnormalized entry point;
+  `sign_payload/2` stays raw per the backend contract.
 
 ## [0.7.1] — 2026-08-22
 

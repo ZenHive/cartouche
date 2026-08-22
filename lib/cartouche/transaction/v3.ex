@@ -196,7 +196,7 @@ defmodule Cartouche.Transaction.V3 do
   @doc """
   Signs a V3 transaction with the given signer process.
   """
-  @spec sign(t(), GenServer.name()) :: {:ok, t()} | {:error, String.t()}
+  @spec sign(t(), GenServer.server()) :: {:ok, t()} | {:error, String.t()}
   def sign(%__MODULE__{} = transaction, signer \\ Default) do
     unsigned = %{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil}
 
