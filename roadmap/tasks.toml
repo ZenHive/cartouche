@@ -1687,7 +1687,7 @@ shipped_in = "7964cc8"
 id = "117"
 phase = 0
 bundle = "phase9_tx"
-status = "pending"
+status = "in_progress"
 title = "Encode must not emit wire-non-conformant RLP — close the encode/decode conformance gap across V2/V3/V4"
 scores = { d = 3, b = 8, u = 7 }
 markers = ["security"]
@@ -1715,6 +1715,7 @@ Dispatch trigger: this is transaction-encoding code on the money path and the fi
 Discovered 2026-08-22 by an orchestrator conformance sweep that read every envelope's RLP field order against the fetched EIP texts. That sweep found the base field orders of V1/V2/V3/V4 correct and the EIP-155 v-formula computed rather than hard-coded — the access-list and list-emptiness asymmetries above are the only conformance defects it surfaced.
 """
 created_at = "2026-08-22"
+started_at = "2026-08-22"
 scored_at = "2026-08-22"
 
 [[task]]
