@@ -789,6 +789,17 @@ defmodule Cartouche.Test.Client do
      }}
   end
 
+  # Call that reverts with the compiler-defined `Error(string)` (a plain
+  # `require(x, "msg")`), which is never in the caller's `:errors` list.
+  def eth_call(%{"to" => "0x000000000000000000000000000000000000000E"} = _trx, _block) do
+    {:error,
+     %{
+       "code" => 3,
+       "data" => to_hex(ABI.encode("Error(string)", ["Dai/insufficient-balance"])),
+       "message" => "execution reverted"
+     }}
+  end
+
   # Call that fails with a blank data
   def eth_call(%{"to" => "0x000000000000000000000000000000000000000C"} = _trx, _block) do
     {:error,

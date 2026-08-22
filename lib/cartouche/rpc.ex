@@ -94,6 +94,13 @@ defmodule Cartouche.RPC do
   defp classify_decoded_error("Panic", [0x51], _errors, _data),
     do: {:ok, "called a zero-initialized variable of internal function type", nil}
 
+  # `Error(string)` is compiler-defined, so it is never in the caller's `:errors`
+  # list and must be labelled from its own selector. Matching it back against the
+  # candidates instead would attribute a plain `require(x, "msg")` revert to
+  # whichever error happened to be listed first.
+  defp classify_decoded_error("Error", params, _errors, <<0x08, 0xC3, 0x79, 0xA0, _::binary>>),
+    do: {:ok, "Error(string)", params}
+
   defp classify_decoded_error(error_name, params, errors, data) do
     case find_error_abi(error_name, errors, data) do
       {:ok, error_abi} -> {:ok, error_abi, params}
@@ -103,12 +110,27 @@ defmodule Cartouche.RPC do
 
   @spec find_error_abi(String.t(), [String.t()], binary()) :: {:ok, String.t()} | :error
   defp find_error_abi(error_name, errors, data) do
-    Enum.find_value(errors, :error, fn error ->
-      case ABI.decode_error(data, [error]) do
-        {:ok, %{error: ^error_name}} -> {:ok, error}
-        _ -> nil
-      end
-    end)
+    Enum.find_value(errors, :error, &match_error_abi(&1, error_name, data))
+  end
+
+  @spec match_error_abi(String.t(), String.t(), binary()) :: {:ok, String.t()} | nil
+  defp match_error_abi(error, error_name, data) do
+    with {:ok, %{error: ^error_name}} <- ABI.decode_error(data, [error]),
+         true <- reverted_with?(data, error) do
+      {:ok, error}
+    else
+      _ -> nil
+    end
+  end
+
+  # True when `error`'s own selector is the one the revert data carries.
+  # `ABI.decode_error/2` falls back to the compiler-defined `Error(string)` /
+  # `Panic(uint256)` for *any* candidate list, so a bare name match would let a
+  # built-in revert be reported under an unrelated caller-supplied ABI entry.
+  @spec reverted_with?(binary(), String.t()) :: boolean()
+  defp reverted_with?(data, error) do
+    method_id = ABI.method_id(error)
+    binary_part(data, 0, byte_size(method_id)) == method_id
   end
 
   @spec build_revert_data(binary(), [String.t()] | nil) :: map()

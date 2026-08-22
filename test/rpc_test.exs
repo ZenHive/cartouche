@@ -414,4 +414,42 @@ defmodule Cartouche.RPCTest do
       end
     end
   end
+
+  describe "revert-error classification" do
+    # The compiler-defined `Error(string)` is never in the caller's `:errors`
+    # list; hieroglyph decodes it through a built-in fallback that fires for any
+    # candidate list. Attributing it back to a candidate labelled a plain
+    # `require(x, "msg")` revert with an unrelated ABI entry.
+    test "an Error(string) revert is labelled Error(string), not a caller-supplied entry" do
+      assert {:error, %{error_abi: "Error(string)", error_params: ["Dai/insufficient-balance"]}} =
+               1
+               |> V1.new({100, :gwei}, 100_000, <<14::160>>, {2, :wei}, <<1, 2, 3>>)
+               |> Cartouche.RPC.call_trx(errors: ["Cool(uint256,string)"])
+    end
+
+    test "an Error(string) revert is decoded with no caller-supplied :errors" do
+      assert {:error, %{error_abi: "Error(string)", error_params: ["Dai/insufficient-balance"]}} =
+               1
+               |> V1.new({100, :gwei}, 100_000, <<14::160>>, {2, :wei}, <<1, 2, 3>>)
+               |> Cartouche.RPC.call_trx()
+    end
+
+    test "a custom error still maps to its own ABI entry" do
+      assert {:error, %{error_abi: "Cool(uint256,string)", error_params: [1, "cat"]}} =
+               1
+               |> V1.new({100, :gwei}, 100_000, <<11::160>>, {2, :wei}, <<1, 2, 3>>)
+               |> Cartouche.RPC.call_trx(errors: ["Cool(uint256,string)"])
+    end
+
+    test "an unlisted custom-error selector is not attributed to an unrelated entry" do
+      assert {:error, revert_error} =
+               1
+               |> V1.new({100, :gwei}, 100_000, <<10::160>>, {2, :wei}, <<1, 2, 3>>)
+               |> Cartouche.RPC.call_trx(errors: ["Cool(uint256,string)"])
+
+      refute Map.has_key?(revert_error, :error_abi)
+      refute Map.has_key?(revert_error, :error_params)
+      assert revert_error.revert == <<0x3D, 0x73, 0x8B, 0x2E>>
+    end
+  end
 end
