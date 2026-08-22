@@ -16,6 +16,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A compiler-defined `Error(string)` revert was reported under an unrelated
+  caller-supplied ABI entry.** `Cartouche.RPC.call_trx/2` re-derives which error
+  ABI a revert corresponds to by looping over the `:errors` list and asking
+  `ABI.decode_error/2` about each candidate. But hieroglyph falls back to the
+  built-in `Error(string)` / `Panic(uint256)` definitions whenever no candidate's
+  selector matches — for *any* candidate list — so the loop's first entry
+  "matched" on name alone. Since the list is always built as
+  `["Panic(uint256)" | errors]`, a plain `require(x, "msg")` revert came back as
+  `error_abi: "Panic(uint256)"` with the require string in `error_params`: a
+  label claiming a compiler panic for what was an ordinary revert. Fixed by
+  classifying the built-in `Error(string)` from its own selector, and by
+  requiring a candidate's own 4-byte selector to match the revert data before it
+  can be attributed. Custom errors are unaffected; an unlisted selector now stays
+  unattributed instead of borrowing a neighbour's name.
+
+### Added
+
+- **`CLZ` (EIP-7939) added to the `Cartouche.DebugTrace.StructLog` opcode
+  whitelist.** The whitelist is deliberately closed — an unknown opcode raises
+  rather than growing the atom table — so it needs a fork-by-fork update. Osaka
+  activated on mainnet with Fusaka on 2025-12-03 and EIP-7939 is in its final
+  core-EIP set; go-ethereum maps opcode `0x1e` to the exact string `"CLZ"`
+  (`core/vm/opcodes.go`, wired through `enable7939` in `newOsakaInstructionSet`).
+  Without this, any `debug_traceCall` over an Osaka transaction using CLZ raised
+  `ArgumentError`. Closes ROADMAP Task 70.
+
+
 ## [0.7.1] — 2026-08-22
 
 ### Changed

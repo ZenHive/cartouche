@@ -652,19 +652,27 @@ title = "Audit RPC-level requirements bubbling up from defi-skills mining"
 scores = { d = 2, b = 5, u = 4 }
 scored_at = "2026-05-27"
 body = """
-Depends on the four sibling-repo defi-skills:intent-to-transaction mining tasks completing first (planted in hieroglyph, onchain, onchain_aave, onchain_evm ROADMAPs on 2026-04-30). After those tasks publish their 'Proposed additions from defi-skills mining' sections, scan them for any RPC-level requirements that bubble down to cartouche — e.g. eth_call edge cases (revert-data shape, gas-stipend behavior), eth_estimateGas semantics on reverts, log-filter quirks, fee-history math, eth_getCode for proxy detection. Add any surfaced needs as new Phase 0.5 / Phase 2 tasks here. If nothing surfaces after all four upstream tasks close, mark this complete as 'no action needed.' Read-only triage exercise — no cartouche code edits in this task itself.
+Read-only triage: scan the sibling-repo defi-skills:intent-to-transaction mining output for RPC-level requirements that bubble down to cartouche — eth_call edge cases (revert-data shape, gas-stipend behavior), eth_estimateGas semantics on reverts, log-filter quirks, fee-history math, eth_getCode for proxy detection. Surfaced needs get filed as new tasks here. No cartouche code edits in this task itself.
+
+TRIAGE PASS 1 EXECUTED 2026-08-22 — three of the four upstream inputs are settled and produced nothing RPC-relevant. The original gate ("after all four upstream tasks close") is unsatisfiable as written and must not be waited on:
+- hieroglyph (done): output was pure ABI-encoding work — golden calldata vectors, selector vectors, tuple[]/nested-struct round-trips (its tasks 25-31). Zero JSON-RPC content.
+- onchain_evm #51 (SUPERSEDED, never executed): its named successor is a local revm/ForkDB simulation bug in native/onchain_evm/src/lib.rs (default BlockEnv, state-override clobbering un-fetched accounts). Internal to that repo's Rust harness; no bearing on cartouche's JSON-RPC client.
+- onchain: the mining task was NEVER PLANTED there (0 matches for defi-skills in its roadmap/tasks.toml). It will never close.
+- onchain_aave #54: still pending. THE ONLY OUTSTANDING INPUT.
+
+Pass 1 surfaced one real cartouche defect on its own — Error(string) reverts were being labelled with an unrelated caller-supplied ABI entry — which was fixed inline in the same session (lib/cartouche/rpc.ex: classify_decoded_error/4 built-in clause + a selector guard in find_error_abi/3), not deferred.
+
+REMAINING WORK IS NARROW: when onchain_aave #54 lands, scan only its output. If it also yields nothing RPC-relevant, close this as "no action needed" citing pass 1 — do not re-derive the three settled repos. Reference points from pass 1 for judging any future finding: eth_getLogs is absent from cartouche entirely; eth_getCode (rpc.ex:567) is a raw bytecode fetch with no EIP-1967/1167 slot inspection; eth_feeHistory (rpc.ex:1570) is a passthrough over Cartouche.FeeHistory.deserialize/1. Those are uncovered ground, not gaps anyone has yet asked for.
 """
 
 [[task]]
 id = 70
 phase = 0
 bundle = "eip_opcode_followups"
-status = "blocked"
+status = "done"
 title = "Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist"
 scores = { d = 1, b = 2, u = 3 }
-scored_at = "2026-05-27"
 markers = ["cx"]
-blocked_reason = "Blocked on Fusaka/Osaka mainnet activation (no firm date as of 2026-05-01)."
 body = """
 CLZ ('count leading zeros') is in go-ethereum master's newOsakaInstructionSet() per EIP-7607 Osaka composition, with EIP-7939 defining the opcode at slot 0x1e. Once Osaka activates, any eth_debug_traceCall against an Osaka tx that uses CLZ will raise ArgumentError in the closed whitelist.
 
@@ -674,6 +682,11 @@ Watch list for Amsterdam (post-Osaka): SLOTNUM (0x4b, EIP-7843) — currently Dr
 
 Replaces the abandoned Task 68 (which conflated EIP-3074's withdrawn AUTH/AUTHCALL with EIP-7702). Discovered during Codex consultation 2026-05-01.
 """
+implemented = """Osaka activated on mainnet 2025-12-03 (Fusaka, epoch 411392), so the blocker this task waited on resolved nine months before it was noticed. Pre-add gate cleared against the authorities the body names: EIP-7607 (Fusaka meta), the EF mainnet announcement and ethereum.org all list EIP-7939 in the FINAL Fusaka core-EIP set (it was not among the dropped ones), and go-ethereum's core/vm/opcodes.go maps opcode 0x1e to the exact string "CLZ", wired via enable7939 in newOsakaInstructionSet (core/vm/jump_table.go). Added CLZ to @single_opcodes in lib/cartouche/debug_trace.ex (next to SAR, matching its 0x1e slot), updated the deserialize/1 doc to say the whitelist covers Osaka's CLZ, and added a regression test asserting StructLog.deserialize decodes "CLZ" to :CLZ. SLOTNUM (0x4b, EIP-7843) stays unfiled per the body's watch-list note — still Draft. Done inline: D1, one atom plus one test."""
+delivered_by = "human"
+scored_at = "2026-05-27"
+done_at = "2026-08-22"
+shipped_in = "pending"
 
 [[task]]
 id = 73
@@ -1066,12 +1079,15 @@ shipped_in = "PR #61"
 id = 34
 phase = 10
 bundle = "phase10_upstream"
-status = "blocked"
+status = "superseded"
 title = "ABI.decode/2 specced no_return() in poanetwork/ex_abi"
 scores = { d = 3, b = 5, u = 5 }
 scored_at = "2026-05-27"
-blocked_reason = "Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this."
-body = "External package — ABI.decode/2 specced no_return() in poanetwork/ex_abi. Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this."
+body = """
+External package — ABI.decode/2 specced no_return() in poanetwork/ex_abi. Separate fork + PR if pursued. Only chase if Phase 1 fixes are merged (here) and onchain's remaining dialyzer noise is clearly bounded by this.
+
+SUPERSEDED (2026-08-22, roadmap review): cartouche no longer depends on poanetwork/ex_abi at all. `mix.exs:157` pins `{:hieroglyph, "~> 1.6"}` — the ZenHive fork, published on hex under its own package name — and hieroglyph's `ABI.decode/2` already carries a real spec (`deps/hieroglyph/lib/abi.ex:368`: `[any()] | map() | {:error, {:strict_violation, term()}}`), not the `no_return()` this task was filed against. The upstream fork+PR this task contemplated has no consumer here; spec work now lands in hieroglyph directly. Closed on evidence, not abandoned.
+"""
 
 # ============================================================================
 # Phase 11 — hieroglyph adoption (TBD ids → 100/101/102)
@@ -1303,11 +1319,12 @@ id = "105"
 phase = 0
 bundle = "generator_hardening"
 status = "pending"
-assignee = "human"
 title = "Optional: slim generated IConsole surface (~250 MB dialyzer win, not the bomb)"
 scores = { d = 3, b = 2, u = 3 }
 acceptance_criteria = ["Generated IConsole emits a minimal decode-oriented surface (e.g. `decode_call/1` + per-overload decode it dispatches to), dropping the call/prepare/estimate_gas/execute/build_trx/encode families that have no consumer.", "`Cartouche.VM` console-log decoding still works unchanged; full suite green.", "Downstream dialyzer peak-RSS delta recorded (expected ~250 MB on top of the Task 103 Assembly fix — confirm it is genuinely additive and worth the generator complexity)."]
 out_of_scope = ["The Assembly tuple_set fix — that was the real bomb and shipped under Task 103.", "Not touching the IConsole ABI / console.sol version."]
+assignee = "grok"
+model = "grok-4.6"
 body = """
 Spun out of Task 103 after the ~30 GB bomb was correctly attributed to `Cartouche.Assembly.compile/1` (not IConsole). IConsole's combinatorial generated surface (4,577 fns across call/prepare/estimate_gas/execute/build_trx/encode/decode/log families for 381 ABI entries) is still the single largest contributor to PLT *stored bytes* (~5.9 MB, ~21% of the .plt file) and contributes ~250 MB to downstream dialyzer peak RSS — real but second-order versus the 27 GB Assembly win.
 
@@ -1322,7 +1339,7 @@ scored_at = "2026-06-04"
 id = "104"
 phase = 0
 bundle = "signer_backends"
-status = "in_progress"
+status = "done"
 title = "Formalize signer backends as a behaviour (pure digest-signer contract) — unlock multi-provider signing"
 scores = { d = 4, b = 6, u = 6 }
 acceptance_criteria = ["A `Cartouche.Signer.Backend` behaviour exists with documented `@callback get_address/...` and `@callback sign/...`; the existing implicit MFA contract is now compile-checked.", "`Cartouche.Signer.Curvy` and `Cartouche.Signer.CloudKMS` declare `@behaviour Cartouche.Signer.Backend` + `@impl true`, compile clean (warnings-as-errors), all existing doctests/tests green.", "The sign contract is a PURE DIGEST/PAYLOAD signer: the backend signs exactly the bytes it is handed (secp256k1 backends expect the 32-byte digest; ed25519 backends expect the raw message). Message hashing moves OUT of the backend into the caller (`Cartouche.Signer` / a helper), so plain Eth-tx signing, EIP-712 typed-data, and Solana all reuse one backend set with no per-venue backend change. `find_recid` is fed the same digest the backend signed.", "Both signer modules are at critical-tier >=95% coverage BEFORE mutating (raise first if below); full suite green; dialyzer run LOCALLY (per CLAUDE.md KMS-dialyzer-stays-local rule) shows no new warnings on touched files.", "Config decision is recorded and proven by a test: either (a) keep `:priv_key`/`:cloud_kms` shorthands AND accept an explicit `{BackendModule, config}` form (non-breaking), or (b) clean break to module-form-only. A test asserts the chosen config path still starts a working signer end-to-end.", "CHANGELOG + `implemented` field document the contract and the config decision."]
@@ -1345,9 +1362,16 @@ OPEN FORKS for the design phase (do not pre-decide here): (1) config back-compat
 
 Touch points: lib/cartouche/signer.ex (sign_direct hashing, GenServer handle_call), lib/cartouche/signer/{curvy,cloud_kms}.ex, lib/cartouche/application.ex (signer_mfa dispatch / config parsing), and the Solana parallels if in scope. CloudKMS work => dialyzer verification stays LOCAL (cartouche PLT OOMs on cloud VMs — see CLAUDE.md). Critical-tier (signing) => >=95% coverage gate before mutating.
 """
+implemented = "Shipped in 7c82cd8 (CHANGELOG 'Cartouche.Signer.Backend behaviour'). Three callbacks — algorithm/1, public_key/1, sign_payload/2 — NOT the get_address/sign names this task's acceptance criteria guessed at scoping time; the shipped names are the better ones and the criteria were never re-worded. Pure digest/payload contract: sign_payload/2 signs exactly the bytes handed to it, hashing moved into the caller (Cartouche.Signer), so one backend set serves Eth tx, EIP-712, Hyperliquid and Solana. Cartouche.Signer.{Curvy,CloudKMS} and Cartouche.Solana.Signer.{Ed25519,CloudKMS} all declare @behaviour + @impl. Address derivation, low-s canonicalization (new Recover.normalize_low_s/1) and recid recovery live caller-side so future secp256k1 backends inherit them. Config decision (a) non-breaking: :priv_key/:cloud_kms/:ed25519 shorthands kept, explicit {BackendModule, config} form additionally accepted (application.ex:57-97), proven end-to-end by test/signer_test.exs:39 '{backend, config} carrier (pure-payload path)'. Signer/recover modules at 100% coverage bar the unreachable find_recid guard. Three latent defects the audit recorded and deferred (32-byte payload guard, CloudKMS DER parse-wrap, unconsumed algorithm/1 curve guard) are carried forward as a separate task, not silently dropped."
+delivered_by = "human"
+verified = true
+verified_by = "audit-review v1 dual-reviewer (claude-opus-4-8 + codex)"
+verification_ref = ".audit/7c82cd8-task-104-formalize-signer.md"
 created_at = "2026-06-04"
 started_at = "2026-06-24"
 scored_at = "2026-06-04"
+done_at = "2026-08-22"
+shipped_in = "7c82cd82b18d8120b1dbbbd2465c66b6d7633363"
 
 [[task]]
 id = "106"
@@ -1515,14 +1539,124 @@ bundle = "phase8_dedup"
 status = "pending"
 title = "Finish typed-tx Signature extraction: migrate V4.get_signature onto Signature.get/1"
 scores = { d = 2, b = 3, u = 4 }
-acceptance_criteria = ["V4.get_signature/1 delegates to Cartouche.Transaction.Signature.get/1 with no behavior change", "No remaining hand-rolled signature nil-guard / packed-assembly duplication across V3 and V4", "Existing V4 transaction tests (sign to encode to decode to recover round-trip) stay green"]
+acceptance_criteria = ["V4.get_signature/1 delegates to Cartouche.Transaction.Signature.get/1", "V4.get_authorization_signature/1 stops hand-rolling the same nil-guard + packed assembly — extract a shared primitive (e.g. Signature.pack/3) that both the struct path and the EIP-7702 authorization 6-tuple call, since Signature.get/1 pattern-matches struct keys and cannot take a tuple", "After this task no hand-rolled signature nil-guard or `r <> s <> y_parity` assembly remains under lib/cartouche/transaction/ outside Cartouche.Transaction.Signature — verify by grep; the legacy V1 integer-v path at transaction.ex:310 is explicitly excluded", "The r/s length tightening is deliberate and tested: Signature.get/1 constructs with binary-size(32) where V4 concatenated unbounded, so a struct carrying a short r or s now raises instead of emitting a malformed packed signature — assert the 32-byte path stays byte-identical AND add a test pinning the new rejection", "Existing V4 transaction tests (sign to encode to decode to recover round-trip) and the EIP-7702 authorization round-trip stay green"]
 out_of_scope = ["V2/V1 legacy signature paths", "any change to the packed signature wire format"]
 assignee = "cursor"
-model = "composer-2.5"
+model = "cursor-grok-4.6-high"
 body = """
 Task 109 extracted the shared signature-field helpers into `Cartouche.Transaction.Signature` and migrated V3 (`get_signature/1` now delegates to `Signature.get/1`), but left `Cartouche.Transaction.V4.get_signature/1` hand-rolled — it still duplicates the exact nil-guard error clause and the packed `r <> s <> y_parity` assembly that `Signature.get/1` now owns. This is the residual half of the "uneven extraction" the dedup task set out to finish.
 
 Migrate `V4.get_signature/1` to delegate to `Cartouche.Transaction.Signature.get/1` (as V3 already does), confirming the recovery-byte encoding stays byte-identical (`<<y_parity_integer(v)>>` vs `Signature.get`'s `:binary.encode_unsigned/1` form — both emit `<<0>>`/`<<1>>`). Keep V4's existing tests green; the round-trip sign/encode/decode/recover path is the equivalence check.
+
+SCOPE CORRECTED 2026-08-22 (roadmap review). Two corrections, both to criteria that the task as originally scoped could not have met:
+
+1. There are TWO hand-rolled sites in v4.ex, not one. `get_signature/1` (v4.ex:220) is the struct path and is straight delegation. `get_authorization_signature/1` (v4.ex:281) handles the EIP-7702 authorization tuple `{chain_id, address, nonce, v, r, s}` and duplicates the identical nil-guard and `r <> s <> <<y_parity_integer(v)>>` assembly. `Signature.get/1` matches on `%{signature_y_parity:, signature_r:, signature_s:}` keys and cannot serve a 6-tuple, so closing this site needs a shared primitive both call. The old criterion "no remaining duplication across V3 and V4" would still have been false on delivery.
+
+2. This is NOT a pure no-op. `Signature.get/1` builds with `<<r::binary-size(32), s::binary-size(32), v_enc::binary>>`; V4 concatenates with an unbounded `r <> s <> ...`. Every current producer pads to 32 bytes (`decode_word/1` -> `Hex.pad(word, 32)` at v4.ex:564; `add_signature/2` matches `binary-size(32)` at v4.ex:257), so live behaviour is unchanged — but a directly-constructed struct carrying a short `r`/`s` goes from silently emitting a malformed packed signature to raising. That is desirable hardening; pin it with a test rather than describing the task as behaviour-preserving.
 """
 created_at = "2026-06-24"
 scored_at = "2026-06-24"
+
+[[task]]
+id = "113"
+phase = 0
+bundle = "coverage_pushes"
+status = "pending"
+title = "Property + cross-implementation vector suite for Ethereum tx envelopes and signing"
+scores = { d = 4, b = 8, u = 8 }
+markers = ["security"]
+acceptance_criteria = ["`stream_data` added as a test-only dependency (mix.exs + mix.lock committed)", "Property tests cover every ENCODABLE envelope — V1 (legacy/EIP-155), V2 (EIP-1559), V3 (EIP-4844), V4 (EIP-7702) — asserting encode/decode round-trip identity, sign to recover_signer identity, and boundary-sized fields (zero, one, 2^256-1, empty data, empty and maximal access lists, 32-byte r/s). V_2930 is decode-only today and is explicitly out of scope", "Chain-id / domain separation is a property, not an example: a payload signed for chain A must not recover the signing address when re-checked under chain B, and the EIP-155 v-encoding is asserted against the EIP formula rather than a recorded constant", "Golden vectors live under test/fixtures/vectors/ as committed files, each carrying inline provenance: source implementation, its exact version, and the command that generated it. The EIP text is the authority for semantics; vectors from at least two independently maintained implementations are required ONLY where an EIP leaves edge behaviour implicit — where the EIP is explicit, cite the EIP and one vector suffices", "A short docs/verification-ledger.md records, for this task: which EIPs were treated as authoritative, every vector's provenance, and the toolchain versions used to generate them", "Touched critical modules (lib/cartouche/transaction*, lib/cartouche/signer*, lib/cartouche/recover.ex) are at >=95% coverage and `mix ci` passes"]
+out_of_scope = ["The mutation-adequacy campaign, the deliberate-fault canary and the survivor ledger — those are the follow-up task that depends on this one", "V_2930: it has no encode/sign surface to exercise; adding one is its own task", "Solana signing and transaction paths", "Any change to public API signatures — this task only adds tests, fixtures and a test-only dep"]
+touches = ["mix.exs", "mix.lock", "lib/cartouche/transaction.ex", "lib/cartouche/transaction/", "lib/cartouche/signer.ex", "lib/cartouche/signer/", "lib/cartouche/recover.ex", "test/transaction_test.exs", "test/signer_test.exs", "test/cartouche/transaction/", "test/fixtures/vectors/", "docs/verification-ledger.md"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+Establish the evidence base that cartouche's signing and transaction encoding are correct against the specs rather than merely self-consistent. Two instruments: properties that must hold across generated inputs, and golden vectors produced by implementations outside this codebase.
+
+The authority order is the one this repo already follows: the EIP text first (EIP-155 chain-id replay protection, EIP-2718 typed envelopes, EIP-1559, EIP-4844, EIP-7702, EIP-2 low-s), then independently generated vectors where an EIP leaves edge behaviour implicit. Third-party clients are compatibility evidence, never semantics. Where a vector and the EIP disagree, record the discrepancy — do not pick a reading.
+
+Why vectors from outside cartouche matter here specifically: the existing suite computes expectations with the same code it is testing, so a wrong constant or a wrong field order would be ratified by its own golden values. An externally generated vector is the only artifact in the suite that cannot share that mistake.
+
+SPLIT NOTE 2026-08-22 (roadmap review): this was one oversized task also carrying a mutation campaign, a fault canary and a survivor ledger — five criteria, each a session's work, with no mutation tool named. It is now the first half; the mutation-adequacy half is a separate task that depends on this one, because it measures the suite this task builds.
+"""
+created_at = "2026-08-17"
+scored_at = "2026-08-22"
+
+[[task]]
+id = "114"
+phase = 0
+bundle = "coverage_pushes"
+status = "pending"
+title = "Mutation-adequacy campaign over the signing and transaction paths"
+scores = { d = 5, b = 7, u = 6 }
+markers = ["security"]
+depends_on = [113]
+acceptance_criteria = ["The campaign runs on `muex` (hex, actively maintained in 2026, 18 mutators). Do NOT reach for `muzak`: its last release is 1.1.1 from Dec 2022 and the free tier caps each run at 25 randomly chosen mutations, which cannot satisfy a reproducible, exhaustive campaign. If muex proves unworkable on this codebase, say so with the concrete failure and stop — do not silently fall back to a capped tool", "The mutated surface is enumerated explicitly: lib/cartouche/transaction.ex, lib/cartouche/transaction/*, lib/cartouche/signer.ex, lib/cartouche/signer/*, lib/cartouche/recover.ex, lib/cartouche/recovery_bit.ex. Mutations target RLP field order and arity, EIP-2718 type bytes, chain-id handling, v / y-parity encoding, low-s normalization, hash-domain selection and signer dispatch", "Every survivor is triaged and dispositioned in writing as one of: killed by a new test added in this task, provably equivalent (with the argument), or an accepted gap (with the reason). No survivor is left unclassified", "A deliberate-fault canary proves the harness detects real faults: at minimum a wrong-chain-id mutant and a skipped-low-s-normalization mutant. Each must be killed by the suite; if either survives, the run fails and the gap is closed before the task is done", "docs/verification-ledger.md is extended with the campaign record: muex version, mutator set, mutation and survivor counts per module, and each survivor's disposition", "Touched critical modules stay at >=95% coverage and `mix ci` passes"]
+out_of_scope = ["Building the property suite and golden vectors — that is task 113, which this depends on", "Solana signing and transaction paths", "Mutating the generated contract wrappers under lib/cartouche/contract/ — machine-generated, fix the generator instead", "Adopting mutation testing as a permanent CI gate; this is a one-off measurement plus the tests it produces"]
+touches = ["mix.exs", "mix.lock", "lib/cartouche/transaction.ex", "lib/cartouche/transaction/", "lib/cartouche/signer.ex", "lib/cartouche/signer/", "lib/cartouche/recover.ex", "lib/cartouche/recovery_bit.ex", "test/transaction_test.exs", "test/signer_test.exs", "test/cartouche/transaction/", "docs/verification-ledger.md"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+Measure whether the signing and transaction suite detects plausible semantic faults, rather than merely executing the lines. Line coverage says the code ran; mutation adequacy says a wrong answer would have been caught. This is the check that catches the failure mode where a test's expected value was computed with the same wrong constant as the code.
+
+Run only after task 113 lands: mutating a suite that has no external vectors measures self-consistency, and the survivors would be uninformative.
+
+The deliverable is not the mutation score. It is (a) the tests written to kill genuine survivors and (b) a written disposition for every survivor that was not killed. A campaign that reports a number and closes has produced nothing durable.
+
+TOOLING DECISION 2026-08-22 (roadmap review): `muex` is named deliberately. The obvious reach is `muzak`, which is stale (1.1.1, Dec 2022) and whose free tier samples 25 random mutations per run — reproducibility and exhaustiveness are both impossible under it, so a campaign built on it would satisfy the letter of this task and none of its intent.
+"""
+created_at = "2026-08-22"
+scored_at = "2026-08-22"
+
+[[task]]
+id = "115"
+phase = 0
+bundle = "phase8_dedup"
+status = "pending"
+title = "Cartouche.Transaction.V_2930 write surface — new/encode/sign/hash/signature/recover"
+scores = { d = 3, b = 4, u = 4 }
+acceptance_criteria = ["V_2930 gains new/…, encode/1, sign/2, hash/1, add_signature/4, add_signature/2 (packed), get_signature/1 and recover_signer/1, mirroring the shapes V3 already uses at v3.ex:94/133/200/212/218/224/230/236", "encode/1 emits `0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, yParity, r, s])` per EIP-2930 — verify the field order against the EIP text, not against the existing decode_fields/1, so a pre-existing order error cannot be copied forward", "Cartouche.Transaction.encode/1 gains a %V_2930{} clause (transaction.ex:1509-1512 currently has V1/V2/V3/V4 only, so a hand-built type-1 struct raises FunctionClauseError at the dispatcher)", "The signature helpers are delegation to Cartouche.Transaction.Signature, not re-implementation — Signature is already struct-agnostic and V_2930 carries the same signature_y_parity/r/s keys", "New describe blocks in test/transaction_test.exs mirroring V3's: encode/decode round-trip, sign then recover_signer identity, both add_signature arities, and the missing-signature error path. Module at >=95% coverage (signing-adjacent, critical tier); mix ci passes"]
+out_of_scope = ["build_trx_v_2930 / build_signed_trx_v_2930 convenience wrappers — V3 and V4 have no equivalent either, so adding them only for V_2930 creates new asymmetry rather than parity", "The Typed-envelope macro (task 111, superseded — and its premise that V_2930 already shared encode/hash/add_signature was factually wrong)", "Any downstream repo change: nothing in onchain / onchain_aave / onchain_evm / onchain_tempo references V_2930 today"]
+files_to_modify = ["lib/cartouche/transaction/v_2930.ex", "lib/cartouche/transaction.ex", "test/transaction_test.exs"]
+touches = ["lib/cartouche/transaction/v_2930.ex", "lib/cartouche/transaction.ex", "lib/cartouche/transaction/signature.ex", "test/transaction_test.exs"]
+assignee = "grok"
+model = "grok-4.6"
+body = """
+Cartouche.Transaction.V_2930 (EIP-2930, type 0x01) is decode-only. It has decode/1 (v_2930.ex:47), from_json/1 (v_2930.ex:53) and private field decoders — and nothing else. A caller cannot construct, encode, sign, hash or recover a type-1 transaction by any route in this library: verified by enumerating every V_2930 reference in lib/ (the dispatcher's decode/1 clause at transaction.ex:1564, the block-JSON dispatch at block.ex:402, and the module itself), and by the absence of a %V_2930{} clause in the encode dispatcher at transaction.ex:1509-1512.
+
+The omission is historical, not a decision. Task 99 (done 2026-06-05, cf9e2d3) introduced the module for one purpose — stop the block deserializer crashing on type-1 transactions — and its body scoped exactly that. No task or CHANGELOG entry anywhere argues the write side should be withheld; CHANGELOG.md:98 notes "V_2930 is decode-only" only as a factual aside.
+
+Most of the work is delegation. Cartouche.Transaction.Signature and TypedDecode are already struct-agnostic (they match on map keys, not module), so the four signature functions are the same one-liners V3 uses. The genuinely new code is encode/1 (single gas_price field instead of the two EIP-1559 fee fields, no blob fields), sign/2, hash/1, new/… and the dispatcher clause — roughly the same increment V3 needed over the shared helpers.
+
+Honest demand note: nothing downstream consumes this today — onchain, onchain_aave, onchain_evm and onchain_tempo reference V_2930 zero times, and every access_list hit in those repos is EIP-1559 or Tempo plumbing. Score it as completeness of a public transaction-type surface in a general-purpose library, which is what it is. Do not inflate it with a usage claim.
+"""
+created_at = "2026-08-22"
+scored_at = "2026-08-22"
+
+[[task]]
+id = "116"
+phase = 0
+bundle = "signer_backends"
+status = "pending"
+title = "Enforce the Signer.Backend contract at the boundary — payload length, curve, DER parse"
+scores = { d = 3, b = 6, u = 6 }
+markers = ["security"]
+depends_on = [104]
+acceptance_criteria = ["secp256k1 sign_payload/2 rejects a non-32-byte payload instead of signing it: the guard in Cartouche.Signer.Curvy and Cartouche.Signer.CloudKMS is tightened from is_binary/1 to an explicit 32-byte match, with a test asserting the rejection for both a short and an over-long payload", "The algorithm/1 callback is either consumed or removed — no third option. If consumed: Cartouche.Signer and Cartouche.Solana.Signer validate the backend's curve before dispatching, so an ed25519 backend under the Eth signer (or Curvy under the Solana signer) fails loudly with a clear error rather than mis-signing; tests cover both mismatch directions. If removed: the callback and all four @impl definitions go, and the reason is recorded", "Cartouche.Signer.CloudKMS no longer wraps a possibly-non-struct in {:ok, Curvy.Signature.parse(decoded_sig)} (cloud_kms.ex:88): a parse failure returns an error tuple rather than producing a term that makes Recover.normalize_low_s/1 raise FunctionClauseError, with a test over malformed DER input", "The three fixes ship together in one diff — they are the same contract-boundary surface and one reviewer verifies them as one change", "Both signer module families stay at >=95% coverage; dialyzer runs LOCALLY (KMS PLT rule) with no new warnings on touched files; mix ci passes"]
+out_of_scope = ["New backend implementations (AWS KMS, Azure Key Vault, Vault Transit, MPC/custody) — each is its own task once the contract is enforced", "Changing the pure-payload contract itself or moving hashing back into backends — that decision is settled by task 104", "EIP-712 / Hyperliquid message builders (Axis B)"]
+touches = ["lib/cartouche/signer.ex", "lib/cartouche/signer/backend.ex", "lib/cartouche/signer/curvy.ex", "lib/cartouche/signer/cloud_kms.ex", "lib/cartouche/solana/signer.ex", "lib/cartouche/solana/signer/ed25519.ex", "lib/cartouche/solana/signer/cloud_kms.ex", "test/signer_test.exs", "test/signer/curvy_test.exs", "test/signer/cloud_kms_test.exs", "test/solana/signer_test.exs"]
+assignee = "cursor"
+model = "cursor-grok-4.6-high"
+body = """
+Task 104 formalized Cartouche.Signer.Backend and landed clean, but its dual-reviewer audit (.audit/7c82cd8-task-104-formalize-signer.md, 2026-06-24) recorded three defects it deliberately did not fix, on the grounds that hardening critical signing code belonged to the warm implementer rather than an audit pass. Task 104 then closed. This task carries those three forward so they are not lost with it.
+
+1. Findings 2 (pri 3, verified latent) — the secp256k1 sign_payload/2 guard is only is_binary/1. The behaviour's freshly-documented contract says the argument IS the 32-byte digest, but a caller passing anything else gets it signed as garbage rather than rejected. No live trigger today: every caller passes keccak(message). It is a footgun against a contract that now exists in writing, and it is the kind of thing a future backend author trips over.
+
+2. Finding 4 (discuss-design, Claude and Codex agreed) — algorithm/1 is declared by the behaviour and implemented by all four backends, and consumed by nobody. There is no curve-mismatch guard: an ed25519 backend configured under the Eth signer, or Curvy under the Solana signer, mis-dispatches instead of failing. An unconsumed callback is either a missing guard or dead weight; decide which and act, do not leave it declared-and-ignored.
+
+3. Finding 3 (pri 4, verified latent) — cloud_kms.ex:88 wraps Curvy.Signature.parse/1 output in {:ok, ...} without checking it is a %Curvy.Signature{}; a malformed DER response then reaches Recover.normalize_low_s/1 and raises FunctionClauseError instead of returning an error. KMS-path only and pre-existing, but low-s normalization is exactly where a malleability bug hides.
+
+They are grouped as one task because they are one surface — the backend contract boundary — touching the same four modules, and a reviewer verifies them in a single pass. Splitting them would pay three dispatch cycles for one coherent diff.
+"""
+created_at = "2026-08-22"
+scored_at = "2026-08-22"
