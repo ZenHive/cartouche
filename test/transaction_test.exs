@@ -18,6 +18,7 @@ defmodule Cartouche.TransactionTest do
   doctest V2
   doctest V3
   doctest V4
+  doctest V_2930
 
   describe "Call.new/3" do
     test "builds eth_call params without transaction-only fields" do
@@ -1095,6 +1096,28 @@ defmodule Cartouche.TransactionTest do
         V4.add_authorization_signature(authorization, <<1::256, 2::256>>)
       end
     end
+
+    test "get_signature/1 32-byte packing is r <> s <> <<y_parity>>" do
+      transaction = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
+
+      assert V4.get_signature(transaction) == {:ok, <<1::256, 2::256, 1>>}
+
+      assert V4.get_authorization_signature(signed_authorization(1, <<2::160>>, 7)) ==
+               {:ok, <<1::256, 2::256, 0>>}
+    end
+
+    test "get_signature/1 raises on short r or s instead of emitting a malformed packed signature" do
+      transaction =
+        [signed_authorization(1, <<2::160>>, 7)]
+        |> v4_transaction()
+        |> Map.put(:signature_r, <<1, 2, 3>>)
+
+      assert_raise ArgumentError, fn -> V4.get_signature(transaction) end
+
+      assert_raise ArgumentError, fn ->
+        V4.get_authorization_signature({1, <<2::160>>, 7, false, <<1>>, <<2::256>>})
+      end
+    end
   end
 
   describe "V4 mainnet vector" do
@@ -1255,6 +1278,118 @@ defmodule Cartouche.TransactionTest do
     end
   end
 
+  describe "V_2930.encode/1" do
+    test "round-trips signed transactions" do
+      transaction = V_2930.add_signature(v2930_transaction(), true, <<1::256>>, <<2::256>>)
+
+      assert {:ok, ^transaction} = transaction |> V_2930.encode() |> V_2930.decode()
+    end
+
+    test "round-trips unsigned transactions" do
+      transaction = v2930_transaction()
+
+      assert {:ok, ^transaction} = transaction |> V_2930.encode() |> V_2930.decode()
+    end
+
+    test "new/8 defaults chain id and leaves signature fields unset" do
+      transaction = V_2930.new(1, {1, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [])
+
+      assert transaction.chain_id == Cartouche.Application.chain_id()
+      assert transaction.signature_y_parity == nil
+      assert transaction.signature_r == nil
+      assert transaction.signature_s == nil
+    end
+
+    test "emits 0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, yParity, r, s])" do
+      access_key = <<22::256>>
+      transaction = V_2930.add_signature(v2930_transaction(), false, <<1::256>>, <<2::256>>)
+
+      <<0x01, payload::binary>> = V_2930.encode(transaction)
+
+      assert [
+               chain_id,
+               nonce,
+               gas_price,
+               gas_limit,
+               destination,
+               amount,
+               data,
+               access_list,
+               y_parity,
+               signature_r,
+               signature_s
+             ] = ExRLP.decode(payload)
+
+      assert :binary.decode_unsigned(chain_id) == 5
+      assert :binary.decode_unsigned(nonce) == 1
+      assert :binary.decode_unsigned(gas_price) == 1_000_000_000
+      assert :binary.decode_unsigned(gas_limit) == 100_000
+      assert destination == <<1::160>>
+      assert :binary.decode_unsigned(amount) == 2
+      assert data == <<1, 2, 3>>
+      assert access_list == [[<<2::160>>, [access_key]]]
+      assert :binary.decode_unsigned(y_parity) == 0
+      assert :binary.decode_unsigned(signature_r) == 1
+      assert :binary.decode_unsigned(signature_s) == 2
+    end
+
+    test "unsigned encode omits yParity, r, and s" do
+      <<0x01, payload::binary>> = V_2930.encode(v2930_transaction())
+
+      assert [_, _, _, _, _, _, _, _] = ExRLP.decode(payload)
+    end
+
+    test "round-trips a mainnet type-1 vector through encode" do
+      raw = v2930_raw()
+
+      assert {:ok, transaction} = V_2930.decode(raw)
+      assert V_2930.encode(transaction) == raw
+    end
+  end
+
+  describe "V_2930 signatures" do
+    test "sign/2 then recover_signer/1 recovers the signer identity" do
+      signer_proc = Signer.start_signer()
+
+      assert {:ok, %V_2930{} = signed} = V_2930.sign(v2930_transaction(), signer_proc)
+      assert byte_size(signed.signature_r) == 32
+      assert byte_size(signed.signature_s) == 32
+
+      {:ok, recovered} = V_2930.recover_signer(signed)
+      assert Cartouche.Hex.to_address(recovered) == "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
+    end
+
+    test "default signer path signs with the configured signer" do
+      Signer.start_signer(Default)
+      transaction = v2930_transaction()
+
+      assert {:ok, %V_2930{signature_r: <<_::256>>, signature_s: <<_::256>>}} = V_2930.sign(transaction)
+    end
+
+    test "add_signature/4 and add_signature/2 attach the same fields" do
+      explicit = V_2930.add_signature(v2930_transaction(), true, <<1::256>>, <<2::256>>)
+      packed = V_2930.add_signature(v2930_transaction(), <<1::256, 2::256, 1>>)
+      false_parity = V_2930.add_signature(v2930_transaction(), <<1::256, 2::256, 0>>)
+
+      assert explicit == packed
+      assert explicit.signature_y_parity == true
+      assert false_parity.signature_y_parity == false
+    end
+
+    test "missing signatures return explicit errors" do
+      transaction = v2930_transaction()
+
+      assert {:error, "transaction missing signature"} = V_2930.get_signature(transaction)
+      assert {:error, "transaction missing signature"} = V_2930.recover_signer(transaction)
+    end
+
+    test "hash/1 returns the keccak of encoded bytes" do
+      transaction = V_2930.add_signature(v2930_transaction(), true, <<1::256>>, <<2::256>>)
+
+      assert V_2930.hash(transaction) == transaction |> V_2930.encode() |> Cartouche.Hash.keccak()
+    end
+  end
+
   describe "Cartouche.Transaction.encode/1" do
     test "delegates V1 structs to V1.encode/1 (untyped legacy RLP)" do
       transaction = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
@@ -1264,6 +1399,15 @@ defmodule Cartouche.TransactionTest do
       assert encoded == V1.encode(transaction)
       assert <<first, _::binary>> = encoded
       assert first >= 0x80
+    end
+
+    test "delegates V_2930 structs to V_2930.encode/1 with the 0x01 envelope byte" do
+      transaction = v2930_transaction()
+
+      encoded = Transaction.encode(transaction)
+
+      assert encoded == V_2930.encode(transaction)
+      assert <<0x01, _::binary>> = encoded
     end
 
     test "delegates V2 structs to V2.encode/1 with the 0x02 envelope byte" do
@@ -1295,11 +1439,13 @@ defmodule Cartouche.TransactionTest do
 
     test "round-trips decode(encode(tx)) for every supported version" do
       v1 = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      v2930 = v2930_transaction()
       v2 = V2.new(1, {1, :gwei}, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, [], :goerli)
       v3 = v3_transaction()
       v4 = v4_transaction([signed_authorization(1, <<2::160>>, 7)])
 
       assert {:ok, ^v1} = v1 |> Transaction.encode() |> Transaction.decode()
+      assert {:ok, ^v2930} = v2930 |> Transaction.encode() |> Transaction.decode()
       assert {:ok, ^v2} = v2 |> Transaction.encode() |> Transaction.decode()
       assert {:ok, ^v3} = v3 |> Transaction.encode() |> Transaction.decode()
       assert {:ok, ^v4} = v4 |> Transaction.encode() |> Transaction.decode()
@@ -1448,6 +1594,19 @@ defmodule Cartouche.TransactionTest do
       :mainnet
     )
     |> V4.add_signature(<<1::256, 2::256, 1>>)
+  end
+
+  defp v2930_transaction do
+    V_2930.new(
+      1,
+      {1, :gwei},
+      100_000,
+      <<1::160>>,
+      {2, :wei},
+      <<1, 2, 3>>,
+      [{<<2::160>>, [<<22::256>>]}],
+      :goerli
+    )
   end
 
   defp v2930_raw do

@@ -1485,6 +1485,8 @@ defmodule Cartouche.Transaction do
 
     * `%Cartouche.Transaction.V1{}` - untyped RLP-encoded legacy/EIP-155 bytes
       (leading byte `>= 0x80`).
+    * `%Cartouche.Transaction.V_2930{}` - `0x01`-prefixed EIP-2718 typed RLP
+      (EIP-2930 access-list transaction).
     * `%Cartouche.Transaction.V2{}` - `0x02`-prefixed EIP-2718 typed RLP.
     * `%Cartouche.Transaction.V3{}` - `0x03`-prefixed EIP-2718 typed RLP
       (EIP-4844 blob transaction envelope).
@@ -1505,8 +1507,9 @@ defmodule Cartouche.Transaction do
       iex> <<0x02, _::binary>> = Cartouche.Transaction.encode(tx)
       iex> {:ok, ^tx} = tx |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
   """
-  @spec encode(V1.t() | V2.t() | V3.t() | V4.t()) :: binary()
+  @spec encode(V1.t() | V_2930.t() | V2.t() | V3.t() | V4.t()) :: binary()
   def encode(%V1{} = transaction), do: V1.encode(transaction)
+  def encode(%V_2930{} = transaction), do: V_2930.encode(transaction)
   def encode(%V2{} = transaction), do: V2.encode(transaction)
   def encode(%V3{} = transaction), do: V3.encode(transaction)
   def encode(%V4{} = transaction), do: V4.encode(transaction)

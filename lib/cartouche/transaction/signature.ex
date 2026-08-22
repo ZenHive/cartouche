@@ -2,7 +2,10 @@ defmodule Cartouche.Transaction.Signature do
   @moduledoc """
   Shared signature-field helpers for typed-transaction structs that carry the
   `signature_y_parity` / `signature_r` / `signature_s` triple
-  (EIP-1559 `V2`, EIP-4844 `V3`, and any future post-EIP-2718 type).
+  (EIP-2930 `V_2930`, EIP-1559 `V2`, EIP-4844 `V3`, EIP-7702 `V4`).
+
+  `pack/3` is the shared primitive behind both struct recovery (`get/1`) and
+  EIP-7702 authorization 6-tuples, which do not carry those map keys.
 
   These functions operate on the struct as a plain map, so they work uniformly
   across the typed-transaction modules without coupling them to one another.
@@ -18,16 +21,32 @@ defmodule Cartouche.Transaction.Signature do
   end
 
   @doc """
+  Packs `y_parity`, `r`, and `s` into the `r <> s <> y_parity` binary used by
+  typed-transaction recovery. `r` and `s` must be exactly 32 bytes.
+
+  Returns `{:error, :missing}` when any field is nil. Callers map that atom to
+  a domain string (`"transaction missing signature"`, `"authorization missing
+  signature"`). A short `r` or `s` raises `ArgumentError` rather than emitting
+  a malformed packed signature.
+  """
+  @spec pack(boolean() | nil, binary() | nil, binary() | nil) :: {:ok, binary()} | {:error, :missing}
+  def pack(v, r, s) when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, :missing}
+
+  def pack(v, r, s) do
+    v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
+    {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
+  end
+
+  @doc """
   Recovers the packed `r <> s <> y_parity` signature from a signed transaction,
   or `{:error, "transaction missing signature"}` when any signature field is nil.
   """
   @spec get(map()) :: {:ok, binary()} | {:error, String.t()}
-  def get(%{signature_y_parity: v, signature_r: r, signature_s: s}) when is_nil(v) or is_nil(r) or is_nil(s),
-    do: {:error, "transaction missing signature"}
-
   def get(%{signature_y_parity: v, signature_r: r, signature_s: s}) do
-    v_enc = :binary.encode_unsigned(if v, do: 1, else: 0)
-    {:ok, <<r::binary-size(32), s::binary-size(32), v_enc::binary>>}
+    case pack(v, r, s) do
+      {:ok, packed} -> {:ok, packed}
+      {:error, :missing} -> {:error, "transaction missing signature"}
+    end
   end
 
   @doc """

@@ -214,12 +214,7 @@ defmodule Cartouche.Transaction.V4 do
   Recovers a packed outer transaction signature (`r <> s <> y_parity`).
   """
   @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
-  def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s})
-      when is_nil(v) or is_nil(r) or is_nil(s), do: {:error, "transaction missing signature"}
-
-  def get_signature(%__MODULE__{signature_y_parity: v, signature_r: r, signature_s: s}) do
-    {:ok, r <> s <> <<y_parity_integer(v)>>}
-  end
+  def get_signature(%__MODULE__{} = transaction), do: Signature.get(transaction)
 
   @doc """
   Signs an EIP-7702 authorization tuple.
@@ -274,11 +269,11 @@ defmodule Cartouche.Transaction.V4 do
   Returns a packed authorization signature (`r <> s <> y_parity`).
   """
   @spec get_authorization_signature(authorization()) :: {:ok, binary()} | {:error, String.t()}
-  def get_authorization_signature({_chain_id, _address, _nonce, v, r, s}) when is_nil(v) or is_nil(r) or is_nil(s),
-    do: {:error, "authorization missing signature"}
-
   def get_authorization_signature({_chain_id, _address, _nonce, v, r, s}) do
-    {:ok, r <> s <> <<y_parity_integer(v)>>}
+    case Signature.pack(v, r, s) do
+      {:ok, packed} -> {:ok, packed}
+      {:error, :missing} -> {:error, "authorization missing signature"}
+    end
   end
 
   @doc ~S"""
