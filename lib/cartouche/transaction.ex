@@ -1461,18 +1461,18 @@ defmodule Cartouche.Transaction do
 
   api(
     :encode,
-    "Encode a concrete transaction struct (V1/V2/V3/V4) into raw RLP/typed-RLP transaction bytes by dispatching on struct.",
+    "Encode a concrete transaction struct (V1/V_2930/V2/V3/V4) into raw RLP/typed-RLP transaction bytes by dispatching on struct.",
     params: [
       transaction: [
         kind: :value,
         description:
-          "%Cartouche.Transaction.V1{}, %Cartouche.Transaction.V2{}, %Cartouche.Transaction.V3{}, or %Cartouche.Transaction.V4{} to encode."
+          "%Cartouche.Transaction.V1{}, %Cartouche.Transaction.V_2930{}, %Cartouche.Transaction.V2{}, %Cartouche.Transaction.V3{}, or %Cartouche.Transaction.V4{} to encode."
       ]
     ],
     returns: %{
       type: :transaction_binary,
       description:
-        "Raw transaction bytes: untyped RLP for V1; EIP-2718 typed envelope (`0x02`/`0x03`/`0x04`) followed by RLP-encoded payload for V2/V3/V4."
+        "Raw transaction bytes: untyped RLP for V1; EIP-2718 typed envelope (`0x01`/`0x02`/`0x03`/`0x04`) followed by RLP-encoded payload for V_2930/V2/V3/V4."
     },
     composes_with: [:decode]
   )
