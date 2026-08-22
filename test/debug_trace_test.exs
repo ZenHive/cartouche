@@ -62,6 +62,10 @@ defmodule Cartouche.DebugTraceTest do
       end
     end
 
+    test "Osaka addition decodes (CLZ, EIP-7939)" do
+      assert StructLog.deserialize(%{@base_struct_log | "op" => "CLZ"}).op == :CLZ
+    end
+
     test "raises ArgumentError on unknown opcode with offending string in message" do
       params = %{@base_struct_log | "op" => "FAKEOPCODE"}
 

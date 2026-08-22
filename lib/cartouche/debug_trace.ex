@@ -61,7 +61,7 @@ defmodule Cartouche.DebugTrace do
     # (`Map.fetch/2` keyed by the wire string) can never grow the atom table.
     @single_opcodes ~w(
       STOP ADD MUL SUB DIV SDIV MOD SMOD ADDMOD MULMOD EXP SIGNEXTEND
-      LT GT SLT SGT EQ ISZERO AND OR XOR NOT BYTE SHL SHR SAR
+      LT GT SLT SGT EQ ISZERO AND OR XOR NOT BYTE SHL SHR SAR CLZ
       KECCAK256 SHA3
       ADDRESS BALANCE ORIGIN CALLER CALLVALUE CALLDATALOAD CALLDATASIZE CALLDATACOPY
       CODESIZE CODECOPY GASPRICE EXTCODESIZE EXTCODECOPY RETURNDATASIZE RETURNDATACOPY
@@ -103,7 +103,8 @@ defmodule Cartouche.DebugTrace do
     Deserializes a trace's struct-log into a struct.
 
     Raises `ArgumentError` for unknown opcode strings or non-binary `op` —
-    the whitelist covers Cancun-era opcodes plus the legacy Geth `SHA3` alias;
+    the whitelist covers Cancun-era opcodes, Osaka's `CLZ` (EIP-7939),
+    plus the legacy Geth `SHA3` alias;
     future-fork additions surface as raises rather than silent atom-table growth.
 
     ## Examples
