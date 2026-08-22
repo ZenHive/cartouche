@@ -6,8 +6,10 @@ if Code.ensure_loaded?(Goth) do
     Implements `Cartouche.Signer.Backend` — its `config` is the
     `{credentials, project, location, keychain, key, version}` key-coordinate
     tuple. `c:Cartouche.Signer.Backend.sign_payload/2` sends the 32-byte digest
-    to KMS directly (no internal keccak); `sign/7` is a back-compat wrapper that
-    keccaks a raw message first.
+    to KMS directly (no internal keccak) and returns the DER-parsed signature
+    as KMS produced it. `sign/7` is a back-compat MFA wrapper: it keccaks a
+    raw message first and canonicalizes low-s before returning, so plugging
+    it into `Cartouche.Signer.sign_direct/4` cannot emit a high-s signature.
     """
     @behaviour Cartouche.Signer.Backend
 
@@ -85,7 +87,10 @@ if Code.ensure_loaded?(Goth) do
     @doc ~S"""
     Signs a raw message via KMS, keccak-digesting it first.
 
-    Back-compat convenience over `sign_payload/2`.
+    Back-compat convenience over `sign_payload/2`. Canonicalizes the
+    returned signature to low-s (EIP-2) so this MFA-shaped wrapper is not
+    an unnormalized signing entry point; `sign_payload/2` stays raw per
+    the backend contract.
 
     ## Examples
 
@@ -98,7 +103,10 @@ if Code.ensure_loaded?(Goth) do
     @spec sign(String.t(), term(), String.t(), String.t(), String.t(), String.t(), String.t()) ::
             {:ok, Curvy.Signature.t()} | {:error, term()}
     def sign(message, cred, project, location, keychain, key, version) when is_binary(message) do
-      sign_payload(keccak(message), {cred, project, location, keychain, key, version})
+      with {:ok, signature} <-
+             sign_payload(keccak(message), {cred, project, location, keychain, key, version}) do
+        {:ok, Cartouche.Recover.normalize_low_s(signature)}
+      end
     end
 
     @spec parse_kms_signature(binary()) :: {:ok, Curvy.Signature.t()} | {:error, :invalid_signature}

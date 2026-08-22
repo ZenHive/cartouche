@@ -6,6 +6,7 @@ defmodule Cartouche.Signer.CloudKMSTest do
   doctest CloudKMS
 
   @credential_ref {:goth_credential, __MODULE__}
+  @secp256k1_n 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
   setup do
     previous_config = Application.get_env(:cartouche, CloudKMS, [])
@@ -131,6 +132,14 @@ defmodule Cartouche.Signer.CloudKMSTest do
 
       assert :meck.num_calls(Goth, :fetch!, [credential]) == 1
     end
+
+    test "canonicalizes a high-s KMS signature so returned s is at most n/2" do
+      Application.put_env(:cartouche, CloudKMS, req_options: [plug: &high_s_sign_plug/1])
+
+      {:ok, sig} = CloudKMS.sign("test", "token", "project", "location", "keychain", "key", "version")
+
+      assert sig.s <= div(@secp256k1_n, 2)
+    end
   end
 
   describe "get_address/6 algorithm validation" do
@@ -189,6 +198,17 @@ defmodule Cartouche.Signer.CloudKMSTest do
   defp malformed_der_sign_plug(conn) do
     Req.Test.json(conn, %{
       signature: Base.encode64("not-a-der-signature"),
+      signatureCrc32c: "0",
+      name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
+      protectionLevel: "HSM"
+    })
+  end
+
+  defp high_s_sign_plug(conn) do
+    der = Curvy.Signature.to_der(%Curvy.Signature{crv: :secp256k1, r: 123, s: @secp256k1_n - 1})
+
+    Req.Test.json(conn, %{
+      signature: Base.encode64(der),
       signatureCrc32c: "0",
       name: "projects/project/locations/location/keyRings/keychain/cryptoKeys/key/cryptoKeyVersions/version",
       protectionLevel: "HSM"

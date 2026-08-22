@@ -1,12 +1,23 @@
 defmodule Cartouche.Signer do
   @moduledoc """
-  Cartouche.Signer is a GenServer which can sign messages. This module takes an
-  mfa (mod, func, args triple) which defines how to actually sign messages.
-  For instance, `Cartouche.Signer.Curvy` will sign with a public key, or
-  `Cartouche.Signer.CloudKMS` will sign using a GCP Cloud KMS key. In either
-  case, the caller should start the GenServer, and then call:
-  `Cartouche.Signer.sign(MySigner, "message")`. This should return back a
-  properly signed message.
+  Cartouche.Signer is a GenServer which can sign messages. The runtime carrier
+  is a `{backend_module, config}` pair implementing `Cartouche.Signer.Backend`
+  (for instance `Cartouche.Signer.Curvy` with a local key, or
+  `Cartouche.Signer.CloudKMS` with GCP Cloud KMS coordinates). A legacy
+  `{module, function, args}` MFA is also accepted so existing call sites
+  (`Cartouche.Signer.sign_direct/4`, and `start_link/1` handed a 3-tuple)
+  keep working. In either case, start the GenServer and call
+  `Cartouche.Signer.sign(MySigner, "message")` to get a 65-byte Ethereum
+  signature.
+
+  This library never emits a 65-byte Ethereum signature with `s > n/2`
+  (EIP-2). Low-s canonicalization is applied at the emission funnel, not by
+  the configured backend: both the `{backend, config}` path and the legacy
+  MFA path pass through `Cartouche.Recover.normalize_low_s/1` before the
+  recovery-bit search and EIP-155 packing. The MFA carrier is kept because
+  `sign_direct/4` is the production signing route in the downstream `onchain`
+  repo; migrating that call site is a separate task. It cannot bypass the
+  invariant.
 
   Note: we also enforce that a given signer process knows its public key,
   such that we can verify signatures recovery bits. That is, since CloudKMS
@@ -222,14 +233,15 @@ defmodule Cartouche.Signer do
   Directly sign a message, not using a signer process.
 
   This is mostly used internally, but can be used safely externally as well.
+  The returned 65-byte signature is always low-s (EIP-2), regardless of
+  whether the MFA backend normalized.
   """
   @spec sign_direct(String.t(), binary(), {module(), atom(), [any()]}, integer() | atom() | nil) ::
           {:ok, binary()} | {:error, String.t()}
   def sign_direct(message, address, {mod, fun, args}, chain_id_or_name) do
     with {:ok, %Curvy.Signature{crv: :secp256k1, recid: nil} = signature} <-
-           apply(mod, fun, [message] ++ args),
-         {:ok, recid} <- Cartouche.Recover.find_recid(message, signature, address) do
-      {:ok, encode_eip155(signature, recid, chain_id_or_name)}
+           apply(mod, fun, [message] ++ args) do
+      emit_signature(keccak(message), signature, address, chain_id_or_name)
     end
   end
 
@@ -265,15 +277,26 @@ defmodule Cartouche.Signer do
   defp backend_sign({backend, config}, message, address, chain_id_or_name) when is_atom(backend) do
     with :ok <- Backend.expect_algorithm(backend, config, :secp256k1),
          digest = keccak(message),
-         {:ok, raw_signature} <- backend.sign_payload(digest, config),
-         signature = Cartouche.Recover.normalize_low_s(raw_signature),
-         {:ok, recid} <- Cartouche.Recover.find_recid_from_digest(digest, signature, address) do
-      {:ok, encode_eip155(signature, recid, chain_id_or_name)}
+         {:ok, raw_signature} <- backend.sign_payload(digest, config) do
+      emit_signature(digest, raw_signature, address, chain_id_or_name)
     end
   end
 
   defp backend_sign({_mod, _fun, _args} = mfa, message, address, chain_id_or_name) do
     sign_direct(message, address, mfa, chain_id_or_name)
+  end
+
+  # Sole 65-byte emission funnel. Low-s is applied here, before recid search,
+  # so a high-s backend cannot produce a malleable signature and flipping s
+  # cannot leave a stale recovery bit.
+  @spec emit_signature(<<_::256>>, Curvy.Signature.t(), binary(), integer() | atom() | nil) ::
+          {:ok, binary()} | {:error, term()}
+  defp emit_signature(digest, raw_signature, address, chain_id_or_name) do
+    signature = Cartouche.Recover.normalize_low_s(raw_signature)
+
+    with {:ok, recid} <- Cartouche.Recover.find_recid_from_digest(digest, signature, address) do
+      {:ok, encode_eip155(signature, recid, chain_id_or_name)}
+    end
   end
 
   # Assemble the 65-byte EIP-155 signature from a recovered secp256k1 signature.
