@@ -2797,6 +2797,181 @@
       "created_at": "2026-08-23",
       "scored_at": "2026-08-23",
       "cross_repo": []
+    },
+    {
+      "id": "120",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Cartouche.RPC.create_access_list/2 — eth_createAccessList",
+      "scores": {
+        "d": 3,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 2.17,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "parallel"
+      ],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "Cartouche.RPC.create_access_list/2 sends eth_createAccessList with the same call-object encoding as eth_call and accepts the same block parameter forms (integer, :latest, hex tag) as the rest of the module",
+        "The returned access list is the {address, [storage_keys]} binary tuple list that Cartouche.Transaction.V2.new/9 and V_2930.new/8 accept, proven by a test that feeds the decoded result into V_2930.new/8 and round-trips the encoded transaction",
+        "gas_used is decoded as a non-negative integer",
+        "A node-returned error field is surfaced to the caller rather than dropped, and does not discard the access list the node returned with it",
+        "A live integration test (@moduletag :integration, Cartouche.Test.Live.live_opts/0) calls a storage-touching mainnet contract at a pinned block and asserts specific addresses and storage keys appear in the result, not merely that a list came back",
+        "A live integration test pins the node's behaviour for a reverting call, asserting the actual observed response rather than an assumed one",
+        "Doctest and @spec match the conventions of the surrounding defrpc entries",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "eth_getBlockAccessList (EIP-7928 block-level access lists) — filed against onchain, it is a block read",
+        "Automatically populating access lists during signing or gas estimation — this task adds the read, not a policy",
+        "Any access-list gas-cost heuristics"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "test/rpc_test.exs",
+        "test/rpc_integration_test.exs"
+      ],
+      "body": "Add `eth_createAccessList` to `Cartouche.RPC`. This is the one JSON-RPC method in the completeness sweep that belongs in cartouche rather than in onchain: it produces exactly the structure `Cartouche.Transaction.V2` and `V_2930` already encode, so it closes the loop opened by the V_2930 write surface shipped in 0.8.0 — a caller can now build a type-1 transaction but cannot ask a node what to put in its access list.\n\nThe method takes the same call object as `eth_call` / `eth_estimateGas` (reuse `to_call_params/2`) plus a block parameter, and returns `{accessList, gasUsed}` — and optionally an `error` string when the call reverts, which the node returns alongside a usable access list rather than instead of one. Decode the access list into cartouche's native representation, the `{address_binary, [storage_key_binary]}` tuple list that `V2`/`V_2930` accept, so the result can be handed straight to `new/8` without a caller-side shim. Do not invent a new struct shape for it.\n\nAuthority for the response shape is the provider-owned spec (`ethereum/execution-apis`, `src/eth/execute.yaml`) plus the live node, not a third-party client.\n",
+      "created_at": "2026-08-23",
+      "scored_at": "2026-08-23",
+      "cross_repo": []
+    },
+    {
+      "id": "121",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Complete the Cartouche.Filter lifecycle — uninstall, getFilterLogs, and the block/pending filter kinds",
+      "scores": {
+        "d": 4,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 1.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "parallel"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Cartouche.Filter uninstalls its node-side filter on normal termination, and a test asserts the eth_uninstallFilter call is issued with the filter id the node handed out",
+        "An uninstall that fails or times out during shutdown is logged and does not crash the terminating process, proven by a test that makes the uninstall call fail",
+        "Cartouche.RPC exposes get_filter_logs/2 (eth_getFilterLogs), decoding to the same Cartouche.Filter.Log shape eth_getFilterChanges already produces",
+        "Cartouche.RPC exposes new_block_filter/1 and new_pending_transaction_filter/1",
+        "Cartouche.Filter can be started as a block or pending-transaction filter through its existing option surface, and delivers the corresponding hash lists to listeners; log filters keep their current behaviour and existing tests stay green unchanged",
+        "The expired-filter recovery branch that task 58 hardened still fires for every filter kind, not only log filters",
+        "A live integration test (@moduletag :integration) creates each of the three filter kinds against the node, polls it, and uninstalls it, asserting the observed payload shape for each",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "eth_subscribe / eth_unsubscribe and any WebSocket transport — cartouche is HTTP-only over Req; onchain owns the subscription surface",
+        "eth_getLogs — onchain owns historical log queries",
+        "Changing the polling interval strategy or the listener protocol"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/filter.ex",
+        "lib/cartouche/rpc.ex",
+        "test/filter_test.exs"
+      ],
+      "body": "`Cartouche.Filter` implements two of the six filter methods: it creates a filter with `eth_newFilter` and polls it with `eth_getFilterChanges`. Three consequences, the first being a defect rather than a gap.\n\nThe GenServer never calls `eth_uninstallFilter`. It registers a filter on the node and, when the process stops, abandons it — the node holds the filter until its own idle timeout expires (commonly around five minutes, but it is a node policy, not a guarantee). A supervised Filter that restarts repeatedly leaks a filter registration per restart. Install a `terminate/2` that uninstalls, and treat an uninstall failure as a logged non-fatal event rather than a crash during shutdown.\n\n`eth_getFilterLogs` is absent, so there is no way to read a filter's full backlog — only the changes since the last poll. A consumer that attaches to an existing filter, or that wants the current matching set rather than a delta, has no route.\n\n`eth_newBlockFilter` and `eth_newPendingTransactionFilter` are absent, so the module only supports log filters even though the polling machinery is identical for all three kinds; only the payload deserialization differs (a block-hash list, a transaction-hash list, or `Cartouche.Filter.Log` entries). Extend the existing `start_link/1` option surface to select the kind rather than adding parallel modules.\n\nAuthority for the response shapes is `ethereum/execution-apis` (`src/eth/filter.yaml`) plus the live node.\n",
+      "created_at": "2026-08-23",
+      "scored_at": "2026-08-23",
+      "cross_repo": []
+    },
+    {
+      "id": "122",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Cartouche.RPC fee reads — eth_baseFee and eth_blobBaseFee",
+      "scores": {
+        "d": 2,
+        "b": 6,
+        "u": 5
+      },
+      "eff": 2.75,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "parallel"
+      ],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "Cartouche.RPC.base_fee/1 and blob_base_fee/1 send eth_baseFee and eth_blobBaseFee and decode to non-negative integers, following the defrpc conventions of the surrounding fee reads",
+        "A live integration test asserts base_fee/1 against the same block's base_fee_per_gas obtained through get_block_by_number, proving the two routes agree rather than merely that a number came back",
+        "A live integration test asserts blob_base_fee/1 is consistent with the excess_blob_gas of the corresponding block via EIP-4844's fake_exponential, computed in the test",
+        "A node that does not support the method surfaces the node's own error unchanged, pinned by a test against the observed response",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Implementing fake_exponential as library code",
+        "Any blob-fee estimation policy or V3 gas-pricing helper",
+        "eth_feeHistory changes"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "test/rpc_test.exs",
+        "test/rpc_integration_test.exs"
+      ],
+      "body": "Cartouche already exposes `eth_gasPrice`, `eth_maxPriorityFeePerGas` and `eth_feeHistory`. Two fee reads from the current spec are missing, and both are plain quantity returns that belong beside them.\n\n`eth_baseFee` returns the computed base fee of the next block, which today a caller can only obtain by fetching a block and reading `base_fee_per_gas`, or by going through `eth_feeHistory`.\n\n`eth_blobBaseFee` matters more than its size suggests: cartouche can construct and sign EIP-4844 blob transactions through `Cartouche.Transaction.V3`, but offers no way to price one. The value is derivable today — `Cartouche.Block` already deserializes `excess_blob_gas`, and EIP-4844's `fake_exponential` turns that into the blob base fee — so this is a convenience over an existing route, not an unblocking. Implement it as the direct node read; do not reimplement `fake_exponential` locally.\n\nNote that a node may not support either method (they are recent, and `eth_blobBaseFee` is Cancun-onward). Surface the node's actual response for an unsupported method rather than translating it into a synthetic value.\n\nAuthority is `ethereum/execution-apis` (`src/eth/fee_market.yaml`) plus the live node.\n",
+      "created_at": "2026-08-23",
+      "scored_at": "2026-08-23",
+      "cross_repo": []
+    },
+    {
+      "id": "123",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Cartouche.RPC node introspection — eth_config (EIP-7910) and eth_capabilities",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 4
+      },
+      "eff": 1.13,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "parallel"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Cartouche.RPC.eth_config/1 returns a deserialized struct with typed fields for at least chain id, fork id, fork activation, blob schedule, precompiles and system contracts, with optional fields typed as nilable",
+        "Cartouche.RPC.eth_capabilities/1 returns the node's capability report deserialized into a documented shape",
+        "Both deserializers tolerate a response that omits optional fields, proven by unit tests over recorded payloads, and neither raises on an unknown extra field",
+        "The moduledoc states explicitly whether and how eth_config relates to the static Cartouche.Chain table; Cartouche.Chain does not acquire a runtime network dependency",
+        "A live integration test calls both methods against the node and asserts domain values, not merely shape; if the node does not implement a method the test flunks with the method name and the node's actual error rather than skipping",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Making any existing code path consume eth_config at runtime",
+        "eth_getStorageValues and eth_getBlockAccessList — filed against onchain",
+        "A chain-registry refactor"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "lib/cartouche/chain.ex",
+        "test/rpc_integration_test.exs"
+      ],
+      "body": "Two node-introspection methods from the current spec are missing. They sit beside the existing `net_version` and `eth_chainId` as questions about the node and chain rather than about state.\n\n`eth_config` (EIP-7910) returns the chain's configuration: fork activation times, the blob schedule, chain id, fork id, precompiles, and system contracts. It is the only method that lets a client discover which fork rules a node is applying without hardcoding a chain table, and cartouche carries exactly such a table in `Cartouche.Chain`. Decide, and record in the moduledoc, whether the result is offered purely as a read or is also usable to cross-check `Cartouche.Chain`; do not silently make the static table depend on a network call.\n\n`eth_capabilities` reports which capabilities the node has available — notably whether state or state proofs are unavailable, as happens on a node without genesis world state.\n\nBoth return structured objects rather than scalars, so each needs a deserializer following the conventions of `Cartouche.FeeHistory` and `Cartouche.Block`: a struct with typed fields and a `deserialize/1`, tolerating fields a given client omits rather than raising on them. The `eth_config` payload is the larger of the two and is still evolving — read the current shape from the spec, and be explicit in the type about which fields are optional.\n\nAuthority is EIP-7910 and `ethereum/execution-apis` (`src/eth/client.yaml`, `src/eth/capabilities.yaml`) plus the live node. Note that client support is uneven; if the integration node does not implement a method, the test must record that observation and fail loudly rather than skip.\n",
+      "created_at": "2026-08-23",
+      "scored_at": "2026-08-23",
+      "cross_repo": []
     }
   ]
 }
