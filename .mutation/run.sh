@@ -10,7 +10,7 @@
 # Exhaustive: --no-filter --no-optimize, all 18 mutators. --coverage-guided
 # only narrows which EXISTING tests run per mutant; it never drops a mutant.
 set -u
-cd /Users/efries/_DATA/worktrees/cartouche/114 || exit 1
+cd "${0:A:h}/.." || exit 1
 export MIX_ENV=test
 
 MUTATORS=arithmetic,boolean,case_clause,comparison,cond_clause,conditional,enum_semantics,extended_math,function_call,guard,invert_negatives,literal,map_semantics,negate_conditionals,pipe,return_value,statement_deletion,with_clause

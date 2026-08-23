@@ -14,6 +14,25 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [Unreleased]
+
+### Added
+
+- **`Cartouche.RPC` now wraps `eth_createAccessList`, `eth_baseFee`,
+  `eth_blobBaseFee`, `eth_config` (EIP-7910), and `eth_capabilities`.**
+  `create_access_list/2` reuses the existing call-object encoding and returns
+  a `V_2930`-ready `{address, storage_keys}` list plus `gas_used`, retaining
+  an optional execution-error string when the node still produced a usable
+  list. `base_fee/1` and `blob_base_fee/1` decode `QUANTITY` results and pass
+  the node's unchanged error through when the method is unsupported.
+  `eth_config/1` deserializes the current/next/last fork report defined by
+  EIP-7910 (`activationTime` as a JSON number, `chainId`/`forkId` as hex,
+  named precompile and system-contract addresses). `eth_capabilities/1`
+  deserializes the node's advertised head and per-resource retention
+  (`oldestBlock`, `deleteStrategy`). Unknown fields are ignored so a newer
+  node revision does not break the decoder. Closes ROADMAP Tasks 120, 122,
+  and 123.
+
 ## [0.8.0] — 2026-08-23
 
 ### Added

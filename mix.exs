@@ -184,7 +184,7 @@ defmodule Cartouche.MixProject do
       # campaigns are run on demand; the record lives in
       # docs/verification-ledger.md.
       #
-      # TODO: muex 0.8.2 cannot report a surviving mutant on Elixir 1.20 —
+      # TODO(Task 119): muex 0.8.2 cannot report a surviving mutant on Elixir 1.20 —
       # do not read a mutation score from it until this is fixed upstream.
       # `Muex.TestRunner.Port.count_failures/2` matches the pre-1.20 summary
       # wording (`N tests, M failures`); 1.20 prints `Result: N passed` /
