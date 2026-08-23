@@ -2803,7 +2803,7 @@
       "id": "120",
       "phase": 0,
       "bundle": "rpc_correctness",
-      "status": "in_progress",
+      "status": "done",
       "title": "Cartouche.RPC.create_access_list/2 — eth_createAccessList",
       "scores": {
         "d": 3,
@@ -2837,10 +2837,17 @@
         "test/rpc_test.exs",
         "test/rpc_integration_test.exs"
       ],
+      "shipped_in": "670b22b49c91c5c80432a3fd5c000e92207a7992",
       "body": "Add `eth_createAccessList` to `Cartouche.RPC`. This is the one JSON-RPC method in the completeness sweep that belongs in cartouche rather than in onchain: it produces exactly the structure `Cartouche.Transaction.V2` and `V_2930` already encode, so it closes the loop opened by the V_2930 write surface shipped in 0.8.0 — a caller can now build a type-1 transaction but cannot ask a node what to put in its access list.\n\nThe method takes the same call object as `eth_call` / `eth_estimateGas` (reuse `to_call_params/2`) plus a block parameter, and returns `{accessList, gasUsed}` — and optionally an `error` string when the call reverts, which the node returns alongside a usable access list rather than instead of one. Decode the access list into cartouche's native representation, the `{address_binary, [storage_key_binary]}` tuple list that `V2`/`V_2930` accept, so the result can be handed straight to `new/8` without a caller-side shim. Do not invent a new struct shape for it.\n\nAuthority for the response shape is the provider-owned spec (`ethereum/execution-apis`, `src/eth/execute.yaml`) plus the live node, not a third-party client.\n",
       "created_at": "2026-08-23",
       "started_at": "2026-08-23",
+      "done_at": "2026-08-23",
       "scored_at": "2026-08-23",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787470449354-d8c31a68, 670b22b49c91c5c80432a3fd5c000e92207a7992).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787470449354-d8c31a68",
       "cross_repo": []
     },
     {

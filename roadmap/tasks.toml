@@ -1817,7 +1817,7 @@ scored_at = "2026-08-23"
 id = "120"
 phase = 0
 bundle = "rpc_correctness"
-status = "in_progress"
+status = "done"
 title = "Cartouche.RPC.create_access_list/2 — eth_createAccessList"
 scores = { d = 3, b = 7, u = 6 }
 markers = []
@@ -1833,9 +1833,16 @@ The method takes the same call object as `eth_call` / `eth_estimateGas` (reuse `
 
 Authority for the response shape is the provider-owned spec (`ethereum/execution-apis`, `src/eth/execute.yaml`) plus the live node, not a third-party client.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787470449354-d8c31a68, 670b22b49c91c5c80432a3fd5c000e92207a7992)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787470449354-d8c31a68"
 created_at = "2026-08-23"
 started_at = "2026-08-23"
 scored_at = "2026-08-23"
+done_at = "2026-08-23"
+shipped_in = "670b22b49c91c5c80432a3fd5c000e92207a7992"
 
 [[task]]
 id = "121"
