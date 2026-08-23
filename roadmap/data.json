@@ -2995,7 +2995,7 @@
       "id": "124",
       "phase": 0,
       "bundle": "rpc_correctness",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Cartouche.RPC node-custody methods — eth_accounts, eth_coinbase, eth_fillTransaction, eth_sign, eth_signTransaction, eth_sendTransaction",
       "scores": {
         "d": 4,
@@ -3032,6 +3032,7 @@
       ],
       "body": "The last six `eth_` methods missing from the stack are the ones where the node, not the caller, holds the key. Cartouche's model is the opposite — build the envelope locally, sign it through `Cartouche.Signer`, submit `eth_sendRawTransaction` — which is why they were left out. For a library that aims at full JSON-RPC coverage that omission costs more to explain than to close, and against a development node (Anvil, Hardhat, geth --dev) these methods are the normal way to work.\n\nAdd all six as passthroughs. They divide into three groups and must not be documented as one thing:\n\n- `eth_accounts` and `eth_coinbase` are pure reads with no signing at all: which addresses this node manages, and its fee recipient. Nothing about them conflicts with local signing.\n- `eth_fillTransaction` asks the node to populate nonce, gas and fee fields and return the completed transaction without signing it.\n- `eth_sign`, `eth_signTransaction` and `eth_sendTransaction` delegate signing, and in the last case broadcasting, to the node's own keystore.\n\nTwo things the moduledoc must state plainly. First, that local signing through `Cartouche.Signer` remains the library's normal route, and that these exist for nodes that hold keys — the distinction is not key custody as such (`Cartouche.Signer.CloudKMS` already signs with a key cartouche does not hold) but which side constructs the transaction: with these methods the envelope construction, nonce and fee policy, EIP-155 `v` derivation and low-s normalization all move into the node. Second, that `eth_sign` signs an arbitrary 32-byte digest and has historically been usable to trick a signer into signing a transaction hash; most nodes ship it disabled, and EIP-191 / `personal_sign` superseded it. Do not add a warning that discourages the other five by association.\n\nThese are passthroughs, not policy. Return what the node returns — including its refusal when a method is disabled or an account is locked — rather than translating, retrying, or substituting a locally-signed path.\n\nAuthority is `ethereum/execution-apis` (`src/eth/sign.yaml`, `src/eth/submit.yaml`, `src/eth/fill.yaml`, `src/eth/client.yaml`) plus the live node.\n\nNote on test infrastructure: `Cartouche.Test.Live.assert_node_available!/0` flunks unless the node reports chain id 1, because the existing integration suite pins mainnet historical anchors. A mainnet archive node has no unlocked accounts, so these six cannot be exercised there. This task must add a development-node lane alongside the mainnet one — its own env var and availability assertion, following the shape of the existing helper — without weakening the mainnet check that the current suite depends on.\n",
       "created_at": "2026-08-23",
+      "started_at": "2026-08-23",
       "scored_at": "2026-08-23",
       "cross_repo": []
     }

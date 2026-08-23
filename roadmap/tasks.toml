@@ -1946,7 +1946,7 @@ shipped_in = "670b22b49c91c5c80432a3fd5c000e92207a7992"
 id = "124"
 phase = 0
 bundle = "rpc_correctness"
-status = "pending"
+status = "in_progress"
 title = "Cartouche.RPC node-custody methods — eth_accounts, eth_coinbase, eth_fillTransaction, eth_sign, eth_signTransaction, eth_sendTransaction"
 scores = { d = 4, b = 6, u = 4 }
 acceptance_criteria = ["All six methods are exposed on Cartouche.RPC following the surrounding defrpc conventions, with @spec, doc and doctest matching their neighbours", "eth_fillTransaction's populated transaction is deserialized into cartouche's existing transaction representation rather than returned as a raw map, and a test proves the result can be encoded and decoded through Cartouche.Transaction", "eth_signTransaction's returned raw transaction decodes through Cartouche.Transaction.decode/1, and a test asserts the recovered signer equals the node account that signed it", "test/support/live.ex gains a development-node lane with its own env var and availability assertion; when the env var is unset the lane may fall back to booting a locally installed anvil ephemerally for the test run (cleanly torn down afterwards), and when neither is available the tests flunk with the exact env var and the anvil install/launch command, never skip; the existing mainnet chain-id-1 assertion is unchanged and the current integration suite still passes against a mainnet archive node", "Live integration tests against a development node cover all six methods: accounts and coinbase return the node's configured addresses, fillTransaction populates a transaction, and signTransaction and sendTransaction produce a transaction whose recovered signer is the expected account", "A live test pins the node's actual refusal for a disabled or locked-account case, asserting the observed error rather than an assumed one; a node that has the method disabled is a recorded observation, never a skip", "The Cartouche.RPC moduledoc states that local signing remains the normal route, explains that the distinction is which side constructs the transaction rather than key custody, and carries the eth_sign caveat scoped to eth_sign alone", "mix ci passes"]
@@ -1972,4 +1972,5 @@ Authority is `ethereum/execution-apis` (`src/eth/sign.yaml`, `src/eth/submit.yam
 Note on test infrastructure: `Cartouche.Test.Live.assert_node_available!/0` flunks unless the node reports chain id 1, because the existing integration suite pins mainnet historical anchors. A mainnet archive node has no unlocked accounts, so these six cannot be exercised there. This task must add a development-node lane alongside the mainnet one — its own env var and availability assertion, following the shape of the existing helper — without weakening the mainnet check that the current suite depends on.
 """
 created_at = "2026-08-23"
+started_at = "2026-08-23"
 scored_at = "2026-08-23"
