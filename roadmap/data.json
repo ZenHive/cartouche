@@ -2890,7 +2890,7 @@
       "id": "122",
       "phase": 0,
       "bundle": "rpc_correctness",
-      "status": "pending",
+      "status": "in_progress",
       "title": "Cartouche.RPC fee reads — eth_baseFee and eth_blobBaseFee",
       "scores": {
         "d": 2,
@@ -2923,6 +2923,7 @@
       ],
       "body": "Cartouche already exposes `eth_gasPrice`, `eth_maxPriorityFeePerGas` and `eth_feeHistory`. Two fee reads from the current spec are missing, and both are plain quantity returns that belong beside them.\n\n`eth_baseFee` returns the computed base fee of the next block, which today a caller can only obtain by fetching a block and reading `base_fee_per_gas`, or by going through `eth_feeHistory`.\n\n`eth_blobBaseFee` matters more than its size suggests: cartouche can construct and sign EIP-4844 blob transactions through `Cartouche.Transaction.V3`, but offers no way to price one. The value is derivable today — `Cartouche.Block` already deserializes `excess_blob_gas`, and EIP-4844's `fake_exponential` turns that into the blob base fee — so this is a convenience over an existing route, not an unblocking. Implement it as the direct node read; do not reimplement `fake_exponential` locally.\n\nNote that a node may not support either method (they are recent, and `eth_blobBaseFee` is Cancun-onward). Surface the node's actual response for an unsupported method rather than translating it into a synthetic value.\n\nAuthority is `ethereum/execution-apis` (`src/eth/fee_market.yaml`) plus the live node.\n",
       "created_at": "2026-08-23",
+      "started_at": "2026-08-23",
       "scored_at": "2026-08-23",
       "cross_repo": []
     },
