@@ -471,6 +471,112 @@ defmodule Cartouche.FilterTest do
     assert Keyword.get(dictionary, :new_filter_count, 0) >= 2
   end
 
+  defmodule StallingUninstallServer do
+    @moduledoc false
+    # A real socket, not a `Req.Test` plug: plugs are invoked in-process, so
+    # `receive_timeout` never applies to them and they cannot exercise the
+    # shutdown-budget bound in `Cartouche.Filter.uninstall_filter/1`.
+    # Answers `eth_newFilter` immediately, then stalls forever on
+    # `eth_uninstallFilter` so only the client-side timeout ends the call.
+
+    @spec start() :: {:ok, String.t()}
+    def start do
+      {:ok, listen} = :gen_tcp.listen(0, [:binary, packet: :raw, active: false, reuseaddr: true])
+      {:ok, port} = :inet.port(listen)
+      spawn_link(fn -> accept_loop(listen) end)
+      {:ok, "http://127.0.0.1:#{port}"}
+    end
+
+    defp accept_loop(listen) do
+      case :gen_tcp.accept(listen) do
+        {:ok, socket} ->
+          pid = spawn(fn -> serve(socket) end)
+          :ok = :gen_tcp.controlling_process(socket, pid)
+          accept_loop(listen)
+
+        {:error, :closed} ->
+          :ok
+      end
+    end
+
+    defp serve(socket) do
+      with {:ok, body} <- read_request(socket) do
+        request = Jason.decode!(body)
+
+        if request["method"] == "eth_uninstallFilter" do
+          # Never reply. The filter must give up on its own timeout.
+          Process.sleep(:infinity)
+        else
+          respond(socket, request["id"], "0xdeadf11e")
+        end
+      end
+    end
+
+    defp respond(socket, id, result) do
+      json = Jason.encode!(%{jsonrpc: "2.0", id: id, result: result})
+
+      :gen_tcp.send(
+        socket,
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{byte_size(json)}\r\nConnection: close\r\n\r\n" <>
+          json
+      )
+
+      :gen_tcp.close(socket)
+    end
+
+    defp read_request(socket, acc \\ "") do
+      case :gen_tcp.recv(socket, 0, 5_000) do
+        {:ok, chunk} -> take_complete_request(socket, acc <> chunk)
+        {:error, _} = error -> error
+      end
+    end
+
+    defp take_complete_request(socket, acc) do
+      case String.split(acc, "\r\n\r\n", parts: 2) do
+        [headers, body] ->
+          if byte_size(body) >= content_length(headers), do: {:ok, body}, else: read_request(socket, acc)
+
+        _ ->
+          read_request(socket, acc)
+      end
+    end
+
+    defp content_length(headers) do
+      headers
+      |> String.split("\r\n")
+      |> Enum.find_value(0, fn line ->
+        case String.split(String.downcase(line), ":", parts: 2) do
+          ["content-length", value] -> String.to_integer(String.trim(value))
+          _ -> nil
+        end
+      end)
+    end
+  end
+
+  test "a stalled uninstall gives up inside the supervisor shutdown budget" do
+    {:ok, url} = StallingUninstallServer.start()
+
+    log =
+      capture_log(fn ->
+        {:ok, pid} =
+          Cartouche.Filter.start_link(
+            name: StalledUninstallFilter,
+            address: <<1::160>>,
+            check_delay: 10_000,
+            rpc_opts: [ethereum_node: url, req_options: [plug: nil]]
+          )
+
+        # A supervisor gives a trapping child 5_000 ms before killing it; the
+        # uninstall must return well inside that, not after the 30_000 ms
+        # transport default.
+        {elapsed, :ok} = :timer.tc(fn -> GenServer.stop(pid, :normal, 4_500) end)
+        assert div(elapsed, 1_000) < 4_000
+      end)
+
+    assert log =~ "uninstall"
+    assert log =~ "0xdeadf11e"
+  end
+
   test "rejects an unknown filter kind" do
     assert_raise ArgumentError, ~r/unknown filter kind/, fn ->
       Cartouche.Filter.start_link(name: BadKindFilter, kind: :nope)
@@ -485,48 +591,97 @@ defmodule Cartouche.Filter.IntegrationTest do
 
   @moduletag :integration
 
+  # Same mainnet anchor `rpc_integration_test.exs` pins. WETH9 transfers in this
+  # block make `eth_getFilterLogs` deterministically non-empty, so the payload
+  # shape is actually exercised instead of an empty list vacuously satisfying it.
+  @weth9 "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+  @anchor_block "0x112A880"
+
+  # Mainnet produces a block roughly every 12 s, so a minute without one is a
+  # node problem worth failing on, not a flake.
+  @block_poll_attempts 30
+  @block_poll_interval 2_000
+
   setup_all do
     Cartouche.Test.Live.assert_node_available!()
     :ok
   end
 
-  test "log filter create, poll, get_filter_logs, and uninstall" do
+  test "log filter over a historical range decodes real logs, then uninstalls" do
     opts = live_opts()
-    assert {:ok, id} = Cartouche.RPC.send_rpc("eth_newFilter", [%{}], opts)
+
+    params = %{"address" => @weth9, "fromBlock" => @anchor_block, "toBlock" => @anchor_block}
+    assert {:ok, id} = Cartouche.RPC.send_rpc("eth_newFilter", [params], opts)
     assert is_binary(id)
 
+    # A freshly created filter has no *changes* yet — the backlog is what
+    # `eth_getFilterLogs` returns, and that is where the shape is provable.
     assert {:ok, changes} = Cartouche.RPC.send_rpc("eth_getFilterChanges", [id], opts)
     assert is_list(changes)
-    Enum.each(changes, fn log -> assert is_map(log) end)
 
     assert {:ok, logs} = Cartouche.RPC.get_filter_logs(id, opts)
-    assert is_list(logs)
-    Enum.each(logs, fn log -> assert %Cartouche.Filter.Log{} = log end)
+    assert logs != [], "expected WETH9 logs in block #{@anchor_block}; is the node an archive node?"
+
+    Enum.each(logs, fn log ->
+      assert %Cartouche.Filter.Log{} = log
+      assert byte_size(log.address) == 20
+      assert byte_size(log.block_hash) == 32
+      assert byte_size(log.transaction_hash) == 32
+      assert log.block_number == 18_000_000
+      assert Enum.all?(log.topics, &(byte_size(&1) == 32))
+    end)
 
     assert {:ok, true} = Cartouche.RPC.send_rpc("eth_uninstallFilter", [id], opts)
   end
 
-  test "block filter create, poll, and uninstall" do
+  test "block filter yields block hashes as the chain advances, then uninstalls" do
     opts = live_opts()
     assert {:ok, id} = Cartouche.RPC.new_block_filter(opts)
     assert is_binary(id)
 
-    assert {:ok, hashes} = Cartouche.RPC.send_rpc("eth_getFilterChanges", [id], opts)
-    assert is_list(hashes)
-    Enum.each(hashes, fn hash -> assert is_binary(hash) and String.starts_with?(hash, "0x") end)
+    hashes = poll_until_non_empty(id, opts, @block_poll_attempts)
+
+    assert hashes != [],
+           "no new block in #{div(@block_poll_attempts * @block_poll_interval, 1_000)}s — the node is not following the chain"
+
+    Enum.each(hashes, fn hash -> assert byte_size(Cartouche.Hex.decode_word!(hash)) == 32 end)
 
     assert {:ok, true} = Cartouche.RPC.send_rpc("eth_uninstallFilter", [id], opts)
   end
 
-  test "pending-transaction filter create, poll, and uninstall" do
+  test "pending-transaction filter installs and uninstalls; payload shape asserted only when the node shares its mempool" do
     opts = live_opts()
     assert {:ok, id} = Cartouche.RPC.new_pending_transaction_filter(opts)
     assert is_binary(id)
 
     assert {:ok, hashes} = Cartouche.RPC.send_rpc("eth_getFilterChanges", [id], opts)
-    assert is_list(hashes)
-    Enum.each(hashes, fn hash -> assert is_binary(hash) and String.starts_with?(hash, "0x") end)
+
+    # Recorded observation, not a skip: most hosted archive endpoints install
+    # the filter but never surface mempool contents to an external caller, so an
+    # empty list is the node's real answer here. When the node does share it,
+    # the payload must decode as 32-byte hashes.
+    case hashes do
+      [] ->
+        assert hashes == []
+
+      [_ | _] ->
+        Enum.each(hashes, fn hash -> assert byte_size(Cartouche.Hex.decode_word!(hash)) == 32 end)
+    end
 
     assert {:ok, true} = Cartouche.RPC.send_rpc("eth_uninstallFilter", [id], opts)
+  end
+
+  @spec poll_until_non_empty(String.t(), Keyword.t(), non_neg_integer()) :: [String.t()]
+  defp poll_until_non_empty(_id, _opts, 0), do: []
+
+  defp poll_until_non_empty(id, opts, remaining) do
+    assert {:ok, hashes} = Cartouche.RPC.send_rpc("eth_getFilterChanges", [id], opts)
+
+    if hashes == [] do
+      Process.sleep(@block_poll_interval)
+      poll_until_non_empty(id, opts, remaining - 1)
+    else
+      hashes
+    end
   end
 end

@@ -21,8 +21,10 @@ All notable changes to this project will be documented in this file.
 - **`Cartouche.Filter` completes the filter lifecycle, and `Cartouche.RPC` adds
   the six node-custody methods.** The filter GenServer traps exits and
   uninstalls its node-side filter in `terminate/2` — an uninstall that fails or
-  raises during shutdown is logged, never fatal — closing a leak that registered
-  one abandoned filter per supervised restart. `start_link/1` gains
+  raises during shutdown is logged, never fatal, and is bounded to well inside
+  the default supervisor shutdown budget so an unresponsive node cannot hold the
+  tree open past it — closing a leak that registered one abandoned filter per
+  supervised restart. `start_link/1` gains
   `kind: :log | :block | :pending`: block and pending-transaction filters
   deliver `{:hashes, hashes}` while log filters keep their existing
   `{:event, :log}` behaviour, and the expired-filter recovery branch fires for
@@ -33,7 +35,11 @@ All notable changes to this project will be documented in this file.
   the node returns, including its refusal. Local signing through
   `Cartouche.Signer` remains the normal route; the distinction is which side
   constructs the envelope, not key custody. `fill_transaction/2` deserializes
-  into cartouche's transaction structs rather than a raw map. Tests run against
+  into cartouche's transaction structs rather than a raw map. All three
+  envelope-constructing methods serialize an EIP-1559 transaction with its
+  `type`, `chainId` and `accessList`, so a caller-supplied access list reaches
+  the node that signs it instead of being dropped on the way; `sign/3` takes the
+  message the node signs under EIP-191, not a pre-computed digest. Tests run against
   a development node through a new lane in `test/support/live.ex`
   (`CARTOUCHE_DEV_NODE_URL`, or an ephemeral locally installed anvil, flunking
   with setup instructions when neither is available) that leaves the mainnet

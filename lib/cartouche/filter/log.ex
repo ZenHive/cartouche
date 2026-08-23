@@ -1,5 +1,13 @@
 defmodule Cartouche.Filter.Log do
-  @moduledoc false
+  @moduledoc """
+  A decoded Ethereum log entry.
+
+  Produced by `Cartouche.Filter` for `kind: :log` filters and returned by
+  `Cartouche.RPC.get_filter_logs/2`. Addresses, hashes, and topics are decoded
+  to raw binaries; `:block_number`, `:log_index`, and `:transaction_index` to
+  integers. `:extra_data` is the opaque term a `Cartouche.Filter` was started
+  with, stamped onto every log it dispatches, and is `nil` elsewhere.
+  """
   use Cartouche.Hex
 
   defstruct [

@@ -63,6 +63,14 @@ defmodule Cartouche.Test.Live do
   @dev_env "CARTOUCHE_DEV_NODE_URL"
   @anvil_port 18_545
   @anvil_url "http://127.0.0.1:#{@anvil_port}"
+  @anvil_chain_id "31337"
+  # Node-custody calls (fill/sign/send) are slower than a plain read.
+  @dev_timeout 30_000
+  # A reachability probe should fail fast rather than spend the call budget.
+  @ping_timeout 5_000
+  # 50 x 100 ms — anvil binds its port in well under five seconds.
+  @anvil_boot_attempts 50
+  @anvil_boot_backoff 100
 
   @doc false
   @spec dev_rpc_url() :: String.t()
@@ -75,7 +83,7 @@ defmodule Cartouche.Test.Live do
 
   @doc false
   @spec dev_opts() :: Keyword.t()
-  def dev_opts, do: [req_options: [plug: nil], ethereum_node: dev_rpc_url(), timeout: 30_000]
+  def dev_opts, do: [req_options: [plug: nil], ethereum_node: dev_rpc_url(), timeout: @dev_timeout]
 
   @doc false
   @spec assert_dev_node_available!() :: :ok | no_return()
@@ -91,7 +99,7 @@ defmodule Cartouche.Test.Live do
 
   @spec ping_dev_node!(String.t()) :: :ok | no_return()
   defp ping_dev_node!(url) do
-    opts = [req_options: [plug: nil], ethereum_node: url, timeout: 5_000]
+    opts = [req_options: [plug: nil], ethereum_node: url, timeout: @ping_timeout]
 
     case Cartouche.RPC.eth_chain_id(opts) do
       {:ok, _chain_id} ->
@@ -124,7 +132,7 @@ defmodule Cartouche.Test.Live do
               :binary,
               :exit_status,
               :hide,
-              args: ["--host", "127.0.0.1", "--port", Integer.to_string(@anvil_port), "--chain-id", "31337"]
+              args: ["--host", "127.0.0.1", "--port", Integer.to_string(@anvil_port), "--chain-id", @anvil_chain_id]
             ]
           )
 
@@ -135,7 +143,7 @@ defmodule Cartouche.Test.Live do
   end
 
   @spec wait_for_anvil!(port()) :: :ok | no_return()
-  defp wait_for_anvil!(port), do: wait_for_anvil_attempt(port, 50)
+  defp wait_for_anvil!(port), do: wait_for_anvil_attempt(port, @anvil_boot_attempts)
 
   @spec wait_for_anvil_attempt(port(), non_neg_integer()) :: :ok | no_return()
   defp wait_for_anvil_attempt(port, remaining) do
@@ -163,7 +171,7 @@ defmodule Cartouche.Test.Live do
         :ok
 
       {:error, _} ->
-        Process.sleep(100)
+        Process.sleep(@anvil_boot_backoff)
         wait_for_anvil_attempt(port, remaining - 1)
     end
   end
@@ -211,7 +219,7 @@ defmodule Cartouche.Test.Live do
 
         curl -L https://foundry.paradigm.xyz | bash
         foundryup
-        anvil --port #{@anvil_port} --chain-id 31337
+        anvil --port #{@anvil_port} --chain-id #{@anvil_chain_id}
 
     Then re-run:
 

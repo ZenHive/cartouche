@@ -11,9 +11,11 @@ defmodule Cartouche.RPC do
   the transaction: those methods move envelope construction, nonce and fee
   policy, EIP-155 `v` derivation, and low-s normalization into the node.
 
-  `sign/3` (`eth_sign`) signs an arbitrary digest and has historically been
-  usable to trick a signer into signing a transaction hash; most nodes ship
-  it disabled, and EIP-191 / `personal_sign` superseded it.
+  `sign/3` (`eth_sign`) takes a message, not a pre-computed digest: the node
+  returns an EIP-191 signature over the data it is handed (`execution-apis`,
+  `src/eth/sign.yaml`). The method is historically dangerous because early
+  implementations signed the bytes verbatim, which let a caller pass a
+  transaction hash and get it signed; most nodes ship it disabled today.
   """
   use Descripex, namespace: "/ethereum/rpc"
   use Cartouche.Hex
@@ -2575,10 +2577,10 @@ defmodule Cartouche.RPC do
     )
   end
 
-  api(:sign, "Ask the node to sign an arbitrary digest with a managed account (`eth_sign`).",
+  api(:sign, "Ask the node to sign a message under EIP-191 with a managed account (`eth_sign`).",
     params: [
       account: [kind: :value, description: "20-byte account address the node must hold a key for."],
-      digest: [kind: :value, description: "Arbitrary message bytes to sign."],
+      message: [kind: :value, description: "Message bytes the node signs under EIP-191; not a pre-computed digest."],
       opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
     ],
     returns: %{
@@ -2590,20 +2592,22 @@ defmodule Cartouche.RPC do
   @doc """
   RPC call to `eth_sign`.
 
-  Signs an arbitrary digest with a node-managed account. Most nodes disable
-  this method; when they do, the node's error is returned unchanged.
+  The node signs `message` with a managed account and returns an EIP-191
+  signature over it — `message` is the data to be signed, not a digest the
+  node signs verbatim. Most nodes disable this method; when they do, the
+  node's error is returned unchanged.
 
   ## Examples
 
-      iex> {:ok, signature} = Cartouche.RPC.sign(<<1::160>>, <<1::256>>)
+      iex> {:ok, signature} = Cartouche.RPC.sign(<<1::160>>, "hello")
       iex> byte_size(signature)
       65
   """
   @spec sign(<<_::160>>, binary(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
-  def sign(account, digest, opts \\ []) do
+  def sign(account, message, opts \\ []) do
     send_rpc(
       "eth_sign",
-      [Hex.encode_big_hex(account), Hex.encode_big_hex(digest)],
+      [Hex.encode_big_hex(account), Hex.encode_big_hex(message)],
       Keyword.put(opts, :decode, :hex)
     )
   end
@@ -2681,7 +2685,7 @@ defmodule Cartouche.RPC do
       iex> Base.encode16(hash, case: :lower)
       "abababababababababababababababababababababababababababababababab"
   """
-  @spec send_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, <<_::256>>} | {:error, term()}
+  @spec send_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
   def send_transaction(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
 
@@ -2700,13 +2704,29 @@ defmodule Cartouche.RPC do
 
   @spec decode_filled_transaction(map()) :: struct()
   defp decode_filled_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
-  defp decode_filled_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_rpc_transaction(tx)
-  defp decode_filled_transaction(%{} = tx), do: deserialize_rpc_transaction(tx)
+
+  # `eth_fillTransaction` populates the transaction without signing it. geth
+  # answers with the `{raw, tx}` pair this module decodes, but `execution-apis`
+  # types the result as `FillTransactionResult` — a required, unsigned `tx` and
+  # no `raw` at all. Cartouche's envelope structs have no unsigned
+  # representation (`from_json/1` requires `v`/`r`/`s`), so a `raw`-less result
+  # is not deserializable here. Fail by name instead of inside a hex decoder.
+  defp decode_filled_transaction(%{} = params) do
+    raise ArgumentError,
+          "eth_fillTransaction returned no `raw` field. The spec-conforming " <>
+            "`FillTransactionResult` carries only an unsigned `tx`, which cartouche cannot yet " <>
+            "deserialize into a transaction struct (keys: #{inspect(Map.keys(params))})"
+  end
 
   @spec decode_signed_transaction(map() | String.t()) :: struct()
   defp decode_signed_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
   defp decode_signed_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_rpc_transaction(tx)
   defp decode_signed_transaction(raw) when is_binary(raw), do: decode_raw_transaction!(raw)
+
+  defp decode_signed_transaction(%{} = params) do
+    raise ArgumentError,
+          "eth_signTransaction returned neither a `raw` nor a `tx` field (keys: #{inspect(Map.keys(params))})"
+  end
 
   @spec decode_raw_transaction!(String.t()) :: struct()
   defp decode_raw_transaction!(raw) do
@@ -2736,13 +2756,46 @@ defmodule Cartouche.RPC do
     |> Map.put(:nonce, Hex.encode_short_hex(trx.nonce))
   end
 
+  # `to_call_params/2` serializes what `eth_call` needs, which omits the fields
+  # that only matter once the node *signs* an envelope: without `type` the node
+  # picks its own envelope kind, and without `accessList` a non-empty access
+  # list is silently dropped from the transaction the caller asked it to sign.
   defp to_transaction_params(%V2{} = trx, from) do
     trx
     |> to_call_params(from)
     |> Map.put(:nonce, Hex.encode_short_hex(trx.nonce))
+    |> Map.put(:type, "0x2")
+    |> put_chain_id(trx.chain_id)
+    |> Map.put(:accessList, encode_access_list(trx.access_list))
   end
 
   defp to_transaction_params(%Call{} = call, from), do: to_call_params(call, from)
+
+  # `chainId` is optional in `GenericTransaction` but is not nullable, so omit
+  # the key rather than sending an explicit JSON `null`.
+  @spec put_chain_id(map(), non_neg_integer() | nil) :: map()
+  defp put_chain_id(params, nil), do: params
+  defp put_chain_id(params, chain_id), do: Map.put(params, :chainId, encode_quantity(chain_id))
+
+  # `uint` per `execution-apis` `src/schemas/base-types.yaml`: lowercase, no
+  # leading zeros. `Hex.encode_short_hex/1` strips leading zeros but emits
+  # uppercase, which the pattern rejects.
+  @spec encode_quantity(non_neg_integer()) :: String.t()
+  defp encode_quantity(value) when is_integer(value) and value >= 0,
+    do: "0x" <> String.downcase(Integer.to_string(value, 16))
+
+  # `AccessList` per `execution-apis` `src/schemas/transaction.yaml`: a list of
+  # `{address, storageKeys}` objects. `address` and `hash32` are both
+  # lowercase-only patterns, so this uses `encode_hex/1`, not the uppercase
+  # `encode_big_hex/1` the rest of this module reaches for.
+  @spec encode_access_list(V2.access_list() | nil) :: [map()]
+  defp encode_access_list(nil), do: []
+
+  defp encode_access_list(entries) when is_list(entries) do
+    Enum.map(entries, fn {address, storage_keys} ->
+      %{address: Hex.encode_hex(address), storageKeys: Enum.map(storage_keys, &Hex.encode_hex/1)}
+    end)
+  end
 
   @doc false
   @spec to_call_params(V1.t() | V2.t() | Call.t(), <<_::160>> | nil) :: map()

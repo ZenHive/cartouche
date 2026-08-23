@@ -19,6 +19,8 @@ defmodule Cartouche.RPC.DevNodeTest do
 
   # Anvil account #0 when the suite boots an ephemeral node.
   @anvil_account <<0xF39FD6E51AAD88F6F4CE6AB8827279CFFFB92266::160>>
+  # Any address works as an access-list key; WETH9 keeps it recognisable.
+  @weth9 <<0xC02AAA39B223FE8D0A0E5C4F27EAD9083C756CC2::160>>
 
   setup_all do
     Live.assert_dev_node_available!()
@@ -113,6 +115,39 @@ defmodule Cartouche.RPC.DevNodeTest do
         other -> flunk("unexpected sent envelope type: #{inspect(other)}")
       end
 
+    assert recover_signer!(signed, opts) == from
+  end
+
+  test "eth_signTransaction preserves a V2 access list and envelope type", %{opts: opts, accounts: accounts} do
+    from = hd(accounts)
+    recipient = Enum.at(accounts, 1, @anvil_account)
+    access_list = [{@weth9, [<<0::256>>, <<1::256>>]}]
+    {:ok, chain_id} = Cartouche.RPC.eth_chain_id(opts)
+    {:ok, nonce} = Cartouche.RPC.get_nonce(from, opts)
+
+    trx =
+      V2.new(
+        nonce,
+        {1, :gwei},
+        {100, :gwei},
+        100_000,
+        recipient,
+        0,
+        <<>>,
+        access_list,
+        nil,
+        nil,
+        nil,
+        chain_id
+      )
+
+    assert {:ok, signed} = Cartouche.RPC.sign_transaction(trx, Keyword.put(opts, :from, from))
+
+    # The node signs what it was handed. If `accessList` or `type` never reach
+    # it, this comes back as a legacy envelope with the access list dropped —
+    # silently signing something other than what the caller built.
+    assert %V2{} = signed
+    assert signed.access_list == access_list
     assert recover_signer!(signed, opts) == from
   end
 

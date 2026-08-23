@@ -1988,3 +1988,51 @@ started_at = "2026-08-23"
 scored_at = "2026-08-23"
 done_at = "2026-08-23"
 shipped_in = "ee89999227890b284573647435c759c7fc4cc03a"
+
+[[task]]
+id = "125"
+phase = 0
+bundle = "rpc_correctness"
+status = "pending"
+title = "Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result"
+scores = { d = 5, b = 5, u = 4 }
+acceptance_criteria = ["fill_transaction/2 deserializes a spec-conforming FillTransactionResult — a required, unsigned `tx` object with no `raw` — into a cartouche transaction struct", "The unsigned-envelope representation is explicit: whatever carries the absent v/r/s is typed to admit that absence, and dialyzer under MIX_ENV=test is clean", "The geth-shaped `{raw, tx}` response keeps working and still round-trips through Cartouche.Transaction.encode/decode", "A unit test covers both response shapes; the spec-conforming one asserts the populated nonce, gas and fee fields survive deserialization", "Cartouche.Transaction.from_json/1 on V1/V2/V3/V4 keeps rejecting a genuinely malformed signed transaction — tolerating an unsigned fill result must not silently accept a signed one with a corrupt signature", "The eth_getBlockBy* decode path is unchanged, proven by the existing integration tests staying green", "mix ci passes"]
+out_of_scope = ["eth_signTransaction, which returns a signed transaction and is already handled", "Adding an unsigned-transaction type to the public API beyond what deserializing a fill result requires", "Making anvil implement eth_fillTransaction, or vendoring a node that does"]
+touches = ["lib/cartouche/rpc.ex", "lib/cartouche/transaction.ex", "test/rpc_test.exs", "test/rpc_dev_node_test.exs"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+`fill_transaction/2` decodes only the `raw` field of an `eth_fillTransaction`
+response. That is geth's shape — geth answers with a `{raw, tx}` pair — but it
+is not the shape the provider-owned contract defines. In `execution-apis`,
+`src/schemas/transaction.yaml`, `FillTransactionResult` requires exactly one
+property, `tx`, a `FilledTransaction`, and carries no `raw` at all. Against a
+node that answers per spec, `fill_transaction/2` returns an error.
+
+The reason it cannot simply decode `tx` is structural, not an oversight. A
+filled transaction is populated but unsigned, so its `tx` object has no `v`,
+`r`, `s` or `yParity`. Every cartouche envelope's `from_json/1` requires those
+fields — `V1.from_json/1` calls `decode_hex_number!(params["v"])` and raises in
+`Cartouche.Hex.decode_hex_/1` when it is absent — because the structs have no
+representation for an unsigned envelope. `V2.t()` already types its signature
+fields as non-nilable while `defstruct` defaults them to `nil`, the same
+mismatch that produced the generated-fixture dialyzer trap documented in
+CLAUDE.md, so widening `from_json/1` to tolerate missing signature fields would
+push that inconsistency into a shared decoder used by `eth_getBlockBy*`.
+
+Surfaced by the audit of `e0e240e` / `ee89999` (`.audit/e0e240e-*.md`, finding
+7), confirmed against the spec rather than inferred. That audit only replaced
+the opaque `FunctionClauseError` with a named `ArgumentError` that states the
+limitation; it did not close it. Deciding how an unsigned envelope should be
+represented is a change to a public method's contract, which is why it is a
+task rather than an audit fix.
+
+Authority is `ethereum/execution-apis`
+(`src/schemas/transaction.yaml` → `FillTransactionResult`, `FilledTransaction`)
+plus a live node. Note that geth and anvil disagree here: anvil 1.5.1-stable
+does not implement `eth_fillTransaction` at all and answers `-32601`, which
+`test/rpc_dev_node_test.exs` already pins, so the dev-node lane cannot verify
+the fix on its own.
+"""
+created_at = "2026-08-23"
+scored_at = "2026-08-23"

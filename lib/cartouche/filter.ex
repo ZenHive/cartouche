@@ -19,6 +19,10 @@ defmodule Cartouche.Filter do
   @check_delay 3000
   @kinds [:log, :block, :pending]
 
+  # Shutdown-budget ceiling for the `terminate/2` uninstall — see
+  # `uninstall_filter/1`.
+  @uninstall_timeout 2_000
+
   @doc """
   Starts a `Cartouche.Filter` GenServer that polls an Ethereum node-side filter.
 
@@ -220,6 +224,15 @@ defmodule Cartouche.Filter do
 
   @spec uninstall_filter(map()) :: :ok
   defp uninstall_filter(%{filter_id: filter_id, rpc_opts: rpc_opts} = state) when not is_nil(filter_id) do
+    # The uninstall runs inside `terminate/2`, so it spends the caller's shutdown
+    # budget: a supervisor gives a trapping child `:shutdown` ms (5_000 by
+    # default) before killing it. `send_rpc/3` otherwise inherits the 30_000 ms
+    # transport default, so an unresponsive node would hold the tree open past
+    # that budget and be killed mid-call — the failure would never be logged.
+    # Bound it well inside the default budget; a caller that set its own
+    # `:timeout` in `:rpc_opts` keeps it.
+    rpc_opts = Keyword.put_new(rpc_opts, :timeout, @uninstall_timeout)
+
     case RPC.send_rpc("eth_uninstallFilter", [filter_id], rpc_opts) do
       {:ok, _} ->
         :ok
