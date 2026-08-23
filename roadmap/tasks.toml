@@ -1848,7 +1848,7 @@ shipped_in = "670b22b49c91c5c80432a3fd5c000e92207a7992"
 id = "121"
 phase = 0
 bundle = "rpc_correctness"
-status = "pending"
+status = "in_progress"
 title = "Complete the Cartouche.Filter lifecycle — uninstall, getFilterLogs, and the block/pending filter kinds"
 scores = { d = 4, b = 7, u = 7 }
 markers = []
@@ -1869,6 +1869,7 @@ The GenServer never calls `eth_uninstallFilter`. It registers a filter on the no
 Authority for the response shapes is `ethereum/execution-apis` (`src/eth/filter.yaml`) plus the live node.
 """
 created_at = "2026-08-23"
+started_at = "2026-08-23"
 scored_at = "2026-08-23"
 
 [[task]]
