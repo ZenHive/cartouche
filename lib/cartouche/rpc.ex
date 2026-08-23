@@ -1,6 +1,19 @@
 defmodule Cartouche.RPC do
   @moduledoc """
   Excessively simple RPC client for Ethereum.
+
+  Local signing through `Cartouche.Signer` is the normal route for submitting
+  transactions (`eth_sendRawTransaction`). The node-custody methods
+  (`accounts/1`, `coinbase/1`, `fill_transaction/2`, `sign/3`,
+  `sign_transaction/2`, `send_transaction/2`) exist for nodes that hold keys.
+  The distinction is not key custody as such (`Cartouche.Signer.CloudKMS`
+  already signs with a key cartouche does not hold) but which side constructs
+  the transaction: those methods move envelope construction, nonce and fee
+  policy, EIP-155 `v` derivation, and low-s normalization into the node.
+
+  `sign/3` (`eth_sign`) signs an arbitrary digest and has historically been
+  usable to trick a signer into signing a transaction hash; most nodes ship
+  it disabled, and EIP-191 / `personal_sign` superseded it.
   """
   use Descripex, namespace: "/ethereum/rpc"
   use Cartouche.Hex
@@ -9,7 +22,9 @@ defmodule Cartouche.RPC do
   import Cartouche.RPC.DSL, only: [defrpc: 3]
   import Cartouche.Wei, only: [to_wei: 1]
 
+  alias Cartouche.Filter.Log, as: FilterLog
   alias Cartouche.Signer.Default
+  alias Cartouche.Transaction
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
@@ -2262,7 +2277,7 @@ defmodule Cartouche.RPC do
          {:ok, trx} <-
            (case trx_type do
               {:v1, gas_price} ->
-                Cartouche.Transaction.build_signed_trx(
+                Transaction.build_signed_trx(
                   contract,
                   nonce,
                   call_data,
@@ -2275,7 +2290,7 @@ defmodule Cartouche.RPC do
                 )
 
               {:v2, max_fee_per_gas, max_priority_fee_per_gas} ->
-                Cartouche.Transaction.build_signed_trx_v2(
+                Transaction.build_signed_trx_v2(
                   contract,
                   nonce,
                   call_data,
@@ -2398,6 +2413,335 @@ defmodule Cartouche.RPC do
       send_trx(trx, send_opts)
     end
   end
+
+  api(:new_block_filter, "Create a node-side filter that records new block hashes.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, filter_id}` as the node's hex filter identifier, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to create a new block filter.
+
+  ## Examples
+
+      iex> Cartouche.RPC.new_block_filter()
+      {:ok, "0xb10cf11e"}
+  """
+  @spec new_block_filter(Keyword.t()) :: {:ok, String.t()} | {:error, term()}
+  def new_block_filter(opts \\ []) do
+    send_rpc("eth_newBlockFilter", [], opts)
+  end
+
+  api(:new_pending_transaction_filter, "Create a node-side filter that records new pending transaction hashes.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, filter_id}` as the node's hex filter identifier, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to create a new pending-transaction filter.
+
+  ## Examples
+
+      iex> Cartouche.RPC.new_pending_transaction_filter()
+      {:ok, "0xpend1ng"}
+  """
+  @spec new_pending_transaction_filter(Keyword.t()) :: {:ok, String.t()} | {:error, term()}
+  def new_pending_transaction_filter(opts \\ []) do
+    send_rpc("eth_newPendingTransactionFilter", [], opts)
+  end
+
+  api(:get_filter_logs, "Return every log matching a log filter, not only changes since the last poll.",
+    params: [
+      filter_id: [kind: :value, description: "Hex filter identifier returned by `eth_newFilter`."],
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, [%Cartouche.Filter.Log{}]}` decoded from `eth_getFilterLogs`, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to fetch the full log backlog for a filter.
+
+  ## Examples
+
+      iex> {:ok, [log]} = Cartouche.RPC.get_filter_logs("0xf11735")
+      iex> log.address
+      <<181, 165, 242, 38, 148, 53, 44, 21, 176, 3, 35, 132, 74, 213, 69, 171, 178, 177, 16, 40>>
+  """
+  @spec get_filter_logs(String.t(), Keyword.t()) :: {:ok, [FilterLog.t()]} | {:error, term()}
+  def get_filter_logs(filter_id, opts \\ []) do
+    send_rpc("eth_getFilterLogs", [filter_id], Keyword.put(opts, :decode, &decode_filter_logs/1))
+  end
+
+  api(:accounts, "List addresses the node manages.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, addresses}` as 20-byte binaries decoded from `eth_accounts`, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to list accounts the node holds keys for.
+
+  ## Examples
+
+      iex> Cartouche.RPC.accounts()
+      {:ok, [<<64, 125, 115, 216, 164, 158, 235, 133, 211, 44, 244, 101, 80, 125, 215, 29, 80, 113, 0, 193>>]}
+  """
+  @spec accounts(Keyword.t()) :: {:ok, [<<_::160>>]} | {:error, term()}
+  def accounts(opts \\ []) do
+    send_rpc("eth_accounts", [], Keyword.put(opts, :decode, &decode_addresses/1))
+  end
+
+  api(:coinbase, "Return the node's coinbase (fee recipient) address.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, address}` as a 20-byte binary decoded from `eth_coinbase`, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to get the node's coinbase address.
+
+  ## Examples
+
+      iex> Cartouche.RPC.coinbase()
+      {:ok, <<254, 59, 85, 126, 143, 182, 43, 137, 244, 145, 107, 114, 27, 229, 92, 235, 130, 141, 189, 115>>}
+  """
+  @spec coinbase(Keyword.t()) :: {:ok, <<_::160>>} | {:error, term()}
+  def coinbase(opts \\ []) do
+    send_rpc("eth_coinbase", [], Keyword.put(opts, :decode, &Hex.decode_address!/1))
+  end
+
+  api(:fill_transaction, "Ask the node to populate missing nonce, gas, and fee fields without signing.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to fill."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options including optional `:from` and common `send_rpc/3` transport options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, transaction}` deserialized into cartouche's transaction representation, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to fill missing transaction fields via `eth_fillTransaction`.
+
+  The node populates nonce, gas, and fee fields and returns the completed
+  unsigned transaction. The result is decoded into a `Cartouche.Transaction`
+  struct.
+
+  ## Examples
+
+      iex> {:ok, trx} =
+      ...>   Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      ...>   |> Cartouche.RPC.fill_transaction()
+      iex> trx.nonce
+      1
+  """
+  @spec fill_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, struct()} | {:error, term()}
+  def fill_transaction(trx, opts \\ []) do
+    from = Keyword.get(opts, :from)
+
+    send_rpc(
+      "eth_fillTransaction",
+      [to_transaction_params(trx, from)],
+      Keyword.put(opts, :decode, &decode_filled_transaction/1)
+    )
+  end
+
+  api(:sign, "Ask the node to sign an arbitrary digest with a managed account (`eth_sign`).",
+    params: [
+      account: [kind: :value, description: "20-byte account address the node must hold a key for."],
+      digest: [kind: :value, description: "Arbitrary message bytes to sign."],
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, signature}` as decoded bytes from `eth_sign`, or the node's `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to `eth_sign`.
+
+  Signs an arbitrary digest with a node-managed account. Most nodes disable
+  this method; when they do, the node's error is returned unchanged.
+
+  ## Examples
+
+      iex> {:ok, signature} = Cartouche.RPC.sign(<<1::160>>, <<1::256>>)
+      iex> byte_size(signature)
+      65
+  """
+  @spec sign(<<_::160>>, binary(), Keyword.t()) :: {:ok, binary()} | {:error, term()}
+  def sign(account, digest, opts \\ []) do
+    send_rpc(
+      "eth_sign",
+      [Hex.encode_big_hex(account), Hex.encode_big_hex(digest)],
+      Keyword.put(opts, :decode, :hex)
+    )
+  end
+
+  api(:sign_transaction, "Ask the node to sign a transaction with a managed account.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to sign."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options including optional `:from` and common `send_rpc/3` transport options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, transaction}` decoded from the node's raw signed transaction via `Cartouche.Transaction.decode/1`, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to `eth_signTransaction`.
+
+  The node signs with its keystore and returns a raw transaction, which is
+  decoded through `Cartouche.Transaction.decode/1`.
+
+  ## Examples
+
+      iex> {:ok, trx} =
+      ...>   Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      ...>   |> Cartouche.RPC.sign_transaction()
+      iex> trx.nonce
+      1
+  """
+  @spec sign_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, struct()} | {:error, term()}
+  def sign_transaction(trx, opts \\ []) do
+    from = Keyword.get(opts, :from)
+
+    send_rpc(
+      "eth_signTransaction",
+      [to_transaction_params(trx, from)],
+      Keyword.put(opts, :decode, &decode_signed_transaction/1)
+    )
+  end
+
+  api(:send_transaction, "Ask the node to sign and broadcast a transaction with a managed account.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to submit."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description: "Keyword options including optional `:from` and common `send_rpc/3` transport options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, transaction_hash}` as 32 decoded bytes from `eth_sendTransaction`, or `{:error, reason}`."
+    }
+  )
+
+  @doc """
+  RPC call to `eth_sendTransaction`.
+
+  ## Examples
+
+      iex> {:ok, hash} =
+      ...>   Cartouche.Transaction.V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>)
+      ...>   |> Cartouche.RPC.send_transaction()
+      iex> Base.encode16(hash, case: :lower)
+      "abababababababababababababababababababababababababababababababab"
+  """
+  @spec send_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, <<_::256>>} | {:error, term()}
+  def send_transaction(trx, opts \\ []) do
+    from = Keyword.get(opts, :from)
+
+    send_rpc(
+      "eth_sendTransaction",
+      [to_transaction_params(trx, from)],
+      Keyword.put(opts, :decode, :hex)
+    )
+  end
+
+  @spec decode_filter_logs(list()) :: [FilterLog.t()]
+  defp decode_filter_logs(logs) when is_list(logs), do: Enum.map(logs, &FilterLog.deserialize/1)
+
+  @spec decode_addresses(list()) :: [<<_::160>>]
+  defp decode_addresses(addresses) when is_list(addresses), do: Enum.map(addresses, &Hex.decode_address!/1)
+
+  @spec decode_filled_transaction(map()) :: struct()
+  defp decode_filled_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
+  defp decode_filled_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_rpc_transaction(tx)
+  defp decode_filled_transaction(%{} = tx), do: deserialize_rpc_transaction(tx)
+
+  @spec decode_signed_transaction(map() | String.t()) :: struct()
+  defp decode_signed_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
+  defp decode_signed_transaction(raw) when is_binary(raw), do: decode_raw_transaction!(raw)
+
+  @spec decode_raw_transaction!(String.t()) :: struct()
+  defp decode_raw_transaction!(raw) do
+    case raw |> Hex.decode_hex!() |> Transaction.decode() do
+      {:ok, trx} -> trx
+      {:error, reason} -> raise ArgumentError, "invalid transaction payload: #{inspect(reason)}"
+    end
+  end
+
+  @spec deserialize_rpc_transaction(map()) :: struct()
+  defp deserialize_rpc_transaction(%{} = params) do
+    case params["type"] do
+      nil -> V1.from_json(params)
+      "0x0" -> V1.from_json(params)
+      "0x1" -> V_2930.from_json(params)
+      "0x2" -> V2.from_json(params)
+      "0x3" -> Transaction.V3.from_json(params)
+      "0x4" -> Transaction.V4.from_json(params)
+      other -> raise ArgumentError, "unsupported transaction envelope type #{inspect(other)}"
+    end
+  end
+
+  @spec to_transaction_params(V1.t() | V2.t() | Call.t(), <<_::160>> | nil) :: map()
+  defp to_transaction_params(%V1{} = trx, from) do
+    trx
+    |> to_call_params(from)
+    |> Map.put(:nonce, Hex.encode_short_hex(trx.nonce))
+  end
+
+  defp to_transaction_params(%V2{} = trx, from) do
+    trx
+    |> to_call_params(from)
+    |> Map.put(:nonce, Hex.encode_short_hex(trx.nonce))
+  end
+
+  defp to_transaction_params(%Call{} = call, from), do: to_call_params(call, from)
 
   @doc false
   @spec to_call_params(V1.t() | V2.t() | Call.t(), <<_::160>> | nil) :: map()

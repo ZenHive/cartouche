@@ -600,4 +600,25 @@ defmodule Cartouche.RPCTest do
       assert revert_error.revert == <<0x3D, 0x73, 0x8B, 0x2E>>
     end
   end
+
+  describe "node-custody passthroughs" do
+    test "fill_transaction result round-trips through Transaction.encode/decode" do
+      {:ok, trx} =
+        1
+        |> V1.new({100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+        |> Cartouche.RPC.fill_transaction()
+
+      encoded = Cartouche.Transaction.encode(trx)
+      assert {:ok, decoded} = Cartouche.Transaction.decode(encoded)
+      assert decoded.nonce == trx.nonce
+      assert decoded.to == trx.to
+      assert decoded.data == trx.data
+    end
+
+    test "get_filter_logs decodes the same Log shape as filter changes" do
+      assert {:ok, [log]} = Cartouche.RPC.get_filter_logs("0xf11735")
+      assert %Cartouche.Filter.Log{} = log
+      assert byte_size(log.address) == 20
+    end
+  end
 end

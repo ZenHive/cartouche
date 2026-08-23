@@ -59,4 +59,184 @@ defmodule Cartouche.Test.Live do
         """)
     end
   end
+
+  @dev_env "CARTOUCHE_DEV_NODE_URL"
+  @anvil_port 18_545
+  @anvil_url "http://127.0.0.1:#{@anvil_port}"
+
+  @doc false
+  @spec dev_rpc_url() :: String.t()
+  def dev_rpc_url do
+    case System.get_env(@dev_env) do
+      url when is_binary(url) and url != "" -> url
+      _ -> @anvil_url
+    end
+  end
+
+  @doc false
+  @spec dev_opts() :: Keyword.t()
+  def dev_opts, do: [req_options: [plug: nil], ethereum_node: dev_rpc_url(), timeout: 30_000]
+
+  @doc false
+  @spec assert_dev_node_available!() :: :ok | no_return()
+  def assert_dev_node_available! do
+    case System.get_env(@dev_env) do
+      url when is_binary(url) and url != "" ->
+        ping_dev_node!(url)
+
+      _ ->
+        start_ephemeral_anvil!()
+    end
+  end
+
+  @spec ping_dev_node!(String.t()) :: :ok | no_return()
+  defp ping_dev_node!(url) do
+    opts = [req_options: [plug: nil], ethereum_node: url, timeout: 5_000]
+
+    case Cartouche.RPC.eth_chain_id(opts) do
+      {:ok, _chain_id} ->
+        :ok
+
+      {:error, reason} ->
+        flunk("""
+        CARTOUCHE_DEV_NODE_URL=#{url} is set but the node is unreachable.
+
+        Error: #{inspect(reason)}
+
+        Start the node, or unset the env var to fall back to a locally installed anvil.
+        """)
+    end
+  end
+
+  @spec start_ephemeral_anvil!() :: :ok | no_return()
+  defp start_ephemeral_anvil! do
+    case Cartouche.RPC.eth_chain_id(dev_opts()) do
+      {:ok, _} ->
+        :ok
+
+      {:error, _} ->
+        anvil = System.find_executable("anvil") || flunk(missing_dev_node_message())
+
+        port =
+          Port.open(
+            {:spawn_executable, anvil},
+            [
+              :binary,
+              :exit_status,
+              :hide,
+              args: ["--host", "127.0.0.1", "--port", Integer.to_string(@anvil_port), "--chain-id", "31337"]
+            ]
+          )
+
+        :persistent_term.put({__MODULE__, :anvil_port}, port)
+        wait_for_anvil!(port)
+        :ok
+    end
+  end
+
+  @spec wait_for_anvil!(port()) :: :ok | no_return()
+  defp wait_for_anvil!(port), do: wait_for_anvil_attempt(port, 50)
+
+  @spec wait_for_anvil_attempt(port(), non_neg_integer()) :: :ok | no_return()
+  defp wait_for_anvil_attempt(port, remaining) do
+    receive do
+      {^port, {:exit_status, status}} ->
+        flunk("""
+        Ephemeral anvil exited with status #{status} before it accepted RPC.
+
+        #{missing_dev_node_message()}
+        """)
+    after
+      0 -> poll_anvil(port, remaining)
+    end
+  end
+
+  @spec poll_anvil(port(), non_neg_integer()) :: :ok | no_return()
+  defp poll_anvil(_port, 0) do
+    stop_ephemeral_anvil()
+    flunk(missing_dev_node_message())
+  end
+
+  defp poll_anvil(port, remaining) do
+    case Cartouche.RPC.eth_chain_id(dev_opts()) do
+      {:ok, _} ->
+        :ok
+
+      {:error, _} ->
+        Process.sleep(100)
+        wait_for_anvil_attempt(port, remaining - 1)
+    end
+  end
+
+  @doc false
+  @spec stop_ephemeral_anvil() :: :ok
+  def stop_ephemeral_anvil do
+    case :persistent_term.get({__MODULE__, :anvil_port}, nil) do
+      nil ->
+        :ok
+
+      port ->
+        :persistent_term.erase({__MODULE__, :anvil_port})
+        stop_port(port)
+        :ok
+    end
+  end
+
+  @spec stop_port(port()) :: :ok
+  defp stop_port(port) do
+    info = Port.info(port)
+    os_pid = info && Keyword.get(info, :os_pid)
+
+    if Port.info(port) do
+      Port.close(port)
+    end
+
+    if is_integer(os_pid) do
+      System.cmd("kill", ["-TERM", Integer.to_string(os_pid)], stderr_to_stdout: true)
+    end
+
+    :ok
+  end
+
+  @spec missing_dev_node_message() :: String.t()
+  defp missing_dev_node_message do
+    """
+    Development-node tests require an Ethereum node that holds keys (Anvil, Hardhat, or geth --dev).
+
+    Set the node URL:
+
+        export CARTOUCHE_DEV_NODE_URL=http://127.0.0.1:8545
+
+    Or install Foundry and leave the env var unset so the suite can boot anvil on port #{@anvil_port}:
+
+        curl -L https://foundry.paradigm.xyz | bash
+        foundryup
+        anvil --port #{@anvil_port} --chain-id 31337
+
+    Then re-run:
+
+        mix test --only dev_node
+    """
+  end
+
+  @spec dev_node_unreachable_message(String.t(), :env | :anvil, term()) :: String.t()
+  defp dev_node_unreachable_message(url, :env, reason) do
+    """
+    CARTOUCHE_DEV_NODE_URL=#{url} is set but the node is unreachable.
+
+    Error: #{inspect(reason)}
+
+    Start the node, or unset the env var to fall back to a locally installed anvil.
+    """
+  end
+
+  defp dev_node_unreachable_message(url, :anvil, reason) do
+    """
+    Development node at #{url} is unreachable.
+
+    Error: #{inspect(reason)}
+
+    #{missing_dev_node_message()}
+    """
+  end
 end

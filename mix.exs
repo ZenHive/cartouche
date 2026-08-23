@@ -219,7 +219,7 @@ defmodule Cartouche.MixProject do
         "format --check-formatted",
         "credo --strict --ignore Credo.Check.Design.TagTODO,Credo.Check.Design.TagFIXME",
         "ex_dna --max-clones 0",
-        "test.json --exclude integration"
+        "test.json --exclude integration --exclude dev_node"
       ],
       # Dispatch-scale gate — the harness reviewer's `check_command`. Deliberately
       # lighter than `precommit.full`: no dialyzer (cold PLT dominates a fresh run
@@ -236,7 +236,7 @@ defmodule Cartouche.MixProject do
         "ex_dna --max-clones 0",
         "reach.check --arch --smells",
         "sobelow --config",
-        "test.json --exclude integration"
+        "test.json --exclude integration --exclude dev_node"
       ],
       # Comprehensive gate — the landed-base Architect/QA pass and the `mix ci`
       # target. The GitHub Actions workflows were removed family-wide on
@@ -250,7 +250,7 @@ defmodule Cartouche.MixProject do
         "reach.check --arch --smells",
         "sobelow --config",
         "deps.audit.gated",
-        "test.json --cover --cover-threshold 85 --summary-only --exclude integration",
+        "test.json --cover --cover-threshold 85 --summary-only --exclude integration --exclude dev_node",
         "dialyzer",
         "agents.check"
       ],

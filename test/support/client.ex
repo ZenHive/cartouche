@@ -930,7 +930,7 @@ defmodule Cartouche.Test.Client do
   end
 
   @doc false
-  @spec eth_getFilterChanges(binary()) :: list(map())
+  @spec eth_getFilterChanges(binary()) :: list(map()) | [String.t()]
   def eth_getFilterChanges("0xf11735") do
     [
       %{
@@ -950,6 +950,64 @@ defmodule Cartouche.Test.Client do
       }
     ]
   end
+
+  def eth_getFilterChanges("0xb10cf11e") do
+    ["0xdc0818cf78f21a8e70579cb46a43643f78291264dda342ae31049421c82d21ae"]
+  end
+
+  def eth_getFilterChanges("0xpend1ng") do
+    ["0x88df016429689c079f3b2f6ad39fa052532c56795b733da78a91ebe6a713944b"]
+  end
+
+  def eth_getFilterChanges(_id), do: []
+
+  @doc false
+  @spec eth_getFilterLogs(binary()) :: list(map())
+  def eth_getFilterLogs(id), do: eth_getFilterChanges(id)
+
+  @doc false
+  @spec eth_uninstallFilter(binary()) :: boolean()
+  def eth_uninstallFilter(_id), do: true
+
+  @doc false
+  @spec eth_newBlockFilter() :: String.t()
+  def eth_newBlockFilter, do: "0xb10cf11e"
+
+  @doc false
+  @spec eth_newPendingTransactionFilter() :: String.t()
+  def eth_newPendingTransactionFilter, do: "0xpend1ng"
+
+  @doc false
+  @spec eth_accounts() :: [String.t()]
+  def eth_accounts, do: ["0x407d73d8a49eeb85d32cf465507dd71d507100c1"]
+
+  @doc false
+  @spec eth_coinbase() :: String.t()
+  def eth_coinbase, do: "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"
+
+  @doc false
+  @spec eth_fillTransaction(map()) :: map()
+  def eth_fillTransaction(_tx) do
+    raw =
+      1
+      |> V1.new({100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+      |> V1.encode()
+      |> Hex.encode_hex()
+
+    %{"raw" => raw}
+  end
+
+  @doc false
+  @spec eth_sign(String.t(), String.t()) :: String.t()
+  def eth_sign(_account, _digest), do: "0x" <> String.duplicate("11", 65)
+
+  @doc false
+  @spec eth_signTransaction(map()) :: map()
+  def eth_signTransaction(tx), do: eth_fillTransaction(tx)
+
+  @doc false
+  @spec eth_sendTransaction(map()) :: String.t()
+  def eth_sendTransaction(_tx), do: "0x" <> String.duplicate("ab", 32)
 
   @doc false
   @spec eth_getBlockByHash(term(), boolean()) :: map()
