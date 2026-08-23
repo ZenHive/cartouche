@@ -2705,6 +2705,7 @@ defmodule Cartouche.RPC do
 
   @spec decode_signed_transaction(map() | String.t()) :: struct()
   defp decode_signed_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
+  defp decode_signed_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_rpc_transaction(tx)
   defp decode_signed_transaction(raw) when is_binary(raw), do: decode_raw_transaction!(raw)
 
   @spec decode_raw_transaction!(String.t()) :: struct()

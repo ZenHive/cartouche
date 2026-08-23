@@ -76,11 +76,10 @@ defmodule Cartouche.RPC.DevNodeTest do
     unknown = <<1::160>>
     digest = :crypto.hash(:sha256, "cartouche-dev-node-sign")
 
-    # Observed on anvil 1.5.1-stable for an account the node does not hold.
-    assert {:error, %{code: code, message: message}} = Cartouche.RPC.sign(unknown, digest, opts)
-    assert is_integer(code)
-    assert is_binary(message)
-    assert message != ""
+    # Observed on anvil for an account the node does not hold: code -32602,
+    # message "No Signer available".
+    assert {:error, %{code: -32_602, message: message}} = Cartouche.RPC.sign(unknown, digest, opts)
+    assert message =~ "No Signer available"
   end
 
   test "eth_signTransaction recovers the node account that signed it", %{opts: opts, accounts: accounts} do
@@ -93,7 +92,7 @@ defmodule Cartouche.RPC.DevNodeTest do
     assert signer == from
   end
 
-  test "eth_sendTransaction returns a 32-byte hash signed by a node account", %{
+  test "eth_sendTransaction returns a hash whose recovered signer is the node account", %{
     opts: opts,
     accounts: accounts
   } do
@@ -103,6 +102,18 @@ defmodule Cartouche.RPC.DevNodeTest do
 
     assert {:ok, hash} = Cartouche.RPC.send_transaction(call, Keyword.put(opts, :from, from))
     assert byte_size(hash) == 32
+
+    assert {:ok, params} =
+             Cartouche.RPC.send_rpc("eth_getTransactionByHash", [Cartouche.Hex.encode_hex(hash)], opts)
+
+    signed =
+      case params["type"] do
+        type when type in [nil, "0x0"] -> V1.from_json(params)
+        "0x2" -> V2.from_json(params)
+        other -> flunk("unexpected sent envelope type: #{inspect(other)}")
+      end
+
+    assert recover_signer!(signed, opts) == from
   end
 
   @spec recover_signer!(struct(), Keyword.t()) :: <<_::160>>

@@ -218,25 +218,4 @@ defmodule Cartouche.Test.Live do
         mix test --only dev_node
     """
   end
-
-  @spec dev_node_unreachable_message(String.t(), :env | :anvil, term()) :: String.t()
-  defp dev_node_unreachable_message(url, :env, reason) do
-    """
-    CARTOUCHE_DEV_NODE_URL=#{url} is set but the node is unreachable.
-
-    Error: #{inspect(reason)}
-
-    Start the node, or unset the env var to fall back to a locally installed anvil.
-    """
-  end
-
-  defp dev_node_unreachable_message(url, :anvil, reason) do
-    """
-    Development node at #{url} is unreachable.
-
-    Error: #{inspect(reason)}
-
-    #{missing_dev_node_message()}
-    """
-  end
 end
