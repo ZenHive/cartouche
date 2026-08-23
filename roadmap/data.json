@@ -2945,7 +2945,7 @@
       "id": "123",
       "phase": 0,
       "bundle": "rpc_correctness",
-      "status": "in_progress",
+      "status": "done",
       "title": "Cartouche.RPC node introspection — eth_config (EIP-7910) and eth_capabilities",
       "scores": {
         "d": 4,
@@ -2977,10 +2977,17 @@
         "lib/cartouche/chain.ex",
         "test/rpc_integration_test.exs"
       ],
+      "shipped_in": "670b22b49c91c5c80432a3fd5c000e92207a7992",
       "body": "Two node-introspection methods from the current spec are missing. They sit beside the existing `net_version` and `eth_chainId` as questions about the node and chain rather than about state.\n\n`eth_config` (EIP-7910) returns the chain's configuration: fork activation times, the blob schedule, chain id, fork id, precompiles, and system contracts. It is the only method that lets a client discover which fork rules a node is applying without hardcoding a chain table, and cartouche carries exactly such a table in `Cartouche.Chain`. Decide, and record in the moduledoc, whether the result is offered purely as a read or is also usable to cross-check `Cartouche.Chain`; do not silently make the static table depend on a network call.\n\n`eth_capabilities` reports which capabilities the node has available — notably whether state or state proofs are unavailable, as happens on a node without genesis world state.\n\nBoth return structured objects rather than scalars, so each needs a deserializer following the conventions of `Cartouche.FeeHistory` and `Cartouche.Block`: a struct with typed fields and a `deserialize/1`, tolerating fields a given client omits rather than raising on them. The `eth_config` payload is the larger of the two and is still evolving — read the current shape from the spec, and be explicit in the type about which fields are optional.\n\nAuthority is EIP-7910 and `ethereum/execution-apis` (`src/eth/client.yaml`, `src/eth/capabilities.yaml`) plus the live node. Note that client support is uneven; if the integration node does not implement a method, the test must record that observation and fail loudly rather than skip.\n",
       "created_at": "2026-08-23",
       "started_at": "2026-08-23",
+      "done_at": "2026-08-23",
       "scored_at": "2026-08-23",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787470449354-d8c31a68, 670b22b49c91c5c80432a3fd5c000e92207a7992).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787470449354-d8c31a68",
       "cross_repo": []
     },
     {

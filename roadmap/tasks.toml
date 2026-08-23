@@ -1910,7 +1910,7 @@ shipped_in = "670b22b49c91c5c80432a3fd5c000e92207a7992"
 id = "123"
 phase = 0
 bundle = "rpc_correctness"
-status = "in_progress"
+status = "done"
 title = "Cartouche.RPC node introspection — eth_config (EIP-7910) and eth_capabilities"
 scores = { d = 4, b = 5, u = 4 }
 markers = []
@@ -1930,9 +1930,16 @@ Both return structured objects rather than scalars, so each needs a deserializer
 
 Authority is EIP-7910 and `ethereum/execution-apis` (`src/eth/client.yaml`, `src/eth/capabilities.yaml`) plus the live node. Note that client support is uneven; if the integration node does not implement a method, the test must record that observation and fail loudly rather than skip.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787470449354-d8c31a68, 670b22b49c91c5c80432a3fd5c000e92207a7992)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787470449354-d8c31a68"
 created_at = "2026-08-23"
 started_at = "2026-08-23"
 scored_at = "2026-08-23"
+done_at = "2026-08-23"
+shipped_in = "670b22b49c91c5c80432a3fd5c000e92207a7992"
 
 [[task]]
 id = "124"
