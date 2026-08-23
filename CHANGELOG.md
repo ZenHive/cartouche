@@ -35,19 +35,45 @@ All notable changes to this project will be documented in this file.
   the node returns, including its refusal. Local signing through
   `Cartouche.Signer` remains the normal route; the distinction is which side
   constructs the envelope, not key custody. `fill_transaction/2` deserializes
-  a spec-conforming unsigned `FillTransactionResult` (`tx` only; signature
-  fields become `nil`) as well as geth's `{raw, tx}` pair (preferring `raw`)
-  into cartouche's transaction structs; `V1.t()` types `v`/`r`/`s` as nilable
-  so the unsigned envelope is explicit, and `V1.encode/1` treats nil as `0`.
-  All three envelope-constructing methods serialize an EIP-1559 transaction with
-  its `type`, `chainId` and `accessList`, so a caller-supplied access list reaches
+  into cartouche's transaction structs rather than a raw map. All three
+  envelope-constructing methods serialize an EIP-1559 transaction with its
+  `type`, `chainId` and `accessList`, so a caller-supplied access list reaches
   the node that signs it instead of being dropped on the way; `sign/3` takes the
   message the node signs under EIP-191, not a pre-computed digest. Tests run against
   a development node through a new lane in `test/support/live.ex`
   (`CARTOUCHE_DEV_NODE_URL`, or an ephemeral locally installed anvil, flunking
   with setup instructions when neither is available) that leaves the mainnet
   chain-id assertion untouched; they pin anvil's observed refusals rather than
-  assumed ones. Closes ROADMAP Tasks 121, 124, and 125.
+  assumed ones. Closes ROADMAP Tasks 121 and 124.
+
+- **`fill_transaction/2` decodes the spec-conforming `eth_fillTransaction`
+  result, and no longer hands back a transaction that would sign to the wrong
+  address.** `execution-apis` types the result as `FillTransactionResult`: a
+  required, unsigned `tx` object and no `raw` field at all, whereas geth answers
+  with a `{raw, tx}` pair. `tx` is now the field cartouche decodes, with `raw`
+  as a fallback — the reverse of `eth_signTransaction`'s precedence, and the
+  correction that makes this safe. A fill result is *unsigned*, but geth
+  serializes it into `raw` using the canonical **signed** wire format with a
+  zero signature: a legacy body ending `[0, 0, 0]` instead of EIP-155's
+  `[chain_id, 0, 0]`, and a typed body carrying its zero-valued V/R/S instead of
+  the short signing preimage. Nothing in those bytes distinguishes "unsigned"
+  from "signed with zeros", so re-encoding the decoded struct produced a payload
+  whose signature recovers to an unrelated address. Deserializing `tx` instead
+  makes each envelope's unsigned representation explicit: the typed envelopes
+  carry `chain_id` in their own field and take `nil` signature fields, while
+  `Cartouche.Transaction.V1` keeps the chain id in `v` alongside `r = 0, s = 0`.
+  Because geth omits `chainId` from an unsigned legacy `tx`, `fill_transaction/2`
+  gained a `chain_id:` option to supply it; chain id 0 counts as absent from
+  either side, because `Cartouche.Signer` would sign it pre-EIP-155 while
+  `V1.encode/1` emits the nine-field body. When no chain id is available, or the
+  `raw` fallback decodes to anything that is not unambiguously unsigned, the
+  call fails by name rather than return a transaction that cannot be signed
+  correctly. Signature keys present but zero now read as unsigned, and only a
+  non-zero `r`/`s` marks a result as already signed — while a signature word or
+  chain id that does not parse as a non-negative hex or integer quantity is
+  refused outright rather than collapsing to a zero that would read as an unset
+  field. `from_json/1` stays strict for signed envelopes, so `eth_getBlockBy*`
+  still rejects a corrupt signature. Closes ROADMAP Tasks 125 and 126.
 
 - **`Cartouche.RPC` now wraps `eth_createAccessList`, `eth_baseFee`,
   `eth_blobBaseFee`, `eth_config` (EIP-7910), and `eth_capabilities`.**

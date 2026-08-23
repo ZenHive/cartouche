@@ -34,7 +34,11 @@ defmodule Cartouche.RPC do
 
   require Logger
 
+  # `r`/`s` decide whether a fill result is already signed; the full set is
+  # shape-checked so a garbled value cannot pass as an unset field.
+  @filled_signature_words ~w(r s)
   @filled_signature_fields ~w(v yParity r s)
+  @hex_digits ~r/\A[0-9a-fA-F]+\z/
 
   defmodule Configuration do
     @moduledoc """
@@ -2544,7 +2548,9 @@ defmodule Cartouche.RPC do
       opts: [
         kind: :value,
         default: [],
-        description: "Keyword options including optional `:from` and common `send_rpc/3` transport options."
+        description:
+          "Keyword options including optional `:from`, optional `:chain_id` (the chain id geth " <>
+            "omits from an unsigned legacy result), and common `send_rpc/3` transport options."
       ]
     ],
     returns: %{
@@ -2558,9 +2564,21 @@ defmodule Cartouche.RPC do
 
   The node populates nonce, gas, and fee fields and returns the completed
   unsigned transaction. Spec-conforming nodes return a `FillTransactionResult`
-  with only `tx` (no `v`/`r`/`s`/`yParity`); geth returns `{raw, tx}`. Either
-  shape decodes into a `Cartouche.Transaction` struct. Signature fields on a
-  spec-path result are `nil`.
+  carrying only `tx`; geth returns a `{raw, tx}` pair. Both shapes decode into a
+  `Cartouche.Transaction` struct.
+
+  Decoding prefers the `tx` object `execution-apis` requires over geth's
+  additional `raw` field, because `raw` serializes an unsigned transaction in
+  the signed wire format and so cannot be told apart from a signed one.
+
+  A typed envelope's unsigned form is `nil` signature fields; a legacy one keeps
+  the chain id in `v` with `r`/`s` zero.
+
+  Legacy fills need a chain id, which `Cartouche.Transaction.V1` holds in `v`
+  until a signature replaces it. geth omits `chainId` from an unsigned legacy
+  result; pass `chain_id:` to supply it. Without it — from either side — the
+  call errors rather than return a transaction that would sign to the wrong
+  address.
 
   ## Examples
 
@@ -2573,11 +2591,12 @@ defmodule Cartouche.RPC do
   @spec fill_transaction(V1.t() | V2.t() | Call.t(), Keyword.t()) :: {:ok, struct()} | {:error, term()}
   def fill_transaction(trx, opts \\ []) do
     from = Keyword.get(opts, :from)
+    chain_id = Keyword.get(opts, :chain_id)
 
     send_rpc(
       "eth_fillTransaction",
       [to_transaction_params(trx, from)],
-      Keyword.put(opts, :decode, &decode_filled_transaction/1)
+      Keyword.put(opts, :decode, &decode_filled_transaction(&1, chain_id))
     )
   end
 
@@ -2706,14 +2725,51 @@ defmodule Cartouche.RPC do
   @spec decode_addresses(list()) :: [<<_::160>>]
   defp decode_addresses(addresses) when is_list(addresses), do: Enum.map(addresses, &Hex.decode_address!/1)
 
-  @spec decode_filled_transaction(map()) :: struct()
-  defp decode_filled_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
-  defp decode_filled_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_unsigned_rpc_transaction(tx)
+  # `tx` wins over `raw`, which inverts the precedence `eth_signTransaction`
+  # uses below. `eth_fillTransaction` returns an *unsigned* transaction, and
+  # geth serializes that into `raw` using the canonical *signed* wire format
+  # with a zero signature — a legacy body ending `[0, 0, 0]` rather than
+  # EIP-155's `[chain_id, 0, 0]`, and a typed body carrying its zero-valued
+  # V/R/S rather than the short signing preimage. Nothing in those bytes
+  # distinguishes "unsigned" from "signed with zeros", so a caller who signs
+  # the re-encoded result gets a signature that recovers to the wrong address.
+  # `tx` is the field `execution-apis` actually requires, and it says which
+  # fields the node left unset, so it is the trustworthy one.
+  @spec decode_filled_transaction(map(), atom() | integer() | nil) :: struct()
+  defp decode_filled_transaction(%{"tx" => tx}, chain_id) when is_map(tx),
+    do: deserialize_unsigned_rpc_transaction(tx, chain_id)
 
-  defp decode_filled_transaction(%{} = params) do
+  defp decode_filled_transaction(%{"raw" => raw}, _chain_id) when is_binary(raw),
+    do: raw |> decode_raw_transaction!() |> assert_unsigned_raw!()
+
+  defp decode_filled_transaction(%{} = params, _chain_id) do
     raise ArgumentError,
-          "eth_fillTransaction returned neither a `raw` field nor an unsigned `tx` object " <>
+          "eth_fillTransaction returned neither a `tx` object nor a `raw` field " <>
             "(keys: #{inspect(Map.keys(params))})"
+  end
+
+  # Reached only when the node sent `raw` without the `tx` object that would say
+  # what it means. `eth_fillTransaction` returns an *unsigned* transaction, so
+  # the fallback must yield an envelope that is unsigned in cartouche's own
+  # representation — the only shape `encode/1` re-emits as the bytes a caller
+  # signs. Legacy means `[chain_id, 0, 0]` with a real chain id; typed means
+  # `nil` signature fields, which only a short signing-preimage body decodes to.
+  # Everything else is refused: geth's all-zero canonical serialization (whose
+  # signing payload is not recoverable from those bytes), an already-signed
+  # transaction, or a malformed mix. Re-encoding any of them would hash
+  # different bytes than were signed, and the signature would recover to an
+  # address that never signed anything.
+  @spec assert_unsigned_raw!(struct()) :: struct()
+  defp assert_unsigned_raw!(%V1{v: v, r: 0, s: 0} = transaction) when is_integer(v) and v > 0, do: transaction
+
+  defp assert_unsigned_raw!(%{signature_y_parity: nil, signature_r: nil, signature_s: nil} = transaction), do: transaction
+
+  defp assert_unsigned_raw!(transaction) do
+    raise ArgumentError,
+          "eth_fillTransaction returned a `raw` transaction that is not unambiguously unsigned, " <>
+            "and no `tx` object to interpret it (#{inspect(transaction.__struct__)}). A node " <>
+            "answering per `execution-apis` sends `tx`; geth's `raw` serializes an unsigned fill " <>
+            "in the signed wire format, whose signing payload cannot be recovered from those bytes"
   end
 
   @spec decode_signed_transaction(map() | String.t()) :: struct()
@@ -2747,35 +2803,139 @@ defmodule Cartouche.RPC do
     end
   end
 
-  @spec deserialize_unsigned_rpc_transaction(map()) :: struct()
-  defp deserialize_unsigned_rpc_transaction(%{} = params) do
-    case Enum.filter(@filled_signature_fields, &Map.has_key?(params, &1)) do
+  # A fill result is unsigned, but geth still emits the signature keys with zero
+  # values, so "key present" cannot mean "signed" — only a non-zero `r`/`s` can.
+  # `v`/`yParity` are deliberately not consulted: a legitimately signed typed
+  # transaction may carry `yParity: "0x0"`, and an unsigned legacy one carries
+  # the chain id in `v`.
+  @spec deserialize_unsigned_rpc_transaction(map(), atom() | integer() | nil) :: struct()
+  defp deserialize_unsigned_rpc_transaction(%{} = params, chain_id) do
+    validate_signature_quantities!(params)
+
+    case Enum.filter(@filled_signature_words, &match?({:ok, value} when value != 0, quantity(params[&1]))) do
       [] ->
         params
-        |> put_signature_placeholders()
+        |> put_unsigned_signature_fields(chain_id)
         |> deserialize_rpc_transaction()
-        |> clear_transaction_signature()
+        |> clear_typed_signature()
 
-      signature_fields ->
+      signature_words ->
         raise ArgumentError,
-              "eth_fillTransaction returned a signature-bearing `tx` object " <>
-                "(fields: #{inspect(signature_fields)})"
+              "eth_fillTransaction returned a signed `tx` object " <>
+                "(non-zero: #{inspect(signature_words)})"
     end
   end
 
-  @spec put_signature_placeholders(map()) :: map()
-  defp put_signature_placeholders(%{} = params) do
-    case params["type"] do
-      type when type in [nil, "0x0"] -> Map.merge(params, %{"v" => "0x0", "r" => "0x0", "s" => "0x0"})
-      _type -> Map.merge(params, %{"yParity" => "0x0", "r" => "0x0", "s" => "0x0"})
+  # A typed envelope keeps `chain_id` in its own field, so its unsigned form is
+  # the signature fields set to `nil` — which `V2.encode/1` and its siblings
+  # already emit as the payload a caller signs. The placeholders here only exist
+  # to get past `from_json/1`, which stays strict for `eth_getBlockBy*`.
+  @spec put_unsigned_signature_fields(map(), atom() | integer() | nil) :: map()
+  defp put_unsigned_signature_fields(%{"type" => type} = params, _chain_id) when type not in [nil, "0x0"],
+    do: Map.merge(params, %{"yParity" => "0x0", "r" => "0x0", "s" => "0x0"})
+
+  # A legacy envelope has no `chain_id` field: `V1` carries the chain id in `v`
+  # until a signature overwrites it, which is exactly the `[chain_id, 0, 0]`
+  # signature triple EIP-155 defines for the payload a caller signs. Writing a
+  # placeholder there instead would make `V1.encode/1` emit `[0, 0, 0]`, and a
+  # signature over that payload recovers to the wrong address.
+  defp put_unsigned_signature_fields(%{} = params, chain_id) do
+    id = legacy_chain_id(params["chainId"], chain_id, params)
+    Map.merge(params, %{"v" => Hex.encode_short_hex(id), "r" => "0x0", "s" => "0x0"})
+  end
+
+  # geth omits `chainId` from a legacy fill result — `newRPCTransaction` emits it
+  # only for a replay-protected (already signed) transaction — so the caller's
+  # `:chain_id` option is the fallback. Neither present is a hard error: guessing
+  # from application config would sign for whatever network happened to be
+  # configured. Chain id 0 is refused too, because `Cartouche.Signer` maps it to
+  # a pre-EIP-155 `v` of 27/28 while `V1.encode/1` always emits nine fields, and
+  # the two halves would disagree about what was signed.
+  @spec legacy_chain_id(term(), atom() | integer() | nil, map()) :: pos_integer()
+  defp legacy_chain_id(response_chain_id, opt_chain_id, params) do
+    cond do
+      id = quantity_chain_id(response_chain_id) -> id
+      id = option_chain_id(opt_chain_id) -> id
+      true -> raise ArgumentError, missing_chain_id_message(params)
     end
   end
 
-  @spec clear_transaction_signature(V1.t() | V_2930.t() | V2.t() | Transaction.V3.t() | Transaction.V4.t()) ::
+  # `Cartouche.Chain.parse_id/1` passes every integer through, so the option
+  # needs the same positivity check the node's `chainId` gets — otherwise
+  # `chain_id: 0` would reach `v` and defeat the refusal above. The message
+  # blames the caller rather than the response, because that is where a bad
+  # value came from.
+  @spec option_chain_id(atom() | integer() | nil) :: pos_integer() | nil
+  defp option_chain_id(nil), do: nil
+
+  defp option_chain_id(chain_id) do
+    case chain_id |> Cartouche.Chain.parse_id() |> quantity() do
+      {:ok, id} when id > 0 ->
+        id
+
+      _zero_or_invalid ->
+        raise ArgumentError,
+              "`chain_id:` must be a positive chain id, got #{inspect(chain_id)}. Chain id 0 is " <>
+                "not signable here: `Cartouche.Signer` would sign it pre-EIP-155 while " <>
+                "`V1.encode/1` emits the nine-field body"
+    end
+  end
+
+  # A garbled signature word must not read as "unsigned" — the placeholders below
+  # would overwrite it, and the caller would sign a transaction built from a
+  # response cartouche never actually understood. `v` and `yParity` are checked
+  # for shape here even though only `r`/`s` decide signedness.
+  @spec validate_signature_quantities!(map()) :: :ok
+  defp validate_signature_quantities!(params) do
+    case Enum.filter(@filled_signature_fields, &(quantity(params[&1]) == :malformed)) do
+      [] ->
+        :ok
+
+      malformed ->
+        raise ArgumentError,
+              "eth_fillTransaction returned a `tx` object with malformed signature quantities " <>
+                "(#{inspect(malformed)})"
+    end
+  end
+
+  # Reads a JSON `QUANTITY`. Nothing is silently coerced: anything that is
+  # neither a `0x`-prefixed hex string nor a non-negative integer comes back
+  # `:malformed` so the caller can refuse it, rather than collapsing to a zero
+  # that would read as an unset field.
+  @spec quantity(term()) :: {:ok, non_neg_integer()} | :absent | :malformed
+  defp quantity(nil), do: :absent
+  defp quantity(value) when is_integer(value) and value >= 0, do: {:ok, value}
+
+  defp quantity("0x" <> digits) when byte_size(digits) > 0 do
+    if String.match?(digits, @hex_digits), do: {:ok, String.to_integer(digits, 16)}, else: :malformed
+  end
+
+  defp quantity(_value), do: :malformed
+
+  @spec quantity_chain_id(term()) :: pos_integer() | nil
+  defp quantity_chain_id(value) do
+    case quantity(value) do
+      {:ok, id} when id > 0 -> id
+      :malformed -> raise ArgumentError, "eth_fillTransaction returned a malformed `chainId` (#{inspect(value)})"
+      _zero_or_absent -> nil
+    end
+  end
+
+  @spec missing_chain_id_message(map()) :: String.t()
+  defp missing_chain_id_message(params) do
+    "eth_fillTransaction returned an unsigned legacy `tx` object with no usable `chainId` " <>
+      "(keys: #{inspect(Map.keys(params))}). `Cartouche.Transaction.V1` holds the chain id in " <>
+      "`v` until it is signed, so the EIP-155 signing payload cannot be reconstructed without " <>
+      "it — pass `chain_id:` to `fill_transaction/2`"
+  end
+
+  # Only the typed envelopes need clearing: the legacy placeholders above are
+  # already the representation `V1` uses for an unsigned transaction.
+  @spec clear_typed_signature(V1.t() | V_2930.t() | V2.t() | Transaction.V3.t() | Transaction.V4.t()) ::
           V1.t() | V_2930.t() | V2.t() | Transaction.V3.t() | Transaction.V4.t()
-  defp clear_transaction_signature(%V1{} = transaction), do: %{transaction | v: nil, r: nil, s: nil}
+  defp clear_typed_signature(%V1{} = transaction), do: transaction
 
-  defp clear_transaction_signature(%{signature_y_parity: _, signature_r: _, signature_s: _} = transaction) do
+  defp clear_typed_signature(%{signature_y_parity: _, signature_r: _, signature_s: _} = transaction) do
     %{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil}
   end
 

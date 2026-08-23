@@ -1551,12 +1551,6 @@ defmodule Cartouche.TransactionTest do
       assert Cartouche.Hex.to_address(recovered) == "0x63Cc7c25e0cdb121aBb0fE477a6b9901889F99A7"
     end
 
-    test "encode treats nil signature fields as unsigned zeros" do
-      base = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
-      unsigned = %{base | v: nil, r: nil, s: nil}
-      assert V1.encode(unsigned) == V1.encode(%{base | v: 0, r: 0, s: 0})
-    end
-
     test "decode of unsigned RLP yields r=0, s=0; recover_signer reports missing signature" do
       encoded = V1.encode(V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan))
       {:ok, decoded} = V1.decode(encoded)

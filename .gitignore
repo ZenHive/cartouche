@@ -63,7 +63,8 @@ cartouche-*.tar
 /.mutation/results/
 /.mutation/*.log
 
-# Harness reviewer artifacts must not land. The contract is `.harness/review.json`
+# Harness run artifacts must not land. The contract is `.harness/review.json`
 # (excluded from staging). `.review/` leaked once onto main (task 125) and is
-# ignored so it cannot ride a reviewer-fixes commit again.
+# ignored so neither can ride a reviewer-fixes commit again.
+/.harness/
 /.review/

@@ -6,6 +6,7 @@ defmodule Cartouche.RPCTest do
 
   alias Cartouche.RPC.Capabilities
   alias Cartouche.RPC.Configuration
+  alias Cartouche.Test.Signer
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
@@ -33,6 +34,22 @@ defmodule Cartouche.RPCTest do
     Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => decode_id(conn)})
   end
 
+  # The oracle for "this unsigned envelope encodes to the payload that actually
+  # gets signed": sign the filled transaction the way a caller would, attach the
+  # signature, recover. If the envelope's unsigned representation is wrong,
+  # signing and recovery hash different bytes and the addresses diverge — which
+  # is exactly the wrong-address hazard, not a shape mismatch a struct assertion
+  # would catch.
+  defp assert_signs_back_to_signer(filled, attach, recover, sign_opts \\ []) do
+    signer_proc = Signer.start_signer()
+
+    {:ok, signature} = Cartouche.Signer.sign(Cartouche.Transaction.encode(filled), signer_proc, sign_opts)
+    assert {:ok, recovered} = recover.(attach.(signature))
+
+    assert Cartouche.Hex.to_address(recovered) ==
+             Cartouche.Hex.to_address(Cartouche.Signer.address(signer_proc))
+  end
+
   defp unsigned_filled_v2_json do
     %{
       "type" => "0x2",
@@ -52,6 +69,7 @@ defmodule Cartouche.RPCTest do
   defp unsigned_filled_v1_json do
     %{
       "type" => "0x0",
+      "chainId" => "0x2a",
       "nonce" => "0x9",
       "gasPrice" => "0x174876e800",
       "gas" => "0x5208",
@@ -559,7 +577,7 @@ defmodule Cartouche.RPCTest do
 
   describe "prepare_trx/3 branches" do
     test "execute_trx/3 prepares, signs, and broadcasts a legacy transaction" do
-      signer_proc = Cartouche.Test.Signer.start_signer()
+      signer_proc = Signer.start_signer()
 
       assert {:ok, trx_id} =
                Cartouche.RPC.execute_trx(<<1::160>>, <<>>,
@@ -654,7 +672,7 @@ defmodule Cartouche.RPCTest do
                |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
     end
 
-    test "fill_transaction represents an unsigned legacy signature with nil fields" do
+    test "fill_transaction keeps the chain id in an unsigned legacy signature triple" do
       result = %{"tx" => unsigned_filled_v1_json()}
       plug = fn conn -> respond_with_result(conn, result) end
 
@@ -663,43 +681,175 @@ defmodule Cartouche.RPCTest do
                 nonce: 9,
                 gas_limit: 21_000,
                 gas_price: 100_000_000_000,
-                v: nil,
-                r: nil,
-                s: nil
+                v: 42,
+                r: 0,
+                s: 0
               } = transaction} =
                <<1::160>>
                |> Call.new(<<1, 2, 3>>)
                |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
 
       assert {:error, "transaction missing signature"} = V1.get_signature(transaction)
-      assert is_binary(Cartouche.Transaction.encode(transaction))
+
+      # The point of keeping `chainId` in `v`: what a caller signs next must be
+      # the EIP-155 `[chain_id, 0, 0]` payload, not the `[0, 0, 0]` one — a
+      # signature over the latter recovers to the wrong address.
+      assert Cartouche.Transaction.encode(transaction) ==
+               V1.encode(V1.new(9, {100, :gwei}, 21_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, 42))
     end
 
-    test "fill_transaction prefers geth's raw field and round-trips its {raw, tx} result" do
-      filled = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
-
-      result = %{
-        "raw" => filled |> Cartouche.Transaction.encode() |> Cartouche.Hex.encode_hex(),
-        "tx" => unsigned_filled_v2_json()
-      }
-
+    test "fill_transaction rejects an unsigned legacy tx with no chainId" do
+      result = %{"tx" => Map.delete(unsigned_filled_v1_json(), "chainId")}
       plug = fn conn -> respond_with_result(conn, result) end
 
-      assert {:ok, ^filled} =
+      assert {:error, message} =
                <<1::160>>
                |> Call.new(<<1, 2, 3>>)
                |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
 
-      assert {:ok, ^filled} = filled |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
+      assert message =~ "failed to decode `eth_fillTransaction` response"
+      assert message =~ "no usable `chainId`"
+      assert message =~ "pass `chain_id:`"
     end
 
-    test "fill_transaction rejects a non-unsigned spec result" do
-      cases = [
-        {%{"tx" => Map.put(unsigned_filled_v2_json(), "r", "0x1")}, "signature-bearing"},
-        {%{}, "neither a `raw` field nor an unsigned `tx` object"}
-      ]
+    # geth serializes an unsigned TYPED fill into `raw` using the canonical
+    # signed encoding — a 12-field EIP-1559 body whose V/R/S are zero — not the
+    # 9-field signing preimage. Decoding those bytes yields `signature_y_parity:
+    # false` with two zero words, which `V2.encode/1` re-emits as a signed body;
+    # signing that recovers to a different address than the one that signed it.
+    # The spec-required `tx` object is the trustworthy field, so it wins.
+    test "fill_transaction prefers the spec tx object over geth's ambiguous raw" do
+      geth_typed_raw =
+        <<0x02>> <>
+          ExRLP.encode([
+            1,
+            7,
+            1_000_000_000,
+            100_000_000_000,
+            21_000,
+            <<1::160>>,
+            2,
+            <<1, 2, 3>>,
+            [],
+            0,
+            0,
+            0
+          ])
 
-      Enum.each(cases, fn {result, needle} ->
+      result = %{
+        "raw" => Cartouche.Hex.encode_hex(geth_typed_raw),
+        "tx" => Map.merge(unsigned_filled_v2_json(), %{"yParity" => "0x0", "r" => "0x0", "s" => "0x0"})
+      }
+
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:ok, %V2{nonce: 7, signature_y_parity: nil, signature_r: nil, signature_s: nil} = filled} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      # The oracle: what the caller signs must be the unsigned payload, so the
+      # recovered address is the signer's. Decoding geth's `raw` instead yields
+      # a struct whose `encode/1` appends the zero triple, and this fails.
+      assert_signs_back_to_signer(filled, fn signature -> V2.add_signature(filled, signature) end, &V2.recover_signer/1)
+    end
+
+    # geth's unsigned legacy `tx` carries no `chainId` at all — `newRPCTransaction`
+    # emits it only for a replay-protected transaction — and its `raw` ends in a
+    # literal `[0, 0, 0]` rather than EIP-155's `[chain_id, 0, 0]`. The caller's
+    # `chain_id:` option is the only source, and it must reach `v`.
+    test "fill_transaction takes the chain id from chain_id: when geth omits it" do
+      geth_legacy_raw = ExRLP.encode([9, 100_000_000_000, 21_000, <<1::160>>, 2, <<1, 2, 3>>, 0, 0, 0])
+
+      result = %{
+        "raw" => Cartouche.Hex.encode_hex(geth_legacy_raw),
+        "tx" => Map.delete(unsigned_filled_v1_json(), "chainId")
+      }
+
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:ok, %V1{v: 42, r: 0, s: 0} = filled} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(chain_id: 42, req_options: [plug: plug])
+
+      assert_signs_back_to_signer(
+        filled,
+        fn signature -> V1.add_signature(filled, signature) end,
+        &V1.recover_signer(&1, 42),
+        chain_id: 42
+      )
+    end
+
+    # `Cartouche.Chain.parse_id/1` passes every integer through, so a zero or
+    # negative option would reach `v` and produce the same `[0, 0, 0]` payload
+    # the response-side check refuses. Chain id 0 is not signable here either
+    # way: `Signer` maps it to a pre-EIP-155 `v` of 27/28 while `V1.encode/1`
+    # always emits nine fields.
+    test "fill_transaction refuses a chain_id: option that is not a positive id" do
+      result = %{"tx" => Map.delete(unsigned_filled_v1_json(), "chainId")}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      for chain_id <- [0, -1] do
+        assert {:error, message} =
+                 <<1::160>>
+                 |> Call.new(<<1, 2, 3>>)
+                 |> Cartouche.RPC.fill_transaction(chain_id: chain_id, req_options: [plug: plug])
+
+        assert message =~ "`chain_id:` must be a positive chain id"
+      end
+    end
+
+    test "fill_transaction reports the missing chain id against the response when no option is given" do
+      result = %{"tx" => Map.delete(unsigned_filled_v1_json(), "chainId")}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert message =~ "no usable `chainId`"
+    end
+
+    # A garbled `chainId` must not fall through to the caller's option — that
+    # would sign for whatever network the caller guessed while the node was
+    # naming a different one it could not be understood to name.
+    test "fill_transaction refuses a malformed chainId instead of using the chain_id: fallback" do
+      for bad <- ["bad", "0x", 42.0] do
+        result = %{"tx" => Map.put(unsigned_filled_v1_json(), "chainId", bad)}
+        plug = fn conn -> respond_with_result(conn, result) end
+
+        assert {:error, message} =
+                 <<1::160>>
+                 |> Call.new(<<1, 2, 3>>)
+                 |> Cartouche.RPC.fill_transaction(chain_id: 42, req_options: [plug: plug])
+
+        assert message =~ "malformed `chainId`"
+      end
+    end
+
+    # The raw fallback must yield something cartouche can re-encode into the same
+    # bytes that get signed. A signed or half-signed envelope is neither unsigned
+    # nor safe to hand back from a method documented to return an unsigned fill.
+    test "fill_transaction rejects a raw transaction that is not unambiguously unsigned" do
+      malformed = ExRLP.encode([9, 100_000_000_000, 21_000, <<1::160>>, 2, <<1, 2, 3>>, 0, 1, 2])
+      plug = fn conn -> respond_with_result(conn, %{"raw" => Cartouche.Hex.encode_hex(malformed)}) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert message =~ "not unambiguously unsigned"
+    end
+
+    # A garbled signature word must not read as "unsigned" — the placeholders
+    # would overwrite it, and the caller would sign a transaction built from a
+    # response cartouche never actually understood.
+    test "fill_transaction rejects a tx object with a malformed signature quantity" do
+      for {field, value} <- [{"r", "not-a-quantity"}, {"s", "0x"}, {"yParity", %{}}, {"v", "2a"}] do
+        result = %{"tx" => Map.put(unsigned_filled_v2_json(), field, value)}
         plug = fn conn -> respond_with_result(conn, result) end
 
         assert {:error, message} =
@@ -707,8 +857,45 @@ defmodule Cartouche.RPCTest do
                  |> Call.new(<<1, 2, 3>>)
                  |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
 
-        assert message =~ needle
-      end)
+        assert message =~ "malformed signature quantities"
+        assert message =~ field
+      end
+    end
+
+    test "fill_transaction rejects a genuinely signed tx object" do
+      result = %{"tx" => Map.merge(unsigned_filled_v1_json(), %{"v" => "0x54", "r" => "0x1", "s" => "0x2"})}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert message =~ "returned a signed `tx` object"
+    end
+
+    test "fill_transaction rejects geth's all-zero legacy raw when no tx accompanies it" do
+      geth_raw = ExRLP.encode([9, 100_000_000_000, 21_000, <<1::160>>, 2, <<1, 2, 3>>, 0, 0, 0])
+      result = %{"raw" => Cartouche.Hex.encode_hex(geth_raw)}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert message =~ "not unambiguously unsigned"
+    end
+
+    test "fill_transaction rejects a result carrying neither tx nor raw" do
+      plug = fn conn -> respond_with_result(conn, %{}) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert message =~ "neither a `tx` object nor a `raw` field"
     end
 
     test "get_filter_logs decodes the same Log shape as filter changes" do

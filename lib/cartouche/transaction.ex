@@ -36,9 +36,9 @@ defmodule Cartouche.Transaction do
             to: <<_::160>> | nil,
             value: integer(),
             data: binary(),
-            v: integer() | nil,
-            r: integer() | nil,
-            s: integer() | nil
+            v: integer(),
+            r: integer(),
+            s: integer()
           }
 
     defstruct [
@@ -151,7 +151,6 @@ defmodule Cartouche.Transaction do
     @doc ~S"""
     Build an RLP-encoded transaction. Note: transactions can be encoded before they are signed, which
     uses `[chain_id, 0, 0]` in the signature fields, otherwise those fields are `[v, r, s]`.
-    Nil `v`/`r`/`s` (unsigned `eth_fillTransaction` results) encode as `0`.
 
     ## Examples
 
@@ -172,7 +171,7 @@ defmodule Cartouche.Transaction do
           r: r,
           s: s
         }) do
-      ExRLP.encode([nonce, gas_price, gas_limit, to, value, data, v || 0, r || 0, s || 0])
+      ExRLP.encode([nonce, gas_price, gas_limit, to, value, data, v, r, s])
     end
 
     api(:decode, "Decode RLP bytes into a legacy transaction struct.",
@@ -316,12 +315,9 @@ defmodule Cartouche.Transaction do
         {:error, "transaction missing signature"}
     """
     @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
-    def get_signature(%__MODULE__{v: v, r: r, s: s}) when is_nil(v) or is_nil(r) or is_nil(s),
-      do: {:error, "transaction missing signature"}
-
     def get_signature(%__MODULE__{v: _v, r: 0, s: 0}), do: {:error, "transaction missing signature"}
 
-    def get_signature(%__MODULE__{v: v, r: r, s: s}) when is_integer(v) and is_integer(r) and is_integer(s) do
+    def get_signature(%__MODULE__{v: v, r: r, s: s}) do
       v_enc = :binary.encode_unsigned(v)
       {:ok, <<r::big-256, s::big-256, v_enc::binary>>}
     end
