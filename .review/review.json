@@ -1,0 +1,55 @@
+{
+  "verdict": "approve",
+  "review": "Task 125 is met. fill_transaction/2 now accepts a spec FillTransactionResult (confirmed on ethereum/execution-apis master src/schemas/transaction.yaml: required `tx` only, FilledTransaction is the unsigned *Unsigned union with no v/r/s/yParity) by injecting throwaway signature placeholders, running the existing from_json/1 path, then clearing those fields to nil. That keeps eth_getBlockBy* decoders strict. V1.t() now types v/r/s as integer() | nil (V2/V3/V4 already admitted nil); get_signature/1 treats nil as missing. Geth {raw, tx} still prefers raw and round-trips through Transaction.encode/decode. Unit tests cover both shapes and assert nonce/gas/fee survival; from_json/1 on V1–V4 still raises InvalidHex on a corrupt present signature. Reviewer fix: spec-path V1 results crashed V1.encode/1 (ExRLP has no Atom clause for nil); encode now treats nil v/r/s as 0, with tests. mix check.dispatch 1270 passed; MIX_ENV=test dialyzer passed (5 pre-existing skipped); mix agents.check OK.",
+  "checks": {
+    "mix test.json test/rpc_test.exs test/block_test.exs --exclude integration --exclude dev_node": {
+      "passed": true,
+      "output": "145 passed, 0 failed (pre-fix focused run)"
+    },
+    "mix check.dispatch": {
+      "passed": true,
+      "output": "compile/format/credo/doctor/ex_dna/reach/sobelow + test.json: 1270 passed, 0 failed, 49 excluded (post-fix)"
+    },
+    "MIX_ENV=test mix dialyzer --format short": {
+      "passed": true,
+      "output": "done (passed successfully); Total errors: 5, Skipped: 5 (pre-existing .dialyzer_ignore.exs CloudKMS unknown_function)"
+    },
+    "mix agents.check": {
+      "passed": true,
+      "output": "OK: ./AGENTS.md is up to date"
+    }
+  },
+  "concerns": [
+    "A spec-path legacy fill still drops chainId: V1.from_json/1 never reads it, and v is cleared to nil. Encode of that struct is now the pre-EIP-155 unsigned payload (v=0,r=0,s=0), not [chainId,0,0]. Signing APIs take chain_id separately, so this is residual rather than a fill decode bug."
+  ],
+  "proposed_tasks": [],
+  "facets": {
+    "language": "elixir",
+    "surface": "json-rpc",
+    "archetype": "bugfix",
+    "difficulty": "moderate",
+    "risk": "medium"
+  },
+  "ratings": {
+    "elixir": {
+      "score": 8,
+      "note": "Isolated unsigned decode behind fill_transaction; from_json/1 left strict for getBlockBy*."
+    },
+    "ethereum_rpc": {
+      "score": 8,
+      "note": "Matched execution-apis FillTransactionResult (`tx` only) vs geth {raw, tx} without conflating the two."
+    },
+    "type_design": {
+      "score": 8,
+      "note": "Made V1 signature fields explicitly nilable instead of widening the shared signed decoder."
+    },
+    "test_rigor": {
+      "score": 7,
+      "note": "Both wire shapes plus corrupt-signature from_json; reviewer added V1.encode nil coverage."
+    },
+    "honesty": {
+      "score": 8,
+      "note": "Implementer claims (spec decode, geth raw-first, dialyzer, tests) matched the diff; AGENTS.md mix-ci miss was harness-preamble, not this tree."
+    }
+  }
+}
