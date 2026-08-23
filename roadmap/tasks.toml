@@ -1993,7 +1993,7 @@ shipped_in = "ee89999227890b284573647435c759c7fc4cc03a"
 id = "125"
 phase = 0
 bundle = "rpc_correctness"
-status = "in_progress"
+status = "done"
 title = "Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result"
 scores = { d = 5, b = 5, u = 4 }
 acceptance_criteria = ["fill_transaction/2 deserializes a spec-conforming FillTransactionResult — a required, unsigned `tx` object with no `raw` — into a cartouche transaction struct", "The unsigned-envelope representation is explicit: whatever carries the absent v/r/s is typed to admit that absence, and dialyzer under MIX_ENV=test is clean", "The geth-shaped `{raw, tx}` response keeps working and still round-trips through Cartouche.Transaction.encode/decode", "A unit test covers both response shapes; the spec-conforming one asserts the populated nonce, gas and fee fields survive deserialization", "Cartouche.Transaction.from_json/1 on V1/V2/V3/V4 keeps rejecting a genuinely malformed signed transaction — tolerating an unsigned fill result must not silently accept a signed one with a corrupt signature", "The eth_getBlockBy* decode path is unchanged, proven by the existing integration tests staying green", "mix ci passes"]
@@ -2034,6 +2034,13 @@ does not implement `eth_fillTransaction` at all and answers `-32601`, which
 `test/rpc_dev_node_test.exs` already pins, so the dev-node lane cannot verify
 the fix on its own.
 """
+implemented = "Landed by codex via merge-train; reviewer-approved (run run-1787495687335-659cbeb5, 1446c316f796007fc50d010ed8d0d92a5de59209)."
+delivered_by = "codex"
+verified = true
+verified_by = "cursor"
+verification_ref = "harness-run:run-1787495687335-659cbeb5"
 created_at = "2026-08-23"
 started_at = "2026-08-23"
 scored_at = "2026-08-23"
+done_at = "2026-08-23"
+shipped_in = "1446c316f796007fc50d010ed8d0d92a5de59209"

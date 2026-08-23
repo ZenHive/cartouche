@@ -3054,7 +3054,7 @@
       "id": "125",
       "phase": 0,
       "bundle": "rpc_correctness",
-      "status": "in_progress",
+      "status": "done",
       "title": "Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result",
       "scores": {
         "d": 5,
@@ -3088,10 +3088,17 @@
         "test/rpc_test.exs",
         "test/rpc_dev_node_test.exs"
       ],
+      "shipped_in": "1446c316f796007fc50d010ed8d0d92a5de59209",
       "body": "`fill_transaction/2` decodes only the `raw` field of an `eth_fillTransaction`\nresponse. That is geth's shape — geth answers with a `{raw, tx}` pair — but it\nis not the shape the provider-owned contract defines. In `execution-apis`,\n`src/schemas/transaction.yaml`, `FillTransactionResult` requires exactly one\nproperty, `tx`, a `FilledTransaction`, and carries no `raw` at all. Against a\nnode that answers per spec, `fill_transaction/2` returns an error.\n\nThe reason it cannot simply decode `tx` is structural, not an oversight. A\nfilled transaction is populated but unsigned, so its `tx` object has no `v`,\n`r`, `s` or `yParity`. Every cartouche envelope's `from_json/1` requires those\nfields — `V1.from_json/1` calls `decode_hex_number!(params[\"v\"])` and raises in\n`Cartouche.Hex.decode_hex_/1` when it is absent — because the structs have no\nrepresentation for an unsigned envelope. `V2.t()` already types its signature\nfields as non-nilable while `defstruct` defaults them to `nil`, the same\nmismatch that produced the generated-fixture dialyzer trap documented in\nCLAUDE.md, so widening `from_json/1` to tolerate missing signature fields would\npush that inconsistency into a shared decoder used by `eth_getBlockBy*`.\n\nSurfaced by the audit of `e0e240e` / `ee89999` (`.audit/e0e240e-*.md`, finding\n7), confirmed against the spec rather than inferred. That audit only replaced\nthe opaque `FunctionClauseError` with a named `ArgumentError` that states the\nlimitation; it did not close it. Deciding how an unsigned envelope should be\nrepresented is a change to a public method's contract, which is why it is a\ntask rather than an audit fix.\n\nAuthority is `ethereum/execution-apis`\n(`src/schemas/transaction.yaml` → `FillTransactionResult`, `FilledTransaction`)\nplus a live node. Note that geth and anvil disagree here: anvil 1.5.1-stable\ndoes not implement `eth_fillTransaction` at all and answers `-32601`, which\n`test/rpc_dev_node_test.exs` already pins, so the dev-node lane cannot verify\nthe fix on its own.\n",
       "created_at": "2026-08-23",
       "started_at": "2026-08-23",
+      "done_at": "2026-08-23",
       "scored_at": "2026-08-23",
+      "implemented": "Landed by codex via merge-train; reviewer-approved (run run-1787495687335-659cbeb5, 1446c316f796007fc50d010ed8d0d92a5de59209).",
+      "delivered_by": "codex",
+      "verified": true,
+      "verified_by": "cursor",
+      "verification_ref": "harness-run:run-1787495687335-659cbeb5",
       "cross_repo": []
     }
   ]

@@ -194,7 +194,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 122 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC fee reads — eth_baseFee and eth_blobBaseFee [D:2/B:6/U:5 → Eff:2.75] 🎯 |
 | Task 123 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC node introspection — eth_config (EIP-7910) and eth_capabilities [D:4/B:5/U:4 → Eff:1.12] 📋 |
 | Task 124 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC node-custody methods — eth_accounts, eth_coinbase, eth_fillTransaction, eth_sign, eth_signTransaction, eth_sendTransaction [D:4/B:6/U:4 → Eff:1.25] 📋 |
-| Task 125 | 🔄 | 🎁 **rpc_correctness** · Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result [D:5/B:5/U:4 → Eff:0.9] ⚠️ |
+| Task 125 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result [D:5/B:5/U:4 → Eff:0.9] ⚠️ |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
