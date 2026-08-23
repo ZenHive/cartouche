@@ -3100,6 +3100,51 @@
       "verified_by": "cursor",
       "verification_ref": "harness-run:run-1787495687335-659cbeb5",
       "cross_repo": []
+    },
+    {
+      "id": "126",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "done",
+      "title": "Spec-path fill_transaction V1 results drop chainId, so encode is pre-EIP-155",
+      "scores": {
+        "d": 4,
+        "b": 5,
+        "u": 4
+      },
+      "eff": 1.13,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "A spec-conforming unsigned legacy FillTransactionResult that includes chainId deserializes so the chain id is not discarded",
+        "Encoding that filled V1 produces the EIP-155 unsigned payload [chainId, 0, 0], not the pre-EIP-155 [0, 0, 0]",
+        "A spec-conforming unsigned legacy result that omits chainId still deserializes; encode of that struct remains the pre-EIP-155 unsigned payload",
+        "V1.get_signature/1 still reports missing signature on both shapes",
+        "V2/V_2930/V3/V4 spec-path fills continue to keep chain_id from from_json/1; from_json/1 on signed V1–V4 still raises InvalidHex on a corrupt present signature",
+        "A unit test covers both the chainId-present and chainId-absent legacy fill shapes",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Changing eth_getBlockBy* decode of signed legacy transactions",
+        "Adding a public unsigned-transaction type beyond what this preservation requires",
+        "Making anvil implement eth_fillTransaction"
+      ],
+      "touches": [
+        "lib/cartouche/rpc.ex",
+        "lib/cartouche/transaction.ex",
+        "test/rpc_test.exs"
+      ],
+      "shipped_in": "17b7f2a4500b47d374eda714c73a1f5eb933c7f9",
+      "body": "Open decision before dispatch: how should an unsigned legacy fill carry chain id? Two coherent answers, pick one and write it into the implementation — do not leave both.\n\n1. Keep v/r/s as nil (the Task 125 unsigned representation) and also preserve chainId, then teach V1.encode/1 to emit [chainId, 0, 0] when the signature is absent.\n2. When chainId is present, restore the V1.new/7 convention of v=chain_id, r=0, s=0 so the existing encode path already emits EIP-155 unsigned RLP. When chainId is absent, keep nil → encode as 0.\n\nA spec-path `eth_fillTransaction` result is a `FillTransactionResult` whose `tx` is a `FilledTransaction` (`ethereum/execution-apis` `src/schemas/transaction.yaml`). For legacy that is `TransactionLegacyUnsigned`: no `v`/`r`/`s`, and `chainId` is an optional property (not in `required`). Task 125 deserializes that shape by injecting throwaway signature placeholders, running `from_json/1`, then clearing v/r/s to nil.\n\nThe drop: `V1.from_json/1` never reads `chainId` (legacy signed JSON carries replay protection in `v`, not a separate field), and `clear_transaction_signature/1` then sets `v: nil`. `V1.encode/1` treats nil as 0, so a filled legacy struct encodes as the pre-EIP-155 payload `[0, 0, 0]` rather than `[chainId, 0, 0]`. Typed envelopes already keep `chain_id` because their `from_json/1` reads it. Surfaced as a residual concern on the Task 125 review, not a rejection.\n\nAuthority is `ethereum/execution-apis` (`TransactionLegacyUnsigned.chainId`) plus EIP-155. The current unit fixture `unsigned_filled_v1_json/0` omits `chainId`, so it cannot catch this.\n",
+      "created_at": "2026-08-23",
+      "done_at": "2026-08-23",
+      "scored_at": "2026-08-23",
+      "implemented": "lib/cartouche/rpc.ex,lib/cartouche/transaction.ex,test/rpc_test.exs",
+      "cross_repo": []
     }
   ]
 }
