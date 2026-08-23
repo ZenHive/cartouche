@@ -180,6 +180,21 @@ defmodule Cartouche.MixProject do
       {:ex_slop, "~> 0.4", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:reach, "~> 2.7", only: [:dev, :test], runtime: false},
+      # Mutation-adequacy measurement (ROADMAP task 114). Not a CI gate —
+      # campaigns are run on demand; the record lives in
+      # docs/verification-ledger.md.
+      #
+      # TODO: muex 0.8.2 cannot report a surviving mutant on Elixir 1.20 —
+      # do not read a mutation score from it until this is fixed upstream.
+      # `Muex.TestRunner.Port.count_failures/2` matches the pre-1.20 summary
+      # wording (`N tests, M failures`); 1.20 prints `Result: N passed` /
+      # `Failed: N test`, so the regex never matches and the fallback returns
+      # 1 failure — every survivor is reported `killed` and the score is a
+      # constant 100%. Reported as Oeditus/muex#20 with a four-file
+      # reproduction and a patch. Re-run the campaign (ROADMAP task 119) once
+      # a release carries the fix; the `no_coverage` and `equivalent` classes
+      # were unaffected and their results stand.
+      {:muex, "~> 0.8.2", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.6", only: :dev},
       {:bandit, "~> 1.12", only: :dev}
       # :boxart intentionally omitted — conflicts with upstream ex_doc 0.31.1

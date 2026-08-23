@@ -18,6 +18,42 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **A mutation-adequacy campaign ran over the signing and transaction paths, and
+  established that the measurement itself is currently unavailable**
+  (`docs/verification-ledger.md`, `test/cartouche/mutation_canary_test.exs`,
+  `test/cartouche/transaction/mutation_gap_test.exs`, `test/recovery_bit_test.exs`).
+  The campaign mutated 13 files / 4,599 lines into 4,905 mutants with muex 0.8.2 —
+  all 18 mutators, sampling and file filtering disabled so the run is exhaustive by
+  construction — and reported zero survivors at a 100% score. That number is an
+  artifact and is not recorded as a result: muex parses the ExUnit summary line and
+  matches the wording Elixir used up to 1.19, while 1.20 prints `Result: N passed`
+  and `Failed: N test`. Its regex therefore never matches, `count_failures/2` falls
+  back to one failure, and `:survived` — reachable only through a zero-failure run —
+  cannot be produced. A mutant no test notices is reported as killed. Verified
+  against a four-file project outside this repo whose single test asserts only a
+  return type, where a hand-checked surviving mutant is likewise reported killed;
+  filed upstream as [Oeditus/muex#20](https://github.com/Oeditus/muex/issues/20) with
+  that reproduction and a patch. Two classes are decided before or without running a
+  test and are unaffected: `no_coverage`, taken from the coverage index, and
+  `equivalent`, decided by bytecode comparison. Those carried the campaign's real
+  finding — **55 mutants on lines no test in `test/` reached**, weaker than survivors
+  because the suite was never given the chance to fail. They trace to six sites,
+  five of which are now covered by new tests (the `rec_type \\ :eip155` default and
+  its guard on both `RecoveryBit.normalize/2` and `normalize_signature/2`, the
+  `V3.sign/1` default-signer route, `V4`'s nil access list, and `V4`'s `decode_uint/2`
+  error clause reached through a wire-level 13-field envelope); the sixth,
+  `decode_y_parity(nil)`, is recorded as an accepted gap — dead defensive code the RLP
+  decoder cannot reach. A verification pass over the three affected files confirms
+  55 unexecuted mutants drop to 3, all at that one clause. Separately,
+  `mutation_canary_test.exs` reconstructs three faults by hand and pins which
+  invariant catches each *and which does not*: deleting low-s normalization is caught
+  by the `s <= n/2` property but not by address recovery, and a wrong chain id in the
+  `v` byte is caught by the EIP-155 formula but not by recovery, because
+  `Recover.decode_signature/1` reduces `v` to `rem(v + 1, 2)` and a chain-id shift of
+  one moves `v` by two. Closes ROADMAP Task 114 under its own clause for an unworkable
+  tool; ROADMAP Task 119 re-runs the measurement once an upstream release reports
+  survivors.
+
 - **A cross-implementation vector suite and property suite now back the
   transaction and signing invariants** (`test/cartouche/transaction/vector_test.exs`,
   `property_test.exs`, `test/fixtures/vectors/`, `docs/verification-ledger.md`).
@@ -58,6 +94,16 @@ All notable changes to this project will be documented in this file.
   `ArgumentError`. Closes ROADMAP Task 70.
 
 ### Changed
+
+- **`hieroglyph` 1.6.2 → 1.7.0.** Carries two ABI fixes. A static fixed-size array
+  argument was counted as one head slot instead of `k`, so `ABI.encode/2` wrote a tail
+  offset Solidity does not write for signatures like `(bytes,address[3])` — invisible
+  to a round-trip, because the decoder discards the offset and walks the tail
+  sequentially, and therefore only observable to an external reader. And anonymous
+  events could not be decoded at all, since the decoder unconditionally reserved a
+  `topics[0]` slot. Neither changes cartouche's output: no ABI signature string in
+  `lib/` contains a fixed-size array, and nothing here decodes anonymous events. The
+  requirement is unchanged at `~> 1.6`.
 
 - **`mix check.dispatch` is now defined** and is the harness reviewer's
   dispatch-scale gate; `mix precommit.full` / `mix ci` is the landed-base gate.

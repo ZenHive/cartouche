@@ -56,3 +56,9 @@ cartouche-*.tar
 # Not checked in to avoid merge drift; consumers regenerate from source or
 # call `Cartouche.Manifest.build/0` at runtime.
 /api_manifest.json
+
+# Mutation-adequacy campaign artifacts (ROADMAP tasks 114 / 119). The scripts that
+# define a campaign are tracked; the raw muex output is not — one run is ~40 MB of
+# JSON, and the numbers that matter are transcribed into docs/verification-ledger.md.
+/.mutation/results/
+/.mutation/*.log

@@ -2482,7 +2482,7 @@
       "id": "114",
       "phase": 0,
       "bundle": "coverage_pushes",
-      "status": "in_progress",
+      "status": "done",
       "title": "Mutation-adequacy campaign over the signing and transaction paths",
       "scores": {
         "d": 5,
@@ -2532,7 +2532,10 @@
       "body": "Measure whether the signing and transaction suite detects plausible semantic faults, rather than merely executing the lines. Line coverage says the code ran; mutation adequacy says a wrong answer would have been caught. This is the check that catches the failure mode where a test's expected value was computed with the same wrong constant as the code.\n\nRun only after task 113 lands: mutating a suite that has no external vectors measures self-consistency, and the survivors would be uninformative.\n\nThe deliverable is not the mutation score. It is (a) the tests written to kill genuine survivors and (b) a written disposition for every survivor that was not killed. A campaign that reports a number and closes has produced nothing durable.\n\nTOOLING DECISION 2026-08-22 (roadmap review): `muex` is named deliberately. The obvious reach is `muzak`, which is stale (1.1.1, Dec 2022) and whose free tier samples 25 random mutations per run — reproducibility and exhaustiveness are both impossible under it, so a campaign built on it would satisfy the letter of this task and none of its intent.\n",
       "created_at": "2026-08-22",
       "started_at": "2026-08-22",
+      "done_at": "2026-08-23",
       "scored_at": "2026-08-22",
+      "implemented": "Campaign ran (muex 0.8.2, 4905 mutants, 13 files, 98 min) but its central deliverable — the survivor triage — has no input: muex cannot report a surviving mutant on Elixir 1.20, so a mutant no test notices is reported as killed and the score is a constant 100%. Closed under AC1's own clause for an unworkable tool, with the concrete failure recorded rather than papered over. Verified against a four-file reproduction outside the repo and filed as Oeditus/muex#20 with a patch; task 119 re-runs the measurement once a release reports survivors. What the run did establish, and what landed: the no_coverage class (unaffected — decided from the coverage index before any test runs) found 55 mutants on lines no test reached, traced to six sites; five are now covered by new tests (test/cartouche/transaction/mutation_gap_test.exs, test/recovery_bit_test.exs) and the sixth, v4.ex:574 decode_y_parity(nil), is dispositioned as an unreachable dead clause. A verification pass over the three affected files confirms 55 -> 3, all at that clause. Deliberate-fault canaries (test/cartouche/mutation_canary_test.exs, 9 tests) pin which invariant catches each of three hand-built faults and which plausible one does not. docs/verification-ledger.md carries the full record. mix ci green; RecoveryBit 100%, V3 100%, V4 98.98% coverage.",
+      "delivered_by": "claude-opus-5 (inline)",
       "cross_repo": []
     },
     {
@@ -2753,6 +2756,43 @@
       "verified": true,
       "verified_by": "codex",
       "verification_ref": "harness-run:run-1787384103944-c6923f2e",
+      "cross_repo": []
+    },
+    {
+      "id": "119",
+      "phase": 0,
+      "bundle": "coverage_pushes",
+      "status": "pending",
+      "title": "Re-run the mutation-adequacy campaign once muex can report survivors",
+      "scores": {
+        "d": 5,
+        "b": 7,
+        "u": 3
+      },
+      "eff": 1.0,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "security"
+      ],
+      "depends_on": [],
+      "assignee": "human",
+      "acceptance_criteria": [
+        "The muex reproduction from Oeditus/muex#20 reports survived=2 and mutation score 0% on the installed version, recorded in the ledger with the muex version — a campaign is not started until this passes",
+        "The campaign re-runs over the surface task 114 enumerated (lib/cartouche/transaction.ex, lib/cartouche/transaction/*, lib/cartouche/signer.ex, lib/cartouche/signer/*, lib/cartouche/recover.ex, lib/cartouche/recovery_bit.ex) with the same flags, so the run is comparable to the recorded baseline",
+        "Every survivor is triaged and dispositioned in writing as one of: killed by a new test added in this task, provably equivalent (with the argument), or an accepted gap (with the reason). No survivor is left unclassified",
+        "docs/verification-ledger.md replaces the task 114 'measurement blocked' record with the real campaign record: muex version, mutator set, per-module counts, and each survivor's disposition",
+        "Touched critical modules stay at >=95% coverage and mix ci passes"
+      ],
+      "out_of_scope": [
+        "Patching muex locally to work around the defect — deps/ is not committable and a measurement produced by a hand-patched tool is not a durable verification record. Wait for the upstream release",
+        "Re-deriving the no_coverage and equivalent results from task 114 — those classes are unaffected by the defect",
+        "Adopting mutation testing as a permanent CI gate; this stays a one-off measurement plus the tests it produces",
+        "Solana signing and transaction paths"
+      ],
+      "body": "Task 114 ran the campaign and could not produce its central deliverable: muex 0.8.2 cannot report a surviving mutant on Elixir 1.20, so the survivor triage that task 114 exists for has no input. This task re-runs the measurement once a muex release carries the fix.\n\nThe defect, verified against a four-file reproduction outside this repo and filed as Oeditus/muex#20: `Muex.TestRunner.Port.count_failures/2` matches the pre-1.20 ExUnit summary wording (`N tests, M failures`). Elixir 1.20 prints `Result: N passed (...)` for a green run and `Result: 0/M passed` + `Failed: N test` for a red one. Neither matches, and neither contains the substring `0 failures`, so the regex misses, the fallback returns 1 failure, and `classify_test_result({:ok, %{failures: 0}})` — the only path to `:survived` — is unreachable. Every survivor is reported `killed` and the score is a constant 100%. The same stale patterns make `has_exunit_summary?/1` always false, which reduces `compile_error?/1` to \"does the output contain `** (SomethingError)`\" — true whenever a test fails by raising rather than asserting — so mutants also flip between `killed` and `invalid` depending on which tests coverage guidance happened to select. In task 114's two runs over byte-identical `lib/`, 337 of 1,379 re-measured mutants changed class.\n\nWhat task 114 established and this task does NOT need to redo: the surface enumeration, the campaign script (`.mutation/run.sh`, single whole-surface invocation — per-module invocations pay a full serial coverage pass each and exhausted a harness run's budget), the flag set and its rationale, and the `no_coverage` / `equivalent` results. Those two classes are decided before or without a test run — `no_coverage` from the coverage index in `select_tests/2`, `equivalent` by Trivial Compiler Equivalence bytecode comparison — so the muex defect does not touch them. Their numbers stand and are recorded in docs/verification-ledger.md.\n\nStart by confirming the fix is real rather than assuming a version bump fixed it: run the reproduction from Oeditus/muex#20 and require it to report two survivors and a 0% score before spending hours on the full surface.\n",
+      "created_at": "2026-08-23",
+      "scored_at": "2026-08-23",
       "cross_repo": []
     }
   ]
