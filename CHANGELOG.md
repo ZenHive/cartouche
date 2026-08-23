@@ -14,9 +14,31 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
-## [Unreleased]
+## [0.8.0] — 2026-08-23
 
 ### Added
+
+- **`Cartouche.Filter` completes the filter lifecycle, and `Cartouche.RPC` adds
+  the six node-custody methods.** The filter GenServer traps exits and
+  uninstalls its node-side filter in `terminate/2` — an uninstall that fails or
+  raises during shutdown is logged, never fatal — closing a leak that registered
+  one abandoned filter per supervised restart. `start_link/1` gains
+  `kind: :log | :block | :pending`: block and pending-transaction filters
+  deliver `{:hashes, hashes}` while log filters keep their existing
+  `{:event, :log}` behaviour, and the expired-filter recovery branch fires for
+  all three kinds. `Cartouche.RPC` exposes `get_filter_logs/2`,
+  `new_block_filter/1` and `new_pending_transaction_filter/1`, and — for nodes
+  that hold keys — `accounts/1`, `coinbase/1`, `fill_transaction/2`, `sign/3`,
+  `sign_transaction/2` and `send_transaction/2` as passthroughs that return what
+  the node returns, including its refusal. Local signing through
+  `Cartouche.Signer` remains the normal route; the distinction is which side
+  constructs the envelope, not key custody. `fill_transaction/2` deserializes
+  into cartouche's transaction structs rather than a raw map. Tests run against
+  a development node through a new lane in `test/support/live.ex`
+  (`CARTOUCHE_DEV_NODE_URL`, or an ephemeral locally installed anvil, flunking
+  with setup instructions when neither is available) that leaves the mainnet
+  chain-id assertion untouched; they pin anvil's observed refusals rather than
+  assumed ones. Closes ROADMAP Tasks 121 and 124.
 
 - **`Cartouche.RPC` now wraps `eth_createAccessList`, `eth_baseFee`,
   `eth_blobBaseFee`, `eth_config` (EIP-7910), and `eth_capabilities`.**
@@ -32,10 +54,6 @@ All notable changes to this project will be documented in this file.
   (`oldestBlock`, `deleteStrategy`). Unknown fields are ignored so a newer
   node revision does not break the decoder. Closes ROADMAP Tasks 120, 122,
   and 123.
-
-## [0.8.0] — 2026-08-23
-
-### Added
 
 - **A mutation-adequacy campaign ran over the signing and transaction paths, and
   established that the measurement itself is currently unavailable**
