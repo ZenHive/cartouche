@@ -8,6 +8,7 @@ defmodule Cartouche.RPCTest do
   alias Cartouche.RPC.Configuration
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V_2930
 
   doctest Cartouche.RPC
@@ -26,6 +27,38 @@ defmodule Cartouche.RPCTest do
   @doc false
   def decode_id(conn) do
     conn |> Req.Test.raw_body() |> IO.iodata_to_binary() |> Jason.decode!() |> Map.fetch!("id")
+  end
+
+  defp respond_with_result(conn, result) do
+    Req.Test.json(conn, %{"jsonrpc" => "2.0", "result" => result, "id" => decode_id(conn)})
+  end
+
+  defp unsigned_filled_v2_json do
+    %{
+      "type" => "0x2",
+      "chainId" => "0x1",
+      "nonce" => "0x7",
+      "maxPriorityFeePerGas" => "0x3b9aca00",
+      "maxFeePerGas" => "0x174876e800",
+      "gasPrice" => "0x174876e800",
+      "gas" => "0x5208",
+      "to" => "0x0000000000000000000000000000000000000001",
+      "value" => "0x2",
+      "input" => "0x010203",
+      "accessList" => []
+    }
+  end
+
+  defp unsigned_filled_v1_json do
+    %{
+      "type" => "0x0",
+      "nonce" => "0x9",
+      "gasPrice" => "0x174876e800",
+      "gas" => "0x5208",
+      "to" => "0x0000000000000000000000000000000000000001",
+      "value" => "0x2",
+      "input" => "0x010203"
+    }
   end
 
   defmodule CaptureClient do
@@ -602,17 +635,61 @@ defmodule Cartouche.RPCTest do
   end
 
   describe "node-custody passthroughs" do
-    test "fill_transaction result round-trips through Transaction.encode/decode" do
-      {:ok, trx} =
-        1
-        |> V1.new({100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
-        |> Cartouche.RPC.fill_transaction()
+    test "fill_transaction deserializes a spec-conforming unsigned tx result" do
+      result = %{"tx" => unsigned_filled_v2_json()}
+      plug = fn conn -> respond_with_result(conn, result) end
 
-      encoded = Cartouche.Transaction.encode(trx)
-      assert {:ok, decoded} = Cartouche.Transaction.decode(encoded)
-      assert decoded.nonce == trx.nonce
-      assert decoded.to == trx.to
-      assert decoded.data == trx.data
+      assert {:ok,
+              %V2{
+                nonce: 7,
+                gas_limit: 21_000,
+                max_priority_fee_per_gas: 1_000_000_000,
+                max_fee_per_gas: 100_000_000_000,
+                signature_y_parity: nil,
+                signature_r: nil,
+                signature_s: nil
+              }} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+    end
+
+    test "fill_transaction represents an unsigned legacy signature with nil fields" do
+      result = %{"tx" => unsigned_filled_v1_json()}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:ok,
+              %V1{
+                nonce: 9,
+                gas_limit: 21_000,
+                gas_price: 100_000_000_000,
+                v: nil,
+                r: nil,
+                s: nil
+              } = transaction} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert {:error, "transaction missing signature"} = V1.get_signature(transaction)
+    end
+
+    test "fill_transaction prefers geth's raw field and round-trips its {raw, tx} result" do
+      filled = V1.new(1, {100, :gwei}, 100_000, <<1::160>>, {2, :wei}, <<1, 2, 3>>, :kovan)
+
+      result = %{
+        "raw" => filled |> Cartouche.Transaction.encode() |> Cartouche.Hex.encode_hex(),
+        "tx" => unsigned_filled_v2_json()
+      }
+
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:ok, ^filled} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+      assert {:ok, ^filled} = filled |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
     end
 
     test "get_filter_logs decodes the same Log shape as filter changes" do

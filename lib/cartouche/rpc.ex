@@ -34,6 +34,8 @@ defmodule Cartouche.RPC do
 
   require Logger
 
+  @filled_signature_fields ~w(v yParity r s)
+
   defmodule Configuration do
     @moduledoc """
     Deserialized `eth_config` fork configuration report defined by EIP-7910.
@@ -2704,18 +2706,12 @@ defmodule Cartouche.RPC do
 
   @spec decode_filled_transaction(map()) :: struct()
   defp decode_filled_transaction(%{"raw" => raw}) when is_binary(raw), do: decode_raw_transaction!(raw)
+  defp decode_filled_transaction(%{"tx" => tx}) when is_map(tx), do: deserialize_unsigned_rpc_transaction(tx)
 
-  # `eth_fillTransaction` populates the transaction without signing it. geth
-  # answers with the `{raw, tx}` pair this module decodes, but `execution-apis`
-  # types the result as `FillTransactionResult` — a required, unsigned `tx` and
-  # no `raw` at all. Cartouche's envelope structs have no unsigned
-  # representation (`from_json/1` requires `v`/`r`/`s`), so a `raw`-less result
-  # is not deserializable here. Fail by name instead of inside a hex decoder.
   defp decode_filled_transaction(%{} = params) do
     raise ArgumentError,
-          "eth_fillTransaction returned no `raw` field. The spec-conforming " <>
-            "`FillTransactionResult` carries only an unsigned `tx`, which cartouche cannot yet " <>
-            "deserialize into a transaction struct (keys: #{inspect(Map.keys(params))})"
+          "eth_fillTransaction returned neither a `raw` field nor an unsigned `tx` object " <>
+            "(keys: #{inspect(Map.keys(params))})"
   end
 
   @spec decode_signed_transaction(map() | String.t()) :: struct()
@@ -2747,6 +2743,38 @@ defmodule Cartouche.RPC do
       "0x4" -> Transaction.V4.from_json(params)
       other -> raise ArgumentError, "unsupported transaction envelope type #{inspect(other)}"
     end
+  end
+
+  @spec deserialize_unsigned_rpc_transaction(map()) :: struct()
+  defp deserialize_unsigned_rpc_transaction(%{} = params) do
+    case Enum.filter(@filled_signature_fields, &Map.has_key?(params, &1)) do
+      [] ->
+        params
+        |> put_signature_placeholders()
+        |> deserialize_rpc_transaction()
+        |> clear_transaction_signature()
+
+      signature_fields ->
+        raise ArgumentError,
+              "eth_fillTransaction returned a signature-bearing `tx` object " <>
+                "(fields: #{inspect(signature_fields)})"
+    end
+  end
+
+  @spec put_signature_placeholders(map()) :: map()
+  defp put_signature_placeholders(%{} = params) do
+    case params["type"] do
+      type when type in [nil, "0x0"] -> Map.merge(params, %{"v" => "0x0", "r" => "0x0", "s" => "0x0"})
+      _type -> Map.merge(params, %{"yParity" => "0x0", "r" => "0x0", "s" => "0x0"})
+    end
+  end
+
+  @spec clear_transaction_signature(V1.t() | V_2930.t() | V2.t() | Transaction.V3.t() | Transaction.V4.t()) ::
+          V1.t() | V_2930.t() | V2.t() | Transaction.V3.t() | Transaction.V4.t()
+  defp clear_transaction_signature(%V1{} = transaction), do: %{transaction | v: nil, r: nil, s: nil}
+
+  defp clear_transaction_signature(%{signature_y_parity: _, signature_r: _, signature_s: _} = transaction) do
+    %{transaction | signature_y_parity: nil, signature_r: nil, signature_s: nil}
   end
 
   @spec to_transaction_params(V1.t() | V2.t() | Call.t(), <<_::160>> | nil) :: map()

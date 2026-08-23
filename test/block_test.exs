@@ -495,6 +495,19 @@ defmodule Cartouche.BlockTest do
       end
     end
 
+    test "signed envelope decoders reject a corrupt signature" do
+      signed_transactions = [
+        {V1, tx_v1_json(%{"r" => "not-hex"})},
+        {V2, tx_v2_json(%{"r" => "not-hex"})},
+        {V3, tx_v3_json(%{"r" => "not-hex"})},
+        {V4, tx_v4_json(%{"r" => "not-hex"})}
+      ]
+
+      Enum.each(signed_transactions, fn {transaction_module, params} ->
+        assert_raise InvalidHex, fn -> transaction_module.from_json(params) end
+      end)
+    end
+
     test "full-detail V_2930 contract creation — `destination: nil` preserved" do
       json = tx_v2930_json(%{"to" => nil})
       b = Block.deserialize(pre_london_params(%{"transactions" => [json]}))

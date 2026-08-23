@@ -36,9 +36,9 @@ defmodule Cartouche.Transaction do
             to: <<_::160>> | nil,
             value: integer(),
             data: binary(),
-            v: integer(),
-            r: integer(),
-            s: integer()
+            v: integer() | nil,
+            r: integer() | nil,
+            s: integer() | nil
           }
 
     defstruct [
@@ -315,9 +315,12 @@ defmodule Cartouche.Transaction do
         {:error, "transaction missing signature"}
     """
     @spec get_signature(t()) :: {:ok, binary()} | {:error, String.t()}
+    def get_signature(%__MODULE__{v: v, r: r, s: s}) when is_nil(v) or is_nil(r) or is_nil(s),
+      do: {:error, "transaction missing signature"}
+
     def get_signature(%__MODULE__{v: _v, r: 0, s: 0}), do: {:error, "transaction missing signature"}
 
-    def get_signature(%__MODULE__{v: v, r: r, s: s}) do
+    def get_signature(%__MODULE__{v: v, r: r, s: s}) when is_integer(v) and is_integer(r) and is_integer(s) do
       v_enc = :binary.encode_unsigned(v)
       {:ok, <<r::big-256, s::big-256, v_enc::binary>>}
     end
