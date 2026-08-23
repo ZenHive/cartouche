@@ -191,7 +191,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 119 | 🔶 | 🎁 **coverage_pushes** · 🔒 Re-run the mutation-adequacy campaign once muex can report survivors [D:5/B:7/U:3 → Eff:1.0] 📋 ⛔ muex 0.8.2 cannot report survivors on Elixir 1.20 (Oeditus/muex#20, still open); unblocks when an upstream release ships the fix and the issue's reproduction reports survived=2 |
 | Task 120 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC.create_access_list/2 — eth_createAccessList [D:3/B:7/U:6 → Eff:2.17] 🎯 |
 | Task 121 | ⬜ | 🎁 **rpc_correctness** · Complete the Cartouche.Filter lifecycle — uninstall, getFilterLogs, and the block/pending filter kinds [D:4/B:7/U:7 → Eff:1.75] 🚀 |
-| Task 122 | 🔄 | 🎁 **rpc_correctness** · Cartouche.RPC fee reads — eth_baseFee and eth_blobBaseFee [D:2/B:6/U:5 → Eff:2.75] 🎯 |
+| Task 122 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC fee reads — eth_baseFee and eth_blobBaseFee [D:2/B:6/U:5 → Eff:2.75] 🎯 |
 | Task 123 | 🔄 | 🎁 **rpc_correctness** · Cartouche.RPC node introspection — eth_config (EIP-7910) and eth_capabilities [D:4/B:5/U:4 → Eff:1.12] 📋 |
 | Task 124 | ⬜ | 🎁 **rpc_correctness** · Cartouche.RPC node-custody methods — eth_accounts, eth_coinbase, eth_fillTransaction, eth_sign, eth_signTransaction, eth_sendTransaction [D:4/B:6/U:4 → Eff:1.25] 📋 |
 <!-- TASKS:END -->
