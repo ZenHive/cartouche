@@ -672,6 +672,7 @@ defmodule Cartouche.RPCTest do
                |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
 
       assert {:error, "transaction missing signature"} = V1.get_signature(transaction)
+      assert is_binary(Cartouche.Transaction.encode(transaction))
     end
 
     test "fill_transaction prefers geth's raw field and round-trips its {raw, tx} result" do

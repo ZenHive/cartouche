@@ -151,6 +151,7 @@ defmodule Cartouche.Transaction do
     @doc ~S"""
     Build an RLP-encoded transaction. Note: transactions can be encoded before they are signed, which
     uses `[chain_id, 0, 0]` in the signature fields, otherwise those fields are `[v, r, s]`.
+    Nil `v`/`r`/`s` (unsigned `eth_fillTransaction` results) encode as `0`.
 
     ## Examples
 
@@ -171,7 +172,7 @@ defmodule Cartouche.Transaction do
           r: r,
           s: s
         }) do
-      ExRLP.encode([nonce, gas_price, gas_limit, to, value, data, v, r, s])
+      ExRLP.encode([nonce, gas_price, gas_limit, to, value, data, v || 0, r || 0, s || 0])
     end
 
     api(:decode, "Decode RLP bytes into a legacy transaction struct.",
