@@ -13,6 +13,7 @@ defmodule Cartouche.RPC.IntegrationTest do
 
   import Cartouche.Test.Live, only: [live_opts: 0]
 
+  alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
   alias Cartouche.Transaction.V_2930
@@ -114,11 +115,24 @@ defmodule Cartouche.RPC.IntegrationTest do
   @weth9_nonce 0x1
   @weth9_total_supply 0x2B30B5DBA159D35B4FEC1
   @weth9_total_supply_selector <<0x18, 0x16, 0x0D, 0xDD>>
+  @weth9_balance_of_zero_call <<0x70A08231::32, 0::256>>
+  @weth9_zero_balance_storage_key <<0x3617319A054D772F909F7C479A2CEBE5066E836A939412E32403C99029B92EFF::256>>
+  @weth9_withdraw_max_call <<0x2E1A7D4D::32, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF::256>>
+  @weth9_access_list_gas_used 0x65AA
+  @weth9_revert_access_list_gas_used 0x5DEB
 
   # feeHistory anchor at block 18,000,000
   @fee_history_newest_block 18_000_000
   @fee_history_block_count 4
   @fee_history_oldest_block 0x112A87D
+
+  # EIP-1559 and EIP-4844 constants used only to independently verify the node reads.
+  @base_fee_elasticity_multiplier 2
+  @base_fee_change_denominator 8
+  @minimum_blob_base_fee 1
+  @blob_gas_per_blob 131_072
+  @blob_base_cost 8_192
+  @stable_head_attempts 3
 
   describe "chain-level reads" do
     test "eth_chainId returns 1 (mainnet)" do
@@ -141,6 +155,34 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert {:ok, p} = Cartouche.RPC.max_priority_fee_per_gas(live_opts())
       assert is_integer(p)
       assert p >= 0
+    end
+
+    test "eth_config reports mainnet fork constants" do
+      config = live_result!("eth_config", Cartouche.RPC.eth_config(live_opts()))
+
+      assert config.current.chain_id == 1
+      assert byte_size(config.current.fork_id) == 4
+      assert config.current.precompiles["KZG_POINT_EVALUATION"] == <<10::160>>
+
+      assert config.current.system_contracts["BEACON_ROOTS_ADDRESS"] ==
+               <<0x000F3DF6D732807EF1319FB7B8BB8522D0BEAC02::160>>
+
+      assert config.current.blob_schedule.target > 0
+      assert config.current.blob_schedule.max >= config.current.blob_schedule.target
+    end
+
+    test "eth_capabilities reports an archive node and a real canonical head" do
+      capabilities = live_result!("eth_capabilities", Cartouche.RPC.eth_capabilities(live_opts()))
+
+      block =
+        live_result!("eth_getBlockByNumber", Cartouche.RPC.get_block_by_number(capabilities.head.number, live_opts()))
+
+      assert block.hash == capabilities.head.hash
+      assert capabilities.state.disabled == false
+      assert capabilities.state.oldest_block == 0
+      assert capabilities.blocks.disabled == false
+      assert capabilities.blocks.oldest_block == 0
+      assert capabilities.stateproofs.disabled == false
     end
   end
 
@@ -382,9 +424,48 @@ defmodule Cartouche.RPC.IntegrationTest do
       assert is_integer(gas)
       assert gas == 21_000
     end
+
+    test "eth_createAccessList returns WETH9's pinned balance storage key" do
+      call = Call.new(@weth9, @weth9_balance_of_zero_call)
+      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
+
+      assert {:ok,
+              %{
+                access_list: [{@weth9, [@weth9_zero_balance_storage_key]}],
+                gas_used: @weth9_access_list_gas_used
+              }} = Cartouche.RPC.create_access_list(call, opts)
+    end
+
+    test "eth_createAccessList retains the node's observed WETH9 revert result" do
+      call = Call.new(@weth9, @weth9_withdraw_max_call)
+      opts = Keyword.put(live_opts(), :block_number, @weth9_anchor_block)
+
+      assert {:ok,
+              %{
+                access_list: [{@weth9, [@weth9_zero_balance_storage_key]}],
+                error: "execution reverted",
+                gas_used: @weth9_revert_access_list_gas_used
+              }} = Cartouche.RPC.create_access_list(call, opts)
+    end
   end
 
-  describe "fee history" do
+  describe "fee reads" do
+    test "eth_baseFee matches the EIP-1559 next-block update rule" do
+      {head, base_fee} = stable_head_fee!("eth_baseFee", &Cartouche.RPC.base_fee/1)
+
+      assert base_fee == next_base_fee(head)
+    end
+
+    test "eth_blobBaseFee matches the next-block excess update and EIP-4844 fake_exponential" do
+      {head, blob_base_fee} = stable_head_fee!("eth_blobBaseFee", &Cartouche.RPC.blob_base_fee/1)
+      config = live_result!("eth_config", Cartouche.RPC.eth_config(live_opts()))
+      schedule = config.current.blob_schedule
+      next_excess_blob_gas = next_excess_blob_gas(head, schedule)
+
+      assert blob_base_fee ==
+               fake_exponential(@minimum_blob_base_fee, next_excess_blob_gas, schedule.base_fee_update_fraction)
+    end
+
     test "eth_feeHistory at block 18,000,000 returns expected shape" do
       opts =
         live_opts()
@@ -527,5 +608,100 @@ defmodule Cartouche.RPC.IntegrationTest do
         assert trace.action.balance >= 0
       end)
     end
+  end
+
+  @spec live_result!(String.t(), {:ok, term()} | {:error, term()}) :: term() | no_return()
+  defp live_result!(_method, {:ok, result}), do: result
+  defp live_result!(method, {:error, error}), do: flunk("#{method} failed against the live node: #{inspect(error)}")
+
+  @spec stable_head_fee!(String.t(), (Keyword.t() -> {:ok, non_neg_integer()} | {:error, term()})) ::
+          {Cartouche.Block.t(), non_neg_integer()} | no_return()
+  defp stable_head_fee!(method, fee_reader), do: stable_head_fee!(method, fee_reader, @stable_head_attempts)
+
+  @spec stable_head_fee!(String.t(), (Keyword.t() -> {:ok, non_neg_integer()} | {:error, term()}), pos_integer()) ::
+          {Cartouche.Block.t(), non_neg_integer()} | no_return()
+  defp stable_head_fee!(method, fee_reader, attempts_left) do
+    before = live_result!("eth_getBlockByNumber", Cartouche.RPC.get_block_by_number("latest", live_opts()))
+    fee = live_result!(method, fee_reader.(live_opts()))
+    after_read = live_result!("eth_getBlockByNumber", Cartouche.RPC.get_block_by_number("latest", live_opts()))
+
+    if before.hash == after_read.hash do
+      {before, fee}
+    else
+      retry_stable_head_fee!(method, fee_reader, attempts_left)
+    end
+  end
+
+  @spec retry_stable_head_fee!(
+          String.t(),
+          (Keyword.t() -> {:ok, non_neg_integer()} | {:error, term()}),
+          pos_integer()
+        ) :: {Cartouche.Block.t(), non_neg_integer()} | no_return()
+  defp retry_stable_head_fee!(method, fee_reader, attempts_left) when attempts_left > 1 do
+    stable_head_fee!(method, fee_reader, attempts_left - 1)
+  end
+
+  defp retry_stable_head_fee!(method, _fee_reader, 1) do
+    flunk("#{method} could not be compared at a stable head after #{@stable_head_attempts} attempts")
+  end
+
+  @spec next_base_fee(Cartouche.Block.t()) :: non_neg_integer()
+  defp next_base_fee(block) do
+    gas_target = div(block.gas_limit, @base_fee_elasticity_multiplier)
+    base_fee_delta(block.base_fee_per_gas, block.gas_used - gas_target, gas_target)
+  end
+
+  @spec base_fee_delta(non_neg_integer(), integer(), pos_integer()) :: non_neg_integer()
+  defp base_fee_delta(base_fee, 0, _gas_target), do: base_fee
+
+  defp base_fee_delta(base_fee, gas_delta, gas_target) when gas_delta > 0 do
+    increase = max(div(base_fee * gas_delta, gas_target * @base_fee_change_denominator), 1)
+    base_fee + increase
+  end
+
+  defp base_fee_delta(base_fee, gas_delta, gas_target) do
+    base_fee - div(base_fee * -gas_delta, gas_target * @base_fee_change_denominator)
+  end
+
+  @spec next_excess_blob_gas(Cartouche.Block.t(), Cartouche.RPC.Configuration.BlobSchedule.t()) ::
+          non_neg_integer()
+  defp next_excess_blob_gas(block, schedule) do
+    # Post-Fusaka EIP-7918 changes the child excess update when execution gas
+    # sets the blob reserve price; eth_blobBaseFee reflects that child price.
+    target_blob_gas = @blob_gas_per_blob * schedule.target
+    total_blob_gas = block.excess_blob_gas + block.blob_gas_used
+
+    parent_blob_base_fee =
+      fake_exponential(@minimum_blob_base_fee, block.excess_blob_gas, schedule.base_fee_update_fraction)
+
+    cond do
+      total_blob_gas < target_blob_gas ->
+        0
+
+      @blob_base_cost * block.base_fee_per_gas > @blob_gas_per_blob * parent_blob_base_fee ->
+        block.excess_blob_gas + div(block.blob_gas_used * (schedule.max - schedule.target), schedule.max)
+
+      true ->
+        total_blob_gas - target_blob_gas
+    end
+  end
+
+  @spec fake_exponential(non_neg_integer(), non_neg_integer(), pos_integer()) :: non_neg_integer()
+  defp fake_exponential(factor, numerator, denominator) do
+    0 |> fake_exponential_(factor * denominator, numerator, denominator, 1) |> div(denominator)
+  end
+
+  @spec fake_exponential_(non_neg_integer(), non_neg_integer(), non_neg_integer(), pos_integer(), pos_integer()) ::
+          non_neg_integer()
+  defp fake_exponential_(output, 0, _numerator, _denominator, _iteration), do: output
+
+  defp fake_exponential_(output, numerator_accumulator, numerator, denominator, iteration) do
+    fake_exponential_(
+      output + numerator_accumulator,
+      div(numerator_accumulator * numerator, denominator * iteration),
+      numerator,
+      denominator,
+      iteration + 1
+    )
   end
 end

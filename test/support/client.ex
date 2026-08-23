@@ -717,6 +717,14 @@ defmodule Cartouche.Test.Client do
   end
 
   @doc false
+  @spec eth_baseFee() :: String.t()
+  def eth_baseFee, do: "0x3b9aca00"
+
+  @doc false
+  @spec eth_blobBaseFee() :: String.t()
+  def eth_blobBaseFee, do: "0x2a"
+
+  @doc false
   @spec eth_maxPriorityFeePerGas() :: String.t()
   def eth_maxPriorityFeePerGas do
     "0x3b9aca01"
@@ -860,6 +868,33 @@ defmodule Cartouche.Test.Client do
   end
 
   @doc false
+  @spec eth_createAccessList(map(), term()) :: map()
+  def eth_createAccessList(%{"to" => "0x000000000000000000000000000000000000000A"}, _block) do
+    %{
+      "accessList" => [
+        %{
+          "address" => "0x0000000000000000000000000000000000000001",
+          "storageKeys" => ["0x0000000000000000000000000000000000000000000000000000000000000002"]
+        }
+      ],
+      "error" => "execution reverted",
+      "gasUsed" => "0x5deb"
+    }
+  end
+
+  def eth_createAccessList(_trx, _block) do
+    %{
+      "accessList" => [
+        %{
+          "address" => "0x0000000000000000000000000000000000000001",
+          "storageKeys" => ["0x0000000000000000000000000000000000000000000000000000000000000002"]
+        }
+      ],
+      "gasUsed" => "0x65aa"
+    }
+  end
+
+  @doc false
   @spec eth_estimateGas(map(), term()) :: term()
   # Reverting
   def eth_estimateGas(%{"to" => "0x000000000000000000000000000000000000000A"} = _trx, _block) do
@@ -951,6 +986,44 @@ defmodule Cartouche.Test.Client do
   @doc false
   @spec eth_chainId() :: String.t()
   def eth_chainId, do: "0x22"
+
+  @doc false
+  @spec eth_config() :: map()
+  def eth_config do
+    %{
+      "current" => %{
+        "activationTime" => 1_767_747_671,
+        "blobSchedule" => %{"baseFeeUpdateFraction" => 11_684_671, "max" => 21, "target" => 14},
+        "chainId" => "0x1",
+        "forkId" => "0x07c9462e",
+        "precompiles" => %{"P256VERIFY" => "0x0000000000000000000000000000000000000100"},
+        "systemContracts" => %{
+          "BEACON_ROOTS_ADDRESS" => "0x000f3df6d732807ef1319fb7b8bb8522d0beac02"
+        }
+      },
+      "last" => nil,
+      "next" => nil
+    }
+  end
+
+  @doc false
+  @spec eth_capabilities() :: map()
+  def eth_capabilities do
+    available_from_genesis = %{"disabled" => false, "oldestBlock" => "0x0"}
+
+    %{
+      "blocks" => available_from_genesis,
+      "head" => %{
+        "hash" => "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "number" => "0x2a"
+      },
+      "logs" => available_from_genesis,
+      "receipts" => available_from_genesis,
+      "state" => available_from_genesis,
+      "stateproofs" => available_from_genesis,
+      "tx" => available_from_genesis
+    }
+  end
 
   @doc false
   @spec eth_getBalance(term(), term()) :: String.t()

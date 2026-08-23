@@ -4,7 +4,11 @@ defmodule Cartouche.RPCTest do
 
   import ExUnit.CaptureLog
 
+  alias Cartouche.RPC.Capabilities
+  alias Cartouche.RPC.Configuration
+  alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
+  alias Cartouche.Transaction.V_2930
 
   doctest Cartouche.RPC
 
@@ -113,6 +117,21 @@ defmodule Cartouche.RPCTest do
     def call(conn), do: Req.Test.transport_error(conn, :closed)
   end
 
+  defmodule UnsupportedBaseFeeClient do
+    @moduledoc false
+
+    def call(conn) do
+      id = Cartouche.RPCTest.decode_id(conn)
+
+      # Recorded from Infura mainnet on 2026-08-23.
+      Req.Test.json(conn, %{
+        "jsonrpc" => "2.0",
+        "error" => %{"code" => -32_601, "message" => "The method eth_baseFee does not exist/is not available"},
+        "id" => id
+      })
+    end
+  end
+
   describe "block-param wire encoding" do
     setup do
       Process.register(self(), :cartouche_rpc_capture)
@@ -156,6 +175,130 @@ defmodule Cartouche.RPCTest do
       {:ok, %Cartouche.FeeHistory{}} = Cartouche.RPC.fee_history(newest_block: 55)
 
       assert_received {:rpc_request, %{"method" => "eth_feeHistory", "params" => [1, "0x37", []]}}
+    end
+
+    test "create_access_list/2 reuses call encoding and returns a V_2930-ready access list" do
+      call = Call.new(<<1::160>>, <<0, 1>>, from: <<4::160>>, gas: 21_000, value: 7)
+
+      assert {:ok, %{access_list: [{<<1::160>>, [<<2::256>>]}], gas_used: 26_026} = result} =
+               Cartouche.RPC.create_access_list(call, from: <<5::160>>, block_number: 55)
+
+      assert_received {:rpc_request,
+                       %{
+                         "method" => "eth_createAccessList",
+                         "params" => [
+                           %{
+                             "from" => "0x0000000000000000000000000000000000000004",
+                             "to" => "0x0000000000000000000000000000000000000001",
+                             "gas" => "0x5208",
+                             "value" => "0x7",
+                             "data" => "0x0001"
+                           },
+                           "0x37"
+                         ]
+                       }}
+
+      transaction = V_2930.new(0, 1, result.gas_used, call.destination, 0, call.data, result.access_list, :mainnet)
+
+      assert {:ok, ^transaction} = transaction |> V_2930.encode() |> V_2930.decode()
+    end
+
+    test "create_access_list/2 accepts atom and hex-string block selectors" do
+      call = Call.new(<<1::160>>, <<>>)
+
+      for {block_number, expected} <- [{:latest, "latest"}, {"0x37", "0x37"}] do
+        assert {:ok, %{gas_used: 26_026}} = Cartouche.RPC.create_access_list(call, block_number: block_number)
+        assert_received {:rpc_request, %{"method" => "eth_createAccessList", "params" => [_call, ^expected]}}
+      end
+    end
+
+    test "create_access_list/2 retains an execution error alongside the access list" do
+      call = Call.new(<<10::160>>, <<>>)
+
+      assert {:ok,
+              %{
+                access_list: [{<<1::160>>, [<<2::256>>]}],
+                gas_used: 24_043,
+                error: "execution reverted"
+              }} = Cartouche.RPC.create_access_list(call)
+    end
+
+    test "fee reads use their spec method names and decode quantities" do
+      assert {:ok, 1_000_000_000} = Cartouche.RPC.base_fee()
+      assert_received {:rpc_request, %{"method" => "eth_baseFee", "params" => []}}
+
+      assert {:ok, 42} = Cartouche.RPC.blob_base_fee()
+      assert_received {:rpc_request, %{"method" => "eth_blobBaseFee", "params" => []}}
+    end
+
+    test "node introspection reads deserialize their structured results" do
+      assert {:ok, %Configuration{} = config} = Cartouche.RPC.eth_config()
+      assert config.current.chain_id == 1
+      assert config.current.fork_id == <<0x07C9462E::32>>
+      assert config.current.blob_schedule.base_fee_update_fraction == 11_684_671
+      assert config.current.precompiles["P256VERIFY"] == <<0x100::160>>
+      assert_received {:rpc_request, %{"method" => "eth_config", "params" => []}}
+
+      assert {:ok, %Capabilities{} = capabilities} = Cartouche.RPC.eth_capabilities()
+      assert capabilities.head.number == 42
+      assert capabilities.head.hash == <<1::256>>
+      assert capabilities.blocks.disabled == false
+      assert capabilities.blocks.oldest_block == 0
+      assert_received {:rpc_request, %{"method" => "eth_capabilities", "params" => []}}
+    end
+  end
+
+  describe "structured RPC deserializers" do
+    test "configuration tolerates omitted optional fields and unknown additions" do
+      assert %Configuration{
+               current: %Configuration.Fork{
+                 activation_time: nil,
+                 blob_schedule: nil,
+                 chain_id: 1,
+                 fork_id: nil,
+                 precompiles: nil,
+                 system_contracts: nil
+               },
+               next: nil,
+               last: nil
+             } =
+               Configuration.deserialize(%{
+                 "current" => %{"chainId" => "0x1", "futureForkField" => %{"enabled" => true}},
+                 "futureResponseField" => "ignored"
+               })
+
+      assert %Configuration{current: %Configuration.Fork{chain_id: nil}} =
+               Configuration.deserialize(%{"current" => %{}})
+    end
+
+    test "capabilities tolerates omitted optional fields and unknown additions" do
+      assert %Capabilities{
+               head: %Capabilities.Head{number: 42, hash: nil},
+               state: %Capabilities.Resource{disabled: true, oldest_block: nil, delete_strategy: nil},
+               tx: nil,
+               logs: nil,
+               receipts: nil,
+               blocks: nil,
+               stateproofs: nil
+             } =
+               Capabilities.deserialize(%{
+                 "head" => %{"number" => "0x2a", "futureHeadField" => true},
+                 "state" => %{"disabled" => true, "futureResourceField" => "ignored"},
+                 "futureResponseField" => []
+               })
+
+      assert %Capabilities{
+               head: nil,
+               stateproofs: %Capabilities.Resource{
+                 delete_strategy: %Capabilities.DeleteStrategy{type: "window", retention_blocks: 128}
+               }
+             } =
+               Capabilities.deserialize(%{
+                 "stateproofs" => %{
+                   "disabled" => false,
+                   "deleteStrategy" => %{"type" => "window", "retentionBlocks" => "0x80"}
+                 }
+               })
     end
   end
 
@@ -259,6 +402,11 @@ defmodule Cartouche.RPCTest do
       assert {:error, "[Cartouche] HTTP client error: :closed"} =
                Cartouche.RPC.send_rpc("net_version", [], req_options: [plug: &TransportErrorClient.call/1])
     end
+
+    test "an unsupported fee method preserves the node's observed error" do
+      assert {:error, %{code: -32_601, message: "The method eth_baseFee does not exist/is not available"}} =
+               Cartouche.RPC.base_fee(req_options: [plug: &UnsupportedBaseFeeClient.call/1])
+    end
   end
 
   describe "send_rpc/3 invalid params" do
@@ -341,7 +489,7 @@ defmodule Cartouche.RPCTest do
     end
 
     test "call_trx/2 sends Call params without transaction fee fields" do
-      call = Cartouche.Transaction.Call.new(<<1::160>>, <<0, 1>>, from: <<4::160>>, gas: 21_000, value: 7)
+      call = Call.new(<<1::160>>, <<0, 1>>, from: <<4::160>>, gas: 21_000, value: 7)
 
       assert {:ok, <<0xCC>>} = Cartouche.RPC.call_trx(call, from: <<5::160>>, block_number: 55)
 

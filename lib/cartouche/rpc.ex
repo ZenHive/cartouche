@@ -13,8 +13,227 @@ defmodule Cartouche.RPC do
   alias Cartouche.Transaction.Call
   alias Cartouche.Transaction.V1
   alias Cartouche.Transaction.V2
+  alias Cartouche.Transaction.V_2930
 
   require Logger
+
+  defmodule Configuration do
+    @moduledoc """
+    Deserialized `eth_config` fork configuration report defined by EIP-7910.
+
+    Fields are nilable because clients may omit configuration added by newer
+    revisions of the method.
+    """
+
+    alias __MODULE__.BlobSchedule
+    alias __MODULE__.Fork
+    alias Cartouche.Hex
+
+    defmodule BlobSchedule do
+      @moduledoc """
+      Blob fee schedule active for one fork configuration.
+      """
+
+      @type t :: %__MODULE__{
+              base_fee_update_fraction: non_neg_integer() | nil,
+              max: non_neg_integer() | nil,
+              target: non_neg_integer() | nil
+            }
+
+      defstruct [:base_fee_update_fraction, :max, :target]
+    end
+
+    defmodule Fork do
+      @moduledoc """
+      Chain parameters active at one fork boundary.
+      """
+
+      alias Cartouche.RPC.Configuration.BlobSchedule
+
+      @type named_addresses :: %{optional(String.t()) => <<_::160>>}
+
+      @type t :: %__MODULE__{
+              activation_time: non_neg_integer() | nil,
+              blob_schedule: BlobSchedule.t() | nil,
+              chain_id: non_neg_integer() | nil,
+              fork_id: <<_::32>> | nil,
+              precompiles: named_addresses() | nil,
+              system_contracts: named_addresses() | nil
+            }
+
+      defstruct [:activation_time, :blob_schedule, :chain_id, :fork_id, :precompiles, :system_contracts]
+    end
+
+    @type t :: %__MODULE__{
+            current: Fork.t() | nil,
+            next: Fork.t() | nil,
+            last: Fork.t() | nil
+          }
+
+    defstruct [:current, :next, :last]
+
+    @doc """
+    Decodes an `eth_config` result while ignoring unknown fields.
+    """
+    @spec deserialize(map()) :: t()
+    def deserialize(%{} = params) do
+      %__MODULE__{
+        current: deserialize_fork(params["current"]),
+        next: deserialize_fork(params["next"]),
+        last: deserialize_fork(params["last"])
+      }
+    end
+
+    @spec deserialize_fork(map() | nil) :: Fork.t() | nil
+    defp deserialize_fork(nil), do: nil
+
+    defp deserialize_fork(%{} = params) do
+      %Fork{
+        activation_time: params["activationTime"],
+        blob_schedule: deserialize_blob_schedule(params["blobSchedule"]),
+        chain_id: decode_quantity(params["chainId"]),
+        fork_id: decode_data(params["forkId"]),
+        precompiles: decode_named_addresses(params["precompiles"]),
+        system_contracts: decode_named_addresses(params["systemContracts"])
+      }
+    end
+
+    @spec deserialize_blob_schedule(map() | nil) :: BlobSchedule.t() | nil
+    defp deserialize_blob_schedule(nil), do: nil
+
+    defp deserialize_blob_schedule(%{} = params) do
+      %BlobSchedule{
+        base_fee_update_fraction: params["baseFeeUpdateFraction"],
+        max: params["max"],
+        target: params["target"]
+      }
+    end
+
+    @spec decode_quantity(String.t() | nil) :: non_neg_integer() | nil
+    defp decode_quantity(nil), do: nil
+    defp decode_quantity(quantity), do: Hex.decode_hex_number!(quantity)
+
+    @spec decode_data(String.t() | nil) :: binary() | nil
+    defp decode_data(nil), do: nil
+    defp decode_data(data), do: Hex.decode_hex!(data)
+
+    @spec decode_named_addresses(map() | nil) :: Fork.named_addresses() | nil
+    defp decode_named_addresses(nil), do: nil
+
+    defp decode_named_addresses(addresses) when is_map(addresses) do
+      Map.new(addresses, fn {name, address} -> {name, Hex.decode_address!(address)} end)
+    end
+  end
+
+  defmodule Capabilities do
+    @moduledoc """
+    Deserialized `eth_capabilities` report used to determine which historical
+    resources a node can serve.
+    """
+
+    alias __MODULE__.DeleteStrategy
+    alias __MODULE__.Head
+    alias __MODULE__.Resource
+    alias Cartouche.Hex
+
+    defmodule Head do
+      @moduledoc """
+      Block at the head of the node's advertised capability range.
+      """
+
+      @type t :: %__MODULE__{number: non_neg_integer() | nil, hash: <<_::256>> | nil}
+      defstruct [:number, :hash]
+    end
+
+    defmodule DeleteStrategy do
+      @moduledoc """
+      Resource-retention strategy advertised by the node.
+      """
+
+      @type t :: %__MODULE__{type: String.t() | nil, retention_blocks: non_neg_integer() | nil}
+      defstruct [:type, :retention_blocks]
+    end
+
+    defmodule Resource do
+      @moduledoc """
+      Availability and retention details for one node resource.
+      """
+
+      alias Cartouche.RPC.Capabilities.DeleteStrategy
+
+      @type t :: %__MODULE__{
+              disabled: boolean() | nil,
+              oldest_block: non_neg_integer() | nil,
+              delete_strategy: DeleteStrategy.t() | nil
+            }
+
+      defstruct [:disabled, :oldest_block, :delete_strategy]
+    end
+
+    @type t :: %__MODULE__{
+            head: Head.t() | nil,
+            state: Resource.t() | nil,
+            tx: Resource.t() | nil,
+            logs: Resource.t() | nil,
+            receipts: Resource.t() | nil,
+            blocks: Resource.t() | nil,
+            stateproofs: Resource.t() | nil
+          }
+
+    defstruct [:head, :state, :tx, :logs, :receipts, :blocks, :stateproofs]
+
+    @doc """
+    Decodes an `eth_capabilities` result while ignoring unknown fields.
+    """
+    @spec deserialize(map()) :: t()
+    def deserialize(%{} = params) do
+      %__MODULE__{
+        head: deserialize_head(params["head"]),
+        state: deserialize_resource(params["state"]),
+        tx: deserialize_resource(params["tx"]),
+        logs: deserialize_resource(params["logs"]),
+        receipts: deserialize_resource(params["receipts"]),
+        blocks: deserialize_resource(params["blocks"]),
+        stateproofs: deserialize_resource(params["stateproofs"])
+      }
+    end
+
+    @spec deserialize_head(map() | nil) :: Head.t() | nil
+    defp deserialize_head(nil), do: nil
+
+    defp deserialize_head(%{} = params) do
+      %Head{number: decode_quantity(params["number"]), hash: decode_word(params["hash"])}
+    end
+
+    @spec deserialize_resource(map() | nil) :: Resource.t() | nil
+    defp deserialize_resource(nil), do: nil
+
+    defp deserialize_resource(%{} = params) do
+      %Resource{
+        disabled: params["disabled"],
+        oldest_block: decode_quantity(params["oldestBlock"]),
+        delete_strategy: deserialize_delete_strategy(params["deleteStrategy"])
+      }
+    end
+
+    @spec deserialize_delete_strategy(map() | nil) :: DeleteStrategy.t() | nil
+    defp deserialize_delete_strategy(nil), do: nil
+
+    defp deserialize_delete_strategy(%{} = params) do
+      %DeleteStrategy{
+        type: params["type"],
+        retention_blocks: decode_quantity(params["retentionBlocks"])
+      }
+    end
+
+    @spec decode_quantity(String.t() | nil) :: non_neg_integer() | nil
+    defp decode_quantity(nil), do: nil
+    defp decode_quantity(quantity), do: Hex.decode_hex_number!(quantity)
+
+    @spec decode_word(String.t() | nil) :: <<_::256>> | nil
+    defp decode_word(nil), do: nil
+    defp decode_word(word), do: Hex.decode_word!(word)
+  end
 
   @default_timeout Application.compile_env(:cartouche, :timeout, 30_000)
 
@@ -38,6 +257,13 @@ defmodule Cartouche.RPC do
 
   @typedoc "All values that can appear inside an `{:error, reason}` tuple returned by `send_rpc/3`."
   @type send_rpc_error :: rpc_error() | invalid_params_error() | Req.Response.t() | String.t()
+
+  @typedoc "Decoded `eth_createAccessList` result, retaining an optional execution error."
+  @type access_list_result :: %{
+          required(:access_list) => V_2930.access_list(),
+          required(:gas_used) => non_neg_integer(),
+          optional(:error) => String.t()
+        }
 
   @spec headers([{String.t(), String.t()}]) :: [{String.t(), String.t()}]
   defp headers(extra_headers) do
@@ -520,6 +746,66 @@ defmodule Cartouche.RPC do
     end
   end
 
+  api(:create_access_list, "Generate an EIP-2930 access list for a transaction or call object.",
+    params: [
+      trx: [
+        kind: :value,
+        description: "`Cartouche.Transaction.V1`, `Cartouche.Transaction.V2`, or `Cartouche.Transaction.Call` to execute."
+      ],
+      opts: [
+        kind: :value,
+        default: [],
+        description:
+          "Keyword options including optional `:from`, block selector `:block_number`, and common `send_rpc/3` options."
+      ]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description:
+        "`{:ok, %{access_list: [{address, storage_keys}], gas_used: gas, optional(:error) => message}}` with binary addresses and storage keys, or `{:error, reason}`."
+    }
+  )
+
+  @doc ~S"""
+  Generates the access list and gas used by a call at a block selector.
+
+  A node may return an `:error` string alongside a usable access list when
+  execution reverts; the field is retained in the successful result map.
+
+  ## Examples
+
+      iex> call = Cartouche.Transaction.Call.new(<<1::160>>, <<0, 1>>)
+      iex> {:ok, %{access_list: [{address, [storage_key]}], gas_used: gas_used}} =
+      ...>   Cartouche.RPC.create_access_list(call)
+      iex> {address, storage_key, gas_used}
+      {<<1::160>>, <<2::256>>, 26026}
+  """
+  @spec create_access_list(V1.t() | V2.t() | Call.t(), Keyword.t()) ::
+          {:ok, access_list_result()} | {:error, term()}
+  def create_access_list(trx, opts \\ []) do
+    from = Keyword.get(opts, :from)
+    block_number = opts |> Keyword.get(:block_number, "latest") |> normalize_block_param()
+
+    send_rpc(
+      "eth_createAccessList",
+      [to_call_params(trx, from), block_number],
+      Keyword.put(opts, :decode, &deserialize_access_list_result/1)
+    )
+  end
+
+  @spec deserialize_access_list_result(map()) :: access_list_result()
+  defp deserialize_access_list_result(%{"accessList" => access_list, "gasUsed" => gas_used} = params) do
+    result = %{
+      access_list: Cartouche.Transaction.JsonField.decode_access_list(access_list),
+      gas_used: Hex.decode_hex_number!(gas_used)
+    }
+
+    case params do
+      %{"error" => error} -> Map.put(result, :error, error)
+      _ -> result
+    end
+  end
+
   api(:estimate_gas, "Estimate gas for a transaction or call object.",
     params: [
       trx: [
@@ -585,6 +871,54 @@ defmodule Cartouche.RPC do
         {:ok, 0x22}
     """
   )
+
+  api(:eth_config, "Fetch the node's EIP-7910 chain and fork configuration.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, %Cartouche.RPC.Configuration{}}` decoded from `eth_config`, or `{:error, reason}`."
+    }
+  )
+
+  @doc ~S"""
+  Returns the current, next, and last configured Ethereum forks reported by the node.
+
+  ## Examples
+
+      iex> {:ok, config} = Cartouche.RPC.eth_config()
+      iex> {config.current.chain_id, config.current.fork_id}
+      {1, <<7, 201, 70, 46>>}
+  """
+  @spec eth_config(Keyword.t()) :: {:ok, Configuration.t()} | {:error, term()}
+  def eth_config(opts \\ []) do
+    send_rpc("eth_config", [], Keyword.put(opts, :decode, &Configuration.deserialize/1))
+  end
+
+  api(:eth_capabilities, "Fetch the node's effective historical-data capabilities.",
+    params: [
+      opts: [kind: :value, default: [], description: "Common `send_rpc/3` transport options."]
+    ],
+    returns: %{
+      type: :ok_error_tuple,
+      description: "`{:ok, %Cartouche.RPC.Capabilities{}}` decoded from `eth_capabilities`, or `{:error, reason}`."
+    }
+  )
+
+  @doc ~S"""
+  Returns the node's head and resource-retention capabilities.
+
+  ## Examples
+
+      iex> {:ok, capabilities} = Cartouche.RPC.eth_capabilities()
+      iex> {capabilities.head.number, capabilities.blocks.oldest_block}
+      {42, 0}
+  """
+  @spec eth_capabilities(Keyword.t()) :: {:ok, Capabilities.t()} | {:error, term()}
+  def eth_capabilities(opts \\ []) do
+    send_rpc("eth_capabilities", [], Keyword.put(opts, :decode, &Capabilities.deserialize/1))
+  end
 
   defrpc(:get_code, "eth_getCode",
     encode: :big_hex,
@@ -739,12 +1073,13 @@ defmodule Cartouche.RPC do
   end
 
   # Normalises a block-tag parameter for JSON-RPC: integers become lowercase
-  # quantity strings (`"0x37"`); strings (`"latest"`, `"0x37"`, etc.) pass
-  # through unchanged. Required because `Jason.encode!/1` would otherwise
-  # serialise an integer as a bare JSON number, which real Ethereum nodes
-  # reject with `-32602 Invalid params`.
-  @spec normalize_block_param(integer() | binary()) :: String.t()
+  # quantity strings (`"0x37"`); supported tag atoms become their wire strings;
+  # strings (`"latest"`, `"0x37"`, etc.) pass through unchanged. Required
+  # because `Jason.encode!/1` would otherwise serialise an integer as a bare
+  # JSON number, which real Ethereum nodes reject with `-32602 Invalid params`.
+  @spec normalize_block_param(integer() | binary() | :earliest | :latest | :pending | :safe | :finalized) :: String.t()
   defp normalize_block_param(n) when is_integer(n), do: Hex.encode_quantity(n)
+  defp normalize_block_param(tag) when tag in [:earliest, :latest, :pending, :safe, :finalized], do: Atom.to_string(tag)
   defp normalize_block_param(s) when is_binary(s), do: s
 
   api(:get_block_by_hash, "Fetch a block by its 32-byte block hash.",
@@ -1533,6 +1868,34 @@ defmodule Cartouche.RPC do
 
         iex> Cartouche.RPC.gas_price()
         {:ok, 1000000000}
+    """
+  )
+
+  defrpc(:base_fee, "eth_baseFee",
+    decode: :hex_unsigned,
+    summary: "Fetch the computed base fee per gas for the next block.",
+    returns_desc: "`{:ok, wei_per_gas}` decoded from `eth_baseFee`, or the node's unchanged `{:error, reason}`.",
+    doc: ~S"""
+    RPC call to get the computed base fee per gas for the next block.
+
+    ## Examples
+
+        iex> Cartouche.RPC.base_fee()
+        {:ok, 1000000000}
+    """
+  )
+
+  defrpc(:blob_base_fee, "eth_blobBaseFee",
+    decode: :hex_unsigned,
+    summary: "Fetch the current base fee per blob gas.",
+    returns_desc: "`{:ok, wei_per_blob_gas}` decoded from `eth_blobBaseFee`, or the node's unchanged `{:error, reason}`.",
+    doc: ~S"""
+    RPC call to get the current base fee per blob gas.
+
+    ## Examples
+
+        iex> Cartouche.RPC.blob_base_fee()
+        {:ok, 42}
     """
   )
 

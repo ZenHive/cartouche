@@ -1,6 +1,11 @@
 defmodule Cartouche.Chain do
   @moduledoc """
   Chain registry and chain-id parsing helpers.
+
+  This registry is static and never performs network I/O. Callers may use
+  `Cartouche.RPC.eth_config/1` as an independent read to cross-check a node's
+  reported chain configuration, but its result does not mutate or control this
+  table.
   """
 
   use Descripex, namespace: "/ethereum/chain"
