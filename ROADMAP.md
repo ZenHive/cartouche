@@ -166,7 +166,7 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 99 | ✅ | 🎁 **rpc_correctness** · Cartouche.Transaction.V_2930 — add EIP-2930 (type 0x1) JSON deserialization [D:3/B:2/U:2 → Eff:0.67?] ⚠️ |
 | Task 67 | ✅ | 🎁 **rpc_correctness** · Cartouche.Receipt — add EIP-4844 blob fields (blob_gas_used, blob_gas_price) [D:2/B:3/U:4 → Eff:1.75?] 🚀 |
 | Task 68 | ⛔ | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add EIP-7702 opcodes to the closed whitelist (AUTH, AUTHCALL) — closed obsolete [D:1/B:1/U:1 → Eff:1.0?] 📋 |
-| Task 69 | ⬜ | 🎁 **bug_triage** · Audit RPC-level requirements bubbling up from defi-skills mining [D:2/B:5/U:4 → Eff:2.25?] 🎯 |
+| Task 69 | ✅ | 🎁 **bug_triage** · Audit RPC-level requirements bubbling up from defi-skills mining [D:2/B:5/U:4 → Eff:2.25?] 🎯 |
 | Task 70 `[CX]` | ✅ | 🎁 **eip_opcode_followups** · Cartouche.DebugTrace.StructLog — add CLZ (EIP-7939/Osaka) to the closed whitelist [D:1/B:2/U:3 → Eff:2.5?] 🎯 |
 | Task 73 | ✅ | 🎁 **kms_followups** · KMS signer Goth-path test mocking — clear critical-tier ≥95% gate on both KMS signers [D:3/B:2/U:3 → Eff:0.83?] ⚠️ |
 | Task 75 `[CX]` | ✅ | 🎁 **tooling_quality** · Backfill @spec on every defp to enable .credo.exs {Specs, [include_defp: true]} portfolio-wide [D:7/B:5/U:5 → Eff:0.71?] ⚠️ |
