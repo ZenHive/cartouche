@@ -2557,8 +2557,10 @@ defmodule Cartouche.RPC do
   RPC call to fill missing transaction fields via `eth_fillTransaction`.
 
   The node populates nonce, gas, and fee fields and returns the completed
-  unsigned transaction. The result is decoded into a `Cartouche.Transaction`
-  struct.
+  unsigned transaction. Spec-conforming nodes return a `FillTransactionResult`
+  with only `tx` (no `v`/`r`/`s`/`yParity`); geth returns `{raw, tx}`. Either
+  shape decodes into a `Cartouche.Transaction` struct. Signature fields on a
+  spec-path result are `nil`.
 
   ## Examples
 

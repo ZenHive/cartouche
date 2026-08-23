@@ -693,6 +693,24 @@ defmodule Cartouche.RPCTest do
       assert {:ok, ^filled} = filled |> Cartouche.Transaction.encode() |> Cartouche.Transaction.decode()
     end
 
+    test "fill_transaction rejects a non-unsigned spec result" do
+      cases = [
+        {%{"tx" => Map.put(unsigned_filled_v2_json(), "r", "0x1")}, "signature-bearing"},
+        {%{}, "neither a `raw` field nor an unsigned `tx` object"}
+      ]
+
+      Enum.each(cases, fn {result, needle} ->
+        plug = fn conn -> respond_with_result(conn, result) end
+
+        assert {:error, message} =
+                 <<1::160>>
+                 |> Call.new(<<1, 2, 3>>)
+                 |> Cartouche.RPC.fill_transaction(req_options: [plug: plug])
+
+        assert message =~ needle
+      end)
+    end
+
     test "get_filter_logs decodes the same Log shape as filter changes" do
       assert {:ok, [log]} = Cartouche.RPC.get_filter_logs("0xf11735")
       assert %Cartouche.Filter.Log{} = log

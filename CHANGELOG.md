@@ -35,16 +35,19 @@ All notable changes to this project will be documented in this file.
   the node returns, including its refusal. Local signing through
   `Cartouche.Signer` remains the normal route; the distinction is which side
   constructs the envelope, not key custody. `fill_transaction/2` deserializes
-  into cartouche's transaction structs rather than a raw map. All three
-  envelope-constructing methods serialize an EIP-1559 transaction with its
-  `type`, `chainId` and `accessList`, so a caller-supplied access list reaches
+  a spec-conforming unsigned `FillTransactionResult` (`tx` only; signature
+  fields become `nil`) as well as geth's `{raw, tx}` pair (preferring `raw`)
+  into cartouche's transaction structs; `V1.t()` types `v`/`r`/`s` as nilable
+  so the unsigned envelope is explicit, and `V1.encode/1` treats nil as `0`.
+  All three envelope-constructing methods serialize an EIP-1559 transaction with
+  its `type`, `chainId` and `accessList`, so a caller-supplied access list reaches
   the node that signs it instead of being dropped on the way; `sign/3` takes the
   message the node signs under EIP-191, not a pre-computed digest. Tests run against
   a development node through a new lane in `test/support/live.ex`
   (`CARTOUCHE_DEV_NODE_URL`, or an ephemeral locally installed anvil, flunking
   with setup instructions when neither is available) that leaves the mainnet
   chain-id assertion untouched; they pin anvil's observed refusals rather than
-  assumed ones. Closes ROADMAP Tasks 121 and 124.
+  assumed ones. Closes ROADMAP Tasks 121, 124, and 125.
 
 - **`Cartouche.RPC` now wraps `eth_createAccessList`, `eth_baseFee`,
   `eth_blobBaseFee`, `eth_config` (EIP-7910), and `eth_capabilities`.**

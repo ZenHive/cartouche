@@ -62,3 +62,8 @@ cartouche-*.tar
 # JSON, and the numbers that matter are transcribed into docs/verification-ledger.md.
 /.mutation/results/
 /.mutation/*.log
+
+# Harness reviewer artifacts must not land. The contract is `.harness/review.json`
+# (excluded from staging). `.review/` leaked once onto main (task 125) and is
+# ignored so it cannot ride a reviewer-fixes commit again.
+/.review/
