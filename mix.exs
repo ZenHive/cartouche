@@ -190,11 +190,23 @@ defmodule Cartouche.MixProject do
       # `Result: N passed` / `Failed: N test` — the regex missed, the fallback
       # returned 1 failure, every survivor was reported `killed`, and the score
       # was a constant 100%. 0.8.3 adds a `^Failed: (\d+) tests?` pattern
-      # alongside the old one. ROADMAP task 119 re-runs the campaign; its first
-      # acceptance criterion is running the issue's reproduction and requiring
-      # survived=2 / score 0% before trusting a score from this version. The
-      # `no_coverage` and `equivalent` classes were never affected by the defect
-      # and their task 114 results stand.
+      # alongside the old one.
+      #
+      # That fix is necessary but not sufficient, and 0.8.3 still cannot produce
+      # a usable score here — a 2026-08-24 campaign was run on it and discarded.
+      # Two upstream defects remain open. Oeditus/muex#23: sandboxes share the
+      # project's real `_build` in any project with dependencies, so a mutant
+      # can be compiled away by a sibling worker and graded on unmutated code —
+      # verified here against a survivor that the suite in fact kills.
+      # Oeditus/muex#24: mutations are keyed by their reported line, so
+      # `StatementDeletion` never applies at all and bare-boolean flips mostly
+      # do not, regardless of scheduling. ROADMAP task 119 is blocked on a
+      # release carrying both; its first acceptance criterion is a per-defect
+      # gate, not #20's reproduction alone.
+      #
+      # The `no_coverage` and `equivalent` classes are decided without running a
+      # test and are unaffected by all three defects, so their task 114 results
+      # stand.
       {:muex, "~> 0.8.3", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.6", only: :dev},
       {:bandit, "~> 1.12", only: :dev}

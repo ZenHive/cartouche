@@ -242,9 +242,9 @@ opposite assertions depending on whether the chain id sits in the signed digest 
 
 * **No adequacy claim is made by this section.** The suite may well be strong against the
   faults muex generates — this campaign simply cannot say so, in either direction. Task
-  119 re-runs the measurement once an upstream release reports survivors, and requires the
-  reproduction from Oeditus/muex#20 to pass before a campaign is started, so that a fixed
-  version is confirmed rather than assumed.
+  119 re-runs the measurement once an upstream release reports survivors *and* applies the
+  mutations it reports; see the attempt recorded below for why #20 alone is not that
+  release.
 * **`Killed` and `Invalid` in the result table are provenance, not measurement.** They are
   retained so the re-run can be diffed against this baseline, and for no other purpose.
 * **Two-minute contamination window.** The canary file was briefly created under `test/`
@@ -255,3 +255,49 @@ opposite assertions depending on whether the chain id sits in the signed digest 
 * **Not a CI gate.** This is a one-off measurement plus the tests it produced. muex is a
   `:dev`/`:test` dependency and no `mix ci` step runs it. A future scoped check is cheap
   (`mix muex --since main` mutates only changed lines); a recurring exhaustive run is not.
+
+### 2026-08-24 re-measurement attempt on muex 0.8.3 — run and discarded
+
+muex 0.8.3 closes [#20](https://github.com/Oeditus/muex/issues/20): its reproduction now
+reports `survived: 2`, `mutation_score: 0.0%`, where 0.8.2 reported `killed / killed`,
+100%. The campaign above was therefore re-run with the same flags: 4,905 mutants, 88
+minutes, 1,308 `killed` / 111 `survived` / 2,227 `invalid` / 1,256 `equivalent` / 3
+`no_coverage`.
+
+**Those survivors are not test gaps, and the run was discarded.** The first survivor
+checked before triage was `transaction.ex:222`, `:binary` → `:mutated_atom`, on a line
+`V1.decode/1` covers with 13 assertions. It is killed by the existing suite at
+`test/transaction_test.exs:1213`, and killed again when driven through muex's own
+`Sandbox.apply_mutation/4` + `TestRunner.Port.run_tests/2` (`failures=1`). It was scored
+`survived` because the mutation never reached the beam.
+
+Two upstream defects, both open against 0.8.3, produce that:
+
+* [#23](https://github.com/Oeditus/muex/issues/23) — `Sandbox.detect_app_from_build/2`
+  resolves the app name only when `_build/<env>/lib/*/.mix/compile.elixir` has exactly one
+  match. cartouche has 45, one per dependency, so it returns `nil`,
+  `ensure_build_copy_for_file/2` makes no copy, and every sandbox's
+  `_build/test/lib/cartouche` stays a **symlink into the real project build directory** —
+  measured directly, unchanged before and after `apply_mutation/4`. Parallel workers then
+  share one `ebin` and one compile manifest: when a sibling recompiles the file between a
+  worker's mutant write and its own test run, Mix reads the source as up to date and the
+  mutation is silently dropped. This is also the likeliest explanation for the 337-of-1,379
+  class churn recorded above over a byte-identical `lib/`, which was attributed to #20.
+* [#24](https://github.com/Oeditus/muex/issues/24) — mutations are matched by their
+  *reported* line, which for two mutators is deliberately not the matched node's line. So
+  `StatementDeletion` is a 100% no-op and bare-boolean flips are ~70%: 383 of these 4,905
+  mutants, and 8 of the 111 survivors, were graded against unmodified source. Scheduling
+  does not affect this one.
+
+`#22` and `#25` do not reach this campaign: `--no-filter` bypasses the file filter, and
+`--test-paths test` links the whole test root rather than a narrowed subset.
+
+`--concurrency 1` removes #23's race — `.mutation/run.sh` is pinned to it, with the
+reasoning in its header — but nothing available today removes #24, so a serial re-run was
+started and then stopped rather than carried to a partly-invalid result. Task 119 is
+blocked on a muex release carrying both fixes, and its pre-campaign gate is now per defect
+rather than #20's reproduction alone.
+
+What this attempt does **not** change: `no_coverage` and `equivalent` are decided before or
+without running a test, so the 55-unexecuted finding, its disposition table, and the
+verification pass above stand as recorded.
