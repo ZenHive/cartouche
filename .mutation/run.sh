@@ -9,6 +9,11 @@
 #
 # Exhaustive: --no-filter --no-optimize, all 18 mutators. --coverage-guided
 # only narrows which EXISTING tests run per mutant; it never drops a mutant.
+# One exception, deliberately not opted out of: muex drops mutations reported at
+# `line: 0` unless --keep-metadata-mutations is passed (Muex.maybe_drop_unlocatable/2).
+# muex documents those as compile-time/invalid mutants, and keeping them would
+# make the run non-comparable with the recorded baseline -- so "exhaustive" here
+# means every LOCATABLE mutation the 18 mutators generate.
 #
 # --concurrency 1 is REQUIRED for a valid measurement, not a throughput choice.
 # muex's per-worker sandbox only isolates _build when it can name the app:
@@ -50,3 +55,6 @@ i = raw.find('{')
 open(sys.argv[2], 'w').write(raw[i:] if i >= 0 else '')
 PY
 echo "=== CAMPAIGN DONE rc=$rc $(( t1 - t0 ))s $(date +%H:%M:%S)"
+# Propagate muex's status: post-processing succeeding must not make a crashed
+# campaign look like a clean one to a caller reading $?.
+exit $rc

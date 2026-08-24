@@ -14,6 +14,24 @@ All notable changes to this project will be documented in this file.
 <a id="phase-11-hieroglyph-1-0-0-1-4-0-adoption-advisory"></a>
 <a id="phase-12-agent-economy-descripex-adoption"></a>
 
+## [Unreleased]
+
+### Fixed
+
+- **`fill_transaction/2` refuses a `chain_id:` option that disagrees with the
+  `chainId` the response names, instead of silently taking the response's.**
+  `Cartouche.Signer` takes the chain id from its caller rather than from the
+  transaction struct, so a caller that says `chain_id: 42` against a node
+  answering `chainId: "0x1"` previously got a `Cartouche.Transaction.V1` encoding
+  the chain-1 EIP-155 payload, signed the chain-42 digest over it, and recovered
+  to an address that never signed it — the same wrong-address hazard the
+  malformed-`chainId`, chain-id-`0`, and ambiguous-`raw` refusals already close.
+  A `chain_id:` that agrees with the response is still accepted, and a response
+  that names no chain id still falls back to the option. An unknown chain atom
+  (`chain_id: :not_a_chain`) is now reported against the option that carried it
+  rather than escaping `Cartouche.Chain.parse_id/1` as a `KeyError` blamed on the
+  node's response.
+
 ## [0.8.0] — 2026-08-23
 
 ### Added

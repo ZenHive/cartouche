@@ -36,6 +36,11 @@ defmodule Cartouche.Transaction do
             to: <<_::160>> | nil,
             value: integer(),
             data: binary(),
+            # Non-nilable, and `v` is never "unset": until a signature replaces
+            # it, `v` carries the chain id with `r`/`s` zero, which is exactly
+            # EIP-155's `[chain_id, 0, 0]` signing payload. A nil here would
+            # encode as the pre-EIP-155 `[0, 0, 0]` and any signature taken over
+            # that payload recovers to the wrong address.
             v: integer(),
             r: integer(),
             s: integer()
@@ -86,7 +91,8 @@ defmodule Cartouche.Transaction do
       ],
       returns: %{
         type: :transaction_v1,
-        description: "%Cartouche.Transaction.V1{} with legacy `gas_price` fields and empty signature slots."
+        description:
+          "%Cartouche.Transaction.V1{} with legacy `gas_price` fields, the chain id in `v`, and `r`/`s` zero — EIP-155's unsigned signature triple."
       }
     )
 

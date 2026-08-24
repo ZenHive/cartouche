@@ -829,6 +829,50 @@ defmodule Cartouche.RPCTest do
       end
     end
 
+    # `unsigned_filled_v1_json/0` names chain 42. A caller that also names one
+    # is stating which chain it will sign for, and `Cartouche.Signer` takes the
+    # chain id from that caller rather than from the struct — so a disagreement
+    # signs the EIP-155 digest for one chain over a payload encoding another,
+    # and recovery lands on an address that never signed it. Taking either side
+    # silently is the wrong-address hazard; both are refused.
+    test "fill_transaction refuses a chain_id: option that disagrees with the response" do
+      result = %{"tx" => unsigned_filled_v1_json()}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(chain_id: 1, req_options: [plug: plug])
+
+      assert message =~ "returned `chainId` 42 but `chain_id:` was 1"
+    end
+
+    test "fill_transaction accepts a chain_id: option that agrees with the response" do
+      result = %{"tx" => unsigned_filled_v1_json()}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:ok, %V1{v: 42, r: 0, s: 0}} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(chain_id: 42, req_options: [plug: plug])
+    end
+
+    # `Cartouche.Chain.parse_id/1` is `Map.fetch!/2` for atoms, so an unknown
+    # chain atom used to escape as a `KeyError` and be reported as a failure to
+    # decode the response — blaming the node for the caller's typo.
+    test "fill_transaction refuses an unknown chain atom by naming the option" do
+      result = %{"tx" => Map.delete(unsigned_filled_v1_json(), "chainId")}
+      plug = fn conn -> respond_with_result(conn, result) end
+
+      assert {:error, message} =
+               <<1::160>>
+               |> Call.new(<<1, 2, 3>>)
+               |> Cartouche.RPC.fill_transaction(chain_id: :not_a_chain, req_options: [plug: plug])
+
+      assert message =~ "`chain_id:` must be a positive chain id"
+      assert message =~ ":not_a_chain"
+    end
+
     # The raw fallback must yield something cartouche can re-encode into the same
     # bytes that get signed. A signed or half-signed envelope is neither unsigned
     # nor safe to hand back from a method documented to return an unsigned fill.

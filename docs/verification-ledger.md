@@ -298,6 +298,25 @@ started and then stopped rather than carried to a partly-invalid result. Task 11
 blocked on a muex release carrying both fixes, and its pre-campaign gate is now per defect
 rather than #20's reproduction alone.
 
-What this attempt does **not** change: `no_coverage` and `equivalent` are decided before or
-without running a test, so the 55-unexecuted finding, its disposition table, and the
-verification pass above stand as recorded.
+What this attempt does **not** change: `no_coverage` is decided before any mutation is
+applied — `select_tests/2` consults the coverage index and returns `:no_coverage` first —
+so the 55-unexecuted finding, its disposition table, and the verification pass above stand
+as recorded.
+
+**`equivalent` is not in that position, and the sentence above originally claimed it was.**
+Trivial Compiler Equivalence does not run a test, but it does run *after* the mutation is
+applied: `Muex.WorkerPool.run_mutation_worker/4` calls `Compiler.compile_to_source/3` —
+the line-keyed `transform/5` that #24 breaks — and hands the resulting **source** to
+`Tce.equivalent_source?(file_entry.ast, mutated_source)`. A mutation that #24 turns into a
+no-op therefore produces source byte-identical to the original, TCE reports an exact
+instruction-stream match, and the mutant is classified `equivalent` without ever reaching
+a sandbox. `--no-optimize` does not disable this: `Muex.Config.resolve_tce/1` reads only
+`--tce` / `--no-tce`, and the campaign passed neither.
+
+So the `equivalent` counts recorded above — task 114's 1,227 and this attempt's 1,256 —
+are an **upper bound** contaminated by mutations that were never applied, not a measured
+equivalence class. How much of each count is real is unknown and not derivable from the
+recorded artifacts; task 119's re-run has to re-derive `equivalent` alongside the rest.
+`no_coverage` is unaffected, and the #20-scoped claim in the task 114 section above
+("Two classes are decided before or without running any test") remains true of #20 and
+only of #20.

@@ -2550,7 +2550,8 @@ defmodule Cartouche.RPC do
         default: [],
         description:
           "Keyword options including optional `:from`, optional `:chain_id` (the chain id geth " <>
-            "omits from an unsigned legacy result), and common `send_rpc/3` transport options."
+            "omits from an unsigned legacy result; refused when it disagrees with the one the " <>
+            "response names), and common `send_rpc/3` transport options."
       ]
     ],
     returns: %{
@@ -2578,7 +2579,10 @@ defmodule Cartouche.RPC do
   until a signature replaces it. geth omits `chainId` from an unsigned legacy
   result; pass `chain_id:` to supply it. Without it — from either side — the
   call errors rather than return a transaction that would sign to the wrong
-  address.
+  address, and so does a `chain_id:` that disagrees with the one the response
+  names: `Cartouche.Signer` takes the chain id from its caller rather than from
+  the struct, so a disagreement signs a digest the encoded payload does not
+  match.
 
   ## Examples
 
@@ -2851,12 +2855,23 @@ defmodule Cartouche.RPC do
   # configured. Chain id 0 is refused too, because `Cartouche.Signer` maps it to
   # a pre-EIP-155 `v` of 27/28 while `V1.encode/1` always emits nine fields, and
   # the two halves would disagree about what was signed.
+  #
+  # When both name a chain id and they disagree, neither wins. Silently taking
+  # the response would hand back an envelope carrying the node's chain id to a
+  # caller who just said which chain it means to sign for — and `Cartouche.Signer`
+  # takes that chain id from the caller, not from this struct, so the EIP-155
+  # digest signed and the `[chain_id, 0, 0]` payload encoded would disagree and
+  # the signature would recover to an address that never signed it. That is the
+  # same wrong-address hazard the `raw` and malformed-`chainId` refusals exist
+  # for, so it is refused the same way.
   @spec legacy_chain_id(term(), atom() | integer() | nil, map()) :: pos_integer()
   defp legacy_chain_id(response_chain_id, opt_chain_id, params) do
-    cond do
-      id = quantity_chain_id(response_chain_id) -> id
-      id = option_chain_id(opt_chain_id) -> id
-      true -> raise ArgumentError, missing_chain_id_message(params)
+    case {quantity_chain_id(response_chain_id), option_chain_id(opt_chain_id)} do
+      {nil, nil} -> raise ArgumentError, missing_chain_id_message(params)
+      {nil, option} -> option
+      {response, nil} -> response
+      {id, id} -> id
+      {response, option} -> raise ArgumentError, conflicting_chain_id_message(response, option)
     end
   end
 
@@ -2869,7 +2884,7 @@ defmodule Cartouche.RPC do
   defp option_chain_id(nil), do: nil
 
   defp option_chain_id(chain_id) do
-    case chain_id |> Cartouche.Chain.parse_id() |> quantity() do
+    case chain_id |> parse_option_chain_id() |> quantity() do
       {:ok, id} when id > 0 ->
         id
 
@@ -2879,6 +2894,17 @@ defmodule Cartouche.RPC do
                 "not signable here: `Cartouche.Signer` would sign it pre-EIP-155 while " <>
                 "`V1.encode/1` emits the nine-field body"
     end
+  end
+
+  # `Cartouche.Chain.parse_id/1` is `Map.fetch!/2` for atoms, so an unknown chain
+  # atom escapes as a `KeyError` before the check above can name the option that
+  # carried it — the caller is told the response failed to decode. Funnel it into
+  # the same refusal instead: `quantity/1` reads `:unknown_chain` as malformed.
+  @spec parse_option_chain_id(atom() | integer()) :: term()
+  defp parse_option_chain_id(chain_id) do
+    Cartouche.Chain.parse_id(chain_id)
+  rescue
+    KeyError -> :unknown_chain
   end
 
   # A garbled signature word must not read as "unsigned" — the placeholders below
@@ -2919,6 +2945,14 @@ defmodule Cartouche.RPC do
       :malformed -> raise ArgumentError, "eth_fillTransaction returned a malformed `chainId` (#{inspect(value)})"
       _zero_or_absent -> nil
     end
+  end
+
+  @spec conflicting_chain_id_message(pos_integer(), pos_integer()) :: String.t()
+  defp conflicting_chain_id_message(response, option) do
+    "eth_fillTransaction returned `chainId` #{response} but `chain_id:` was #{option}. Neither " <>
+      "is picked: `Cartouche.Transaction.V1` would carry the node's chain id in `v` while " <>
+      "`Cartouche.Signer` signs the EIP-155 digest for the caller's, and the signature would " <>
+      "recover to an address that never signed it. Pass the chain id the node is on, or none"
   end
 
   @spec missing_chain_id_message(map()) :: String.t()

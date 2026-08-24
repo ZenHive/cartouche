@@ -2,6 +2,13 @@
 # Task 114 verification pass: re-measure the three files that carried all 55
 # unexecuted mutants, with the gap-closing tests in place. Same flags as the
 # baseline campaign so the numbers are comparable.
+#
+# --concurrency 1, for the reason spelled out in run.sh's header: muex sandboxes
+# share the project _build in any project with dependencies (Oeditus/muex#23), so
+# parallel workers can grade a mutant on unmutated code. The recorded pass ran at
+# --concurrency 8; its `no_coverage` finding is unaffected (that class is decided
+# from the coverage index, before any mutation is applied) but any kill/survive
+# reading from it is not, and a re-run must be serial to be valid.
 set -u
 cd "${0:A:h}/.." || exit 1
 export MIX_ENV=test
@@ -16,7 +23,7 @@ t0=$(date +%s)
 mix muex --files "$FILES" --test-paths test \
   --mutators "$MUTATORS" \
   --no-filter --no-optimize --coverage-guided \
-  --concurrency 8 --timeout 60000 --fail-at 0 --format json \
+  --concurrency 1 --timeout 60000 --fail-at 0 --format json \
   > "$OUT/verify.raw" 2> "$OUT/verify.err"
 rc=$?
 t1=$(date +%s)
@@ -27,3 +34,4 @@ i = raw.find('{')
 open(sys.argv[2], 'w').write(raw[i:] if i >= 0 else '')
 PY
 echo "=== VERIFY DONE rc=$rc $(( t1 - t0 ))s $(date +%H:%M:%S)"
+exit $rc

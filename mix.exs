@@ -204,9 +204,12 @@ defmodule Cartouche.MixProject do
       # release carrying both; its first acceptance criterion is a per-defect
       # gate, not #20's reproduction alone.
       #
-      # The `no_coverage` and `equivalent` classes are decided without running a
-      # test and are unaffected by all three defects, so their task 114 results
-      # stand.
+      # `no_coverage` is decided before any mutation is applied and its task 114
+      # result stands. `equivalent` does NOT: Trivial Compiler Equivalence runs
+      # after the line-keyed application #24 breaks, so a no-op mutation compiles
+      # to identical bytecode and is classified `equivalent` without reaching a
+      # sandbox. Those counts are an upper bound, not a measurement — see
+      # docs/verification-ledger.md.
       {:muex, "~> 0.8.3", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.6", only: :dev},
       {:bandit, "~> 1.12", only: :dev}
