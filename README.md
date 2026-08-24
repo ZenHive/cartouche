@@ -8,21 +8,21 @@ It bundles four capabilities into one library:
 
 - **JSON-RPC clients** for Ethereum and Solana (`Cartouche.RPC`, `Cartouche.Solana.RPC`).
 - **Signers** as supervised GenServers — local secp256k1 / Ed25519 seeds, or GCP Cloud KMS — exposing a uniform `sign/3` API.
-- **Transaction builders** for legacy (V1) and EIP-1559 (V2) Ethereum transactions, plus Solana legacy transactions.
+- **Transaction builders** for every Ethereum envelope — legacy (V1), EIP-2930 (V_2930), EIP-1559 (V2), EIP-4844 blob (V3) and EIP-7702 set-code (V4) — plus Solana legacy transactions.
 - **Contract codegen** — `mix cartouche.gen` turns Foundry / Hardhat artifacts into typed Elixir modules with `encode_*` / `call_*` / `execute_*` helpers backed by the RPC client.
 
-## Status
+## Release
 
-**`0.2.0` — current release** (2026-05-05). Adds Pectra-era typed transactions (`Cartouche.Transaction.V3` for EIP-4844 blob, `V4` for EIP-7702 set-code), extracts `Cartouche.Transaction.Call` for `eth_call` shapes (collapses the `invalid_contract` cascade), preserves EIP-4844 blob fee fields on `Cartouche.Receipt`, hardens the RPC error envelope (`{:error, {:invalid_params, _}}` on encoder failure), adds `:eth` denomination support to `Cartouche.Wei.to_wei/1`, and pins regression coverage for the silent Hieroglyph 1.0–1.2 bug-fixes cartouche depends on. Earlier `0.1.x` releases ported the signet codebase under the `Cartouche` module tree, added the Solana surface, and shipped a published-on-hex ABI dependency (`hieroglyph`). See [CHANGELOG.md](CHANGELOG.md) for full release history.
-
-**Upcoming — Phase 12 (descripex adoption).** The top-level `Cartouche` module now exposes `describe/0,1,2` for machine-readable API discovery via [`descripex`](https://hexdocs.pm/descripex). `Cartouche.Signer`, `Cartouche.Keys`, `Cartouche.RPC` and its 6 response/trace decoders (`Block`, `Receipt`, `FeeHistory`, `DebugTrace`, `Trace`, `TraceCall` + 4 nested struct modules), `Cartouche.Transaction` (top-level + V1 + V2), `Cartouche.Solana.RPC`, and the full Solana stack — `Solana.Signer` + `Solana.Transaction` + 7 instruction/PDA/ATA/program-id helpers (`Keys`, `PDA`, `ATA`, `Programs`, `SystemProgram`, `TokenProgram`, `Token`) — are registered (Tasks 83 + 84 + 85 + 86 + 87 ✅, 2026-05-06); the remaining annotation pass (Task 88 — Hex/Erc20/Sleuth + primitive bundle) is in flight — see ROADMAP.md.
+Current release: **`0.8.0`** (2026-08-23). See [CHANGELOG.md](CHANGELOG.md) for the
+full release history, including the EIP-2930 access-list encoding fix that changes
+serialized bytes for the bare-address shorthand.
 
 ## Installation
 
 ```elixir
 def deps do
   [
-    {:cartouche, "~> 0.2"}
+    {:cartouche, "~> 0.8"}
   ]
 end
 ```
@@ -325,7 +325,12 @@ Cartouche.Wei.to_wei({2, :gwei})               # 2_000_000_000
 | --- | --- |
 | `Cartouche.RPC` | Ethereum JSON-RPC client; high-level `execute_trx` / `prepare_trx` / `call_trx` |
 | `Cartouche.Signer` | GenServer signer (secp256k1, Cloud KMS) — `sign/3`, `address/1` |
-| `Cartouche.Transaction` | V1 (legacy) and V2 (EIP-1559) builders, encoders, signature recovery |
+| `Cartouche.Transaction` | V1, V_2930, V2, V3 (blob) and V4 (set-code) builders, encoders, signature recovery |
+| `Cartouche.Filter` | Supervised log / block / pending-transaction filter GenServer — `start_link/1` |
+| `Cartouche.Erc20` | ERC-20 call and calldata helpers |
+| `Cartouche.VM` | In-process EVM interpreter for local execution and tracing |
+| `Cartouche.Sleuth` | Batched read-only contract queries via a deployed Sleuth contract |
+| `Cartouche.OpenChain` | Selector lookup against the OpenChain signature database |
 | `Cartouche.Typed` | EIP-712 typed-data domain / type encoder, digest builder |
 | `Cartouche.Recover` | EIP-191 `personal_sign` recovery — `recover_eth/2`, `recover_public_key/2`, `find_recid/3` |
 | `Cartouche.RecoveryBit` | Convert `v` between `:base` (`0/1`), `:ethereum` (`27/28`), `:eip155` |
@@ -333,6 +338,7 @@ Cartouche.Wei.to_wei({2, :gwei})               # 2_000_000_000
 | `Cartouche.Wei` | `to_wei/1` — accepts integers or `{n, :gwei}` |
 | `Cartouche.Solana.RPC` | Solana JSON-RPC client |
 | `Cartouche.Solana.Transaction` | Build / sign / serialize Solana legacy transactions |
+| `Cartouche.Solana.Token` / `TokenProgram` / `ATA` / `PDA` | SPL-token instructions, associated-token and program-derived addresses |
 | `Cartouche.Solana.Signer` | GenServer Ed25519 signer (local seed, Cloud KMS) |
 | `Mix.Tasks.Cartouche.Gen` | Codegen from Solidity artifacts — `mix cartouche.gen` |
 
