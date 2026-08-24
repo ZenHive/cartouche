@@ -2765,7 +2765,7 @@
       "id": "119",
       "phase": 0,
       "bundle": "coverage_pushes",
-      "status": "blocked",
+      "status": "pending",
       "title": "Re-run the mutation-adequacy campaign once muex can report survivors",
       "scores": {
         "d": 5,
@@ -2796,7 +2796,6 @@
       "body": "Task 114 ran the campaign and could not produce its central deliverable: muex 0.8.2 cannot report a surviving mutant on Elixir 1.20, so the survivor triage that task 114 exists for has no input. This task re-runs the measurement once a muex release carries the fix.\n\nThe defect, verified against a four-file reproduction outside this repo and filed as Oeditus/muex#20: `Muex.TestRunner.Port.count_failures/2` matches the pre-1.20 ExUnit summary wording (`N tests, M failures`). Elixir 1.20 prints `Result: N passed (...)` for a green run and `Result: 0/M passed` + `Failed: N test` for a red one. Neither matches, and neither contains the substring `0 failures`, so the regex misses, the fallback returns 1 failure, and `classify_test_result({:ok, %{failures: 0}})` — the only path to `:survived` — is unreachable. Every survivor is reported `killed` and the score is a constant 100%. The same stale patterns make `has_exunit_summary?/1` always false, which reduces `compile_error?/1` to \"does the output contain `** (SomethingError)`\" — true whenever a test fails by raising rather than asserting — so mutants also flip between `killed` and `invalid` depending on which tests coverage guidance happened to select. In task 114's two runs over byte-identical `lib/`, 337 of 1,379 re-measured mutants changed class.\n\nWhat task 114 established and this task does NOT need to redo: the surface enumeration, the campaign script (`.mutation/run.sh`, single whole-surface invocation — per-module invocations pay a full serial coverage pass each and exhausted a harness run's budget), the flag set and its rationale, and the `no_coverage` / `equivalent` results. Those two classes are decided before or without a test run — `no_coverage` from the coverage index in `select_tests/2`, `equivalent` by Trivial Compiler Equivalence bytecode comparison — so the muex defect does not touch them. Their numbers stand and are recorded in docs/verification-ledger.md.\n\nStart by confirming the fix is real rather than assuming a version bump fixed it: run the reproduction from Oeditus/muex#20 and require it to report two survivors and a 0% score before spending hours on the full surface.\n",
       "created_at": "2026-08-23",
       "scored_at": "2026-08-23",
-      "blocked_reason": "muex 0.8.2 cannot report survivors on Elixir 1.20 (Oeditus/muex#20, still open); unblocks when an upstream release ships the fix and the issue's reproduction reports survived=2",
       "cross_repo": []
     },
     {

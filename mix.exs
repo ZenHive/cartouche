@@ -184,17 +184,18 @@ defmodule Cartouche.MixProject do
       # campaigns are run on demand; the record lives in
       # docs/verification-ledger.md.
       #
-      # TODO(Task 119): muex 0.8.2 cannot report a surviving mutant on Elixir 1.20 —
-      # do not read a mutation score from it until this is fixed upstream.
-      # `Muex.TestRunner.Port.count_failures/2` matches the pre-1.20 summary
-      # wording (`N tests, M failures`); 1.20 prints `Result: N passed` /
-      # `Failed: N test`, so the regex never matches and the fallback returns
-      # 1 failure — every survivor is reported `killed` and the score is a
-      # constant 100%. Reported as Oeditus/muex#20 with a four-file
-      # reproduction and a patch. Re-run the campaign (ROADMAP task 119) once
-      # a release carries the fix; the `no_coverage` and `equivalent` classes
-      # were unaffected and their results stand.
-      {:muex, "~> 0.8.2", only: [:dev, :test], runtime: false},
+      # muex 0.8.3 carries the fix for Oeditus/muex#20: 0.8.2's
+      # `Muex.TestRunner.Port.count_failures/2` matched only the pre-1.20 ExUnit
+      # summary wording (`N tests, M failures`), so on Elixir 1.20 —
+      # `Result: N passed` / `Failed: N test` — the regex missed, the fallback
+      # returned 1 failure, every survivor was reported `killed`, and the score
+      # was a constant 100%. 0.8.3 adds a `^Failed: (\d+) tests?` pattern
+      # alongside the old one. ROADMAP task 119 re-runs the campaign; its first
+      # acceptance criterion is running the issue's reproduction and requiring
+      # survived=2 / score 0% before trusting a score from this version. The
+      # `no_coverage` and `equivalent` classes were never affected by the defect
+      # and their task 114 results stand.
+      {:muex, "~> 0.8.3", only: [:dev, :test], runtime: false},
       {:tidewave, "~> 0.6", only: :dev},
       {:bandit, "~> 1.12", only: :dev}
       # :boxart intentionally omitted — conflicts with upstream ex_doc 0.31.1

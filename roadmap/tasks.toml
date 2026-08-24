@@ -1793,14 +1793,13 @@ shipped_in = "51b971c0fa871ebf2cbb8e216956099215466414"
 id = "119"
 phase = 0
 bundle = "coverage_pushes"
-status = "blocked"
+status = "pending"
 title = "Re-run the mutation-adequacy campaign once muex can report survivors"
 scores = { d = 5, b = 7, u = 3 }
 markers = ["security"]
 acceptance_criteria = ["The muex reproduction from Oeditus/muex#20 reports survived=2 and mutation score 0% on the installed version, recorded in the ledger with the muex version — a campaign is not started until this passes", "The campaign re-runs over the surface task 114 enumerated (lib/cartouche/transaction.ex, lib/cartouche/transaction/*, lib/cartouche/signer.ex, lib/cartouche/signer/*, lib/cartouche/recover.ex, lib/cartouche/recovery_bit.ex) with the same flags, so the run is comparable to the recorded baseline", "Every survivor is triaged and dispositioned in writing as one of: killed by a new test added in this task, provably equivalent (with the argument), or an accepted gap (with the reason). No survivor is left unclassified", "docs/verification-ledger.md replaces the task 114 'measurement blocked' record with the real campaign record: muex version, mutator set, per-module counts, and each survivor's disposition", "Touched critical modules stay at >=95% coverage and mix ci passes"]
 out_of_scope = ["Patching muex locally to work around the defect — deps/ is not committable and a measurement produced by a hand-patched tool is not a durable verification record. Wait for the upstream release", "Re-deriving the no_coverage and equivalent results from task 114 — those classes are unaffected by the defect", "Adopting mutation testing as a permanent CI gate; this stays a one-off measurement plus the tests it produces", "Solana signing and transaction paths"]
 assignee = "human"
-blocked_reason = "muex 0.8.2 cannot report survivors on Elixir 1.20 (Oeditus/muex#20, still open); unblocks when an upstream release ships the fix and the issue's reproduction reports survived=2"
 body = """
 Task 114 ran the campaign and could not produce its central deliverable: muex 0.8.2 cannot report a surviving mutant on Elixir 1.20, so the survivor triage that task 114 exists for has no input. This task re-runs the measurement once a muex release carries the fix.
 
