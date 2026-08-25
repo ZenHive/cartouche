@@ -32,6 +32,22 @@ All notable changes to this project will be documented in this file.
   rather than escaping `Cartouche.Chain.parse_id/1` as a `KeyError` blamed on the
   node's response.
 
+### Documentation
+
+- **`README.md` § "Node compatibility"** — states plainly which endpoints
+  cartouche runs against, and names the two exceptions: `Cartouche.RPC.base_fee/1`
+  calls `eth_baseFee`, an Erigon extension that Alchemy mainnet refuses with
+  `-32600`, and historical-state reads need an archive node. Also flags that the
+  `:ethereum_node` default (`https://mainnet.infura.io`) is a keyless placeholder
+  rather than a recommendation. The `base_fee/1` behaviour itself is unchanged —
+  probing the real refusal across providers and deciding standard-vs-extension is
+  roadmap task 127.
+
+  Companion change outside the package: `CLAUDE.md` gains a **Node Portability**
+  section (and imports the shared `node-portability.md` include), so the rule that
+  our archive node is a privileged environment rather than the reference one is
+  ambient for every agent working in this checkout, not folklore.
+
 ## [0.8.0] — 2026-08-23
 
 ### Added

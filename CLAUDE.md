@@ -3,11 +3,14 @@
 @~/.claude/includes/critical-rules.md
 @~/.claude/includes/harness-workflow.md
 @~/.claude/includes/onchain-workspace.md
+@~/.claude/includes/node-portability.md
 
 <!--
 Selective-load (Opus 4.8 — see setup-guide.md § "Skills vs Includes"):
 the eager floor is critical-rules + harness-workflow + onchain-workspace
-(harness workspace add-on — 7-repo roster + dependency shape).
+(harness workspace add-on — 7-repo roster + dependency shape) + node-portability
+(cartouche owns the RPC transport, so the "our node is privileged, not the reference"
+law has to be ambient here — a guardrail invoked on demand fires too late).
 
 Delegation is via the harness engine. harness-workflow.md is @-imported as the
 portfolio-wide implement→review→land contract (cartouche is harness-driven);
@@ -40,6 +43,28 @@ removed family-wide on 2026-08-22.
 -->
 
 forked from https://github.com/hayesgm/signet
+
+## Node portability (cartouche specifics)
+
+The family-wide law is `node-portability.md` (`@`-imported above). What is specific to
+this repo:
+
+- **Cartouche owns the transport.** `lib/cartouche/rpc.ex` and `lib/cartouche/http.ex` are
+  where a non-portable method enters the whole stack — every sibling package inherits
+  whatever this repo wraps. Rule 1 (establish that a method is standard) binds hardest
+  here.
+- **`base_fee/1` is the live counter-example, and it is still unfixed.**
+  `lib/cartouche/rpc.ex` ships `defrpc(:base_fee, "eth_baseFee", …)` with a doctest
+  implying it just works and no portability note, while `lib/cartouche/application.ex`
+  defaults `:ethereum_node` to `https://mainnet.infura.io`. `eth_baseFee` is an Erigon
+  extension; Alchemy mainnet answers `-32600`. Tracked as a roadmap task — do not
+  "fix" it by asserting an error string nobody probed.
+- **The `@doc` is the consumer's only warning.** Cartouche has no capability-probe
+  convention of its own yet; until it does, a non-standard method must name its client
+  and the consumer-visible error in its `@doc`, the way `README.md` § "Node
+  compatibility" now does.
+- **Node access for tests lives in a flunk message** (`test/support/live.ex`), not in this
+  file — if you are adding node-dependent tests, read it there.
 
 ## Delegation roster
 

@@ -110,6 +110,30 @@ Signer specs:
 {:cloud_kms, kms_credentials, "projects/P/locations/L/keyRings/R/cryptoKeys/K", "1"}
 ```
 
+## Node compatibility
+
+Cartouche talks to whatever JSON-RPC endpoint you configure, and nearly all of its
+surface is standard: the transaction, balance, block, log, receipt, call and fee-history
+methods work against any mainstream Ethereum node — Alchemy, Infura, QuickNode, a
+self-hosted Geth/reth/Erigon, pruned or archive alike.
+
+Two caveats worth knowing before you pick an endpoint:
+
+| Surface | Requirement | Symptom without it |
+| --- | --- | --- |
+| `Cartouche.RPC.base_fee/1` | `eth_baseFee`, an **Erigon extension** — not part of the standard JSON-RPC set | Alchemy mainnet answers `-32600 "eth_baseFee is not available on the ETH_MAINNET"` (observed 2026-08-25). Other hosted providers have not been probed; expect a refusal, but the exact code and message will vary |
+| Historical-state reads (a `block` parameter older than ~128 blocks) | an **archive** node, or a hosted plan that retains history | `-32001 Unable to complete request`, or a "missing trie node" error, depending on client |
+
+For the base fee specifically, the portable construction is to read `baseFeePerGas` from
+the **pending** block header — every EIP-1559 node serves it, and it carries the same
+"next block" semantics that `eth_baseFee` does. `Onchain.RPC.base_fee/1` in the
+[`onchain`](https://github.com/ZenHive/onchain) package does exactly that if you'd rather
+not hand-roll it.
+
+Note that the `:ethereum_node` default (`https://mainnet.infura.io`) is a placeholder, not
+a recommendation — it carries no API key and will not serve real traffic. Always set
+`:ethereum_node` explicitly, or pass `rpc_url:` per call.
+
 ## Quick start: send your first transaction
 
 With the configuration above (a `:default` signer registered), `Cartouche.RPC.execute_trx/3` looks up the nonce, signs, and sends in one call:

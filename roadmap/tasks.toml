@@ -2081,3 +2081,36 @@ created_at = "2026-08-23"
 scored_at = "2026-08-23"
 done_at = "2026-08-23"
 shipped_in = "17b7f2a4500b47d374eda714c73a1f5eb933c7f9"
+
+[[task]]
+id = "127"
+phase = 0
+bundle = "rpc_correctness"
+status = "pending"
+title = "base_fee/1 portability — probe the real hosted-provider refusal, then decide standard vs extension"
+scores = { d = 3, b = 7, u = 4 }
+acceptance_criteria = ["The real refusal is observed, not assumed: a live call to eth_baseFee against at least two independent hosted mainnet endpoints (e.g. Alchemy and Infura) is made, and the actual JSON-RPC error code and message from each is recorded verbatim in the task's implemented note", "A live integration test pins the observed hosted refusal for base_fee/1 — a real result or its real refusal, never a skip — flunking with exact export instructions when the endpoint env var is absent", "The existing mocked unsupported-node test in test/rpc_test.exs is corrected to replay an error actually observed from a provider rather than an assumed -32601 message, or is removed in favour of the live test", "Cartouche.RPC.base_fee/1 carries a @doc that names eth_baseFee as a non-standard client extension, names which clients serve it, states the error a consumer on a common hosted provider receives, and points at the portable construction (pending block header baseFeePerGas)", "A decision is recorded in the task body or CHANGELOG on whether base_fee/1 keeps calling eth_baseFee or switches to the pending-header read, with the reasoning; if it switches, a live test proves the two agree on a node that serves both", "mix ci passes"]
+out_of_scope = ["Changing blob_base_fee/1 (eth_blobBaseFee is a separate method with its own support story)", "Adding a general capability-probe framework to cartouche", "Changing the :ethereum_node default value"]
+files_to_modify = ["lib/cartouche/rpc.ex", "test/rpc_test.exs", "test/rpc_integration_test.exs"]
+touches = ["README.md", "CHANGELOG.md"]
+assignee = "codex"
+model = "gpt-5.6-sol"
+body = """
+`Cartouche.RPC.base_fee/1` (lib/cartouche/rpc.ex) wraps `eth_baseFee`, which is a client extension rather than a standard JSON-RPC method — it is absent from the vendored OpenRPC spec. Our own reth node serves it, so every check the library runs is green here while consumers on the most common hosted endpoints get an error. Alchemy mainnet was observed on 2026-08-25 answering `-32600 "eth_baseFee is not available on the ETH_MAINNET"`; that single observation is the trigger for this task, not its conclusion.
+
+Task 122 shipped the wrapper and did include an acceptance criterion about unsupported nodes, but it was satisfied with a mocked plug asserting `-32601 "The method eth_baseFee does not exist/is not available"` (test/rpc_test.exs:180, :458). That message was assumed, not observed — and it does not match what Alchemy actually returns. The mock therefore ratifies a guess and stays green regardless of what providers really do. This task replaces that guess with evidence.
+
+The exposure is sharpened by cartouche's own defaults: `lib/cartouche/application.ex` defaults `:ethereum_node` to `https://mainnet.infura.io`, and README.md's configuration example recommends Infura. A user following the README's own example and calling `base_fee/1` hits the refusal.
+
+Two things are genuinely open and should be decided with the probe results in hand, not pre-decided here:
+
+(1) Whether `base_fee/1` should keep calling `eth_baseFee` and simply document the constraint, or switch to reading `baseFeePerGas` from the pending block header — which every EIP-1559 node serves. `Onchain.RPC.base_fee/1` in the sibling `onchain` package took the second route on 2026-08-25 and verified the two equivalent against reth v2.5.1 in a single batch request (`eth_baseFee` == pending `baseFeePerGas` == 71_739_926, while `latest` was 68_871_658 — so the pending header, not the latest one, carries the "next block" semantics). See the `NOTE (portability):` comment above that function for the worked precedent. Switching is a behaviour-preserving change on nodes that serve both, but it is a public API's semantics, so it deserves the evidence.
+
+(2) Whether the fix is scoped to this one function or generalized. Prefer scoping it here; a capability-probe framework is explicitly out of scope.
+
+Premise to confirm before building on it: that Infura also refuses `eth_baseFee` is expected but unverified — only Alchemy was probed. Probe both; if a provider does serve it, say so rather than asserting a uniform refusal.
+
+Authority is the live providers plus `ethereum/execution-apis`. A third-party client's behaviour is reference material only.
+"""
+created_at = "2026-08-25"
+scored_at = "2026-08-25"

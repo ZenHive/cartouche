@@ -373,7 +373,7 @@ Failed runs retain the worktree at `result.worktree_path` for inspection. Approv
 
 **The gate before any reset-to-pending + re-dispatch:** `git branch -a | grep harness/<run-id>` and `git log --oneline origin/<target>..harness/<run-id>`. Commits present ⇒ recover, never redo.
 
-**🚨 First, confirm the run actually *didn't* land — check `origin`, not your local checkout.** Under `landing_policy: :auto` the lander pushes to `origin/<target>` and **deliberately never touches your local checkout** (it ff-pushes from a detached worktree). So after an autonomous land your local `tasks.toml` is **stale**: it still reads `in_progress` for a task the lander already marked `done --shipped-in` on origin. **Reading that stale local status as "the run didn't land" is the trap** — it triggers a wasteful reset-to-`pending` + re-dispatch that *duplicate-lands already-shipped work*. Before concluding anything from task status, `git fetch origin <target> && git rebase origin/<target>` (the existing "Sync main before committing" rule) or read ground truth directly:
+**🚨 First, confirm the run actually *didn't* land — check `origin`, not your local checkout.** Under `landing_policy: :auto` the lander pushes to `origin/<target>` from a detached worktree, then `Harness.Git.TargetSync` may fast-forward the operator's local target when that is safe (off-target → ff the branch ref; on-target + clean tree → `merge --ff-only`). It skips — witnessed, never `--force` — when the tree is dirty, the update is not a fast-forward, or the target is this running node's own source tree (self-host: path identity, not the project name). Under dogfooding that self-host skip is the common case, so after an autonomous land your local `tasks.toml` is **stale**: it still reads `in_progress` for a task the lander already marked `done --shipped-in` on origin. **Reading that stale local status as "the run didn't land" is the trap** — it triggers a wasteful reset-to-`pending` + re-dispatch that *duplicate-lands already-shipped work*. Before concluding anything from task status, `git fetch origin <target> && git rebase origin/<target>` (the existing "Sync main before committing" rule) or read ground truth directly:
 - `git log --oneline origin/<target>` — does it already show `task <id> -> done (shipped …)` and the agent-delivery commit? Then it **landed**; your local view was just behind. Do nothing but rebase.
 - `dispatch-status <run-id>` / `result_store-list_run_records run_id:<id>` — a record with `state: done, verdict: approve` means the run succeeded; cross-check landing against origin before touching the roadmap.
 
@@ -587,11 +587,76 @@ These firm up as the harness conventions for the stack settle. Fill in from the 
 - `onchain-workspace-delegation.md` — DORMANT Linear/cloud-delegation workspace (pre-harness)
 - Each repo's `CLAUDE.md` — module layout, architecture, testing specifics
 
+<!-- @-import: ~/.claude/includes/node-portability.md -->
+## Node Portability — Our Node Is Privileged, Not the Reference
+
+**We do not develop only against our own node.** These are open-source libraries other
+people run against Alchemy, Infura, pruned Geth, and self-hosted nodes of every shape.
+Our archive node (`localhost:8545`, full-history reth) is a *privileged* environment, not
+the reference one: it serves `trace_*`/`debug_*`, complete history, and client-specific
+extensions most consumer endpoints do not.
+
+Developing only against it silently encodes its capabilities as the library's
+assumptions. The failure is invisible here — it works — and lands on the consumer.
+
+### The four rules
+
+1. **Establish that a method is standard** — present in the vendored OpenRPC spec.
+   Erigon/Geth/provider extensions are not standard however reliably our node answers.
+   (Note: `Onchain.RPC.Codegen.ensure_known_method!/1` reads the *merged* OpenRPC +
+   `erigon-methods.json` map, so it does **not** enforce this distinction. Rule 1 is
+   currently a judgment call, not a compile-time gate.)
+2. **Prefer the portable construction.** If a value is reachable from a standard method,
+   read it that way — `base_fee` via the pending block header's `baseFeePerGas`, not via
+   `eth_baseFee`.
+3. **When only a non-standard method will do, say so in the `@doc`** — name who serves it
+   and the error consumers get without it — and expose a capability probe rather than
+   failing deep in a pipeline (precedent: `Onchain.Trace.available?/1`).
+4. **Verify on a second, unprivileged endpoint before claiming portability.** Green on
+   `localhost:8545` alone proves nothing. A hosted endpoint's *real refusal* is evidence;
+   our node's `{:ok, _}` is not.
+
+### The worked example (2026-08-25)
+
+cartouche 0.8.0's `base_fee/1` calls `eth_baseFee`, an **Erigon extension** absent from
+the vendored OpenRPC spec. Our reth node serves it; Alchemy mainnet answers
+`-32600 "eth_baseFee is not available on the ETH_MAINNET"`. It was caught only by
+hand-probing both endpoints. `Onchain.RPC.base_fee/1` therefore reads `baseFeePerGas`
+from the **pending** block header — portable to any EIP-1559 node, and verified
+equivalent against reth v2.5.1 in a single batch request (`eth_baseFee` == pending
+`baseFeePerGas` == 71_739_926, while `latest` was 68_871_658 — the pending header, not
+the latest one, carries `eth_baseFee`'s "next block" semantics).
+
+The inverse also exists: cartouche ships that same `eth_baseFee` wrapper while defaulting
+`:ethereum_node` to `https://mainnet.infura.io` — a consumer following cartouche's own
+README gets `-32600`.
+
+### Wording to reuse
+
+House idioms, already established in the roadmap tasks — reuse verbatim rather than
+paraphrasing:
+
+- *"a real result or its real refusal, never a skip"*
+- *"the consumer's node — not ours — as the case that matters"*
+- *"the identical green run on both endpoints is what the portability claim rests on"*
+
+### Honest limits
+
+- **No multi-endpoint test seam exists yet.** `Onchain.RPCCase.rpc_url!/0` returns a
+  single string and 17 integration files use it; the dual-endpoint `base_fee`
+  verification was done by manually re-running the whole suite with a different env var.
+  Rule 4 has no tooling today — whoever builds it should build it first.
+- **No CI in any repo** (`.github/workflows` is empty across the stack), so none of this
+  is machine-enforced beyond local `mix ci`. Real enforcement is the reviewer reading
+  `AGENTS.md`.
+
 
 <!--
 Selective-load (Opus 4.8 — see setup-guide.md § "Skills vs Includes"):
 the eager floor is critical-rules + harness-workflow + onchain-workspace
-(harness workspace add-on — 7-repo roster + dependency shape).
+(harness workspace add-on — 7-repo roster + dependency shape) + node-portability
+(cartouche owns the RPC transport, so the "our node is privileged, not the reference"
+law has to be ambient here — a guardrail invoked on demand fires too late).
 
 Delegation is via the harness engine. harness-workflow.md is @-imported as the
 portfolio-wide implement→review→land contract (cartouche is harness-driven);
@@ -624,6 +689,28 @@ removed family-wide on 2026-08-22.
 -->
 
 forked from https://github.com/hayesgm/signet
+
+## Node portability (cartouche specifics)
+
+The family-wide law is `node-portability.md` (`@`-imported above). What is specific to
+this repo:
+
+- **Cartouche owns the transport.** `lib/cartouche/rpc.ex` and `lib/cartouche/http.ex` are
+  where a non-portable method enters the whole stack — every sibling package inherits
+  whatever this repo wraps. Rule 1 (establish that a method is standard) binds hardest
+  here.
+- **`base_fee/1` is the live counter-example, and it is still unfixed.**
+  `lib/cartouche/rpc.ex` ships `defrpc(:base_fee, "eth_baseFee", …)` with a doctest
+  implying it just works and no portability note, while `lib/cartouche/application.ex`
+  defaults `:ethereum_node` to `https://mainnet.infura.io`. `eth_baseFee` is an Erigon
+  extension; Alchemy mainnet answers `-32600`. Tracked as a roadmap task — do not
+  "fix" it by asserting an error string nobody probed.
+- **The `@doc` is the consumer's only warning.** Cartouche has no capability-probe
+  convention of its own yet; until it does, a non-standard method must name its client
+  and the consumer-visible error in its `@doc`, the way `README.md` § "Node
+  compatibility" now does.
+- **Node access for tests lives in a flunk message** (`test/support/live.ex`), not in this
+  file — if you are adding node-dependent tests, read it there.
 
 ## Delegation roster
 
