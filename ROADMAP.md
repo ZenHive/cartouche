@@ -35,8 +35,6 @@ Resist "while we're here, just this once" helpers — they belong in onchain.
 | Core — new precompile | **onchain** usually | Contract-call wrapper; cartouche only if bespoke encoding required |
 | Networking / Meta / Informational | **ignore** | Not a client-library concern |
 
-**Never chase EIPs speculatively.** An EIP enters the roadmap only when a consumer project needs it.
-
 ---
 
 ## Coverage gate for change tasks
@@ -202,6 +200,9 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 130 | ⬜ | 🎁 **rpc_read_surface** · State reads: eth_getStorageAt and eth_getProof (EIP-1186) [D:3/B:5/U:4 → Eff:1.5] 🚀 |
 | Task 131 | ⬜ | 🎁 **rpc_read_surface** · Node-introspection sweep: eth_syncing, net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountBy* [D:2/B:3/U:2 → Eff:1.25] 📋 |
 | Task 132 | ⬜ | 🎁 **rpc_read_surface** · Add eth_simulateV1 — standard multi-block simulation with state overrides [D:5/B:5/U:3 → Eff:0.8] ⚠️ |
+| Task 133 | ⬜ | 🎁 **correctness_010** · 🔒 EIP-712 conformance: encode_type non-termination, bytesN padding direction, array-of-struct support, int types [D:4/B:9/U:8 → Eff:2.12] 🎯 |
+| Task 134 | ⬜ | 🎁 **correctness_010** · 🔒 EIP-191 personal_sign byte length, a recovery helper that applies the prefix, and the 65-byte signature invariant [D:3/B:7/U:6 → Eff:2.17] 🎯 |
+| Task 135 | ⬜ | 🎁 **rpc_correctness** · Portability contract for the non-standard read surface: trace_* and debug_traceCall [D:3/B:7/U:7 → Eff:2.33] 🎯 |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.

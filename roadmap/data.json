@@ -3365,6 +3365,148 @@
       "created_at": "2026-08-26",
       "scored_at": "2026-08-26",
       "cross_repo": []
+    },
+    {
+      "id": "133",
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "pending",
+      "title": "EIP-712 conformance: encode_type non-termination, bytesN padding direction, array-of-struct support, int types",
+      "scores": {
+        "d": 4,
+        "b": 9,
+        "u": 8
+      },
+      "eff": 2.13,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "security"
+      ],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Cartouche.Typed.encode_type/2 terminates for a type referencing two or more DISTINCT struct types, and a test asserts termination with a bounded Task.yield rather than hanging the suite; today `%{\"Root\" => fields [{\"z\",\"Zebra\"},{\"a\",\"Apple\"}]}` never returns",
+        "Referenced struct types are appended sorted by name, per EIP-712 'the set of referenced struct types is collected, sorted by name and appended'; a test pins a type whose field order and alphabetical order differ and asserts the exact encodeType string",
+        "bytesN values are zero-padded AT THE END per EIP-712; `encode_data_value(<<0xCC>>, {:bytes, 32})` returns <<0xCC, 0::248>>. The doctest at typed.ex:279-280 currently asserts the opposite and must be corrected, not deleted",
+        "Address and uint stay LEFT-padded (address is uint160, big-endian) — a test pins both alignments side by side so the two opposite semantics can never be re-conflated into one pad/2 call",
+        "Struct types referenced through an array field are collected into encodeType (today `Root(Person[] people)` omits `Person(string name)` silently), and encode_data_value/2 encodes an array-of-structs field without raising",
+        "int8..int256 are representable: deserialize_type/1 returns an int variant, serialize_type/1 round-trips it, and encode_data_value/2 sign-extends to 256 bits big-endian per EIP-712",
+        "The whole surface is pinned against independent implementations the way docs/verification-ledger.md pins transactions: signTypedData vectors generated from BOTH ethers and viem, covering nested structs, arrays of structs, bytesN, and a negative int — following test/fixtures/vectors/generate.cjs's existing pattern",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "EIP-712 domain-separator policy or chain-id binding — this task fixes encoding conformance, not domain semantics",
+        "A typed-data message builder for Hyperliquid or any specific venue — orthogonal, and already fenced off by task 104",
+        "Refactoring Cartouche.Hex.pad/2's signature; adding a right-padding function beside it is fine, changing every existing caller is not"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/typed.ex",
+        "lib/cartouche/hex.ex",
+        "test/typed_test.exs"
+      ],
+      "touches": [
+        "CHANGELOG.md",
+        "test/fixtures/vectors/"
+      ],
+      "body": "`Cartouche.Typed` is the EIP-712 path the stack signs permits and orders through — task 69 records that ERC-2612 permit \"already expresses it\". It has four confirmed spec defects. All four were verified by executing the compiled module, not by reading it; the reproductions are below and should be turned into the failing tests before any fix.\n\n1. `encode_type/2` DOES NOT TERMINATE for a type referencing 2+ distinct struct types. `do_encode_type/4` (typed.ex:811-836) updates its pending queue as `next_new_types = rest ++ Enum.reverse(new_types_r)` (typed.ex:831). When `rest` is non-empty and the current type discovers no new struct, `rest` is re-appended to itself instead of shrinking, so the queue never drains. Reproduced live: `Root` with fields `{\"z\",\"Zebra\"},{\"a\",\"Apple\"}` did not return in 4s. This is not an exotic shape — any `Order{maker: Person, item: Item}` hits it. It was never caught because every existing doctest uses exactly one distinct referenced type (`Person` twice, for `from`/`to`), and `test/typed_test.exs` (88 lines) never calls `encode_type` at all.\n\n2. Referenced struct types are appended in field-discovery order. EIP-712 requires them \"collected, sorted by name and appended\". Fixing (1) without also sorting produces a terminating but still non-conforming `typeHash`.\n\n3. `bytesN` is LEFT-padded. `encode_data_value(value, {:bytes, _})` (typed.ex:296) calls `Cartouche.Hex.pad(value, 32)`, and `pad/2` (hex.ex:632-635) prepends zeros. EIP-712: \"bytes1 to bytes31 ... are zero-padded at the end to bytes32\". The doctest at typed.ex:279-280 asserts the wrong answer, so the test suite ratifies the bug — this is the coverage-ratifies-the-constant pattern from CLAUDE.md, and the doctest must be corrected as part of the fix. Note carefully that the SAME `pad/2` is correct at typed.ex:292 for `:address`, because address is uint160 and numeric types are big-endian left-padded. One function is serving two opposite alignments; separate them and pin both in one test so this cannot regress.\n\n4. Arrays of structs are broken in both directions. `encode_data_value(value, {:array, ty})` (typed.ex:300-304) recurses with a struct-name `ty` that has no matching clause -> FunctionClauseError (reproduced). And `do_encode_type`'s discovery guard (typed.ex:820) tests `is_binary(type)`, which is false for `{:array, \"Person\"}`, so `encode_type` returns `\"Root(Person[] people)\"` with `Person` silently omitted — a wrong hash even where nothing crashes.\n\nSeparately, `Type.primitive()` (typed.ex:25-33) has no int variant and `deserialize_type(\"int256\")` raises `\"unknown type: int256\"`. EIP-712 defines int8..int256; signed fields (ticks, deltas, funding) are unrepresentable.\n\nSeverity ordering for the implementer: (3) and the array half of (4) are SILENT wrong signatures — no error, no validation failure until a counterparty rejects. (1) is a hang. (2) is a wrong hash. The int gap is a loud raise. Fix all of them, but write the silent ones' tests first.\n\nAuthority is the EIP-712 text plus two independent implementations — ethers `_TypedDataEncoder` and viem `hashTypedData`. Where the EIP is terse, agreement across those two is the spec in practice; a single implementation's behaviour is not.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "134",
+      "phase": 0,
+      "bundle": "correctness_010",
+      "status": "pending",
+      "title": "EIP-191 personal_sign byte length, a recovery helper that applies the prefix, and the 65-byte signature invariant",
+      "scores": {
+        "d": 3,
+        "b": 7,
+        "u": 6
+      },
+      "eff": 2.17,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [
+        "security"
+      ],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "Recover.prefix_eth/1 uses the UTF-8 BYTE length of the message, matching go-ethereum accounts.TextHash and viem; a test pins a multi-byte message (e.g. \"café\" -> length 5, not 4) and asserts the exact prefixed bytes",
+        "A recover_personal_sign/2 (or equivalently named) function applies the prefix and recovers, so the use case Recover's own moduledoc advertises — verifying MetaMask / WalletConnect personal_sign payloads — works without the caller hand-assembling the envelope",
+        "The signature-width contract is made true or made honest: Signer.sign/3 (signer.ex:307-312) builds v as chain_id*2+35+recid and encodes it with :binary.encode_unsigned/1, so any chain id > 110 yields a 66-68 byte result, while Cartouche.signature() is declared <<_::520>> (cartouche.ex:103) and RecoveryBit.normalize_signature/2 pattern-matches <<rs::binary-size(64), v>> (recovery_bit.ex:100). A test signs on a non-mainnet chain id (e.g. Base 8453) and asserts the documented behaviour end to end, including that normalize_signature/2 does not FunctionClauseError",
+        "Signer.sign/3's @spec is narrowed from bare binary() to the real return type so dialyzer can see the contract; mix ci's MIX_ENV=test dialyzer stays clean",
+        "RecoveryBit's EIP-155 normalization no longer silently reads the process-global :chain_id (recovery_bit.ex:62, :143) when the caller can supply the signature's own chain — or, if the global stays, a test pins the documented failure for a signature from a different chain rather than leaving it to raise 'Invalid EIP-155 Signature' opaquely",
+        "Every touched module is at critical-tier >=95% coverage BEFORE mutating (raise coverage first if below, per the coverage gate)",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "EIP-712 encoding conformance — a separate task owns lib/cartouche/typed.ex and lib/cartouche/hex.ex; do not touch those files",
+        "Transaction.V1.add_signature/2's missing chain-consistency guard — related, but it is a transaction-envelope concern and would collide with the transaction surface's write set",
+        "New signer backends"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/recover.ex",
+        "lib/cartouche/signer.ex",
+        "lib/cartouche/recovery_bit.ex",
+        "lib/cartouche.ex",
+        "test/recover_test.exs",
+        "test/signer_test.exs"
+      ],
+      "touches": [
+        "CHANGELOG.md"
+      ],
+      "body": "Three defects on the signing surface, all verified by execution.\n\n`Recover.prefix_eth/1` (recover.ex:75) builds the EIP-191 envelope with `to_string(String.length(msg))` — grapheme clusters, not bytes. Its own `@doc` two lines above (recover.ex:60-63) says \"the byte length of `msg`\", so the implementation contradicts its documentation. go-ethereum's `accounts.TextHash` uses `fmt.Sprintf(\"\\x19Ethereum Signed Message:\\n%d%s\", len(data), data)` over a []byte, and viem's `toPrefixedMessage` uses the byte size — two independent references agree. Reproduced: `prefix_eth(\"café\")` emits `...\\n4café` where every mainstream wallet emits `...\\n5café`, so the digest differs and recovery silently fails. The only doctest uses \"hello\", where grapheme count and byte count coincide — which is why it survived.\n\nThe same module's moduledoc (recover.ex:19-20) sells it as the surface for \"verifying user-supplied signatures (e.g. `personal_sign` payloads from MetaMask, WalletConnect)\", but `recover_eth/2` does not apply the prefix and there is no personal_sign helper. A consumer following the moduledoc recovers the wrong address. Add the helper so the advertised path exists.\n\nThe signature-width defect is a type lie with a latent crash behind it. `sign/3` (signer.ex:307-312) computes `v = chain_id * 2 + 35 + recid` and appends `:binary.encode_unsigned(v)`. For any chain id above 110 — which is every chain in `Cartouche.Chain` except mainnet and the dead testnets — `v` does not fit in one byte, so the \"65-byte signature\" the moduledoc (signer.ex:10-11) and `sign_direct/4` (signer.ex:236) promise is actually 66-68 bytes. `Cartouche.signature()` is typed `<<_::520>>` (cartouche.ex:103) and `RecoveryBit.normalize_signature/2` matches `<<rs::binary-size(64), v>>` (recovery_bit.ex:100), so a Base or Sepolia signature FunctionClauseErrors there. Dialyzer cannot see it because `sign/3`'s spec returns bare `binary()`. The doctest at signer.ex:124-126 asserts the multi-byte behaviour, so again the suite ratifies it.\n\nDecide deliberately which way to resolve the width contract and record the reasoning: either the concatenated form stops carrying EIP-155 v (returning 65 bytes with a parity byte, chain binding living in the transaction envelope where V1 already threads it), or the docs and types stop claiming 65. Do not \"fix\" it by widening the guard in one place and leaving the other two.\n\nWhile in `RecoveryBit`: `recover_base/1` (recovery_bit.ex:143-151, :62) normalizes an EIP-155 v against `config :cartouche, :chain_id` — a process-global — in a library whose `Chain` module knows 24 chains and whose `Transaction.V1` takes a per-call chain id. Either thread the chain through or pin the failure explicitly.\n\nCritical tier: this is signing. Raise coverage to >=95% on each touched module before mutating it.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "135",
+      "phase": 0,
+      "bundle": "rpc_correctness",
+      "status": "pending",
+      "title": "Portability contract for the non-standard read surface: trace_* and debug_traceCall",
+      "scores": {
+        "d": 3,
+        "b": 7,
+        "u": 7
+      },
+      "eff": 2.33,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "trace_transaction (rpc.ex:1435), trace_call (:1586), trace_call_many (:1790) and debug_trace_call (:1872) each carry a @doc naming that the method is absent from ethereum/execution-apis, which clients serve it, and the error a consumer on a common hosted endpoint receives — the error recorded verbatim from an observed response, never assumed",
+        "A capability probe exists following the Onchain.Trace.available?/1 precedent cited by node-portability.md rule 3, so a consumer can branch before failing deep in a pipeline rather than parsing an error string",
+        "README.md's node-compatibility section is corrected: it currently claims 'nearly all of its surface is standard ... the transaction, balance, block, log, receipt, call and fee-history methods work against any mainstream Ethereum node' while listing only base_fee and archive depth as caveats. The trace/debug surface must appear in that table",
+        "A live test pins the probe's answer on the privileged node (serves trace_*) AND the observed refusal from at least one hosted endpoint — a real result or its real refusal, never a skip; flunk with exact export instructions when an endpoint env var is absent",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Removing or reimplementing the trace wrappers — they work on nodes that serve them and consumers depend on them; this task documents and probes, it does not deprecate",
+        "eth_simulateV1 as the portable replacement — that is its own task",
+        "base_fee/1 — its own task owns that @doc"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "test/rpc_integration_test.exs"
+      ],
+      "touches": [
+        "README.md",
+        "CHANGELOG.md"
+      ],
+      "body": "Verified against ethereum/execution-apis `main` by two independent checks this session: the `trace_*` namespace does not appear in the specification at all, and `src/debug/trace.yaml` carries only `debug_traceBlockByNumber`, `debug_traceBlockByHash` and `debug_traceTransaction` — NOT `debug_traceCall`. So cartouche ships four non-standard read methods.\n\nNone of them carries any portability note. Grepping rpc.ex for Erigon / non-standard / Alchemy / Infura / portab returns only `fill_transaction` comments. There is no capability probe, and README.md's node-compatibility section affirmatively tells the reader the surface is nearly all standard, naming only `base_fee` and archive depth as exceptions.\n\nThis is a larger portability hole than `base_fee/1` and it is the one with no task. `base_fee` at least got a README caveat; the trace surface is invisible in the docs, the roadmap, and the module docs simultaneously.\n\nOrigin, for the @doc wording: `trace_*` is the OpenEthereum/Parity namespace, inherited by Erigon and implemented by reth (our own archive node serves it — that is why every existing trace integration test is green here). Do not write that reth lacks it; verify each client claim against that client's own documentation before putting it in a @doc, and cite what you checked.\n\nThe probe precedent to follow is `Onchain.Trace.available?/1` in the sibling onchain_evm package — read it before designing a new shape. This is rule 3 of node-portability.md applied where it actually bites: name who serves it, name the consumer-visible error, and expose a probe rather than failing deep in a pipeline.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
     }
   ]
 }
