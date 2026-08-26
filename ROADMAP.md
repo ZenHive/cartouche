@@ -197,6 +197,11 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 125 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result [D:5/B:5/U:4 → Eff:0.9] ⚠️ |
 | Task 126 | ✅ | 🎁 **rpc_correctness** · Spec-path fill_transaction V1 results drop chainId, so encode is pre-EIP-155 [D:4/B:5/U:4 → Eff:1.12] 📋 |
 | Task 127 | ⬜ | 🎁 **rpc_correctness** · base_fee/1 portability — probe the real hosted-provider refusal, then decide standard vs extension [D:3/B:7/U:4 → Eff:1.83] 🚀 |
+| Task 128 | ⬜ | 🎁 **rpc_read_surface** · Add eth_getLogs — stateless log queries without filter installation [D:3/B:8/U:6 → Eff:2.33] 🎯 |
+| Task 129 | ⬜ | 🎁 **rpc_read_surface** · Transaction and receipt read-back: eth_getTransactionByHash, ByBlock*AndIndex, eth_getBlockReceipts [D:3/B:6/U:5 → Eff:1.83] 🚀 |
+| Task 130 | ⬜ | 🎁 **rpc_read_surface** · State reads: eth_getStorageAt and eth_getProof (EIP-1186) [D:3/B:5/U:4 → Eff:1.5] 🚀 |
+| Task 131 | ⬜ | 🎁 **rpc_read_surface** · Node-introspection sweep: eth_syncing, net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountBy* [D:2/B:3/U:2 → Eff:1.25] 📋 |
+| Task 132 | ⬜ | 🎁 **rpc_read_surface** · Add eth_simulateV1 — standard multi-block simulation with state overrides [D:5/B:5/U:3 → Eff:0.8] ⚠️ |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.

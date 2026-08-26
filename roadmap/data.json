@@ -176,6 +176,11 @@
       "order": 7,
       "description": "Phase 0.5 RPC correctness (block-tag normalization, integration suite, decoder gaps)"
     },
+    "rpc_read_surface": {
+      "phase": 0,
+      "order": 15,
+      "description": "Standard execution-apis read surface the 2026-08-26 gap analysis found missing (getLogs, tx read-back, state reads, introspection, simulateV1)"
+    },
     "signer_backends": {
       "phase": 0,
       "order": 14,
@@ -3190,6 +3195,175 @@
       "body": "`Cartouche.RPC.base_fee/1` (lib/cartouche/rpc.ex) wraps `eth_baseFee`, which is a client extension rather than a standard JSON-RPC method — it is absent from the vendored OpenRPC spec. Our own reth node serves it, so every check the library runs is green here while consumers on the most common hosted endpoints get an error. Alchemy mainnet was observed on 2026-08-25 answering `-32600 \"eth_baseFee is not available on the ETH_MAINNET\"`; that single observation is the trigger for this task, not its conclusion.\n\nTask 122 shipped the wrapper and did include an acceptance criterion about unsupported nodes, but it was satisfied with a mocked plug asserting `-32601 \"The method eth_baseFee does not exist/is not available\"` (test/rpc_test.exs:180, :458). That message was assumed, not observed — and it does not match what Alchemy actually returns. The mock therefore ratifies a guess and stays green regardless of what providers really do. This task replaces that guess with evidence.\n\nThe exposure is sharpened by cartouche's own defaults: `lib/cartouche/application.ex` defaults `:ethereum_node` to `https://mainnet.infura.io`, and README.md's configuration example recommends Infura. A user following the README's own example and calling `base_fee/1` hits the refusal.\n\nTwo things are genuinely open and should be decided with the probe results in hand, not pre-decided here:\n\n(1) Whether `base_fee/1` should keep calling `eth_baseFee` and simply document the constraint, or switch to reading `baseFeePerGas` from the pending block header — which every EIP-1559 node serves. `Onchain.RPC.base_fee/1` in the sibling `onchain` package took the second route on 2026-08-25 and verified the two equivalent against reth v2.5.1 in a single batch request (`eth_baseFee` == pending `baseFeePerGas` == 71_739_926, while `latest` was 68_871_658 — so the pending header, not the latest one, carries the \"next block\" semantics). See the `NOTE (portability):` comment above that function for the worked precedent. Switching is a behaviour-preserving change on nodes that serve both, but it is a public API's semantics, so it deserves the evidence.\n\n(2) Whether the fix is scoped to this one function or generalized. Prefer scoping it here; a capability-probe framework is explicitly out of scope.\n\nPremise to confirm before building on it: that Infura also refuses `eth_baseFee` is expected but unverified — only Alchemy was probed. Probe both; if a provider does serve it, say so rather than asserting a uniform refusal.\n\nAuthority is the live providers plus `ethereum/execution-apis`. A third-party client's behaviour is reference material only.\n",
       "created_at": "2026-08-25",
       "scored_at": "2026-08-25",
+      "cross_repo": []
+    },
+    {
+      "id": "128",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Add eth_getLogs — stateless log queries without filter installation",
+      "scores": {
+        "d": 3,
+        "b": 8,
+        "u": 6
+      },
+      "eff": 2.33,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "eth_getLogs wrapper accepts the standard filter object including the blockHash variant and returns the same decoded log shape the filter surface returns",
+        "Log decoding is shared with the existing filter surface, not duplicated",
+        "A live integration test pins one real success (logs from a known event range) and one relevant real error the node actually refuses (recorded verbatim, not assumed) — a real result or its real refusal, never a skip; flunks with exact export instructions when the node env var is absent",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Changing the existing filter-based surface",
+        "Client-side log decoding beyond the existing log struct (ABI event decoding lives upstream)"
+      ],
+      "body": "Cartouche's only log access today is filter-based (eth_newFilter + eth_getFilterLogs / eth_getFilterChanges, lib/cartouche/filter.ex). eth_getLogs — the standard stateless query taking the same filter object with no server-side filter installation — is missing entirely, and it is the way most consumers actually read events: hosted providers limit or discourage installed filters, so the filter-only surface is a portability gap on exactly the endpoints consumers use (the consumer's node — not ours — as the case that matters).\n\nAdd an eth_getLogs wrapper accepting the standard filter object (fromBlock/toBlock/address/topics, and the mutually-exclusive blockHash form). Reuse the existing log decoding from the filter surface rather than duplicating it. Authority: ethereum/execution-apis (eth_getLogs is standard) plus the live node; a third-party client's reading is reference material only.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "129",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Transaction and receipt read-back: eth_getTransactionByHash, ByBlock*AndIndex, eth_getBlockReceipts",
+      "scores": {
+        "d": 3,
+        "b": 6,
+        "u": 5
+      },
+      "eff": 1.83,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "Wrappers for eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex, eth_getBlockReceipts exist and are documented",
+        "Transaction-object decoding covers all five transaction types; a live round-trip test fetches at least one known mainnet type-2 tx and one legacy tx and asserts decoded domain fields, not just shape",
+        "A null result for an unknown hash maps to an explicit not-found return, never a decode crash — pinned by a live test",
+        "eth_getBlockReceipts reuses the existing receipt decoding; a live test asserts the receipt list of a known block",
+        "Live tests follow the repo's live-test convention — flunk with exact export instructions when the node env var is absent, never skip",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Pending-pool transaction inspection (txpool_* namespaces)",
+        "Re-encoding the RPC transaction object back to raw RLP"
+      ],
+      "body": "Cartouche can fetch a receipt (eth_getTransactionReceipt) but not the transaction itself: eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex and eth_getTransactionByBlockNumberAndIndex are absent, as is eth_getBlockReceipts (all receipts of a block in one call).\n\nAdd the four wrappers. The transaction methods return the RPC transaction *object* (JSON view), not raw RLP — decoding must cover all five 2718 types the repo already models (legacy, 2930, 1559, 4844, 7702), including yParity/v, accessList, blobVersionedHashes and authorizationList fields. Decide from the existing JsonField / typed_decode conventions whether to decode into the existing transaction structs or a dedicated RPC-view struct; follow the repo's precedent rather than inventing a third convention. eth_getBlockReceipts reuses the existing receipt decoding.\n\nAuthority: ethereum/execution-apis + the live node.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "130",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "State reads: eth_getStorageAt and eth_getProof (EIP-1186)",
+      "scores": {
+        "d": 3,
+        "b": 5,
+        "u": 4
+      },
+      "eff": 1.5,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "eth_getStorageAt wrapper with block-tag support, pinned by a live test reading a known contract slot on mainnet",
+        "eth_getProof decodes into a struct covering account fields and storageProof entries; a live test asserts domain fields of a known contract's proof, not just shape",
+        "One relevant real error per method is observed and pinned (invalid slot / unknown account behavior as the node actually answers) — never an assumed error string",
+        "@doc for both names standardness and the historical-depth caveat",
+        "Live tests flunk with exact export instructions when the node env var is absent, never skip",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Verifying proofs client-side against the state root (Merkle-Patricia verification is its own task if ever wanted)"
+      ],
+      "body": "Both standard state reads are missing. eth_getStorageAt is a thin wrapper (address, slot, block tag -> 32-byte word). eth_getProof (EIP-1186) returns the account proof object — balance, nonce, codeHash, storageHash, accountProof, storageProof entries — which should decode into a proper struct following the repo's decoding conventions.\n\nPortability note to encode per the node-portability rules: both methods are standard, but historical-state depth is privileged — hosted providers serve recent blocks and refuse deep history. The @doc must not promise archive depth; if a hosted refusal is observed during the live probe, record it verbatim in the doc or test rather than assuming its shape.\n\nAuthority: ethereum/execution-apis + EIP-1186 + the live node.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "131",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Node-introspection sweep: eth_syncing, net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountBy*",
+      "scores": {
+        "d": 2,
+        "b": 3,
+        "u": 2
+      },
+      "eff": 1.25,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "cursor",
+      "model": "cursor-grok-4.6-high",
+      "acceptance_criteria": [
+        "Wrappers for all six methods exist with @doc",
+        "eth_syncing decodes both the `false` and the sync-status-object answer; the synced case is pinned live, the syncing-object case pinned from its spec shape with the union decode unit-tested",
+        "Live tests flunk with exact export instructions when the node env var is absent, never skip",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "web3_sha3 — keccak exists locally in the crypto layer; a remote hash call is an anti-pattern and is deliberately not added"
+      ],
+      "body": "Small standard methods absent from the surface: eth_syncing (false | sync-status object — the useful one, for health checks before trusting reads), net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountByHash and ...ByNumber. All are trivial wrappers; the only decode of note is eth_syncing's boolean-or-object union.\n\nHonest scoring: low urgency — filed because the execution-apis gap analysis named them, not because anything blocks on them today.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "132",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Add eth_simulateV1 — standard multi-block simulation with state overrides",
+      "scores": {
+        "d": 5,
+        "b": 5,
+        "u": 3
+      },
+      "eff": 0.8,
+      "dep_layer": 0,
+      "unlocks": 0,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "grok",
+      "model": "grok-4.6",
+      "acceptance_criteria": [
+        "eth_simulateV1 wrapper models blockStateCalls with state and block overrides and decodes per-call results including logs and per-call error objects",
+        "A live test pins one real multi-call simulation success (e.g. a funded transfer via state override) and one relevant real per-call failure as the node actually reports it",
+        "The node-support premise from the body is confirmed or corrected with the observed answer recorded",
+        "@doc names the method as standard execution-apis and contrasts it with the privileged trace_callMany path",
+        "Live tests flunk with exact export instructions when the node env var is absent, never skip",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "A convenience simulation DSL or bundle-builder on top of the raw surface",
+        "Deprecating or changing trace_call / trace_callMany / debug_traceCall"
+      ],
+      "body": "eth_simulateV1 is the standard execution-apis simulation entry point: multiple block-state-calls with state/block overrides, optional validation, and full log results — the portable answer to the privileged trace_callMany/debug_traceCall pair cartouche already wraps. Consumers on hosted endpoints (which increasingly serve simulateV1 but not trace_*) currently have no simulation path through cartouche at all.\n\nThe surface is large (blockStateCalls, stateOverrides, blockOverrides, returnFullTransactions, validation flag); model the request/response with structs per repo conventions, but keep to the spec'd surface — no convenience DSL on top in this task.\n\nPremise unverified — confirm before building on it: that our reth node serves eth_simulateV1 is expected (reth shipped it) but was not probed during the gap analysis. Probe first; if it refuses, the live evidence must come from a hosted endpoint that serves it, and the task body's assumption gets corrected in the implemented note.\n\nAuthority: ethereum/execution-apis (eth_simulateV1 spec) + the live node.\n",
+      "created_at": "2026-08-26",
+      "scored_at": "2026-08-26",
       "cross_repo": []
     }
   ]
