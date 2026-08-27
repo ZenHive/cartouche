@@ -3164,10 +3164,12 @@
         "u": 4
       },
       "eff": 1.83,
-      "dep_layer": 0,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136
+      ],
       "assignee": "codex",
       "model": "gpt-5.6-sol",
       "acceptance_criteria": [
@@ -3202,32 +3204,45 @@
       "phase": 0,
       "bundle": "rpc_read_surface",
       "status": "pending",
-      "title": "Add eth_getLogs — stateless log queries without filter installation",
+      "title": "Own eth_getLogs in cartouche — stateless log queries, and delete onchain's copy",
       "scores": {
         "d": 3,
         "b": 8,
-        "u": 6
+        "u": 7
       },
-      "eff": 2.33,
-      "dep_layer": 0,
+      "eff": 2.5,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136
+      ],
       "assignee": "cursor",
       "model": "cursor-grok-4.6-high",
       "acceptance_criteria": [
-        "eth_getLogs wrapper accepts the standard filter object including the blockHash variant and returns the same decoded log shape the filter surface returns",
-        "Log decoding is shared with the existing filter surface, not duplicated",
-        "A live integration test pins one real success (logs from a known event range) and one relevant real error the node actually refuses (recorded verbatim, not assumed) — a real result or its real refusal, never a skip; flunks with exact export instructions when the node env var is absent",
+        "Cartouche.RPC gains an eth_getLogs wrapper accepting the standard filter object (fromBlock/toBlock/address/topics, and the mutually-exclusive blockHash form) and decoding into the existing Cartouche.Filter log struct — one wrapper, one struct, per the stack boundary",
+        "Log decoding is the SAME code the existing filter surface uses (lib/cartouche/filter.ex), not a second decoder. If the filter surface's decode is not reusable as-is, refactor it so it is — do not copy it",
+        "A live integration test pins one real success (logs from a known mainnet event range) and one relevant real error the node actually refuses, recorded verbatim — a real result or its real refusal, never a skip; flunks with exact export instructions when the node env var is absent",
+        "The same call is exercised on >=1 hosted endpoint via the task-136 seam, since hosted providers commonly cap getLogs by block range or result count — that cap is a real, recordable answer, not a test failure",
         "mix ci passes"
       ],
       "out_of_scope": [
-        "Changing the existing filter-based surface",
-        "Client-side log decoding beyond the existing log struct (ABI event decoding lives upstream)"
+        "Changing the existing filter-installation surface (eth_newFilter / eth_getFilterChanges) — it stays; this adds the stateless sibling",
+        "ABI event decoding — that is hieroglyph's layer, above the log struct",
+        "Editing the onchain repo — cartouche cannot touch it from its own worktree; the deletion there is the companion task named in the body"
       ],
-      "body": "Cartouche's only log access today is filter-based (eth_newFilter + eth_getFilterLogs / eth_getFilterChanges, lib/cartouche/filter.ex). eth_getLogs — the standard stateless query taking the same filter object with no server-side filter installation — is missing entirely, and it is the way most consumers actually read events: hosted providers limit or discourage installed filters, so the filter-only surface is a portability gap on exactly the endpoints consumers use (the consumer's node — not ours — as the case that matters).\n\nAdd an eth_getLogs wrapper accepting the standard filter object (fromBlock/toBlock/address/topics, and the mutually-exclusive blockHash form). Reuse the existing log decoding from the filter surface rather than duplicating it. Authority: ethereum/execution-apis (eth_getLogs is standard) plus the live node; a third-party client's reading is reference material only.\n",
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "lib/cartouche/filter.ex"
+      ],
+      "touches": [
+        "test/rpc_integration_test.exs",
+        "test/filter_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "`eth_getLogs` is in the tagged execution-apis release (`v1.0.0-beta.7`, `src/eth/filter.yaml`) and in the vendored local spec, so under the stack boundary it is cartouche's, unambiguously: cartouche owns one wrapper plus one decoded struct for every method in a tagged spec release.\n\nToday cartouche's only log access is filter-based — `eth_newFilter` + `eth_getFilterLogs` / `eth_getFilterChanges` in lib/cartouche/filter.ex. The stateless query that takes the same filter object with no server-side filter installation is missing. That is the one most consumers actually use, because hosted providers limit or discourage installed filters: the filter-only surface is a portability gap on exactly the endpoints consumers run against.\n\nMeanwhile `onchain` has its own `eth_getLogs` at lib/onchain/rpc.ex:974, decoding into its own shape. That is the duplication the boundary reversal exists to end.\n\n**The invariant this task must satisfy: one decoder, one struct.** cartouche gains the method and the log struct. onchain's duplicate log DECODER stops existing — whether its public `eth_get_logs/2` disappears entirely or survives returning cartouche's struct is onchain's call, made in onchain's own task, and this task must not prejudge it. What is not negotiable is that no second derivation of the same wire shape remains anywhere in the stack.\n\nThis task delivers the cartouche half only, because a cartouche worktree cannot edit the onchain repo. The companion task in onchain's roadmap deletes lib/onchain/rpc.ex:974 and repoints its callers. Sequence: this lands first (onchain depends on cartouche, not the reverse), then the deletion.\n\nAuthority: the tagged execution-apis spec and the live node. A third-party client's reading is reference material only, never semantics.\n",
       "created_at": "2026-08-26",
-      "scored_at": "2026-08-26",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     },
     {
@@ -3235,34 +3250,47 @@
       "phase": 0,
       "bundle": "rpc_read_surface",
       "status": "pending",
-      "title": "Transaction and receipt read-back: eth_getTransactionByHash, ByBlock*AndIndex, eth_getBlockReceipts",
+      "title": "Own the transaction and receipt read-back in cartouche — 4 methods, and delete onchain's copies",
       "scores": {
-        "d": 3,
-        "b": 6,
-        "u": 5
+        "d": 4,
+        "b": 7,
+        "u": 6
       },
-      "eff": 1.83,
-      "dep_layer": 0,
+      "eff": 1.63,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136
+      ],
       "assignee": "grok",
       "model": "grok-4.6",
       "acceptance_criteria": [
-        "Wrappers for eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex, eth_getBlockReceipts exist and are documented",
-        "Transaction-object decoding covers all five transaction types; a live round-trip test fetches at least one known mainnet type-2 tx and one legacy tx and asserts decoded domain fields, not just shape",
-        "A null result for an unknown hash maps to an explicit not-found return, never a decode crash — pinned by a live test",
-        "eth_getBlockReceipts reuses the existing receipt decoding; a live test asserts the receipt list of a known block",
-        "Live tests follow the repo's live-test convention — flunk with exact export instructions when the node env var is absent, never skip",
+        "Cartouche.RPC gains eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex and eth_getBlockReceipts, each decoding into a cartouche struct — all four are in the tagged spec and are therefore cartouche's to own",
+        "Transaction-object decoding covers all five 2718 types the repo already models (legacy, 2930, 1559, 4844, 7702), including yParity/v, accessList, blobVersionedHashes and authorizationList; a live test fetches a known mainnet type-2 tx AND a legacy tx and asserts decoded domain fields, not just shape",
+        "A null result for an unknown hash maps to an explicit not-found return, never a decode crash — pinned by a live test against a hash that genuinely does not exist",
+        "eth_getBlockReceipts reuses the EXISTING receipt decoding rather than adding a second one; a live test asserts the receipt list of a known block",
+        "The decode target follows the repo's existing JsonField / typed_decode precedent — decide between the existing transaction structs and a dedicated RPC-view struct by reading how Cartouche.Block already handles the same JSON-vs-RLP split, and follow it rather than inventing a third convention",
+        "Live tests flunk with exact export instructions when the node env var is absent, never skip",
         "mix ci passes"
       ],
       "out_of_scope": [
-        "Pending-pool transaction inspection (txpool_* namespaces)",
-        "Re-encoding the RPC transaction object back to raw RLP"
+        "Pending-pool inspection (txpool_* namespaces) — not in the spec, different task if ever wanted",
+        "Re-encoding the RPC transaction object back to raw RLP",
+        "Editing the onchain repo — the deletions there are the companion task named in the body"
       ],
-      "body": "Cartouche can fetch a receipt (eth_getTransactionReceipt) but not the transaction itself: eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex and eth_getTransactionByBlockNumberAndIndex are absent, as is eth_getBlockReceipts (all receipts of a block in one call).\n\nAdd the four wrappers. The transaction methods return the RPC transaction *object* (JSON view), not raw RLP — decoding must cover all five 2718 types the repo already models (legacy, 2930, 1559, 4844, 7702), including yParity/v, accessList, blobVersionedHashes and authorizationList fields. Decide from the existing JsonField / typed_decode conventions whether to decode into the existing transaction structs or a dedicated RPC-view struct; follow the repo's precedent rather than inventing a third convention. eth_getBlockReceipts reuses the existing receipt decoding.\n\nAuthority: ethereum/execution-apis + the live node.\n",
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "lib/cartouche/transaction.ex"
+      ],
+      "touches": [
+        "lib/cartouche/block.ex",
+        "test/rpc_integration_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "All four methods are in the tagged execution-apis release `v1.0.0-beta.7` (`src/eth/transaction.yaml` for the three transaction getters, `src/eth/block.yaml` for `eth_getBlockReceipts`) and in the vendored local spec. Under the stack boundary they are cartouche's: the node's wire format defines them, so cartouche owns the wrapper and the decoded struct.\n\ncartouche today can fetch a receipt (`eth_getTransactionReceipt`) but not the transaction itself. All four are absent.\n\nAll four already exist in `onchain`, hand-decoded there: lib/onchain/rpc.ex:924 (`eth_getTransactionByHash`), :672 (`...ByBlockHashAndIndex`), :715 (`...ByBlockNumberAndIndex`), :569 (`eth_getBlockReceipts`). This is the duplicated-decoder problem the boundary reversal was adopted to end — onchain could not own the decode without owning the struct, so it wrote its own.\n\n**The invariant: one decoder, one struct.** cartouche gains the four methods and their structs; onchain's four hand-written decoders stop existing. Whether onchain keeps its public functions (returning cartouche structs) or drops them is onchain's decision in onchain's task — note that its wrappers carry retry, telemetry and node-refusal classification that cartouche does not yet have, so a bare deletion is not obviously the cheaper option. This task is the cartouche half only; a cartouche worktree cannot edit the onchain repo, and the dependency edge runs cartouche <- onchain, so this lands and ships first.\n\nThe transaction methods return the RPC transaction *object* (the JSON view), not raw RLP — that is a genuinely different shape from the signed-envelope structs, and the decision of where it decodes to is the substantive design work in this task. Cartouche.Block already faced the identical JSON-vs-RLP question; read block.ex before choosing, and follow its precedent.\n\nAuthority: the tagged execution-apis spec plus the live node.\n",
       "created_at": "2026-08-26",
-      "scored_at": "2026-08-26",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     },
     {
@@ -3270,33 +3298,44 @@
       "phase": 0,
       "bundle": "rpc_read_surface",
       "status": "pending",
-      "title": "State reads: eth_getStorageAt and eth_getProof (EIP-1186)",
+      "title": "Own the state reads in cartouche — eth_getStorageAt and eth_getProof (EIP-1186)",
       "scores": {
         "d": 3,
-        "b": 5,
-        "u": 4
+        "b": 6,
+        "u": 5
       },
-      "eff": 1.5,
-      "dep_layer": 0,
+      "eff": 1.83,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136
+      ],
       "assignee": "codex",
       "model": "gpt-5.6-sol",
       "acceptance_criteria": [
-        "eth_getStorageAt wrapper with block-tag support, pinned by a live test reading a known contract slot on mainnet",
-        "eth_getProof decodes into a struct covering account fields and storageProof entries; a live test asserts domain fields of a known contract's proof, not just shape",
-        "One relevant real error per method is observed and pinned (invalid slot / unknown account behavior as the node actually answers) — never an assumed error string",
-        "@doc for both names standardness and the historical-depth caveat",
+        "Cartouche.RPC gains eth_getStorageAt (address, slot, block tag -> 32-byte word) with block-tag support, pinned by a live test reading a known mainnet contract slot",
+        "Cartouche.RPC gains eth_getProof decoding into a cartouche struct covering the account fields (balance, nonce, codeHash, storageHash, accountProof) and the storageProof entries; a live test asserts domain fields of a known contract's proof, not just shape",
+        "One relevant real error per method is observed and pinned as the node actually answers it — never an assumed error string",
+        "Historical-state depth is verified against >=1 hosted endpoint via the task-136 seam, not asserted: both methods are fully standard, but archive depth is the privileged part. Whatever the hosted endpoint answers for a deep-history block IS the finding — record it verbatim, and let the @doc say what was observed rather than promising depth",
+        "@doc for both names the spec release that carries them and the observed depth caveat",
         "Live tests flunk with exact export instructions when the node env var is absent, never skip",
         "mix ci passes"
       ],
       "out_of_scope": [
-        "Verifying proofs client-side against the state root (Merkle-Patricia verification is its own task if ever wanted)"
+        "Client-side Merkle-Patricia verification of a proof against the state root — a real feature, genuinely separate, and not needed to own the read",
+        "Editing onchain_evm — the deletion there is the companion task named in the body"
       ],
-      "body": "Both standard state reads are missing. eth_getStorageAt is a thin wrapper (address, slot, block tag -> 32-byte word). eth_getProof (EIP-1186) returns the account proof object — balance, nonce, codeHash, storageHash, accountProof, storageProof entries — which should decode into a proper struct following the repo's decoding conventions.\n\nPortability note to encode per the node-portability rules: both methods are standard, but historical-state depth is privileged — hosted providers serve recent blocks and refuse deep history. The @doc must not promise archive depth; if a hosted refusal is observed during the live probe, record it verbatim in the doc or test rather than assuming its shape.\n\nAuthority: ethereum/execution-apis + EIP-1186 + the live node.\n",
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex"
+      ],
+      "touches": [
+        "test/rpc_integration_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "Both methods are in the tagged execution-apis release `v1.0.0-beta.7` (`src/eth/state.yaml`) and in the vendored local spec. Both are cartouche's under the stack boundary. Both are absent from cartouche today.\n\nThe existing duplication is smaller here than elsewhere but real, and it sits in a sibling rather than in `onchain`:\n\n- `eth_getStorageAt` has exactly one caller in the stack — onchain_evm, lib/onchain/trace.ex:185 — where it is inlined into the trace module. Note that the hit at onchain/lib/onchain/rpc.ex:1033 is a doc-string EXAMPLE listing legal method names, not a wrapper; do not mistake it for one.\n- `eth_getProof` is fully implemented in onchain at lib/onchain/rpc.ex:1193, including key normalization.\n\n**The invariant: one decoder, one struct.** cartouche gains both methods and the proof struct. The onchain_evm inline call and onchain's `eth_getProof` decoding are resolved by companion tasks in those repos; the mechanism there is theirs to choose, but no second derivation of the proof shape may survive.\n\n`eth_getProof` is EIP-1186 and returns a structured account proof; it decodes into a proper cartouche struct following the repo's decoding conventions, not a bare map. `eth_getStorageAt` is a thin wrapper returning a 32-byte word.\n\nThe portability point worth getting right: these are not extension methods, so rule 1 is satisfied by the tag. But spec residency says nothing about *availability at depth* — a hosted provider serves recent state and refuses or truncates deep history, and that refusal is the consumer's reality. Probe it rather than documenting an assumption.\n\nAuthority: the tagged execution-apis spec, EIP-1186, and the live node.\n",
       "created_at": "2026-08-26",
-      "scored_at": "2026-08-26",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     },
     {
@@ -3304,31 +3343,46 @@
       "phase": 0,
       "bundle": "rpc_read_surface",
       "status": "pending",
-      "title": "Node-introspection sweep: eth_syncing, net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountBy*",
+      "title": "Own the node-introspection surface in cartouche — and mark the three methods no tagged spec carries",
       "scores": {
-        "d": 2,
-        "b": 3,
-        "u": 2
+        "d": 3,
+        "b": 6,
+        "u": 6
       },
-      "eff": 1.25,
-      "dep_layer": 0,
+      "eff": 2.0,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136,
+        137
+      ],
       "assignee": "cursor",
       "model": "cursor-grok-4.6-high",
       "acceptance_criteria": [
-        "Wrappers for all six methods exist with @doc",
-        "eth_syncing decodes both the `false` and the sync-status-object answer; the synced case is pinned live, the syncing-object case pinned from its spec shape with the union decode unit-tested",
+        "Cartouche.RPC gains all six: eth_syncing, eth_getBlockTransactionCountByHash, eth_getBlockTransactionCountByNumber, net_listening, net_peerCount, web3_clientVersion",
+        "eth_syncing decodes BOTH answers — the bare `false` and the sync-status object — as a single documented union; the synced case is pinned live, the syncing-object case unit-tested against its spec shape",
+        "The three methods no tagged release carries are documented as such, each with the precise reason, NOT lumped together as 'standard': net_listening and net_peerCount were merged to execution-apis `main` only after v1.0.0-beta.7 (commit 7c58b32, 'Add net_listening and net_peerCount (#843)') and are in no tag; web3_clientVersion is in execution-apis at NO point in its history and is defined only by EIP-1474. All three are absent from the vendored local spec",
+        "Per the stack boundary's rule for methods outside a tagged release, those three ship with a @doc naming what defines them and what a consumer sees when an endpoint refuses, plus a capability probe rather than a failure deep in a pipeline — the observed refusal recorded verbatim from the task-136 hosted lane, never assumed",
+        "The three that ARE in the tagged spec (eth_syncing, and both eth_getBlockTransactionCountBy*) carry no such caveat — the distinction between the two groups must be visible in the docs, not flattened",
         "Live tests flunk with exact export instructions when the node env var is absent, never skip",
         "mix ci passes"
       ],
       "out_of_scope": [
-        "web3_sha3 — keccak exists locally in the crypto layer; a remote hash call is an anti-pattern and is deliberately not added"
+        "web3_sha3 — keccak is local in the crypto layer; a network round-trip to hash bytes is an anti-pattern and is deliberately not added",
+        "net_version — already present in the tagged spec since v1.0.0-beta.1 and outside this task's set; if cartouche lacks it, that is its own task",
+        "Editing the onchain repo — the deletions there are the companion task named in the body"
       ],
-      "body": "Small standard methods absent from the surface: eth_syncing (false | sync-status object — the useful one, for health checks before trusting reads), net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountByHash and ...ByNumber. All are trivial wrappers; the only decode of note is eth_syncing's boolean-or-object union.\n\nHonest scoring: low urgency — filed because the execution-apis gap analysis named them, not because anything blocks on them today.\n",
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex"
+      ],
+      "touches": [
+        "test/rpc_integration_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "Six methods, and the reason this task is NOT a rubber-stamp sweep is that they do not share a standardization status. Verified 2026-08-27 against the execution-apis repository at tag and at `main`, not from memory:\n\n- **In the tagged release v1.0.0-beta.7, and in the vendored local spec** — `eth_syncing` (`src/eth/client.yaml`), `eth_getBlockTransactionCountByHash` and `eth_getBlockTransactionCountByNumber` (`src/eth/block.yaml`). Straightforwardly cartouche's.\n- **On `main` only, in no tag** — `net_listening` and `net_peerCount`, added by commit 7c58b32 (\"Add net_listening and net_peerCount (#843)\"), which is `main`'s current tip and lands strictly after beta.7. Absent from the vendored spec.\n- **Never in execution-apis at all** — `web3_clientVersion`. Grepped exhaustively across every `src/**/*.yaml` on `main` HEAD and on every tag: zero hits in the repository's entire history. It is defined only by EIP-1474.\n\nThat distribution is the whole point of the task. `net_listening` / `net_peerCount` are the exact shape of the `eth_baseFee` trap that node-portability rule 1 now names explicitly: merged to `main`, not in any tag, and re-vendoring the spec from `main` would silently reclassify them as standard. They are being wrapped here deliberately and with their status written down, so that nobody later reads `main`, sees them, and deletes the caveat.\n\nAll six go into cartouche — the boundary puts every `eth_*` / `net_*` / node-wire method there, with the tagged ones plain and the untagged ones carrying a `@doc` naming who defines them plus a capability probe. Ownership is not conditional on spec status; documentation is.\n\nExisting duplication in onchain: `eth_syncing` at lib/onchain/rpc.ex:446, `eth_getBlockTransactionCountByHash` at :601, `...ByNumber` at :636. The other three exist nowhere in the stack. Those three onchain copies are resolved by the companion task in onchain's roadmap — these are scalar-returning methods, so the duplication is thin and the resolution there is cheap whichever way onchain goes.\n\n`eth_syncing`'s boolean-or-object union is the only decode of substance. The rest are thin, and thin is fine — a general-purpose library owning the node's wire surface completely is the deliverable, and completeness of that surface is the reason, stated plainly and needing no other.\n",
       "created_at": "2026-08-26",
-      "scored_at": "2026-08-26",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     },
     {
@@ -3336,34 +3390,46 @@
       "phase": 0,
       "bundle": "rpc_read_surface",
       "status": "pending",
-      "title": "Add eth_simulateV1 — standard multi-block simulation with state overrides",
+      "title": "Own eth_simulateV1 in cartouche — the portable simulation entry point",
       "scores": {
         "d": 5,
-        "b": 5,
-        "u": 3
+        "b": 8,
+        "u": 6
       },
-      "eff": 0.8,
-      "dep_layer": 0,
+      "eff": 1.4,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136,
+        137
+      ],
       "assignee": "grok",
       "model": "grok-4.6",
       "acceptance_criteria": [
-        "eth_simulateV1 wrapper models blockStateCalls with state and block overrides and decodes per-call results including logs and per-call error objects",
-        "A live test pins one real multi-call simulation success (e.g. a funded transfer via state override) and one relevant real per-call failure as the node actually reports it",
-        "The node-support premise from the body is confirmed or corrected with the observed answer recorded",
-        "@doc names the method as standard execution-apis and contrasts it with the privileged trace_callMany path",
-        "Live tests flunk with exact export instructions when the node env var is absent, never skip",
+        "Cartouche.RPC gains eth_simulateV1 modelling blockStateCalls with state and block overrides, and decoding per-call results including logs and per-call error objects into cartouche structs",
+        "The request surface covers the spec'd shape — blockStateCalls, stateOverrides, blockOverrides, returnFullTransactions, traceTransfers, validation — modelled as structs per repo conventions",
+        "A live test pins one real multi-call simulation success (e.g. a funded transfer via a state override) and one relevant real per-call failure exactly as the node reports it, including the JSON-RPC error code",
+        "Method-not-found (-32601) is surfaced as an explicit capability answer, not an opaque error — the onchain_tempo precedent at lib/onchain/tempo/rpc.ex classifies exactly this and its shape should be read before designing cartouche's",
+        "@doc names eth_simulateV1 as carried by the tagged spec since v1.0.0-beta.5 and contrasts it with the privileged trace_callMany / debug_traceCall path that task 135 documents",
+        "Behaviour is verified on >=1 hosted endpoint via the task-136 seam as well as the archive node — a real result or its real refusal, never a skip",
         "mix ci passes"
       ],
       "out_of_scope": [
-        "A convenience simulation DSL or bundle-builder on top of the raw surface",
-        "Deprecating or changing trace_call / trace_callMany / debug_traceCall"
+        "A convenience simulation DSL or bundle-builder on top of the raw surface — the raw spec'd surface is the deliverable",
+        "Deprecating or changing trace_call / trace_call_many / debug_trace_call — task 135 owns their portability contract; they stay",
+        "Refactoring onchain_tempo's AA-specific simulate/3 — it is a domain caller, not a duplicate wrapper; see the body"
       ],
-      "body": "eth_simulateV1 is the standard execution-apis simulation entry point: multiple block-state-calls with state/block overrides, optional validation, and full log results — the portable answer to the privileged trace_callMany/debug_traceCall pair cartouche already wraps. Consumers on hosted endpoints (which increasingly serve simulateV1 but not trace_*) currently have no simulation path through cartouche at all.\n\nThe surface is large (blockStateCalls, stateOverrides, blockOverrides, returnFullTransactions, validation flag); model the request/response with structs per repo conventions, but keep to the spec'd surface — no convenience DSL on top in this task.\n\nPremise unverified — confirm before building on it: that our reth node serves eth_simulateV1 is expected (reth shipped it) but was not probed during the gap analysis. Probe first; if it refuses, the live evidence must come from a hosted endpoint that serves it, and the task body's assumption gets corrected in the implemented note.\n\nAuthority: ethereum/execution-apis (eth_simulateV1 spec) + the live node.\n",
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex"
+      ],
+      "touches": [
+        "test/rpc_integration_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "`eth_simulateV1` entered the execution-apis spec at tag `v1.0.0-beta.5` (2026-06-03, `src/eth/execute.yaml`) — verified by walking the tags directly, beta.1 through beta.7 — and it IS present in the vendored local spec. It is squarely cartouche's under the stack boundary, and it is the portable answer to the privileged `trace_callMany` / `debug_traceCall` pair cartouche already wraps.\n\nClient support is real and was verified against each client's own source, not from memory: geth (`internal/ethapi/api.go`, `BlockChainAPI.SimulateV1`), reth (`crates/rpc/rpc-eth-api/src/core.rs`, with the tracking issue closed as implemented), erigon (`rpc/jsonrpc/eth_simulation.go`, and its rpcdaemon README lists it supported) and nethermind (`EthRpcModule.cs`). So the premise the earlier version of this task flagged as unverified is now confirmed for the archive node's client — but confirm the node's live answer anyway before building on it, because a client implementing a method and an endpoint serving it are different facts.\n\n**One existing caller, and it is NOT a duplicate to delete.** onchain_tempo calls `eth_simulateV1` at lib/onchain/tempo/rpc.ex:128, but it is a domain consumer, not a competing wrapper: it builds a single AA-folded 0x76 call, interprets the result as success / revert / unsupported for a fee-payer gas-drain guard, and carries an empirically-verified note that `tempo_simulateV1` is not deployed on Tempo mainnet or Moderato. That is exactly the layering the boundary prescribes — the chain-specific package re-presents the node method for its domain. It stays.\n\nWhat it does reveal is a second transport escape: it builds its own `do_rpc_request/4` directly on Req + Jason rather than going through the shared transport, mirroring why `Onchain.HTTP` exists. Worth noting, out of scope here.\n\nTwo things to take from that module rather than reinvent: its `-32601` -> `:unsupported` classification is the capability-probe shape this method needs, and its `-38013` handling shows that execution errors arrive as JSON-RPC errors distinct from transport failure. cartouche's decode must keep those three outcomes — succeeded, reverted/rejected, method unsupported — distinguishable, because collapsing them is what makes a fail-open caller unsafe.\n\nAuthority: the tagged execution-apis spec plus the live node.\n",
       "created_at": "2026-08-26",
-      "scored_at": "2026-08-26",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     },
     {
@@ -3477,10 +3543,12 @@
         "u": 7
       },
       "eff": 2.33,
-      "dep_layer": 0,
+      "dep_layer": 1,
       "unlocks": 0,
       "markers": [],
-      "depends_on": [],
+      "depends_on": [
+        136
+      ],
       "assignee": "grok",
       "model": "grok-4.6",
       "acceptance_criteria": [
@@ -3506,6 +3574,96 @@
       "body": "Verified against ethereum/execution-apis `main` by two independent checks this session: the `trace_*` namespace does not appear in the specification at all, and `src/debug/trace.yaml` carries only `debug_traceBlockByNumber`, `debug_traceBlockByHash` and `debug_traceTransaction` — NOT `debug_traceCall`. So cartouche ships four non-standard read methods.\n\nNone of them carries any portability note. Grepping rpc.ex for Erigon / non-standard / Alchemy / Infura / portab returns only `fill_transaction` comments. There is no capability probe, and README.md's node-compatibility section affirmatively tells the reader the surface is nearly all standard, naming only `base_fee` and archive depth as exceptions.\n\nThis is a larger portability hole than `base_fee/1` and it is the one with no task. `base_fee` at least got a README caveat; the trace surface is invisible in the docs, the roadmap, and the module docs simultaneously.\n\nOrigin, for the @doc wording: `trace_*` is the OpenEthereum/Parity namespace, inherited by Erigon and implemented by reth (our own archive node serves it — that is why every existing trace integration test is green here). Do not write that reth lacks it; verify each client claim against that client's own documentation before putting it in a @doc, and cite what you checked.\n\nThe probe precedent to follow is `Onchain.Trace.available?/1` in the sibling onchain_evm package — read it before designing a new shape. This is rule 3 of node-portability.md applied where it actually bites: name who serves it, name the consumer-visible error, and expose a probe rather than failing deep in a pipeline.\n",
       "created_at": "2026-08-26",
       "scored_at": "2026-08-26",
+      "cross_repo": []
+    },
+    {
+      "id": "136",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Multi-endpoint live-test seam so node-portability rule 4 can actually be executed",
+      "scores": {
+        "d": 3,
+        "b": 8,
+        "u": 8
+      },
+      "eff": 2.67,
+      "dep_layer": 0,
+      "unlocks": 7,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Cartouche.Test.Live gains a named-endpoint lane beside the existing single live_rpc_url/0: an endpoint is addressed by name (e.g. :archive, :alchemy, :infura, :cloudflare) and resolves to a URL from a per-endpoint env var, so a test can request the SAME call on two endpoints without the whole suite being re-run under a different env var",
+        "The existing live_opts/0 and live_rpc_url/0 keep working unchanged — all 56 existing call sites across test/rpc_integration_test.exs, test/filter_test.exs and test/rpc_debug_namespace_test.exs stay green with no edit. This is an additive seam, not a migration",
+        "A helper expresses rule 4's actual assertion shape: run one call against the privileged node AND against >=1 hosted endpoint, and assert on BOTH answers — the hosted endpoint's real refusal is as much a pass as its success. A hosted endpoint that answers -32601/-32600 must be recordable as the expected result, not treated as a test error",
+        "Absent env vars flunk with the exact export command for that endpoint, never skip — matching assert_node_available!/0's existing flunk style. A portability test that silently skips on the hosted lane is the exact failure this seam exists to prevent",
+        "assert_node_available!/0's hard chain-id-1 assertion is preserved or generalized per endpoint; a hosted mainnet endpoint must satisfy the same mainnet pin the archive node does",
+        "At least one real portability test uses the seam end to end and is green: re-verify base_fee/1 (task 127's subject) on the archive node and on >=1 hosted endpoint, recording the hosted answer verbatim",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Rewriting the existing integration tests onto the new lane — additive only; migrating call sites is a later task if ever wanted",
+        "The dev/anvil lane (dev_opts/0, ephemeral anvil boot) — untouched",
+        "Fixing base_fee/1 itself, or writing the trace_* portability docs — tasks 127 and 135 own those; this task only makes their evidence obtainable",
+        "A general RPC provider-abstraction or failover layer in lib/ — this is test infrastructure"
+      ],
+      "files_to_modify": [
+        "test/support/live.ex"
+      ],
+      "touches": [
+        "test/rpc_integration_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "node-portability.md rule 4 says: \"Verify on a second, unprivileged endpoint before claiming portability. Green on localhost:8545 alone proves nothing. A hosted endpoint's real refusal is evidence; our node's {:ok, _} is not.\" The same file then admits, under Honest limits, that \"Rule 4 has no tooling today — whoever builds it should build it first.\"\n\nThis task builds it first.\n\nThe current seam is single-endpoint by construction. `Cartouche.Test.Live.live_rpc_url/0` (test/support/live.ex) returns one string from `CARTOUCHE_LIVE_NODE_URL`, defaulting to http://127.0.0.1:8545, and `live_opts/0` bakes it into a keyword list used at 56 call sites across three test files. There is no way to express \"this call, on that other endpoint\" inside a test — the dual-endpoint base_fee verification recorded in node-portability.md's worked example was done by manually re-running the whole suite with a different env var, which is not something an acceptance criterion can require of a dispatched agent.\n\nThe consequence is concrete, not theoretical: tasks 127 and 135 both carry criteria demanding a hosted-endpoint observation, and as written neither is satisfiable with the current seam. Five read-surface tasks (128-132) want the same evidence. Every one of them is blocked on infrastructure that does not exist, which is why this is filed as a prerequisite rather than folded into any single one of them.\n\nEndpoints are already available to the operator and need no procurement — ~/.secrets defines ETHEREUM_ALCHEMY_URL, ETHEREUM_INFURA_URL and CLOUDFLARE_ETHEREUM_API_URL (three distinct vendors on mainnet), alongside ETH_RPC_URL / ETHEREUM_API_URL and the Base/Sepolia URLs. Read the variable NAMES from the operator's environment; never print, log, echo or commit a value — these are credentialed URLs and an Alchemy or Infura URL embeds the API key in its path. A test that flunks must name the env var, not interpolate its contents.\n\nDesign note, deliberately left to the implementer: whether the named lane is a keyword/atom map, a per-endpoint module attribute, or a small struct is a judgment call — follow the file's existing style (module attributes + plain functions, no config) rather than introducing a config-driven registry. The one thing that is NOT a judgment call is the assertion shape: a hosted refusal must be a first-class expected outcome. If the helper can only express \"both endpoints returned {:ok, _}\", it has failed to encode rule 4 and would have ratified the base_fee bug.\n\nThe house idioms to reuse verbatim in docs and flunk messages: \"a real result or its real refusal, never a skip\"; \"the consumer's node — not ours — as the case that matters\"; \"the identical green run on both endpoints is what the portability claim rests on\".\n",
+      "created_at": "2026-08-27",
+      "scored_at": "2026-08-27",
+      "cross_repo": []
+    },
+    {
+      "id": "137",
+      "phase": 0,
+      "bundle": "rpc_read_surface",
+      "status": "pending",
+      "title": "Move the transport hardening into cartouche — retry, telemetry, node-refusal classification, batch",
+      "scores": {
+        "d": 5,
+        "b": 9,
+        "u": 9
+      },
+      "eff": 1.8,
+      "dep_layer": 0,
+      "unlocks": 2,
+      "markers": [],
+      "depends_on": [],
+      "assignee": "codex",
+      "model": "gpt-5.6-sol",
+      "acceptance_criteria": [
+        "Cartouche.RPC gains node-refusal classification: JSON-RPC -32601 / -32600 / -32001 become distinguishable tagged results (method-not-found / namespace-unavailable / unavailable) instead of an opaque error term. Port the semantics from Onchain.RPC.classify_node_refusal/1 (onchain/lib/onchain/rpc.ex:1374-1391), whose moduledoc records that it was pinned against live Alchemy responses — keep that provenance in the @doc",
+        "Cartouche.RPC gains opt-in retry over send_rpc/3 with the same policy onchain proved: transport failures retry, JSON-RPC application errors are final and never retried (onchain/lib/onchain/rpc.ex:1317-1368). Generalize it to wrap a call rather than one hardcoded function — onchain's retry_rpc/4 can only call Helpers.do_rpc/3, which is why its typed wrappers cannot use it",
+        "Cartouche.RPC emits telemetry spans around every request, matching the event shape onchain already publishes so downstream dashboards keep working",
+        "Cartouche.RPC gains a JSON-RPC array batch primitive — cartouche has none today, which is the sole reason Onchain.HTTP's batch POST path exists (onchain/lib/onchain/rpc.ex:1516)",
+        "Cartouche's own config split is not widened: send_rpc/3 stays :cartouche-keyed end to end. Note in the CHANGELOG that onchain's batch path currently reads its URL from :cartouche, :ethereum_node while reading transport options from :onchain (onchain/lib/onchain/rpc.ex:1527-1530) — record the split, do not import it",
+        "Existing cartouche behaviour is unchanged for callers that opt into none of it: no retry, no classification rewrite of existing return shapes unless explicitly requested per call",
+        "mix ci passes"
+      ],
+      "out_of_scope": [
+        "Deleting anything in the onchain repo — a cartouche worktree cannot; the deletions are onchain-side companion tasks",
+        "Unifying onchain's URL-vs-transport-options config split — that is onchain's own defect and its own task",
+        "Bang variants (foo!/N) — a separate ergonomic decision, not transport"
+      ],
+      "files_to_modify": [
+        "lib/cartouche/rpc.ex",
+        "lib/cartouche/http.ex"
+      ],
+      "touches": [
+        "test/rpc_test.exs",
+        "CHANGELOG.md"
+      ],
+      "body": "This task is what makes the stack boundary's clean cut actually safe to execute, and it was found by reading both call pipelines rather than by reasoning from the layer diagram.\n\nThe boundary says cartouche owns the transport and every in-spec method; onchain re-presents, never re-derives. Tasks 128-132 move the methods down. But a straight deletion of onchain's duplicate wrappers would be a real regression, because onchain's wrappers are not thin: each one runs inside `:telemetry.span([:onchain, :rpc, :request], ...)` (lib/onchain/rpc.ex:1310-1313), optionally inside `retry_rpc/4` (:1317-1367, transport failures retried, application errors final at :1366-1368), and its result passes through `classify_node_refusal/1` (:1374-1391), which turns `-32601` / `-32600` / `-32001` into tagged, branchable outcomes and was pinned against live Alchemy responses (moduledoc, rpc.ex:41-99). cartouche's `send_rpc/3` (lib/cartouche/rpc.ex:515-556) has none of these.\n\nEvery one of those is a transport concern. Under the boundary they belong in cartouche by definition — the layer that owns the JSON-RPC wire owns retrying it, measuring it, and telling the caller why a node refused. That they grew in onchain is an artifact of the old rule that put wrappers there.\n\nThere is a structural reason this cannot be fixed by delegation, which is worth stating so nobody proposes it later: onchain composes the hardening OUTSIDE the raw call, whereas cartouche's typed wrappers put the decode INSIDE `send_rpc/3` via its `:decode` option. So `Onchain.RPC.foo/2` delegating to `Cartouche.RPC.foo/2` inverts the nesting and silently drops retry, because `retry_rpc/4` is hardcoded to call `Helpers.do_rpc/3` (:1350) and cannot wrap a typed call. Generalizing it is part of this task, not a rider on a per-method port.\n\nThe node-refusal classification is the highest-value piece and should be treated as such. It is exactly what node-portability rule 3 asks for — \"expose a capability probe rather than failing deep in a pipeline\" — and cartouche currently forces consumers to string-match error text to discover that an endpoint does not serve a method. Tasks 131, 132 and 135 all need this: 131 wraps three methods no tagged spec carries, 132 needs `-32601` distinguishable from a failed simulation, and 135 needs a probe for the trace namespace. onchain_tempo independently reinvented the same `-32601 -> :unsupported` classification (onchain_tempo/lib/onchain/tempo/rpc.ex) — a third implementation of one idea, which is the signal that it belongs one layer down.\n\nSequencing note the implementer does not need to act on but should know: onchain pins cartouche as a Hex dependency (`{:cartouche, \"~> 0.6\"}`, onchain/mix.exs:43; lockfile at 0.8.0), not a path dep. So this lands and ships in cartouche first; onchain adopts on a lockfile bump. Nothing is broken in between, because onchain keeps its own implementation until the commit that removes it.\n",
+      "created_at": "2026-08-27",
+      "scored_at": "2026-08-27",
       "cross_repo": []
     }
   ]

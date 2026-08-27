@@ -223,14 +223,16 @@ D/B/U scores stay on individual rows — bundling is about session ergonomics, n
 | Task 125 | ✅ | 🎁 **rpc_correctness** · Cartouche.RPC.fill_transaction/2 cannot deserialize a spec-conforming eth_fillTransaction result [D:5/B:5/U:4 → Eff:0.9] ⚠️ |
 | Task 126 | ✅ | 🎁 **rpc_correctness** · Spec-path fill_transaction V1 results drop chainId, so encode is pre-EIP-155 [D:4/B:5/U:4 → Eff:1.12] 📋 |
 | Task 127 | ⬜ | 🎁 **rpc_correctness** · base_fee/1 portability — probe the real hosted-provider refusal, then decide standard vs extension [D:3/B:7/U:4 → Eff:1.83] 🚀 |
-| Task 128 | ⬜ | 🎁 **rpc_read_surface** · Add eth_getLogs — stateless log queries without filter installation [D:3/B:8/U:6 → Eff:2.33] 🎯 |
-| Task 129 | ⬜ | 🎁 **rpc_read_surface** · Transaction and receipt read-back: eth_getTransactionByHash, ByBlock*AndIndex, eth_getBlockReceipts [D:3/B:6/U:5 → Eff:1.83] 🚀 |
-| Task 130 | ⬜ | 🎁 **rpc_read_surface** · State reads: eth_getStorageAt and eth_getProof (EIP-1186) [D:3/B:5/U:4 → Eff:1.5] 🚀 |
-| Task 131 | ⬜ | 🎁 **rpc_read_surface** · Node-introspection sweep: eth_syncing, net_listening, net_peerCount, web3_clientVersion, eth_getBlockTransactionCountBy* [D:2/B:3/U:2 → Eff:1.25] 📋 |
-| Task 132 | ⬜ | 🎁 **rpc_read_surface** · Add eth_simulateV1 — standard multi-block simulation with state overrides [D:5/B:5/U:3 → Eff:0.8] ⚠️ |
+| Task 128 | ⬜ | 🎁 **rpc_read_surface** · Own eth_getLogs in cartouche — stateless log queries, and delete onchain's copy [D:3/B:8/U:7 → Eff:2.5] 🎯 |
+| Task 129 | ⬜ | 🎁 **rpc_read_surface** · Own the transaction and receipt read-back in cartouche — 4 methods, and delete onchain's copies [D:4/B:7/U:6 → Eff:1.62] 🚀 |
+| Task 130 | ⬜ | 🎁 **rpc_read_surface** · Own the state reads in cartouche — eth_getStorageAt and eth_getProof (EIP-1186) [D:3/B:6/U:5 → Eff:1.83] 🚀 |
+| Task 131 | ⬜ | 🎁 **rpc_read_surface** · Own the node-introspection surface in cartouche — and mark the three methods no tagged spec carries [D:3/B:6/U:6 → Eff:2.0] 🎯 |
+| Task 132 | ⬜ | 🎁 **rpc_read_surface** · Own eth_simulateV1 in cartouche — the portable simulation entry point [D:5/B:8/U:6 → Eff:1.4] 📋 |
 | Task 133 | ⬜ | 🎁 **correctness_010** · 🔒 EIP-712 conformance: encode_type non-termination, bytesN padding direction, array-of-struct support, int types [D:4/B:9/U:8 → Eff:2.12] 🎯 |
 | Task 134 | ⬜ | 🎁 **correctness_010** · 🔒 EIP-191 personal_sign byte length, a recovery helper that applies the prefix, and the 65-byte signature invariant [D:3/B:7/U:6 → Eff:2.17] 🎯 |
 | Task 135 | ⬜ | 🎁 **rpc_correctness** · Portability contract for the non-standard read surface: trace_* and debug_traceCall [D:3/B:7/U:7 → Eff:2.33] 🎯 |
+| Task 136 | ⬜ | 🎁 **rpc_read_surface** · Multi-endpoint live-test seam so node-portability rule 4 can actually be executed [D:3/B:8/U:8 → Eff:2.67] 🎯 |
+| Task 137 | ⬜ | 🎁 **rpc_read_surface** · Move the transport hardening into cartouche — retry, telemetry, node-refusal classification, batch [D:5/B:9/U:9 → Eff:1.8] 🚀 |
 <!-- TASKS:END -->
 
 **Acceptance:** onchain can `mix deps.update cartouche` against `{:cartouche, "~> 0.1"}` and resolve.
