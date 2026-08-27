@@ -35,13 +35,17 @@ All notable changes to this project will be documented in this file.
 ### Documentation
 
 - **`README.md` § "Node compatibility"** — states plainly which endpoints
-  cartouche runs against, and names the two exceptions: `Cartouche.RPC.base_fee/1`
-  calls `eth_baseFee`, an Erigon extension that Alchemy mainnet refuses with
-  `-32600`, and historical-state reads need an archive node. Also flags that the
+  cartouche runs against, and names the three exceptions: `Cartouche.RPC.base_fee/1`
+  calls `eth_baseFee`, an Erigon-origin method that Alchemy mainnet refuses with
+  `-32600` (spec-merged to `execution-apis` `main` on 2026-06-15 but in no tagged
+  release, and documented by neither Alchemy nor Infura); the `trace_*` and
+  `debug_traceCall` wrappers are absent from `execution-apis` entirely; and
+  historical-state reads need an archive node. Also flags that the
   `:ethereum_node` default (`https://mainnet.infura.io`) is a keyless placeholder
   rather than a recommendation. The `base_fee/1` behaviour itself is unchanged —
-  probing the real refusal across providers and deciding standard-vs-extension is
-  roadmap task 127.
+  probing the real refusal across providers and deciding whether to keep calling
+  `eth_baseFee` or read the pending header is roadmap task 127; the tracing surface's
+  portability contract is task 135.
 
   Companion change outside the package: `CLAUDE.md` gains a **Node Portability**
   section (and imports the shared `node-portability.md` include), so the rule that

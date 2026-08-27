@@ -12,15 +12,43 @@
 
 ## Scope principle (what belongs here vs. in onchain)
 
-Cartouche = primitives; onchain = application/protocol. Even though cartouche is our own package, keeping the split sharp prevents protocol-layer creep and keeps onchain the right home for RPC wrappers, ERC parsers, and observability.
+**Cut on what defines the bytes, not on who calls the node.**
 
-| In cartouche's scope | In onchain's scope |
+| Layer | Owns |
 |---|---|
-| Transaction type encoding (V1, V2, V3 blob, V4 auth-list) | RPC method wrappers (`eth_getProof`, `eth_syncing`, batch requests) |
-| Signer internals, key management, CloudKMS | Helpers that compose cartouche structs (fee suggestion on `FeeHistory`) |
-| Hex / ABI / typed-data / chain crypto primitives | Protocol parsers (ENS, ERC-20/721/1155, Transfer events) |
-| Raw transaction encode **and decode** | Subscription management, Multicall, wallet classification |
-| `Cartouche.RPC.send_rpc/3` transport-level concerns | Observability facades (telemetry, retry/backoff wrappers) |
+| [hieroglyph](../hieroglyph) | The ABI codec. Pure functions over types and bytes. No I/O, no chain identity, no node. |
+| **cartouche** | Everything defined by the **node's wire format**: the JSON-RPC transport, and one wrapper **plus one decoded struct** for every method in a tagged release of the `execution-apis` OpenRPC spec — plus transaction envelopes, signing, crypto, hex, and chain ids. |
+| [onchain](../onchain) | Everything defined by a **contract, a standard, or an off-node protocol**: ERC-*, ENS, AA, MEV, DEX, Multicall, subscriptions, vendor/bundler/relay namespaces. It **re-presents** cartouche's structs; it never re-derives them. |
+
+### Routing table — answer in one read
+
+| Question | Answer |
+|---|---|
+| New `eth_*` / `net_*` wrapper? | **cartouche**, iff the method is in a **tagged** OpenRPC release. Not in the spec → cartouche only with a `@doc` naming who serves it *and* a capability probe. Vendor/bundler/relay namespace (`eth_sendUserOperation`, `eth_sendBundle`, `eth_sendPrivateTransaction`) → **onchain**. |
+| Response decoding? | **cartouche**, always, into a cartouche struct. onchain never re-derives a JSON shape the node emits. |
+| ERC standard? | **onchain**, or a sibling package when domain-heavy (`onchain_aave`). |
+| Chain-specific constants? | **cartouche** (`Cartouche.Chain`). A chain with a different tx envelope gets its own package (`onchain_tempo`). |
+| Non-EVM chain? | **Its own package.** Not cartouche, not onchain. |
+
+**Why this replaces the previous rule.** The old table assigned "RPC method wrappers" to
+onchain while leaving the transport and the response structs in cartouche. That is not a
+separable cut: `send_rpc/3` takes a `:decode` function, so a wrapper is *method string +
+param normalizer + pointer to a cartouche struct* — two of three parts already cartouche's.
+Because onchain could not own the decode without owning the struct, it wrote its own, and
+the stack now carries two mutually-incompatible `Block` representations (`Cartouche.Block`
+returns a struct with raw binaries; `Onchain.RPC.Helpers.parse_block_response/1` returns a
+plain map with `0x` strings), ~500 LOC of duplicate decoders, twelve methods wrapped at
+both layers, a `@dialyzer {:no_match, do_rpc: 3}` suppression as the receipt, and 34 LOC of
+duplicate HTTP config in `Onchain.HTTP` whose moduledoc says outright that it exists to
+escape cartouche's config key. No test can catch that, because no module consumes both.
+The old rule did not prevent the duplication — it caused it.
+
+**Enforcement, not prose.** `Onchain.RPC.Codegen.ensure_known_method!/1` already raises at
+compile time on a method absent from the vendored spec; `Cartouche.RPC.DSL.defrpc/3` checks
+nothing. Moving the vendored spec down into cartouche and porting that guard turns "is this
+cartouche's?" into a compile error — the only enforcement that survives a session that
+never opens this file. Pin it to a **tagged release**: `execution-apis` `main` now carries
+`eth_baseFee`, which no release does.
 
 Resist "while we're here, just this once" helpers — they belong in onchain.
 
@@ -30,7 +58,7 @@ Resist "while we're here, just this once" helpers — they belong in onchain.
 |---|---|---|
 | Core — new transaction type (4844, 7702, future) | **cartouche** | Modifies `Cartouche.Transaction` encode/sign |
 | Core — new signer scheme / crypto primitive | **cartouche** | Primitive layer |
-| Interface — new JSON-RPC method | **onchain** | Wrapper over `Cartouche.RPC.send_rpc/3` |
+| Interface — new JSON-RPC method | **cartouche** if in a tagged `execution-apis` release; **onchain** for vendor/bundler/relay namespaces | Reverses the previous routing — see "Why this replaces the previous rule" above |
 | ERC — contract standard (ERC-20/721/1155/4626/8004/…) | **onchain** or sibling | Pure contract calls; spin a sibling package (`onchain_agents`, `onchain_aave`, …) when domain-heavy |
 | Core — new precompile | **onchain** usually | Contract-call wrapper; cartouche only if bespoke encoding required |
 | Networking / Meta / Informational | **ignore** | Not a client-library concern |
