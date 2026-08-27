@@ -179,7 +179,7 @@
     "rpc_read_surface": {
       "phase": 0,
       "order": 15,
-      "description": "Standard execution-apis read surface the 2026-08-26 gap analysis found missing (getLogs, tx read-back, state reads, introspection, simulateV1)"
+      "description": "The execution-apis read surface cartouche must own under the stack boundary, plus the transport and test-seam prerequisites. Most of these methods already exist somewhere in the stack — the work is ownership and de-duplication, not invention. Order: 137 (transport) -> cartouche release -> 128-132 (methods) -> onchain-side tasks."
     },
     "signer_backends": {
       "phase": 0,
@@ -3215,7 +3215,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [
-        136
+        136,
+        137
       ],
       "assignee": "cursor",
       "model": "cursor-grok-4.6-high",
@@ -3261,7 +3262,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [
-        136
+        136,
+        137
       ],
       "assignee": "grok",
       "model": "grok-4.6",
@@ -3309,7 +3311,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [
-        136
+        136,
+        137
       ],
       "assignee": "codex",
       "model": "gpt-5.6-sol",
@@ -3547,7 +3550,8 @@
       "unlocks": 0,
       "markers": [],
       "depends_on": [
-        136
+        136,
+        137
       ],
       "assignee": "grok",
       "model": "grok-4.6",
@@ -3634,7 +3638,7 @@
       },
       "eff": 1.8,
       "dep_layer": 0,
-      "unlocks": 2,
+      "unlocks": 6,
       "markers": [],
       "depends_on": [],
       "assignee": "codex",
@@ -3661,7 +3665,7 @@
         "test/rpc_test.exs",
         "CHANGELOG.md"
       ],
-      "body": "This task is what makes the stack boundary's clean cut actually safe to execute, and it was found by reading both call pipelines rather than by reasoning from the layer diagram.\n\nThe boundary says cartouche owns the transport and every in-spec method; onchain re-presents, never re-derives. Tasks 128-132 move the methods down. But a straight deletion of onchain's duplicate wrappers would be a real regression, because onchain's wrappers are not thin: each one runs inside `:telemetry.span([:onchain, :rpc, :request], ...)` (lib/onchain/rpc.ex:1310-1313), optionally inside `retry_rpc/4` (:1317-1367, transport failures retried, application errors final at :1366-1368), and its result passes through `classify_node_refusal/1` (:1374-1391), which turns `-32601` / `-32600` / `-32001` into tagged, branchable outcomes and was pinned against live Alchemy responses (moduledoc, rpc.ex:41-99). cartouche's `send_rpc/3` (lib/cartouche/rpc.ex:515-556) has none of these.\n\nEvery one of those is a transport concern. Under the boundary they belong in cartouche by definition — the layer that owns the JSON-RPC wire owns retrying it, measuring it, and telling the caller why a node refused. That they grew in onchain is an artifact of the old rule that put wrappers there.\n\nThere is a structural reason this cannot be fixed by delegation, which is worth stating so nobody proposes it later: onchain composes the hardening OUTSIDE the raw call, whereas cartouche's typed wrappers put the decode INSIDE `send_rpc/3` via its `:decode` option. So `Onchain.RPC.foo/2` delegating to `Cartouche.RPC.foo/2` inverts the nesting and silently drops retry, because `retry_rpc/4` is hardcoded to call `Helpers.do_rpc/3` (:1350) and cannot wrap a typed call. Generalizing it is part of this task, not a rider on a per-method port.\n\nThe node-refusal classification is the highest-value piece and should be treated as such. It is exactly what node-portability rule 3 asks for — \"expose a capability probe rather than failing deep in a pipeline\" — and cartouche currently forces consumers to string-match error text to discover that an endpoint does not serve a method. Tasks 131, 132 and 135 all need this: 131 wraps three methods no tagged spec carries, 132 needs `-32601` distinguishable from a failed simulation, and 135 needs a probe for the trace namespace. onchain_tempo independently reinvented the same `-32601 -> :unsupported` classification (onchain_tempo/lib/onchain/tempo/rpc.ex) — a third implementation of one idea, which is the signal that it belongs one layer down.\n\nSequencing note the implementer does not need to act on but should know: onchain pins cartouche as a Hex dependency (`{:cartouche, \"~> 0.6\"}`, onchain/mix.exs:43; lockfile at 0.8.0), not a path dep. So this lands and ships in cartouche first; onchain adopts on a lockfile bump. Nothing is broken in between, because onchain keeps its own implementation until the commit that removes it.\n",
+      "body": "This task is what makes the stack boundary's clean cut actually safe to execute, and it was found by reading both call pipelines rather than by reasoning from the layer diagram.\n\nThe boundary says cartouche owns the transport and every in-spec method; onchain re-presents, never re-derives. Tasks 128-132 move the methods down. But a straight deletion of onchain's duplicate wrappers would be a real regression, because onchain's wrappers are not thin: each one runs inside `:telemetry.span([:onchain, :rpc, :request], ...)` (lib/onchain/rpc.ex:1310-1313), optionally inside `retry_rpc/4` (:1317-1367, transport failures retried, application errors final at :1366-1368), and its result passes through `classify_node_refusal/1` (:1374-1391), which turns `-32601` / `-32600` / `-32001` into tagged, branchable outcomes and was pinned against live Alchemy responses (moduledoc, rpc.ex:41-99). cartouche's `send_rpc/3` (lib/cartouche/rpc.ex:515-556) has none of these.\n\nEvery one of those is a transport concern. Under the boundary they belong in cartouche by definition — the layer that owns the JSON-RPC wire owns retrying it, measuring it, and telling the caller why a node refused. That they grew in onchain is an artifact of the old rule that put wrappers there.\n\nThere is a structural reason this cannot be fixed by delegation, which is worth stating so nobody proposes it later: onchain composes the hardening OUTSIDE the raw call, whereas cartouche's typed wrappers put the decode INSIDE `send_rpc/3` via its `:decode` option. So `Onchain.RPC.foo/2` delegating to `Cartouche.RPC.foo/2` inverts the nesting and silently drops retry, because `retry_rpc/4` is hardcoded to call `Helpers.do_rpc/3` (:1350) and cannot wrap a typed call. Generalizing it is part of this task, not a rider on a per-method port.\n\nThe node-refusal classification is the highest-value piece and should be treated as such. It is exactly what node-portability rule 3 asks for — \"expose a capability probe rather than failing deep in a pipeline\" — and cartouche currently forces consumers to string-match error text to discover that an endpoint does not serve a method. Tasks 131, 132 and 135 all need this: 131 wraps three methods no tagged spec carries, 132 needs `-32601` distinguishable from a failed simulation, and 135 needs a probe for the trace namespace. onchain_tempo independently reinvented the same `-32601 -> :unsupported` classification (onchain_tempo/lib/onchain/tempo/rpc.ex) — a third implementation of one idea, which is the signal that it belongs one layer down.\n\nThe onchain-side question — whether onchain's duplicated wrappers disappear entirely or survive returning cartouche structs — is DELIBERATELY DEFERRED until this task ships, and no task should presume either answer before then. The reason is that this task changes the answer: today a bare deletion would cost consumers retry, telemetry and refusal classification, which makes keeping the wrapper look cheaper; once cartouche has all three, deletion becomes close to free and the trade-off mostly evaporates. Deciding before that is deciding against a constraint that is about to stop existing.\n\nSequencing note the implementer does not need to act on but should know: onchain pins cartouche as a Hex dependency (`{:cartouche, \"~> 0.6\"}`, onchain/mix.exs:43; lockfile at 0.8.0), not a path dep. So this lands and ships in cartouche first; onchain adopts on a lockfile bump. Nothing is broken in between, because onchain keeps its own implementation until the commit that removes it.\n",
       "created_at": "2026-08-27",
       "scored_at": "2026-08-27",
       "cross_repo": []

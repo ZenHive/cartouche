@@ -148,7 +148,7 @@ description = "Pluggable signer-backend behaviour + multi-provider signing (AWS/
 [bundles.rpc_read_surface]
 phase = 0
 order = 15
-description = "Standard execution-apis read surface the 2026-08-26 gap analysis found missing (getLogs, tx read-back, state reads, introspection, simulateV1)"
+description = "The execution-apis read surface cartouche must own under the stack boundary, plus the transport and test-seam prerequisites. Most of these methods already exist somewhere in the stack — the work is ownership and de-duplication, not invention. Order: 137 (transport) -> cartouche release -> 128-132 (methods) -> onchain-side tasks."
 
 [bundles.phase1_specs]
 phase = 1
@@ -2130,7 +2130,7 @@ bundle = "rpc_read_surface"
 status = "pending"
 title = "Own eth_getLogs in cartouche — stateless log queries, and delete onchain's copy"
 scores = { d = 3, b = 8, u = 7 }
-depends_on = [136]
+depends_on = [136, 137]
 acceptance_criteria = ["Cartouche.RPC gains an eth_getLogs wrapper accepting the standard filter object (fromBlock/toBlock/address/topics, and the mutually-exclusive blockHash form) and decoding into the existing Cartouche.Filter log struct — one wrapper, one struct, per the stack boundary", "Log decoding is the SAME code the existing filter surface uses (lib/cartouche/filter.ex), not a second decoder. If the filter surface's decode is not reusable as-is, refactor it so it is — do not copy it", "A live integration test pins one real success (logs from a known mainnet event range) and one relevant real error the node actually refuses, recorded verbatim — a real result or its real refusal, never a skip; flunks with exact export instructions when the node env var is absent", "The same call is exercised on >=1 hosted endpoint via the task-136 seam, since hosted providers commonly cap getLogs by block range or result count — that cap is a real, recordable answer, not a test failure", "mix ci passes"]
 out_of_scope = ["Changing the existing filter-installation surface (eth_newFilter / eth_getFilterChanges) — it stays; this adds the stateless sibling", "ABI event decoding — that is hieroglyph's layer, above the log struct", "Editing the onchain repo — cartouche cannot touch it from its own worktree; the deletion there is the companion task named in the body"]
 files_to_modify = ["lib/cartouche/rpc.ex", "lib/cartouche/filter.ex"]
@@ -2160,7 +2160,7 @@ bundle = "rpc_read_surface"
 status = "pending"
 title = "Own the transaction and receipt read-back in cartouche — 4 methods, and delete onchain's copies"
 scores = { d = 4, b = 7, u = 6 }
-depends_on = [136]
+depends_on = [136, 137]
 acceptance_criteria = ["Cartouche.RPC gains eth_getTransactionByHash, eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex and eth_getBlockReceipts, each decoding into a cartouche struct — all four are in the tagged spec and are therefore cartouche's to own", "Transaction-object decoding covers all five 2718 types the repo already models (legacy, 2930, 1559, 4844, 7702), including yParity/v, accessList, blobVersionedHashes and authorizationList; a live test fetches a known mainnet type-2 tx AND a legacy tx and asserts decoded domain fields, not just shape", "A null result for an unknown hash maps to an explicit not-found return, never a decode crash — pinned by a live test against a hash that genuinely does not exist", "eth_getBlockReceipts reuses the EXISTING receipt decoding rather than adding a second one; a live test asserts the receipt list of a known block", "The decode target follows the repo's existing JsonField / typed_decode precedent — decide between the existing transaction structs and a dedicated RPC-view struct by reading how Cartouche.Block already handles the same JSON-vs-RLP split, and follow it rather than inventing a third convention", "Live tests flunk with exact export instructions when the node env var is absent, never skip", "mix ci passes"]
 out_of_scope = ["Pending-pool inspection (txpool_* namespaces) — not in the spec, different task if ever wanted", "Re-encoding the RPC transaction object back to raw RLP", "Editing the onchain repo — the deletions there are the companion task named in the body"]
 files_to_modify = ["lib/cartouche/rpc.ex", "lib/cartouche/transaction.ex"]
@@ -2190,7 +2190,7 @@ bundle = "rpc_read_surface"
 status = "pending"
 title = "Own the state reads in cartouche — eth_getStorageAt and eth_getProof (EIP-1186)"
 scores = { d = 3, b = 6, u = 5 }
-depends_on = [136]
+depends_on = [136, 137]
 acceptance_criteria = ["Cartouche.RPC gains eth_getStorageAt (address, slot, block tag -> 32-byte word) with block-tag support, pinned by a live test reading a known mainnet contract slot", "Cartouche.RPC gains eth_getProof decoding into a cartouche struct covering the account fields (balance, nonce, codeHash, storageHash, accountProof) and the storageProof entries; a live test asserts domain fields of a known contract's proof, not just shape", "One relevant real error per method is observed and pinned as the node actually answers it — never an assumed error string", "Historical-state depth is verified against >=1 hosted endpoint via the task-136 seam, not asserted: both methods are fully standard, but archive depth is the privileged part. Whatever the hosted endpoint answers for a deep-history block IS the finding — record it verbatim, and let the @doc say what was observed rather than promising depth", "@doc for both names the spec release that carries them and the observed depth caveat", "Live tests flunk with exact export instructions when the node env var is absent, never skip", "mix ci passes"]
 out_of_scope = ["Client-side Merkle-Patricia verification of a proof against the state root — a real feature, genuinely separate, and not needed to own the read", "Editing onchain_evm — the deletion there is the companion task named in the body"]
 files_to_modify = ["lib/cartouche/rpc.ex"]
@@ -2355,7 +2355,7 @@ acceptance_criteria = ["trace_transaction (rpc.ex:1435), trace_call (:1586), tra
 out_of_scope = ["Removing or reimplementing the trace wrappers — they work on nodes that serve them and consumers depend on them; this task documents and probes, it does not deprecate", "eth_simulateV1 as the portable replacement — that is its own task", "base_fee/1 — its own task owns that @doc"]
 files_to_modify = ["lib/cartouche/rpc.ex", "test/rpc_integration_test.exs"]
 touches = ["README.md", "CHANGELOG.md"]
-depends_on = [136]
+depends_on = [136, 137]
 assignee = "grok"
 model = "grok-4.6"
 body = """
@@ -2426,6 +2426,8 @@ Every one of those is a transport concern. Under the boundary they belong in car
 There is a structural reason this cannot be fixed by delegation, which is worth stating so nobody proposes it later: onchain composes the hardening OUTSIDE the raw call, whereas cartouche's typed wrappers put the decode INSIDE `send_rpc/3` via its `:decode` option. So `Onchain.RPC.foo/2` delegating to `Cartouche.RPC.foo/2` inverts the nesting and silently drops retry, because `retry_rpc/4` is hardcoded to call `Helpers.do_rpc/3` (:1350) and cannot wrap a typed call. Generalizing it is part of this task, not a rider on a per-method port.
 
 The node-refusal classification is the highest-value piece and should be treated as such. It is exactly what node-portability rule 3 asks for — "expose a capability probe rather than failing deep in a pipeline" — and cartouche currently forces consumers to string-match error text to discover that an endpoint does not serve a method. Tasks 131, 132 and 135 all need this: 131 wraps three methods no tagged spec carries, 132 needs `-32601` distinguishable from a failed simulation, and 135 needs a probe for the trace namespace. onchain_tempo independently reinvented the same `-32601 -> :unsupported` classification (onchain_tempo/lib/onchain/tempo/rpc.ex) — a third implementation of one idea, which is the signal that it belongs one layer down.
+
+The onchain-side question — whether onchain's duplicated wrappers disappear entirely or survive returning cartouche structs — is DELIBERATELY DEFERRED until this task ships, and no task should presume either answer before then. The reason is that this task changes the answer: today a bare deletion would cost consumers retry, telemetry and refusal classification, which makes keeping the wrapper look cheaper; once cartouche has all three, deletion becomes close to free and the trade-off mostly evaporates. Deciding before that is deciding against a constraint that is about to stop existing.
 
 Sequencing note the implementer does not need to act on but should know: onchain pins cartouche as a Hex dependency (`{:cartouche, "~> 0.6"}`, onchain/mix.exs:43; lockfile at 0.8.0), not a path dep. So this lands and ships in cartouche first; onchain adopts on a lockfile bump. Nothing is broken in between, because onchain keeps its own implementation until the commit that removes it.
 """
